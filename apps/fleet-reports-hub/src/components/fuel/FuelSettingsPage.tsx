@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { showToast } from '../ui/Toast'
 
 type QboAccount = { id: string; name: string; accountType: string }
 type QboItem = { id: string; name: string; itemType: string }
@@ -18,6 +19,9 @@ const FUEL_TYPES: Array<{ key: FuelType; label: string }> = [
   { key: 'def', label: 'DEF' },
 ]
 
+const accountLabel = (a: QboAccount) => `${a.name} (${a.accountType || 'Expense'})`
+const itemLabel = (i: QboItem) => i.name
+
 export function FuelSettingsPage() {
   const [accounts, setAccounts] = useState<QboAccount[]>([])
   const [items, setItems] = useState<QboItem[]>([])
@@ -25,6 +29,16 @@ export function FuelSettingsPage() {
     truck_diesel: { fuel_type: 'truck_diesel' },
     reefer_diesel: { fuel_type: 'reefer_diesel' },
     def: { fuel_type: 'def' },
+  })
+  const [accountInputs, setAccountInputs] = useState<Record<FuelType, string>>({
+    truck_diesel: '',
+    reefer_diesel: '',
+    def: '',
+  })
+  const [itemInputs, setItemInputs] = useState<Record<FuelType, string>>({
+    truck_diesel: '',
+    reefer_diesel: '',
+    def: '',
   })
   const [saving, setSaving] = useState<Record<FuelType, boolean>>({
     truck_diesel: false,
@@ -38,9 +52,12 @@ export function FuelSettingsPage() {
   })
 
   const [customName, setCustomName] = useState('')
-  const [customAccountId, setCustomAccountId] = useState('')
-  const [customItemId, setCustomItemId] = useState('')
+  const [customAccountInput, setCustomAccountInput] = useState('')
+  const [customItemInput, setCustomItemInput] = useState('')
   const [customMsg, setCustomMsg] = useState('')
+
+  const accountByLabel = useMemo(() => new Map(accounts.map((a) => [accountLabel(a), a])), [accounts])
+  const itemByLabel = useMemo(() => new Map(items.map((i) => [itemLabel(i), i])), [items])
 
   useEffect(() => {
     let cancelled = false
@@ -60,16 +77,16 @@ export function FuelSettingsPage() {
 
       const acc = rawAccounts
         .map((a: any) => ({
-          id: String(a?.qboId || a?.Id || a?.id || '').trim(),
-          name: String(a?.name || a?.Name || '').trim(),
-          accountType: String(a?.accountType || a?.AccountType || '').trim(),
+          id: String(a?.qboId || '').trim(),
+          name: String(a?.name || '').trim(),
+          accountType: String(a?.accountType || '').trim(),
         }))
         .filter((a: QboAccount) => Boolean(a.id && a.name))
       const itm = rawItems
         .map((i: any) => ({
-          id: String(i?.qboId || i?.Id || i?.id || '').trim(),
-          name: String(i?.name || i?.Name || '').trim(),
-          itemType: String(i?.type || i?.Type || '').trim(),
+          id: String(i?.qboId || '').trim(),
+          name: String(i?.name || '').trim(),
+          itemType: String(i?.type || '').trim(),
         }))
         .filter((i: QboItem) => Boolean(i.id && i.name))
 
@@ -77,6 +94,8 @@ export function FuelSettingsPage() {
       setItems(itm)
 
       const rows = Array.isArray((settingsRes as any)?.settings) ? (settingsRes as any).settings : []
+      const nextInputsA = { truck_diesel: '', reefer_diesel: '', def: '' }
+      const nextInputsI = { truck_diesel: '', reefer_diesel: '', def: '' }
       setSettings((prev) => {
         const next = { ...prev }
         rows.forEach((r: any) => {
@@ -89,9 +108,13 @@ export function FuelSettingsPage() {
             qbo_item_id: String(r?.qbo_item_id || ''),
             qbo_item_name: String(r?.qbo_item_name || ''),
           }
+          if (next[k].qbo_account_name) nextInputsA[k] = `${next[k].qbo_account_name} (${acc.find((a: QboAccount) => a.id === next[k].qbo_account_id)?.accountType || 'Expense'})`
+          if (next[k].qbo_item_name) nextInputsI[k] = next[k].qbo_item_name || ''
         })
         return next
       })
+      setAccountInputs(nextInputsA)
+      setItemInputs(nextInputsI)
       setSaved({
         truck_diesel: rows.some((r: any) => r?.fuel_type === 'truck_diesel' && r?.qbo_account_id),
         reefer_diesel: rows.some((r: any) => r?.fuel_type === 'reefer_diesel' && r?.qbo_account_id),
@@ -106,29 +129,61 @@ export function FuelSettingsPage() {
 
   const allConfigured = useMemo(() => FUEL_TYPES.every((f) => Boolean(settings[f.key]?.qbo_account_id)), [settings])
 
-  const setField = (key: FuelType, patch: Partial<FuelSetting>) => {
-    setSettings((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }))
+  const syncAccount = (key: FuelType, raw: string) => {
+    setAccountInputs((prev) => ({ ...prev, [key]: raw }))
+    const byLabel = accountByLabel.get(raw)
+    const byId = accounts.find((a) => a.id === raw)
+    const picked = byLabel || byId || null
+    setSettings((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        qbo_account_id: picked?.id || '',
+        qbo_account_name: picked?.name || '',
+      },
+    }))
+    setSaved((prev) => ({ ...prev, [key]: false }))
+  }
+
+  const syncItem = (key: FuelType, raw: string) => {
+    setItemInputs((prev) => ({ ...prev, [key]: raw }))
+    const byLabel = itemByLabel.get(raw)
+    const byId = items.find((i) => i.id === raw)
+    const picked = byLabel || byId || null
+    setSettings((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        qbo_item_id: picked?.id || '',
+        qbo_item_name: picked?.name || '',
+      },
+    }))
     setSaved((prev) => ({ ...prev, [key]: false }))
   }
 
   const saveRow = async (key: FuelType) => {
     const row = settings[key]
-    const account = accounts.find((a) => a.id === String(row?.qbo_account_id || ''))
-    const item = items.find((i) => i.id === String(row?.qbo_item_id || ''))
     setSaving((prev) => ({ ...prev, [key]: true }))
     try {
-      await fetch('/api/fuel/settings', {
+      const resp = await fetch('/api/fuel/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           fuel_type: key,
           qbo_account_id: row?.qbo_account_id || '',
-          qbo_account_name: account?.name || '',
+          qbo_account_name: row?.qbo_account_name || '',
           qbo_item_id: row?.qbo_item_id || '',
-          qbo_item_name: item?.name || '',
+          qbo_item_name: row?.qbo_item_name || '',
         }),
-      })
-      setSaved((prev) => ({ ...prev, [key]: true }))
+      }).then((r) => r.json())
+      if (resp?.ok) {
+        setSaved((prev) => ({ ...prev, [key]: true }))
+        showToast('✅ Fuel mapping saved', 'success')
+      } else {
+        showToast('❌ Error saving fuel mapping', 'error')
+      }
+    } catch {
+      showToast('❌ Error saving fuel mapping', 'error')
     } finally {
       setSaving((prev) => ({ ...prev, [key]: false }))
     }
@@ -140,12 +195,12 @@ export function FuelSettingsPage() {
       setCustomMsg('Enter a custom expense type name.')
       return
     }
-    const account = accounts.find((a) => a.id === customAccountId)
+    const account = accountByLabel.get(customAccountInput) || accounts.find((a) => a.id === customAccountInput)
     if (!account) {
       setCustomMsg('Pick a QBO account for the custom type.')
       return
     }
-    const item = items.find((i) => i.id === customItemId)
+    const item = itemByLabel.get(customItemInput) || items.find((i) => i.id === customItemInput)
     const resp = await fetch('/api/fuel/expense-mapping', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -165,16 +220,29 @@ export function FuelSettingsPage() {
 
     if (resp?.ok) {
       setCustomMsg('Custom expense type added.')
+      showToast('✅ Saved successfully', 'success')
       setCustomName('')
-      setCustomAccountId('')
-      setCustomItemId('')
+      setCustomAccountInput('')
+      setCustomItemInput('')
     } else {
       setCustomMsg(String(resp?.error || 'Unable to add custom type.'))
+      showToast('❌ Error - please try again', 'error')
     }
   }
 
   return (
     <div className="acct-hub" style={{ gap: 12 }}>
+      <datalist id="fuelSettingsAccountOptions">
+        {accounts.map((a) => (
+          <option key={a.id} value={accountLabel(a)} />
+        ))}
+      </datalist>
+      <datalist id="fuelSettingsItemOptions">
+        {items.map((i) => (
+          <option key={i.id} value={itemLabel(i)} />
+        ))}
+      </datalist>
+
       <div className="panel">
         <div className="panel-head">
           <h2 className="panel-title" style={{ margin: 0 }}>Fuel expense - QuickBooks mapping</h2>
@@ -199,42 +267,22 @@ export function FuelSettingsPage() {
             <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
               <label>
                 QBO Account
-                <select
-                  value={String(val.qbo_account_id || '')}
-                  onChange={(e) =>
-                    setField(row.key, {
-                      qbo_account_id: e.target.value,
-                      qbo_account_name: accounts.find((a) => a.id === e.target.value)?.name || '',
-                    })
-                  }
-                >
-                  <option value="">Select account...</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({a.accountType || 'Account'})
-                    </option>
-                  ))}
-                </select>
+                <input
+                  list="fuelSettingsAccountOptions"
+                  value={accountInputs[row.key] || ''}
+                  onChange={(e) => syncAccount(row.key, e.target.value)}
+                  placeholder="Search account..."
+                />
               </label>
 
               <label>
                 QBO Item (optional)
-                <select
-                  value={String(val.qbo_item_id || '')}
-                  onChange={(e) =>
-                    setField(row.key, {
-                      qbo_item_id: e.target.value,
-                      qbo_item_name: items.find((i) => i.id === e.target.value)?.name || '',
-                    })
-                  }
-                >
-                  <option value="">None</option>
-                  {items.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.name}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  list="fuelSettingsItemOptions"
+                  value={itemInputs[row.key] || ''}
+                  onChange={(e) => syncItem(row.key, e.target.value)}
+                  placeholder="Search item..."
+                />
               </label>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -268,25 +316,21 @@ export function FuelSettingsPage() {
           </label>
           <label>
             QBO Account
-            <select value={customAccountId} onChange={(e) => setCustomAccountId(e.target.value)}>
-              <option value="">Select account...</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name} ({a.accountType || 'Account'})
-                </option>
-              ))}
-            </select>
+            <input
+              list="fuelSettingsAccountOptions"
+              value={customAccountInput}
+              onChange={(e) => setCustomAccountInput(e.target.value)}
+              placeholder="Search account..."
+            />
           </label>
           <label>
             QBO Item
-            <select value={customItemId} onChange={(e) => setCustomItemId(e.target.value)}>
-              <option value="">None</option>
-              {items.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
+            <input
+              list="fuelSettingsItemOptions"
+              value={customItemInput}
+              onChange={(e) => setCustomItemInput(e.target.value)}
+              placeholder="Search item..."
+            />
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button type="button" className="btn" onClick={() => void addCustomExpenseType()}>

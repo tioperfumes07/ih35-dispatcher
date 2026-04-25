@@ -43,6 +43,7 @@ import { TelematicsFleetPage } from './components/telematics/TelematicsFleetPage
 import { DriverSchedulerPage } from './components/drivers/DriverSchedulerPage'
 import { DriverProfilesPage } from './components/drivers/DriverProfilesPage'
 import { EquipmentPage } from './components/equipment/EquipmentPage'
+import { ToastContainer, installGlobalSaveFeedback } from './components/ui/Toast'
 
 function matchesSearch(r: ReportDef, q: string, titleOverride?: string) {
   if (!q.trim()) return true
@@ -416,6 +417,10 @@ export default function App() {
   useEffect(() => {
     if (!REPORT_SECTION_IDS.has(activeSection)) setActive(null)
   }, [activeSection])
+
+  useEffect(() => {
+    installGlobalSaveFeedback()
+  }, [])
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -1290,7 +1295,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="toast-host" id="toast-host" aria-live="polite" />
+      <ToastContainer />
 
       {!erpRecordEmbed && !erpFuelEmbed && !erpFuelModalHost ? (
         <IntegrationConnectionStrip />

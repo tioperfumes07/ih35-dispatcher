@@ -7601,6 +7601,75 @@
 
     const LS_ERP_KEY = 'ih35_erp_write_secret';
 
+    function erpShowToast(message, type) {
+      type = type || 'success';
+      var container = document.getElementById('erpToastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'erpToastContainer';
+        container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none';
+        document.body.appendChild(container);
+      }
+      var toast = document.createElement('div');
+      var bg = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#2563eb';
+      var icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      toast.style.cssText = 'padding:12px 20px;border-radius:8px;font-size:14px;font-weight:500;color:#fff;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.3);background:' + bg + ';display:flex;align-items:center;gap:8px;pointer-events:auto';
+      toast.textContent = icon + ' ' + message;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(function() {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 4000);
+    }
+
+    (function installErpFetchToast() {
+      if (window.__erpFetchToastInstalled) return;
+      window.__erpFetchToastInstalled = true;
+      var nativeFetch = window.fetch.bind(window);
+      function isMutation(method) {
+        var m = String(method || 'GET').toUpperCase();
+        return m === 'POST' || m === 'PUT' || m === 'PATCH' || m === 'DELETE';
+      }
+      function actionName(url) {
+        var u = String(url || '').toLowerCase();
+        if (u.includes('work-order') || u.includes('/wo')) return 'Work order';
+        if (u.includes('expense')) return 'Expense';
+        if (u.includes('bill')) return 'Bill';
+        if (u.includes('quickbooks') || u.includes('qbo')) return 'QuickBooks action';
+        if (u.includes('leave')) return 'Leave request';
+        if (u.includes('fuel')) return 'Fuel action';
+        if (u.includes('driver')) return 'Driver action';
+        if (u.includes('schedule')) return 'Schedule update';
+        if (u.includes('load')) return 'Load action';
+        return 'Save';
+      }
+      window.fetch = function(input, init) {
+        var method = (init && init.method) || (input && input.method) || 'GET';
+        var url = typeof input === 'string' ? input : (input && input.url) || '';
+        return nativeFetch(input, init).then(function(resp) {
+          if (!isMutation(method)) return resp;
+          return resp.clone().json().catch(function() { return null; }).then(function(data) {
+            if (resp.ok && !(data && data.ok === false)) {
+              erpShowToast(actionName(url) + ' successful', 'success');
+            } else {
+              var reason = (data && (data.error || data.message)) || resp.statusText || 'Unknown error';
+              erpShowToast(actionName(url) + ' failed - ' + reason, 'error');
+            }
+            return resp;
+          });
+        }).catch(function(err) {
+          if (isMutation(method)) {
+            var reason = (err && err.message) ? err.message : String(err || 'Network error');
+            erpShowToast(actionName(url) + ' failed - ' + reason, 'error');
+          }
+          throw err;
+        });
+      };
+    })();
+
     function authFetchHeaders() {
       const t = localStorage.getItem('ih35_token');
       const h = { Accept: 'application/json' };
