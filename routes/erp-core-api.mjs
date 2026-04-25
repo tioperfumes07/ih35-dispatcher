@@ -1405,6 +1405,287 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+
+  app.post('/api/fuel/driver-expense', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS fuel_expenses (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          gallons NUMERIC,
+          price_per_gallon NUMERIC,
+          total_amount NUMERIC,
+          station_name TEXT,
+          location TEXT,
+          receipt_photo TEXT,
+          submitted_at TIMESTAMPTZ DEFAULT NOW(),
+          qbo_posted BOOLEAN DEFAULT false
+        )`
+      );
+      const { rows } = await dbQuery(
+        `INSERT INTO fuel_expenses (
+          unit_number, driver_name, gallons, price_per_gallon, total_amount,
+          station_name, location, receipt_photo
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING id`,
+        [
+          String(b.unit || b.unit_number || '').trim() || null,
+          String(b.driver || b.driver_name || '').trim() || null,
+          b.gallons == null ? null : Number(b.gallons),
+          b.price_per_gallon == null ? null : Number(b.price_per_gallon),
+          b.total_amount == null ? null : Number(b.total_amount),
+          String(b.station || b.station_name || '').trim() || null,
+          String(b.location || '').trim() || null,
+          String(b.receipt_photo_base64 || b.receipt_photo || '').trim() || null,
+        ]
+      );
+      return res.json({ ok: true, expense_id: rows?.[0]?.id || null });
+    } catch (e) {
+      logError('POST /api/fuel/driver-expense', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/fuel/expenses', async (req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, expenses: [] });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS fuel_expenses (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          gallons NUMERIC,
+          price_per_gallon NUMERIC,
+          total_amount NUMERIC,
+          station_name TEXT,
+          location TEXT,
+          receipt_photo TEXT,
+          submitted_at TIMESTAMPTZ DEFAULT NOW(),
+          qbo_posted BOOLEAN DEFAULT false
+        )`
+      );
+      const unit = String(req.query?.unit || '').trim();
+      const sql = unit
+        ? 'SELECT * FROM fuel_expenses WHERE unit_number = $1 ORDER BY submitted_at DESC'
+        : 'SELECT * FROM fuel_expenses ORDER BY submitted_at DESC';
+      const { rows } = await dbQuery(sql, unit ? [unit] : []);
+      return res.json({ ok: true, expenses: rows || [] });
+    } catch (e) {
+      logError('GET /api/fuel/expenses', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), expenses: [] });
+    }
+  });
+
+  app.post('/api/drivers/leave-request', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS leave_requests (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          start_date DATE,
+          end_date DATE,
+          leave_type TEXT,
+          notes TEXT,
+          status TEXT DEFAULT 'pending',
+          reviewed_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const { rows } = await dbQuery(
+        `INSERT INTO leave_requests (
+          unit_number, driver_name, start_date, end_date, leave_type, notes
+        ) VALUES ($1,$2,$3,$4,$5,$6)
+        RETURNING id`,
+        [
+          String(b.unit || b.unit_number || '').trim() || null,
+          String(b.driver || b.driver_name || '').trim() || null,
+          String(b.start_date || '').trim() || null,
+          String(b.end_date || '').trim() || null,
+          String(b.leave_type || '').trim() || null,
+          String(b.notes || '').trim() || null,
+        ]
+      );
+      return res.json({ ok: true, request_id: rows?.[0]?.id || null });
+    } catch (e) {
+      logError('POST /api/drivers/leave-request', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/drivers/leave-requests', async (req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, requests: [], rows: [] });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS leave_requests (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          start_date DATE,
+          end_date DATE,
+          leave_type TEXT,
+          notes TEXT,
+          status TEXT DEFAULT 'pending',
+          reviewed_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const unit = String(req.query?.unit || '').trim();
+      const sql = unit
+        ? 'SELECT * FROM leave_requests WHERE unit_number = $1 ORDER BY created_at DESC, id DESC'
+        : 'SELECT * FROM leave_requests ORDER BY created_at DESC, id DESC';
+      const { rows } = await dbQuery(sql, unit ? [unit] : []);
+      return res.json({ ok: true, requests: rows || [], rows: rows || [] });
+    } catch (e) {
+      logError('GET /api/drivers/leave-requests', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), requests: [], rows: [] });
+    }
+  });
+
+  app.post('/api/drivers/leave-request/:id/approve', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS leave_requests (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          start_date DATE,
+          end_date DATE,
+          leave_type TEXT,
+          notes TEXT,
+          status TEXT DEFAULT 'pending',
+          reviewed_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ ok: false, error: 'invalid id' });
+
+      const { rows } = await dbQuery(
+        `UPDATE leave_requests
+           SET status = 'approved', reviewed_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [id]
+      );
+      const reqRow = rows?.[0] || null;
+      if (!reqRow) return res.status(404).json({ ok: false, error: 'Leave request not found' });
+
+      const start = String(reqRow.start_date || '').slice(0, 10);
+      const end = String(reqRow.end_date || '').slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(start) && /^\d{4}-\d{2}-\d{2}$/.test(end)) {
+        const leaveType = String(reqRow.leave_type || 'Leave').trim() || 'Leave';
+        let d = new Date(`${start}T00:00:00Z`);
+        const until = new Date(`${end}T00:00:00Z`);
+        while (d <= until) {
+          const iso = d.toISOString().slice(0, 10);
+          await dbQuery(
+            `INSERT INTO driver_schedules (unit_number, driver_id, date, leave_type, notes, created_at, updated_at)
+             VALUES ($1,$2,$3,$4,$5,now(),now())
+             ON CONFLICT (unit_number, date)
+             DO UPDATE SET
+               driver_id = EXCLUDED.driver_id,
+               leave_type = EXCLUDED.leave_type,
+               notes = EXCLUDED.notes,
+               updated_at = now()`,
+            [
+              String(reqRow.unit_number || '').trim() || null,
+              String(reqRow.driver_name || '').trim() || null,
+              iso,
+              leaveType,
+              String(reqRow.notes || '').trim() || `Auto-approved leave request #${id}`,
+            ]
+          );
+          d.setUTCDate(d.getUTCDate() + 1);
+        }
+      }
+
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/drivers/leave-request/:id/approve', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/drivers/leave-request/:id/deny', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS leave_requests (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          start_date DATE,
+          end_date DATE,
+          leave_type TEXT,
+          notes TEXT,
+          status TEXT DEFAULT 'pending',
+          reviewed_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ ok: false, error: 'invalid id' });
+      const { rowCount } = await dbQuery(
+        `UPDATE leave_requests
+           SET status = 'denied', reviewed_at = NOW()
+         WHERE id = $1`,
+        [id]
+      );
+      if (!rowCount) return res.status(404).json({ ok: false, error: 'Leave request not found' });
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/drivers/leave-request/:id/deny', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/pre-trip/submit', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS pre_trip_inspections (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          odometer INTEGER,
+          items JSONB,
+          passed BOOLEAN,
+          signature TEXT,
+          submitted_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const overall = String(b.overall_result || '').toLowerCase();
+      const passed = b.passed != null ? Boolean(b.passed) : overall === 'pass';
+      const { rows } = await dbQuery(
+        `INSERT INTO pre_trip_inspections (
+          unit_number, driver_name, odometer, items, passed, signature
+        ) VALUES ($1,$2,$3,$4,$5,$6)
+        RETURNING id`,
+        [
+          String(b.unit || b.unit_number || '').trim() || null,
+          String(b.driver || b.driver_name || '').trim() || null,
+          Number.isFinite(Number(b.odometer ?? b.odometer_reading)) ? Number(b.odometer ?? b.odometer_reading) : null,
+          JSON.stringify(Array.isArray(b.items) ? b.items : Array.isArray(b.checklist) ? b.checklist : []),
+          passed,
+          String(b.signature || b.driver_signature || '').trim() || null,
+        ]
+      );
+      return res.json({ ok: true, inspection_id: rows?.[0]?.id || null });
+    } catch (e) {
+      logError('POST /api/pre-trip/submit', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.get('/api/integrity/dashboard', (req, res) => {
     try {
       const erp = readFullErpJson();
