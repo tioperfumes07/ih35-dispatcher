@@ -28,6 +28,7 @@ const sharedInputStyle = {
   color: '#e2e8f0',
   fontSize: '13px',
   marginTop: '4px',
+  boxSizing: 'border-box',
 } as const
 
 export function FuelSettingsPage() {
