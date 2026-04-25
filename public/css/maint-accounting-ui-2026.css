@@ -3774,3 +3774,59 @@ body.erp-maintenance #section-maintenance .maint-kpi-strip {
   top: 0;
   z-index: 7;
 }
+
+
+/* ============================================================================
+   ITEM 3 — work order modal alignment + cost section fixes
+   ============================================================================ */
+body.maint-wo-modal-open .maint-workorder-fullmodal__head {
+  align-items: center;
+  padding: 12px 18px 10px;
+}
+
+body.maint-wo-modal-open .maint-workorder-fullmodal__head-main {
+  min-width: 0;
+  padding-left: 2px;
+}
+
+/* Keep modal scroll natural: do not pin snapshot/notes while editing long forms. */
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-wo-snapshot-dock {
+  position: relative;
+  top: auto;
+}
+
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-wo-form-split > .maint-subcard:not(.maint-cost-panel-card) {
+  position: relative;
+  top: auto;
+}
+
+/* Ensure cost breakdown + totals bar use full available width. */
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-wo-form-split > .maint-cost-panel-card {
+  justify-self: stretch;
+  width: 100%;
+  max-width: 100%;
+}
+
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-qb-cost-totals-bar {
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-qb-cost-totals-bar__piece--status {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+/* Normalize field widths/alignment in the top work order form rows. */
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-form-grid__row {
+  align-items: end;
+}
+
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-field-cell .qb-in,
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-field-cell .qb-memo,
+body.maint-wo-modal-open #maintWorkOrderFormMount .maint-field-cell select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
