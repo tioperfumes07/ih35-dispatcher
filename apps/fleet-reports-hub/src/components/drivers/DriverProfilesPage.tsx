@@ -49,21 +49,15 @@ function emptyDraft(): Partial<DriverTableRow> {
 }
 
 function fallbackUnitsRows(): DriverTableRow[] {
-  return Array.from({ length: 58 }, (_, i) => ({
-    id: i + 1,
-    unit_number: `T${120 + i}`,
+  const placeholders = Array.from({length:58}, (_,i) => ({
+    id: -(i+1),
+    unit_number: `T${120+i}`,
     full_name: 'Vacante',
-    team: '',
-    manager: '',
-    cdl_number: '',
-    cdl_expiry: null,
-    medical_expiry: null,
-    phone: '',
-    email: '',
-    status: 'Vacante',
-    notes: '',
-    placeholder: true,
+    team: '', manager: '', cdl_number: '',
+    cdl_expiry: null, medical_expiry: null,
+    phone: '', email: '', status: 'Vacante', notes: ''
   }))
+  return placeholders.map((r) => ({ ...r, placeholder: true }))
 }
 
 async function fetchFleetUnitsRows(): Promise<DriverTableRow[]> {
@@ -74,25 +68,19 @@ async function fetchFleetUnitsRows(): Promise<DriverTableRow[]> {
     const assets = Array.isArray(data?.assets) ? data.assets : []
     const trucks = assets.filter((a: Record<string, unknown>) => /^T\d{3}$/i.test(String(a.unit_number || '')))
     if (!trucks.length) return fallbackUnitsRows()
-    return trucks
-      .map((a: Record<string, unknown>, idx: number) => ({
-        id: idx + 1,
-        unit_number: String(a.unit_number || '').trim(),
-        full_name: 'Vacante',
-        team: '',
-        manager: '',
-        cdl_number: '',
-        cdl_expiry: null,
-        medical_expiry: null,
-        phone: '',
-        email: '',
-        status: 'Vacante',
-        notes: '',
-        placeholder: true,
+    const byUnit = new Map<string, { make: string | null; model: string | null }>()
+    trucks.forEach((a: Record<string, unknown>) => {
+      const unit = String(a.unit_number || '').trim().toUpperCase()
+      if (!unit) return
+      byUnit.set(unit, {
         make: String(a.make || '').trim() || null,
         model: String(a.model || '').trim() || null,
-      }))
-      .sort((a: DriverTableRow, b: DriverTableRow) => a.unit_number.localeCompare(b.unit_number))
+      })
+    })
+    return fallbackUnitsRows().map((row) => {
+      const meta = byUnit.get(String(row.unit_number || '').toUpperCase())
+      return meta ? { ...row, make: meta.make, model: meta.model } : row
+    })
   } catch {
     return fallbackUnitsRows()
   }
@@ -213,6 +201,8 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
                   key={`${r.unit_number}-${r.id}`}
                   style={{
                     opacity: r.placeholder ? 0.72 : 1,
+                    fontStyle: r.placeholder ? 'italic' : 'normal',
+                    color: r.placeholder ? 'var(--color-text-label)' : undefined,
                     background: critical ? 'rgba(239,68,68,.12)' : warning ? 'rgba(234,179,8,.12)' : undefined,
                   }}
                 >

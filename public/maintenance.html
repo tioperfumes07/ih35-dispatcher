@@ -100,7 +100,7 @@
               <h4>Bill details</h4>
               <div class="erp-mb-field" id="mbVendorField">
                 <span class="qb-l">Vendor</span>
-                <input id="mbVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor (QuickBooks)" autocomplete="off" oninput="resolveMbVendorSearch()" onblur="resolveMbVendorSearch()" />
+                <input id="mbVendorSearch" class="qb-in" list="vendorList" placeholder="Vendor (QuickBooks)" autocomplete="off" oninput="resolveMbVendorSearch()" onblur="resolveMbVendorSearch()" />
                 <input id="mbVendorQboId" type="hidden" />
                 <div id="mbErrVendor" class="erp-mb-field-err hidden"></div>
               </div>
@@ -813,7 +813,7 @@
             <div id="safetyMapMeta" class="mini-note">Loading map…</div>
           </div>
           <div class="panel-body" style="padding:10px">
-            <div id="safetyLiveMap" style="height:420px;width:100%;display:block;border:1px solid var(--color-border);border-radius:8px"></div>
+            <div id="safetyLiveMap" style="height:420px; width:100%; display:block; border:1px solid var(--color-border); border-radius:8px"></div>
           </div>
         </div>
         <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
@@ -1078,7 +1078,7 @@
               
             </div>
             <div class="maint-kpi-cards">
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets" class="kpi-tracked-assets">0</div></div>
+              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
@@ -1273,7 +1273,7 @@
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Vendor
                           
                         </span>
-                        <input id="vendorInput" class="qb-in maint-field" list="qboVendorOptions" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
+                        <input id="vendorInput" class="qb-in maint-field" list="vendorList" placeholder="QuickBooks vendor" oninput="syncLinkedVendorFromMainVendor()" onblur="syncLinkedVendorFromMainVendor()" autocomplete="off" />
                         <button type="button" class="maint-linkish" onclick="goToCreateQboVendor()">New in QBO</button>
                       </div>
                       <div class="maint-field-cell maint-field-cell--odo-150">
@@ -2960,7 +2960,7 @@
                     </div>
                     <div class="ap-exp-field ap-exp-field--vendor">
                       <span class="qb-l">Vendor (QuickBooks)</span>
-                      <input id="apVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
+                      <input id="apVendorSearch" class="qb-in" list="vendorList" placeholder="Vendor" oninput="resolveApVendorSearch()" onblur="resolveApVendorSearch()">
                       <input id="apVendorQboId" type="hidden">
                     </div>
                     <div class="ap-exp-field ap-exp-field--unit">
@@ -3288,7 +3288,7 @@
                   <div class="wo-line-grid" style="margin-bottom:0">
                 <div style="grid-column:span 2">
                   <span class="qb-l">Vendor (QuickBooks)</span>
-                  <input id="bpVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Filter by vendor (optional)" oninput="resolveBpVendorSearch()" onblur="resolveBpVendorSearch()">
+                  <input id="bpVendorSearch" class="qb-in" list="vendorList" placeholder="Filter by vendor (optional)" oninput="resolveBpVendorSearch()" onblur="resolveBpVendorSearch()">
                   <input id="bpVendorQboId" type="hidden">
                 </div>
                 <div style="grid-column:span 2">
@@ -3419,7 +3419,7 @@
                 </div>
                 <div style="grid-column:span 2">
                   <span class="qb-l">Vendor (optional)</span>
-                  <input id="bpLogVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="All vendors" oninput="resolveBpLogVendorSearch()" onblur="resolveBpLogVendorSearch()">
+                  <input id="bpLogVendorSearch" class="qb-in" list="vendorList" placeholder="All vendors" oninput="resolveBpLogVendorSearch()" onblur="resolveBpLogVendorSearch()">
                   <input id="bpLogVendorQboId" type="hidden" />
                 </div>
                 <div>
@@ -3545,7 +3545,7 @@
                         </div>
                         <div class="ap-exp-field ap-exp-field--vendor">
                           <span class="qb-l">Vendor (QuickBooks)</span>
-                          <input id="fuelManualVendorSearch" class="qb-in" list="qboVendorOptions" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
+                          <input id="fuelManualVendorSearch" class="qb-in" list="vendorList" placeholder="Merchant / card program" autocomplete="off" oninput="resolveFuelManualVendor()" onblur="resolveFuelManualVendor()" />
                           <input type="hidden" id="fuelManualVendorQboId" />
                         </div>
                         <div class="ap-exp-field ap-exp-field--unit">
@@ -9526,12 +9526,12 @@
       }
       if (name === 'safety') {
         requestAnimationFrame(() => renderSafetyLiveMap());
-        setTimeout(() => {
-          if (window.safetyLiveMap) {
+        setTimeout(function() {
+          if(window.safetyLiveMap) {
             window.safetyLiveMap.invalidateSize();
-            window.safetyLiveMap.setView([29.7604, -95.3698], 8);
+            window.safetyLiveMap.setView([27.5036, -99.5075], 7);
           }
-        }, 300);
+        }, 350);
       }
       if (name === 'reports') {
         loadReportsData();
@@ -12471,7 +12471,7 @@
       const listId = (input.getAttribute('list') || input.dataset.qbPickerListId || '').trim();
       if (!listId) return null;
 
-      if (listId === 'qboVendorOptions') {
+      if (listId === 'qboVendorOptions' || listId === 'vendorList') {
         return {
           rows: () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || '') })),
           onPick: it => qbPickerApplySelectionToInput(input, it.label),
@@ -14555,7 +14555,7 @@
             <td>${unit || '—'}</td>
             <td><select class="fuel-class-sel qb-in" style="min-width:120px">${fuelClassSelectHtml(clsVal)}</select></td>
             <td>
-              <input class="fuel-vendor qb-in" style="min-width:130px" list="qboVendorOptions" value="${vendSearch}" onblur="blurFuelRowVendor(this)" />
+              <input class="fuel-vendor qb-in" style="min-width:130px" list="vendorList" value="${vendSearch}" onblur="blurFuelRowVendor(this)" />
               <input type="hidden" class="fuel-vendor-id" value="${escapeHtml(String(vendId))}" />
             </td>
             <td>
@@ -14567,7 +14567,7 @@
             <td class="num"><input type="number" step="0.01" class="fuel-line qb-in" style="max-width:96px" value="${escapeHtml(lineStr)}" /></td>
             <td><input class="fuel-driver qb-in" style="min-width:100px" maxlength="120" value="${driverMemo}" placeholder="Driver name" /></td>
             <td>
-              <input class="fuel-driver-vend qb-in" style="min-width:120px" list="qboVendorOptions" value="${dvS}" placeholder="Driver pay vendor" onblur="blurFuelRowDriverVend(this)" />
+              <input class="fuel-driver-vend qb-in" style="min-width:120px" list="vendorList" value="${dvS}" placeholder="Driver pay vendor" onblur="blurFuelRowDriverVend(this)" />
               <input type="hidden" class="fuel-driver-vend-id" value="${escapeHtml(String(dvId))}" />
             </td>
             <td>
@@ -25041,6 +25041,16 @@
       loadWorkspaceKpis();
     }
     loadAll();
+    setTimeout(function() {
+      var vals = document.querySelectorAll('.kpi-val, .acct-hub__kpi-val, [class*="kpi"]');
+      var hasZero = false;
+      vals.forEach(function(el){ if(el.textContent.trim()==='0') hasZero=true; });
+      if(hasZero) {
+        if(typeof loadAll==='function') loadAll();
+        else if(typeof erpLoadDashboard==='function') erpLoadDashboard();
+        else if(typeof refreshAll==='function') refreshAll();
+      }
+    }, 3000);
     setInterval(loadAll, AUTO_REFRESH_MS);
     if (typeof erpInitResizableModals === 'function') {
       try {
