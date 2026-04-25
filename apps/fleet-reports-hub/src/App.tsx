@@ -24,6 +24,7 @@ import {
 import type { AccountingMaintNavTarget } from './components/accounting/accountingNav'
 import { FuelTransactionForm } from './components/fuel/FuelTransactionForm'
 import { FuelSettingsPage } from './components/fuel/FuelSettingsPage'
+import { DriverExpenseMappingPage } from './components/fuel/DriverExpenseMappingPage'
 import {
   FUEL_TRANSACTION_TYPE_LABELS,
   fuelTransactionTypesAlphabetical,
@@ -87,6 +88,7 @@ type AppSection =
   | 'safety'
   | 'fuel'
   | 'fuel-settings'
+  | 'expense-mapping'
   | 'loads'
   | 'scheduler'
   | 'drivers'
@@ -101,6 +103,7 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'safety', label: 'Safety' },
   { id: 'fuel', label: 'Fuel' },
   { id: 'fuel-settings', label: 'Fuel settings' },
+  { id: 'expense-mapping', label: 'Expense mapping' },
   { id: 'loads', label: 'Loads' },
   { id: 'scheduler', label: 'Scheduler' },
   { id: 'drivers', label: 'Drivers' },
@@ -175,6 +178,7 @@ const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   safety: 'Review safety report cards and open related audits and drill-downs.',
   fuel: 'Open fuel report cards and launch transaction workflows directly.',
   'fuel-settings': 'Map driver fuel types to QuickBooks accounts/items for auto-posting.',
+  'expense-mapping': 'Map all driver app expense types to QuickBooks accounts, items, and vendors.',
   loads: 'Review operations and load-facing reporting surfaces.',
   scheduler: 'Plan monthly vacation / leave schedule with HOS status and exports.',
   drivers: 'Manage driver profiles, expirations, and schedule links.',
@@ -1181,6 +1185,10 @@ export default function App() {
               ) : activeSection === 'fuel-settings' ? (
                 <ErrorBoundary name="Fuel settings">
                   <FuelSettingsPage />
+                </ErrorBoundary>
+              ) : activeSection === 'expense-mapping' ? (
+                <ErrorBoundary name="Expense mapping">
+                  <DriverExpenseMappingPage />
                 </ErrorBoundary>
               ) : activeSection === 'safety' ? (
                 <ErrorBoundary name="Safety">

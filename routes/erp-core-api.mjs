@@ -1458,6 +1458,8 @@ export function mountErpCoreApi(app, opts = {}) {
         price_per_gallon NUMERIC,
         total_amount NUMERIC,
         load_number TEXT,
+        reefer_unit_number TEXT,
+        settlement_load_id TEXT,
         station_name TEXT,
         location TEXT,
         receipt_photo TEXT,
@@ -1468,6 +1470,8 @@ export function mountErpCoreApi(app, opts = {}) {
     );
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS fuel_type TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS load_number TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS reefer_unit_number TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS settlement_load_id TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_txn_id TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_posted BOOLEAN DEFAULT false');
     await dbQuery(
@@ -1481,23 +1485,69 @@ export function mountErpCoreApi(app, opts = {}) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`
     );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS driver_expense_mappings (
+        id SERIAL PRIMARY KEY,
+        expense_type TEXT UNIQUE,
+        qbo_account_id TEXT,
+        qbo_account_name TEXT,
+        qbo_item_id TEXT,
+        qbo_item_name TEXT,
+        default_vendor_id TEXT,
+        default_vendor_name TEXT,
+        requires_load_number TEXT DEFAULT 'optional',
+        requires_reefer_number BOOLEAN DEFAULT false,
+        requires_receipt BOOLEAN DEFAULT false,
+        requires_odometer BOOLEAN DEFAULT false,
+        auto_post_qbo BOOLEAN DEFAULT false,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`
+    );
+  }
+
+  async function ensureLoadExpenseLinksTable() {
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS load_expense_links (
+        id SERIAL PRIMARY KEY,
+        load_number TEXT NOT NULL,
+        expense_type TEXT,
+        expense_id INTEGER,
+        expense_table TEXT,
+        amount NUMERIC,
+        unit_number TEXT,
+        driver_name TEXT,
+        linked_at TIMESTAMPTZ DEFAULT NOW(),
+        settlement_status TEXT DEFAULT 'pending'
+      )`
+    );
   }
 
   function normalizeFuelTypeKey(v) {
     const key = String(v || '').trim().toLowerCase();
-    if (key === 'truck_diesel' || key === 'reefer_diesel' || key === 'def') return key;
-    return '';
+    if (!key) return '';
+    return key;
   }
 
-  async function postFuelExpenseToQbo(expenseRow) {
+  function normalizeLoadMode(v) {
+    const mode = String(v || '').trim().toLowerCase();
+    if (mode === 'required' || mode === 'optional' || mode === 'not_needed') return mode;
+    if (mode === 'true') return 'required';
+    if (mode === 'false') return 'optional';
+    return 'optional';
+  }
+
+  async function postFuelExpenseToQbo(expenseRow, mappingOverride = null) {
     try {
       const fuelType = normalizeFuelTypeKey(expenseRow?.fuel_type);
       if (!fuelType) return { ok: false, reason: 'missing_fuel_type' };
-      const { rows: mapRows } = await dbQuery(
-        `SELECT * FROM fuel_qbo_settings WHERE fuel_type = $1 LIMIT 1`,
-        [fuelType]
-      );
-      const setting = mapRows?.[0] || null;
+      let setting = mappingOverride;
+      if (!setting) {
+        const { rows: mapRows } = await dbQuery(
+          `SELECT * FROM fuel_qbo_settings WHERE fuel_type = $1 LIMIT 1`,
+          [fuelType]
+        );
+        setting = mapRows?.[0] || null;
+      }
       if (!setting || !String(setting.qbo_account_id || '').trim()) {
         return { ok: false, reason: 'mapping_missing' };
       }
@@ -1511,6 +1561,18 @@ export function mountErpCoreApi(app, opts = {}) {
       const gallons = String(expenseRow.gallons ?? '').trim();
       const description = `${fuelType} - Unit ${unit || 'N/A'} - Load ${load || 'N/A'}`;
 
+      const detail = {
+        AccountRef: { value: String(setting.qbo_account_id), name: String(setting.qbo_account_name || '').trim() || undefined }
+      };
+      if (String(setting.qbo_item_id || '').trim()) {
+        detail.ItemBasedExpenseLineDetail = {
+          ItemRef: {
+            value: String(setting.qbo_item_id),
+            name: String(setting.qbo_item_name || '').trim() || undefined
+          }
+        };
+      }
+
       const payload = {
         PaymentType: 'Cash',
         AccountRef: { value: String(setting.qbo_account_id), name: String(setting.qbo_account_name || '').trim() || undefined },
@@ -1521,18 +1583,15 @@ export function mountErpCoreApi(app, opts = {}) {
             Amount: Number.isFinite(amount) ? amount : 0,
             Description: description,
             DetailType: 'AccountBasedExpenseLineDetail',
-            AccountBasedExpenseLineDetail: {
-              AccountRef: { value: String(setting.qbo_account_id), name: String(setting.qbo_account_name || '').trim() || undefined }
-            }
+            AccountBasedExpenseLineDetail: detail,
           }
         ]
       };
-      if (String(setting.qbo_item_id || '').trim()) {
-        payload.Line[0].AccountBasedExpenseLineDetail.ItemBasedExpenseLineDetail = {
-          ItemRef: {
-            value: String(setting.qbo_item_id),
-            name: String(setting.qbo_item_name || '').trim() || undefined
-          }
+      if (String(setting.default_vendor_id || '').trim()) {
+        payload.EntityRef = {
+          value: String(setting.default_vendor_id),
+          name: String(setting.default_vendor_name || '').trim() || undefined,
+          type: 'Vendor'
         };
       }
 
@@ -1547,17 +1606,94 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   }
 
+  app.get('/api/fuel/expense-mapping', async (_req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, mappings: [] });
+      await ensureFuelExpenseTables();
+      const { rows } = await dbQuery('SELECT * FROM driver_expense_mappings ORDER BY expense_type ASC');
+      return res.json({ ok: true, mappings: rows || [] });
+    } catch (e) {
+      logError('GET /api/fuel/expense-mapping', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), mappings: [] });
+    }
+  });
+
+  app.post('/api/fuel/expense-mapping', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureFuelExpenseTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const expenseType = normalizeFuelTypeKey(b.expense_type || b.expenseType);
+      if (!expenseType) return res.status(400).json({ ok: false, error: 'expense_type is required' });
+      await dbQuery(
+        `INSERT INTO driver_expense_mappings (
+          expense_type, qbo_account_id, qbo_account_name, qbo_item_id, qbo_item_name,
+          default_vendor_id, default_vendor_name, requires_load_number, requires_reefer_number,
+          requires_receipt, requires_odometer, auto_post_qbo, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+        ON CONFLICT (expense_type)
+        DO UPDATE SET
+          qbo_account_id = EXCLUDED.qbo_account_id,
+          qbo_account_name = EXCLUDED.qbo_account_name,
+          qbo_item_id = EXCLUDED.qbo_item_id,
+          qbo_item_name = EXCLUDED.qbo_item_name,
+          default_vendor_id = EXCLUDED.default_vendor_id,
+          default_vendor_name = EXCLUDED.default_vendor_name,
+          requires_load_number = EXCLUDED.requires_load_number,
+          requires_reefer_number = EXCLUDED.requires_reefer_number,
+          requires_receipt = EXCLUDED.requires_receipt,
+          requires_odometer = EXCLUDED.requires_odometer,
+          auto_post_qbo = EXCLUDED.auto_post_qbo,
+          updated_at = NOW()`,
+        [
+          expenseType,
+          String(b.qbo_account_id || '').trim() || null,
+          String(b.qbo_account_name || '').trim() || null,
+          String(b.qbo_item_id || '').trim() || null,
+          String(b.qbo_item_name || '').trim() || null,
+          String(b.default_vendor_id || '').trim() || null,
+          String(b.default_vendor_name || '').trim() || null,
+          normalizeLoadMode(b.requires_load_number),
+          Boolean(b.requires_reefer_number),
+          Boolean(b.requires_receipt),
+          Boolean(b.requires_odometer),
+          Boolean(b.auto_post_qbo),
+        ]
+      );
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/fuel/expense-mapping', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.post('/api/fuel/driver-expense', async (req, res) => {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
       const b = req.body && typeof req.body === 'object' ? req.body : {};
       await ensureFuelExpenseTables();
+      await ensureLoadExpenseLinksTable();
       const fuelType = normalizeFuelTypeKey(b.fuel_type || b.fuelType);
+      const loadNumber = String(b.load_number || b.loadNumber || '').trim();
+      const reeferUnitNumber = String(b.reefer_unit_number || b.reeferUnitNumber || '').trim();
+      const { rows: mappingRows } = await dbQuery(
+        'SELECT * FROM driver_expense_mappings WHERE expense_type = $1 LIMIT 1',
+        [fuelType || '']
+      );
+      const mapping = mappingRows?.[0] || null;
+      const warnings = [];
+      if (mapping && normalizeLoadMode(mapping.requires_load_number) === 'required' && !loadNumber) {
+        warnings.push('Load number is required by mapping for this expense type.');
+      }
+      if (mapping && mapping.requires_reefer_number === true && !reeferUnitNumber) {
+        warnings.push('Reefer unit number is required by mapping for this expense type.');
+      }
+
       const { rows } = await dbQuery(
         `INSERT INTO fuel_expenses (
           unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
-          load_number, station_name, location, receipt_photo, qbo_posted
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,false)
+          load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo, qbo_posted
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false)
         RETURNING *`,
         [
           String(b.unit || b.unit_number || '').trim() || null,
@@ -1566,19 +1702,47 @@ export function mountErpCoreApi(app, opts = {}) {
           b.gallons == null ? null : Number(b.gallons),
           b.price_per_gallon == null ? null : Number(b.price_per_gallon),
           b.total_amount == null ? null : Number(b.total_amount),
-          String(b.load_number || b.loadNumber || '').trim() || null,
+          loadNumber || null,
+          reeferUnitNumber || null,
+          loadNumber || null,
           String(b.station || b.station_name || '').trim() || null,
           String(b.location || '').trim() || null,
           String(b.receipt_photo_base64 || b.receipt_photo || '').trim() || null,
         ]
       );
       const expense = rows?.[0] || null;
-      let qboPosted = false;
-      if (expense?.id) {
-        const posted = await postFuelExpenseToQbo(expense);
-        qboPosted = posted.ok === true;
+
+      if (expense?.id && loadNumber) {
+        await dbQuery(
+          `INSERT INTO load_expense_links (
+            load_number, expense_type, expense_id, expense_table, amount, unit_number, driver_name
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            loadNumber,
+            fuelType || null,
+            expense.id,
+            'fuel_expenses',
+            expense.total_amount == null ? null : Number(expense.total_amount),
+            String(expense.unit_number || '').trim() || null,
+            String(expense.driver_name || '').trim() || null,
+          ]
+        );
       }
-      return res.json({ ok: true, expense_id: expense?.id || null, qbo_posted: qboPosted });
+
+      let qboPosted = false;
+      let qboTxnId = null;
+      if (expense?.id && mapping && mapping.auto_post_qbo === true && String(mapping.qbo_account_id || '').trim()) {
+        const posted = await postFuelExpenseToQbo(expense, mapping);
+        qboPosted = posted.ok === true;
+        qboTxnId = posted.txnId || null;
+      }
+      return res.json({
+        ok: true,
+        expense_id: expense?.id || null,
+        qbo_posted: qboPosted,
+        qbo_txn_id: qboTxnId,
+        warning: warnings.length ? warnings.join(' ') : null,
+      });
     } catch (e) {
       logError('POST /api/fuel/driver-expense', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -1594,7 +1758,15 @@ export function mountErpCoreApi(app, opts = {}) {
         ? 'SELECT * FROM fuel_expenses WHERE unit_number = $1 ORDER BY submitted_at DESC'
         : 'SELECT * FROM fuel_expenses ORDER BY submitted_at DESC';
       const { rows } = await dbQuery(sql, unit ? [unit] : []);
-      return res.json({ ok: true, expenses: rows || [] });
+      const expenses = (rows || []).map((r) => ({
+        ...r,
+        load_number: r?.load_number || null,
+        reefer_unit_number: r?.reefer_unit_number || null,
+        settlement_load_id: r?.settlement_load_id || null,
+        qbo_posted: r?.qbo_posted === true,
+        qbo_txn_id: r?.qbo_txn_id || null,
+      }));
+      return res.json({ ok: true, expenses });
     } catch (e) {
       logError('GET /api/fuel/expenses', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), expenses: [] });
@@ -1668,6 +1840,25 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('POST /api/fuel/settings', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/settlements/by-load', async (req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, load_number: String(req.query?.load || '').trim(), expenses: [], total_amount: 0 });
+      await ensureLoadExpenseLinksTable();
+      const loadNumber = String(req.query?.load || '').trim();
+      if (!loadNumber) return res.status(400).json({ ok: false, error: 'load query param is required', expenses: [], total_amount: 0 });
+      const { rows } = await dbQuery(
+        'SELECT * FROM load_expense_links WHERE load_number = $1 ORDER BY linked_at DESC, id DESC',
+        [loadNumber]
+      );
+      const expenses = rows || [];
+      const total_amount = expenses.reduce((sum, row) => sum + (Number(row?.amount) || 0), 0);
+      return res.json({ ok: true, load_number: loadNumber, expenses, total_amount });
+    } catch (e) {
+      logError('GET /api/settlements/by-load', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), expenses: [], total_amount: 0 });
     }
   });
 
