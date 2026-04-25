@@ -40,6 +40,7 @@ import { MODAL_FULLSCREEN_STYLE, useFullScreen } from './hooks/useFullScreen'
 import { TelematicsFleetPage } from './components/telematics/TelematicsFleetPage'
 import { DriverSchedulerPage } from './components/drivers/DriverSchedulerPage'
 import { DriverProfilesPage } from './components/drivers/DriverProfilesPage'
+import { EquipmentPage } from './components/equipment/EquipmentPage'
 
 function matchesSearch(r: ReportDef, q: string, titleOverride?: string) {
   if (!q.trim()) return true
@@ -87,6 +88,7 @@ type AppSection =
   | 'loads'
   | 'scheduler'
   | 'drivers'
+  | 'equipment'
 
 const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -99,6 +101,7 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'loads', label: 'Loads' },
   { id: 'scheduler', label: 'Scheduler' },
   { id: 'drivers', label: 'Drivers' },
+  { id: 'equipment', label: 'Equipment' },
 ]
 const APP_SECTION_ID_SET = new Set<AppSection>(APP_SECTIONS.map((s) => s.id))
 const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
@@ -171,6 +174,7 @@ const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   loads: 'Review operations and load-facing reporting surfaces.',
   scheduler: 'Plan monthly vacation / leave schedule with HOS status and exports.',
   drivers: 'Manage driver profiles, expirations, and schedule links.',
+  equipment: 'Manage truck equipment lists and driver checklist submissions.',
 }
 
 function sectionForReportTab(tab: ReportCategory): AppSection {
@@ -1165,6 +1169,10 @@ export default function App() {
                       openSection('drivers')
                     }}
                   />
+                </ErrorBoundary>
+              ) : activeSection === 'equipment' ? (
+                <ErrorBoundary name="Equipment">
+                  <EquipmentPage />
                 </ErrorBoundary>
               ) : activeSection === 'safety' ? (
                 <ErrorBoundary name="Safety">

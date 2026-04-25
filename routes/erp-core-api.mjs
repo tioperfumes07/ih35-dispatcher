@@ -1278,6 +1278,133 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/equipment/checklist', async (req, res) => {
+    const unit = String(req.query.unit || '').trim();
+    if (!unit) return res.json({ ok: false, error: 'unit required' });
+    try {
+      const pool = getPool();
+      let items = [];
+      if (pool) {
+        await dbQuery(
+          `CREATE TABLE IF NOT EXISTS equipment_checklist (
+            id SERIAL PRIMARY KEY,
+            unit_number TEXT NOT NULL,
+            item_name TEXT NOT NULL,
+            quantity INTEGER DEFAULT 1,
+            category TEXT,
+            sort_order INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'active'
+          )`
+        );
+        const { rows } = await dbQuery(
+          'SELECT * FROM equipment_checklist WHERE unit_number=$1 ORDER BY sort_order, item_name',
+          [unit]
+        );
+        items = rows || [];
+      }
+      if (!items.length) {
+        items = [
+          { id: 1, item_name: 'Tarp 20x20', quantity: 4, category: 'tarps' },
+          { id: 2, item_name: 'Tarp 24x24', quantity: 2, category: 'tarps' },
+          { id: 3, item_name: '4x4 Oak log', quantity: 8, category: 'lumber' },
+          { id: 4, item_name: 'Bungee cord', quantity: 20, category: 'straps' },
+          { id: 5, item_name: 'Load strap 2"', quantity: 8, category: 'straps' },
+          { id: 6, item_name: 'Load lock bar', quantity: 4, category: 'locks' },
+          { id: 7, item_name: 'Corner protector', quantity: 12, category: 'protection' },
+          { id: 8, item_name: 'Chain binder', quantity: 4, category: 'straps' },
+        ].map((i, idx) => ({ ...i, unit_number: unit, sort_order: idx, status: 'active' }));
+      }
+      res.json({ ok: true, unit, items });
+    } catch (e) {
+      logError('GET /api/equipment/checklist', e);
+      res.json({ ok: false, error: e.message });
+    }
+  });
+
+  app.post('/api/equipment/checklist/submit', async (req, res) => {
+    const { unit, driver, items, timestamp } = req.body || {};
+    try {
+      const pool = getPool();
+      if (pool) {
+        await dbQuery(
+          `CREATE TABLE IF NOT EXISTS equipment_submissions (
+            id SERIAL PRIMARY KEY,
+            unit_number TEXT,
+            driver_name TEXT,
+            submitted_at TIMESTAMPTZ DEFAULT NOW(),
+            items JSONB,
+            all_confirmed BOOLEAN
+          )`
+        );
+        const allConfirmed = Array.isArray(items) && items.every(i => i.status === 'confirmed');
+        await dbQuery(
+          'INSERT INTO equipment_submissions (unit_number, driver_name, submitted_at, items, all_confirmed) VALUES ($1,$2,$3,$4,$5)',
+          [unit, driver, timestamp || new Date().toISOString(), JSON.stringify(items || []), allConfirmed]
+        );
+      }
+      res.json({ ok: true, message: 'Checklist submitted', report_id: Date.now() });
+    } catch (e) {
+      logError('POST /api/equipment/checklist/submit', e);
+      res.json({ ok: false, error: e.message });
+    }
+  });
+
+  app.post('/api/damage/report', async (req, res) => {
+    const { unit, driver, damage_type, description, photos, location, timestamp } = req.body || {};
+    try {
+      const pool = getPool();
+      if (pool) {
+        await dbQuery(
+          `CREATE TABLE IF NOT EXISTS damage_reports (
+            id SERIAL PRIMARY KEY,
+            unit_number TEXT,
+            driver_name TEXT,
+            damage_type TEXT,
+            description TEXT,
+            photos JSONB,
+            location JSONB,
+            reported_at TIMESTAMPTZ DEFAULT NOW(),
+            status TEXT DEFAULT 'new'
+          )`
+        );
+        await dbQuery(
+          'INSERT INTO damage_reports (unit_number, driver_name, damage_type, description, photos, location, reported_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          [unit, driver, damage_type, description, JSON.stringify(photos || []), JSON.stringify(location || {}), timestamp || new Date().toISOString()]
+        );
+      }
+      const reportId = 'DMG-' + Date.now().toString().slice(-6);
+      res.json({ ok: true, report_id: reportId, message: 'Damage report submitted' });
+    } catch (e) {
+      logError('POST /api/damage/report', e);
+      res.json({ ok: false, error: e.message });
+    }
+  });
+
+  app.get('/api/equipment/submissions', async (req, res) => {
+    const unit = req.query.unit;
+    try {
+      const pool = getPool();
+      if (!pool) return res.json({ ok: true, submissions: [] });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS equipment_submissions (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          submitted_at TIMESTAMPTZ DEFAULT NOW(),
+          items JSONB,
+          all_confirmed BOOLEAN
+        )`
+      );
+      const q = unit
+        ? 'SELECT * FROM equipment_submissions WHERE unit_number=$1 ORDER BY submitted_at DESC LIMIT 50'
+        : 'SELECT * FROM equipment_submissions ORDER BY submitted_at DESC LIMIT 100';
+      const { rows } = await dbQuery(q, unit ? [unit] : []);
+      res.json({ ok: true, submissions: rows });
+    } catch (e) {
+      res.json({ ok: true, submissions: [] });
+    }
+  });
+
   app.get('/api/integrity/dashboard', (req, res) => {
     try {
       const erp = readFullErpJson();

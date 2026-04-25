@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="IH35 Driver" />
+  <meta name="theme-color" content="#0f1219" />
+  <link rel="manifest" href="/driver/manifest.json" />
+  <link rel="apple-touch-icon" href="/driver/icon-192.png" />
+  <title>IH35 Driver Portal</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #0f1219;
+      color: #e2e8f0;
+      font-size: 16px;
+      min-height: 100vh;
+    }
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
+      background: #1a1f2e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .muted { color: #8892a4; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .between { justify-content: space-between; }
+    .title { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+    .subtitle { font-size: 13px; color: #8892a4; margin: 0 0 14px; }
+    label { display: block; font-size: 12px; color: #8892a4; margin: 10px 0 6px; }
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #111827;
+      color: #e2e8f0;
+      padding: 12px;
+      font-size: 16px;
+    }
+    button {
+      min-height: 56px;
+      background: #3b82f6;
+      border-color: #2563eb;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary { background: transparent; }
+    button.small { min-height: 42px; padding: 8px 10px; font-size: 13px; }
+    .grid { display: grid; gap: 10px; }
+    .chip {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 2px 10px;
+      background: rgba(59,130,246,.2);
+      color: #93c5fd;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .tap-card {
+      background: #1a1f2e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .status-bar {
+      margin-top: 12px;
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #131a27;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.green { background: #22c55e; }
+    .dot.gray { background: #6b7280; }
+    .item-row { border-bottom: 1px solid rgba(255,255,255,.08); padding: 10px 0; }
+    .item-row:last-child { border-bottom: none; }
+    .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); }
+    .calendar { overflow-x: auto; }
+    .calendar table { border-collapse: collapse; min-width: 680px; width: 100%; }
+    .calendar th, .calendar td { border: 1px solid rgba(255,255,255,.08); text-align: center; padding: 6px; font-size: 12px; }
+    .hos { font-size: 12px; color: #8892a4; margin-top: 10px; }
+    .ok { color: #22c55e; }
+    .err { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="screen-login" class="screen active">
+      <div class="card">
+        <h1 class="title">IH35 Transportation LLC</h1>
+        <p class="subtitle">Driver Portal</p>
+        <label for="loginUnit">Unit number</label>
+        <select id="loginUnit"></select>
+        <label for="loginDriver">Driver name</label>
+        <input id="loginDriver" type="text" placeholder="Your full name" />
+        <label for="loginPin">PIN (4 digits)</label>
+        <input id="loginPin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" />
+        <button id="loginBtn" type="button">Sign in</button>
+        <p id="loginMsg" class="muted"></p>
+      </div>
+    </section>
+
+    <section id="screen-home" class="screen">
+      <div class="card">
+        <div class="row between">
+          <div>
+            <p class="subtitle" style="margin:0">Good morning, <span id="homeDriverName">Driver</span></p>
+            <h2 class="title" style="margin:4px 0 0">Driver Dashboard</h2>
+          </div>
+          <span id="homeUnitBadge" class="chip">T120</span>
+        </div>
+      </div>
+      <div class="grid">
+        <button class="tap-card" type="button" data-nav="screen-checklist">🔧 Equipment checklist</button>
+        <button class="tap-card" type="button" data-nav="screen-damage">📷 Report damage</button>
+        <button class="tap-card" type="button" data-nav="screen-schedule">📅 My schedule</button>
+        <button class="tap-card" type="button" id="inspectionPlaceholder">📋 Pre-trip inspection</button>
+      </div>
+      <div class="status-bar">
+        <div class="row" style="gap:8px"><span class="dot green"></span> <strong>Samsara connected</strong></div>
+        <div class="muted" style="margin-top:6px">Last sync: <span id="homeSync">--</span></div>
+      </div>
+    </section>
+
+    <section id="screen-checklist" class="screen">
+      <div class="row between card">
+        <div>
+          <h2 class="title" id="checklistTitle">T120 Equipment</h2>
+          <p class="subtitle" style="margin:0">Confirm your required items</p>
+        </div>
+        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+      </div>
+      <div class="card" id="checklistItems">Loading checklist…</div>
+      <button id="submitChecklistBtn" type="button">Submit checklist</button>
+      <p id="checklistMsg" class="muted"></p>
+    </section>
+
+    <section id="screen-damage" class="screen">
+      <div class="row between card">
+        <h2 class="title" style="margin:0">Report Damage</h2>
+        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+      </div>
+      <div class="card">
+        <label>Unit number</label>
+        <input id="damageUnit" readonly />
+        <label>Damage type</label>
+        <select id="damageType">
+          <option>Truck body</option>
+          <option>Trailer</option>
+          <option>Tires</option>
+          <option>Equipment</option>
+          <option>Other</option>
+        </select>
+        <label>Description</label>
+        <textarea id="damageDesc" rows="4" placeholder="Describe what happened"></textarea>
+        <label>Photos (up to 4)</label>
+        <input id="damagePhotosInput" type="file" accept="image/*" capture="environment" multiple />
+        <div id="damageThumbs" class="row" style="flex-wrap:wrap;margin-top:8px"></div>
+        <label>Location</label>
+        <input id="damageLocation" readonly placeholder="Getting GPS…" />
+      </div>
+      <button id="submitDamageBtn" type="button">Submit report</button>
+      <p id="damageMsg" class="muted"></p>
+    </section>
+
+    <section id="screen-schedule" class="screen">
+      <div class="row between card">
+        <div>
+          <h2 class="title" style="margin:0">My Schedule</h2>
+          <p class="subtitle" style="margin:0" id="scheduleMonth">Current month</p>
+        </div>
+        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+      </div>
+      <div class="card calendar" id="scheduleCalendar">Loading schedule…</div>
+      <div class="card hos" id="scheduleHos">HOS status: --</div>
+    </section>
+  </main>
+
+  <script>
+    const SCREEN_IDS = ['screen-login', 'screen-home', 'screen-checklist', 'screen-damage', 'screen-schedule']
+    const STORAGE_KEY = 'ih35_driver_profile_v1'
+    const LEAVE_COLORS = {
+      'Vacacion': { bg:'#1e3a5f', text:'#93c5fd', label:'Vac' },
+      'Sick': { bg:'#431407', text:'#fed7aa', label:'Sick' },
+      'Personal': { bg:'#422006', text:'#fde68a', label:'Per' },
+      'Sin Aviso': { bg:'#450a0a', text:'#fca5a5', label:'SA' },
+      'Bank Holiday': { bg:'#1f2937', text:'#9ca3af', label:'Hol' },
+      'WFH': { bg:'#052e16', text:'#86efac', label:'WFH' }
+    }
+
+    let auth = { unit: '', driver: '', pin: '' }
+    let checklistState = []
+    let damagePhotos = []
+
+    function units() { return Array.from({ length: 58 }, (_, i) => `T${120 + i}`) }
+    function setSyncNow() { document.getElementById('homeSync').textContent = new Date().toLocaleString() }
+    function showScreen(id) {
+      SCREEN_IDS.forEach((s) => document.getElementById(s).classList.toggle('active', s === id))
+      if (id === 'screen-checklist') loadChecklist()
+      if (id === 'screen-schedule') loadSchedule()
+      if (id === 'screen-damage') { document.getElementById('damageUnit').value = auth.unit || '' }
+      if (id === 'screen-home') setSyncNow()
+    }
+
+    async function jsonFetch(url, opts) {
+      const r = await fetch(url, opts)
+      const d = await r.json().catch(() => ({}))
+      return d
+    }
+
+    function initLogin() {
+      const unitSel = document.getElementById('loginUnit')
+      unitSel.innerHTML = units().map((u) => `<option value="${u}">${u}</option>`).join('')
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try { auth = JSON.parse(saved) || auth } catch (_) {}
+      }
+      if (auth.unit) unitSel.value = auth.unit
+      if (auth.driver) document.getElementById('loginDriver').value = auth.driver
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        const unit = unitSel.value
+        const driver = String(document.getElementById('loginDriver').value || '').trim()
+        const pin = String(document.getElementById('loginPin').value || '').trim()
+        if (!unit || !driver || !/^\d{4}$/.test(pin)) {
+          document.getElementById('loginMsg').textContent = 'Enter unit, driver name, and a 4-digit PIN.'
+          document.getElementById('loginMsg').className = 'err'
+          return
+        }
+        auth = { unit, driver, pin }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(auth))
+        document.getElementById('homeDriverName').textContent = auth.driver
+        document.getElementById('homeUnitBadge').textContent = auth.unit
+        document.getElementById('checklistTitle').textContent = `${auth.unit} Equipment`
+        document.getElementById('damageUnit').value = auth.unit
+        document.getElementById('loginMsg').textContent = ''
+        showScreen('screen-home')
+      })
+      if (auth.unit && auth.driver) {
+        document.getElementById('homeDriverName').textContent = auth.driver
+        document.getElementById('homeUnitBadge').textContent = auth.unit
+        document.getElementById('checklistTitle').textContent = `${auth.unit} Equipment`
+        document.getElementById('damageUnit').value = auth.unit
+        showScreen('screen-home')
+      }
+    }
+
+    function checklistItemTemplate(row, idx) {
+      const status = row.status || 'confirmed'
+      return `<div class="item-row" data-idx="${idx}">
+        <div class="row between" style="align-items:flex-start">
+          <label style="margin:0;display:flex;gap:8px;align-items:center;color:#e2e8f0">
+            <input type="checkbox" ${status === 'confirmed' ? 'checked' : ''} onchange="window.driverSetChecklistStatus(${idx}, this.checked ? 'confirmed' : 'missing')" style="width:18px;height:18px" />
+            <span>${row.item_name}</span>
+          </label>
+          <span class="muted">x${row.quantity || 1}</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <select onchange="window.driverSetChecklistStatus(${idx}, this.value)">
+            <option value="confirmed" ${status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+            <option value="missing" ${status === 'missing' ? 'selected' : ''}>Missing</option>
+            <option value="damaged" ${status === 'damaged' ? 'selected' : ''}>Damaged</option>
+          </select>
+          <input type="file" accept="image/*" capture="environment" onchange="window.driverAttachChecklistPhoto(${idx}, this)" style="max-width:160px" />
+        </div>
+      </div>`
+    }
+
+    window.driverSetChecklistStatus = (idx, status) => {
+      checklistState[idx].status = status
+      const host = document.getElementById('checklistItems')
+      host.innerHTML = checklistState.map(checklistItemTemplate).join('')
+    }
+
+    window.driverAttachChecklistPhoto = (idx, input) => {
+      const f = input.files && input.files[0]
+      if (!f) return
+      const rd = new FileReader()
+      rd.onload = () => { checklistState[idx].photo_base64 = String(rd.result || '') }
+      rd.readAsDataURL(f)
+    }
+
+    async function loadChecklist() {
+      const host = document.getElementById('checklistItems')
+      host.textContent = 'Loading checklist…'
+      const d = await jsonFetch(`/api/equipment/checklist?unit=${encodeURIComponent(auth.unit || '')}`)
+      const items = Array.isArray(d.items) ? d.items : []
+      checklistState = items.map((i) => ({ ...i, status: 'confirmed', photo_base64: '' }))
+      if (!checklistState.length) {
+        host.innerHTML = '<p class="muted">No checklist items found for this unit.</p>'
+        return
+      }
+      host.innerHTML = checklistState.map(checklistItemTemplate).join('')
+    }
+
+    async function submitChecklist() {
+      const btn = document.getElementById('submitChecklistBtn')
+      const msg = document.getElementById('checklistMsg')
+      btn.disabled = true
+      msg.className = 'muted'
+      msg.textContent = 'Submitting…'
+      const body = {
+        unit: auth.unit,
+        driver: auth.driver,
+        items: checklistState.map((i) => ({ item_id: i.id, status: i.status || 'confirmed', photo_base64: i.photo_base64 || '' })),
+        timestamp: new Date().toISOString()
+      }
+      const d = await jsonFetch('/api/equipment/checklist/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      btn.disabled = false
+      if (d && d.ok) {
+        msg.className = 'ok'
+        msg.textContent = `Checklist submitted. Confirmation #${d.report_id || ''}`
+      } else {
+        msg.className = 'err'
+        msg.textContent = d.error || 'Could not submit checklist.'
+      }
+    }
+
+    function setGeoField() {
+      const el = document.getElementById('damageLocation')
+      if (!navigator.geolocation) { el.value = 'GPS unavailable'; return }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { el.value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}` },
+        () => { el.value = 'Location not available' },
+        { enableHighAccuracy: true, timeout: 8000 }
+      )
+    }
+
+    function bindDamagePhotos() {
+      const inp = document.getElementById('damagePhotosInput')
+      inp.addEventListener('change', () => {
+        const files = Array.from(inp.files || []).slice(0, 4)
+        damagePhotos = []
+        const thumbs = document.getElementById('damageThumbs')
+        thumbs.innerHTML = ''
+        files.forEach((f) => {
+          const rd = new FileReader()
+          rd.onload = () => {
+            const b64 = String(rd.result || '')
+            damagePhotos.push(b64)
+            const img = document.createElement('img')
+            img.className = 'thumb'
+            img.src = b64
+            thumbs.appendChild(img)
+          }
+          rd.readAsDataURL(f)
+        })
+      })
+    }
+
+    async function submitDamageReport() {
+      const msg = document.getElementById('damageMsg')
+      const body = {
+        unit: auth.unit,
+        driver: auth.driver,
+        damage_type: document.getElementById('damageType').value,
+        description: String(document.getElementById('damageDesc').value || '').trim(),
+        photos: damagePhotos,
+        location: { text: document.getElementById('damageLocation').value },
+        timestamp: new Date().toISOString()
+      }
+      msg.className = 'muted'
+      msg.textContent = 'Submitting…'
+      const d = await jsonFetch('/api/damage/report', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      if (d && d.ok) {
+        msg.className = 'ok'
+        msg.textContent = `Report submitted: ${d.report_id}`
+      } else {
+        msg.className = 'err'
+        msg.textContent = d.error || 'Could not submit report.'
+      }
+    }
+
+    async function loadSchedule() {
+      const cal = document.getElementById('scheduleCalendar')
+      const hosEl = document.getElementById('scheduleHos')
+      const dt = new Date()
+      const y = dt.getFullYear()
+      const m = dt.getMonth()
+      const month = `${y}-${String(m + 1).padStart(2,'0')}`
+      document.getElementById('scheduleMonth').textContent = new Intl.DateTimeFormat('en-US', { month:'long', year:'numeric' }).format(dt)
+
+      const [sched, hos] = await Promise.all([
+        jsonFetch(`/api/drivers/schedule?month=${encodeURIComponent(month)}`),
+        jsonFetch('/api/drivers/hos-status')
+      ])
+      const rows = (Array.isArray(sched.rows) ? sched.rows : []).filter((r) => String(r.unit_number || '') === String(auth.unit || ''))
+      const map = {}
+      rows.forEach((r) => { map[String(r.date).slice(0,10)] = String(r.leave_type || '') })
+      const days = new Date(y, m + 1, 0).getDate()
+      let html = '<table><thead><tr>' + Array.from({length:days}, (_,i)=>`<th>${i+1}</th>`).join('') + '</tr></thead><tbody><tr>'
+      for (let d=1; d<=days; d++) {
+        const iso = `${month}-${String(d).padStart(2,'0')}`
+        const type = map[iso] || ''
+        const c = LEAVE_COLORS[type]
+        html += `<td>${c ? `<span style="display:inline-block;padding:2px 6px;border-radius:8px;background:${c.bg};color:${c.text};font-size:11px">${c.label}</span>` : '—'}</td>`
+      }
+      html += '</tr></tbody></table>'
+      cal.innerHTML = html
+
+      const hosRows = Array.isArray(hos.rows) ? hos.rows : []
+      const matched = hosRows.find((r) => String(r.driverName || r.driver || '').toLowerCase() === String(auth.driver || '').toLowerCase() || String(r.unit_number || r.vehicleName || '').toLowerCase() === String(auth.unit || '').toLowerCase())
+      hosEl.textContent = matched ? `HOS status: ${String(matched.dutyStatus || 'unknown')}` : 'HOS status: not available'
+    }
+
+    function bindNav() {
+      document.querySelectorAll('[data-nav]').forEach((btn) => {
+        btn.addEventListener('click', () => showScreen(btn.getAttribute('data-nav')))
+      })
+      document.getElementById('inspectionPlaceholder').addEventListener('click', () => alert('Pre-trip inspection screen coming soon.'))
+      document.getElementById('submitChecklistBtn').addEventListener('click', submitChecklist)
+      document.getElementById('submitDamageBtn').addEventListener('click', submitDamageReport)
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/driver/sw.js').catch(() => {})
+      })
+    }
+
+    initLogin()
+    bindNav()
+    bindDamagePhotos()
+    setGeoField()
+  </script>
+</body>
+</html>

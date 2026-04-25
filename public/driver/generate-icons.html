@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>IH35 icon generator</title></head>
+<body style="font-family:system-ui;background:#0f1219;color:#e2e8f0;padding:20px">
+<h2>Driver icon generator</h2>
+<p>Open this page and click buttons to download icon PNGs from <code>icon.svg</code>.</p>
+<button onclick="gen(192)">Generate 192x192</button>
+<button onclick="gen(512)">Generate 512x512</button>
+<canvas id="c" style="display:none"></canvas>
+<script>
+async function gen(size){
+  const svg=await fetch('/driver/icon.svg').then(r=>r.text())
+  const blob=new Blob([svg],{type:'image/svg+xml'})
+  const url=URL.createObjectURL(blob)
+  const img=new Image()
+  img.onload=()=>{
+    const c=document.getElementById('c'); c.width=size; c.height=size
+    const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,size,size)
+    c.toBlob((b)=>{
+      const a=document.createElement('a')
+      a.href=URL.createObjectURL(b); a.download='icon-'+size+'.png'; a.click()
+    },'image/png')
+    URL.revokeObjectURL(url)
+  }
+  img.src=url
+}
+</script></body></html>
