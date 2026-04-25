@@ -37,6 +37,11 @@
 .erp-icon-nav__btn, .erp-icon-nav__link {
   width: 104px !important;
 }
+
+body.erp-maintenance.erp-modal-lock {
+  overflow: hidden !important;
+  overscroll-behavior: contain;
+}
 </style>
 </head>
 <body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
@@ -292,7 +297,7 @@
               <button type="button" class="btn btn-erp-mb-blue" id="mbPostAllBtn" onclick="mbPostAllCreated()">Post all to QuickBooks</button>
               <button type="button" class="btn secondary" onclick="mbViewSeriesInHistory()">View in expense history</button>
               <button type="button" class="btn secondary" onclick="mbViewSeriesInBillHistory()">View in bill history</button>
-              <button type="button" class="btn secondary" data-erp-mb-close="1">Close</button>
+              <button type="button" class="btn secondary" data-erp-mb-close="1">Cancel</button>
             </div>
           </div>
         </div>
@@ -375,7 +380,7 @@
           <button type="button" class="btn btn--small secondary" id="maintWoFsBtn" onclick="maintWoToggleFullscreen()" title="Fill viewport (Esc to exit full screen)" aria-pressed="false">Full screen</button>
           <button type="button" class="erp-modal-expand-btn" data-erp-modal-expand-btn title="Fill window (layout)" aria-label="Expand to full window" aria-pressed="false">⛶</button>
         </div>
-        <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
+        <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Cancel</button>
       </div>
       <div id="maintWorkOrderModalBody" class="maint-workorder-fullmodal__body"></div>
     </div>
@@ -413,7 +418,10 @@
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintFleetTableModalTitle" onclick="event.stopPropagation()" style="max-width:min(1120px,95vw)">
       <header class="erp-qb-dialog__head maint-modal-head-draggable" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <h3 id="maintFleetTableModalTitle" class="erp-qb-dialog__title" style="margin:0">Fleet table · Active trucks</h3>
-        <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button type="button" class="btn erp-qb-dialog__btn-secondary" onclick="closeMaintFleetTableModal()">Cancel</button>
+          <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
+        </div>
       </header>
       <div class="erp-qb-dialog__body">
         <div class="mini-note" id="maintFleetTableMeta" style="margin:0 0 10px">Loading active trucks…</div>
@@ -6652,6 +6660,7 @@
       modal.setAttribute('aria-hidden', 'false');
       window.__maintWoModalOpen = true;
       document.body.classList.add('maint-wo-modal-open');
+      erpSyncBodyModalLock();
       requestAnimationFrame(() => {
         const mb = document.getElementById('maintWorkOrderModalBody');
         if (mb) mb.scrollTop = 0;
@@ -6687,6 +6696,7 @@
       dockMaintWorkOrderFormToRecordPanel();
       window.__maintWoModalOpen = false;
       document.body.classList.remove('maint-wo-modal-open');
+      erpSyncBodyModalLock();
     }
 
     function maintWoToggleMaximize() {
@@ -6771,6 +6781,25 @@
       }
       shell.classList.remove('erp-qb-dialog--viewport-max', 'erp-qb-dialog--viewport-fs');
     }
+
+    function erpAnyModalOpen() {
+      const ded = document.getElementById('erpDedicatedFormModal');
+      const mb = document.getElementById('erpMultiBillsModal');
+      const dr = document.getElementById('erpDrawer');
+      return !!(
+        document.querySelector('.maint-modal-bg.on') ||
+        (ded && !ded.classList.contains('hidden')) ||
+        (mb && !mb.classList.contains('hidden')) ||
+        (dr && dr.classList.contains('is-open'))
+      );
+    }
+
+    function erpSyncBodyModalLock() {
+      const body = document.body;
+      if (!body) return;
+      body.classList.toggle('erp-modal-lock', erpAnyModalOpen());
+    }
+
 
     function renderMaintLocationBoard() {
       const host = document.getElementById('maintLocationBoardHost');
@@ -8630,6 +8659,7 @@
       }
       m.classList.remove('hidden');
       m.setAttribute('aria-hidden', 'false');
+      erpSyncBodyModalLock();
       if (b) b.setAttribute('aria-expanded', 'true');
       requestAnimationFrame(() => {
         erpPositionNewMenu();
@@ -9575,6 +9605,7 @@
       modal.setAttribute('aria-hidden', 'true');
       modal.removeAttribute('data-erp-ap-preset');
       document.body.classList.remove('erp-dedicated-modal-open');
+      erpSyncBodyModalLock();
       erpDedicatedModalBindEscape(false);
       const mt = document.getElementById('erpDedModalTitle');
       if (mt) mt.textContent = '';
@@ -9999,6 +10030,7 @@
       if (!modal) return;
       modal.classList.remove('on');
       modal.setAttribute('aria-hidden', 'true');
+      erpSyncBodyModalLock();
     }
 
     function schedulePartsLookupFetch() {
@@ -11647,6 +11679,7 @@
       d.classList.add('is-open');
       b.classList.add('is-open');
       d.setAttribute('aria-hidden', 'false');
+      erpSyncBodyModalLock();
       setTimeout(() => {
         const el = focusSelector ? body.querySelector(focusSelector) : null;
         el?.focus?.();
@@ -11659,6 +11692,7 @@
       if (d) d.classList.remove('is-open');
       if (b) b.classList.remove('is-open');
       if (d) d.setAttribute('aria-hidden', 'true');
+      erpSyncBodyModalLock();
       try { __drawerReturnFocusEl?.focus?.(); } catch (_) {}
       __drawerReturnFocusEl = null;
     }
@@ -12530,9 +12564,32 @@
     // ---- QuickBooks-style pickers (dropdown with + Add new) ----
     let __qbPickerBooted = false;
     let __qbPickerMenu = null;
-    let __qbPickerActive = null; // { input, rows, onPick, onAddNew, activeIdx, query }
+    let __qbPickerActive = null; // { input, rows, onPick, onAddNew, activeIdx, query, host }
 
-    function qbPickerEnsureMenu() {
+    function qbPickerResolveHost(input) {
+      const inp = input || (__qbPickerActive && __qbPickerActive.input);
+      if (!inp || typeof inp.closest !== 'function') return document.body;
+      const host =
+        inp.closest('.erp-dedicated-form-modal__body') ||
+        inp.closest('.erp-mb-modal__dialog') ||
+        inp.closest('.maint-modal.erp-qb-dialog') ||
+        inp.closest('.maint-workorder-fullmodal__shell') ||
+        inp.closest('.erp-drawer__body') ||
+        inp.closest('.erp-drawer') ||
+        document.body;
+      try {
+        if (host && window.getComputedStyle(host).position === 'static' && host !== document.body) {
+          host.style.position = 'relative';
+        }
+      } catch (_) {}
+      return host;
+    }
+
+    function qbPickerEnsureMenu(targetHost) {
+      const host = targetHost || qbPickerResolveHost();
+      if (__qbPickerMenu && __qbPickerMenu.parentElement !== host) {
+        host.appendChild(__qbPickerMenu);
+      }
       if (__qbPickerMenu) return __qbPickerMenu;
       const el = document.createElement('div');
       el.id = 'qbPickerMenuHost';
@@ -12540,7 +12597,7 @@
       el.setAttribute('role', 'listbox');
       el.setAttribute('aria-label', 'Suggestions');
       el.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(el);
+      host.appendChild(el);
       __qbPickerMenu = el;
 
       document.addEventListener('mousedown', e => {
@@ -12588,16 +12645,24 @@
 
     function qbPickerPosition() {
       if (!__qbPickerActive || !__qbPickerMenu) return;
+      const host = __qbPickerActive.host || qbPickerResolveHost(__qbPickerActive.input);
       const r = __qbPickerActive.input.getBoundingClientRect();
+      const hr = host.getBoundingClientRect();
+      const hostScrollLeft = host === document.body ? window.scrollX : host.scrollLeft;
+      const hostScrollTop = host === document.body ? window.scrollY : host.scrollTop;
       const minW = Math.max(260, Math.round(r.width));
       const maxW = Math.min(620, Math.max(minW, Math.round(r.width * 1.35)));
-      const left = Math.max(10, Math.min(window.scrollX + r.left, window.scrollX + window.innerWidth - maxW - 10));
-      const belowTop = window.scrollY + r.bottom + 6;
-      const aboveTop = window.scrollY + r.top - 6;
-      const menuH = Math.min(200, __qbPickerMenu.scrollHeight || 200);
-      const spaceBelow = window.innerHeight - r.bottom;
-      const shouldFlip = spaceBelow < Math.min(220, menuH) && r.top > 180;
-      const top = shouldFlip ? Math.max(10 + window.scrollY, aboveTop - menuH) : belowTop;
+      const menuH = Math.min(220, __qbPickerMenu.scrollHeight || 220);
+      const spaceBelow = Math.min(window.innerHeight, hr.bottom) - r.bottom;
+      const spaceAbove = r.top - Math.max(0, hr.top);
+      const shouldFlip = spaceBelow < Math.min(220, menuH) && spaceAbove > 150;
+
+      const rawLeft = r.left - hr.left + hostScrollLeft;
+      const hostClientWidth = host === document.body ? window.innerWidth : host.clientWidth;
+      const left = Math.max(8, Math.min(rawLeft, hostScrollLeft + hostClientWidth - maxW - 8));
+      const top = shouldFlip
+        ? Math.max(hostScrollTop + 8, r.top - hr.top + hostScrollTop - menuH - 6)
+        : r.bottom - hr.top + hostScrollTop + 6;
 
       __qbPickerMenu.style.left = left + 'px';
       __qbPickerMenu.style.top = top + 'px';
@@ -12607,7 +12672,7 @@
 
     function qbPickerRender() {
       if (!__qbPickerActive) return;
-      const menu = qbPickerEnsureMenu();
+      const menu = qbPickerEnsureMenu(__qbPickerActive && __qbPickerActive.host);
       const q = String(__qbPickerActive.query || '').toLowerCase().trim();
       const rows = (__qbPickerActive.rows || [])
         .filter(r => {
@@ -12707,14 +12772,17 @@
     }
 
     function qbPickerOpen(input, opts) {
+      const host = qbPickerResolveHost(input);
       __qbPickerActive = {
         input,
         rows: typeof opts.rows === 'function' ? opts.rows() : (opts.rows || []),
         onPick: opts.onPick,
         onAddNew: opts.onAddNew || null,
         activeIdx: 0,
-        query: input.value || ''
+        query: input.value || '',
+        host
       };
+      qbPickerEnsureMenu(host);
       qbPickerRender();
     }
 
@@ -15902,11 +15970,13 @@
         titleEl.classList.remove('hidden');
       }
       document.getElementById('maintCatModal').classList.add('on');
+      erpSyncBodyModalLock();
     }
 
     function closeMaintCatModal() {
       erpResetQbDialogViewport('maintCatModal');
       document.getElementById('maintCatModal').classList.remove('on');
+      erpSyncBodyModalLock();
       pendingMaintFlow = null;
       const titleEl = document.getElementById('maintModalFlowTitle');
       if (titleEl) {
@@ -16105,6 +16175,7 @@
         if (r.status === 400 && data.requiresDelayReason) {
           pendingShopPatch = { id, body };
           document.getElementById('shopDelayModal').classList.add('on');
+          erpSyncBodyModalLock();
           return false;
         }
         erpNotify(data.error || 'Update failed', 'error');
@@ -16193,17 +16264,20 @@
       document.getElementById('sqEstH').value = '';
       document.getElementById('sqVendor').value = '';
       document.getElementById('shopQueueAddModal').classList.add('on');
+      erpSyncBodyModalLock();
       setTimeout(() => document.getElementById('sqUnit')?.focus(), 50);
     }
 
     function closeShopQueueModal() {
       erpResetQbDialogViewport('shopQueueAddModal');
       document.getElementById('shopQueueAddModal').classList.remove('on');
+      erpSyncBodyModalLock();
     }
 
     function closeShopDelayModal() {
       erpResetQbDialogViewport('shopDelayModal');
       document.getElementById('shopDelayModal').classList.remove('on');
+      erpSyncBodyModalLock();
       pendingShopPatch = null;
       renderShopQueues();
     }
@@ -16216,6 +16290,7 @@
       pendingShopPatch = null;
       erpResetQbDialogViewport('shopDelayModal');
       document.getElementById('shopDelayModal').classList.remove('on');
+      erpSyncBodyModalLock();
       document.getElementById('sqDelayNote').value = '';
       await patchShopQueueEntry(p.id, { ...p.body, delayReasonCode: code, delayReasonNote: note });
     }
@@ -19650,6 +19725,7 @@
       if (!m) return;
       m.classList.add('hidden');
       m.setAttribute('aria-hidden', 'true');
+      erpSyncBodyModalLock();
       document.getElementById('mbConfirmLayer')?.classList.add('hidden');
       document.getElementById('mbSuccessLayer')?.classList.add('hidden');
       document.getElementById('mbMainFlow')?.classList.remove('hidden');
@@ -19700,6 +19776,7 @@
       mbRecomputePreview();
       m.classList.remove('hidden');
       m.setAttribute('aria-hidden', 'false');
+      erpSyncBodyModalLock();
       const mbDlg = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
       if (mbDlg && typeof erpRestoreModalRect === 'function') {
         erpRestoreModalRect(mbDlg, 'multi_bills', { minW: 520, minH: 400 });
