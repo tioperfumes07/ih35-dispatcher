@@ -1268,14 +1268,14 @@ body.erp-maintenance .erp-main-body textarea:focus {
 }
 
 /* --- Phone: icon-only rail; desktop/tablet keep full labels + wide rail --- */
-@media (max-width: 720px) {
+@media (max-width: 480px) {
   body.erp-maintenance .erp-icon-nav__lbl {
     display: none;
   }
 
   body.erp-maintenance .erp-icon-nav {
     flex: 0 0 52px;
-    width: 90px;
+    width: 52px;
     min-width: 52px;
     max-width: 52px;
     padding-top: 6px;
