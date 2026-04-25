@@ -154,7 +154,7 @@
           <h2 class="title" id="checklistTitle">T120 Equipment</h2>
           <p class="subtitle" style="margin:0">Confirm your required items</p>
         </div>
-        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
       </div>
       <div class="card" id="checklistItems">Loading checklist…</div>
       <button id="submitChecklistBtn" type="button">Submit checklist</button>
@@ -164,7 +164,7 @@
     <section id="screen-damage" class="screen">
       <div class="row between card">
         <h2 class="title" style="margin:0">Report Damage</h2>
-        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
       </div>
       <div class="card">
         <label>Unit number</label>
@@ -195,7 +195,7 @@
           <h2 class="title" style="margin:0">My Schedule</h2>
           <p class="subtitle" style="margin:0" id="scheduleMonth">Current month</p>
         </div>
-        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
       </div>
       <div class="card calendar" id="scheduleCalendar">Loading schedule…</div>
       <div class="card hos" id="scheduleHos">HOS status: --</div>
@@ -459,10 +459,10 @@
   </script>
 
 
-    <section id="screen-fuel" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0" class="screen" style="display:none; padding: 20px; max-width:480px; margin:0 auto;">
+    <section id="screen-fuel" class="screen" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0">
       <div class="row between card">
         <h2 class="title" style="margin:0">Fuel Expense</h2>
-        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
       </div>
       <div class="card">
         <label>Unit</label>
@@ -492,7 +492,7 @@
     <section id="screen-leave" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0" class="screen">
       <div class="row between card">
         <h2 class="title" style="margin:0">Request Time Off</h2>
-        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
       </div>
       <div class="card">
         <label>Start date</label>
@@ -522,7 +522,7 @@
     <section id="screen-pretrip" style="display:none;padding:20px;max-width:480px;margin:0 auto;min-height:100vh;background:#0f1219;color:#e2e8f0" class="screen">
       <div class="row between card">
         <h2 class="title" style="margin:0">Pre-trip Inspection</h2>
-        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+        <button class="small secondary" type="button" onclick="showScreen('screen-home')" style="width:auto;min-width:90px">Back</button>
       </div>
       <div class="card">
         <label>Odometer reading</label>
