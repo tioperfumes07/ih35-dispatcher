@@ -14,6 +14,7 @@ export interface BulkActionBarProps {
   onClearSelection: () => void
   actions: BulkActionBarAction[]
   onStatusChange?: (status: string) => void
+  onTypeChange?: (type: string) => void
 }
 
 const baseButtonStyle: CSSProperties = {
@@ -34,6 +35,16 @@ const STATUS_BUTTON_LABELS = new Set([
   'accident',
 ])
 
+const dropdownStyle: CSSProperties = {
+  padding: '6px 10px',
+  background: '#1a1f2e',
+  border: '1px solid rgba(255,255,255,0.2)',
+  borderRadius: '6px',
+  color: '#e2e8f0',
+  fontSize: '13px',
+  cursor: 'pointer',
+}
+
 function actionStyle(variant: BulkActionBarAction['variant']): CSSProperties {
   if (variant === 'danger') return { ...baseButtonStyle, background: '#dc2626' }
   if (variant === 'warning') return { ...baseButtonStyle, background: '#d97706' }
@@ -47,6 +58,7 @@ export function BulkActionBar({
   onClearSelection,
   actions,
   onStatusChange,
+  onTypeChange,
 }: BulkActionBarProps) {
   if (selectedCount <= 0) return null
 
@@ -87,15 +99,7 @@ export function BulkActionBar({
             }
             e.target.selectedIndex = 0
           }}
-          style={{
-            padding: '6px 10px',
-            background: '#1a1f2e',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '6px',
-            color: '#e2e8f0',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
+          style={dropdownStyle}
         >
           <option value="">Change status...</option>
           <option value="Active">Active</option>
@@ -104,6 +108,32 @@ export function BulkActionBar({
           <option value="In Shop">In Shop</option>
           <option value="Accident">Accident</option>
           <option value="Sold">Sold</option>
+        </select>
+
+        <select
+          defaultValue=""
+          onChange={(e) => {
+            const type = e.target.value
+            if (!type) return
+            if (window.confirm('Set ' + selectedCount + ' selected unit(s) type to "' + type + '"?')) {
+              onTypeChange && onTypeChange(type)
+            }
+            e.target.selectedIndex = 0
+          }}
+          style={dropdownStyle}
+        >
+          <option value="">Change type...</option>
+          <option value="Truck">Truck</option>
+          <option value="Trailer">Trailer</option>
+          <option value="Flatbed">Flatbed</option>
+          <option value="Reefer">Reefer</option>
+          <option value="Dry Van">Dry Van</option>
+          <option value="Step Deck">Step Deck</option>
+          <option value="Lowboy">Lowboy</option>
+          <option value="Tanker">Tanker</option>
+          <option value="Van">Van</option>
+          <option value="Company Vehicle">Company Vehicle</option>
+          <option value="Other">Other</option>
         </select>
 
         {renderedActions.map((action) => (

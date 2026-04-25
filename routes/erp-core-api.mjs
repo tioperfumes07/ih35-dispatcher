@@ -1145,13 +1145,29 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
       const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => String(v)).filter(Boolean) : [];
       const statusRaw = String(req.body?.status || '').trim();
+      const assetTypeRaw = String(req.body?.asset_type || '').trim();
       if (!ids.length) return res.status(400).json({ ok: false, error: 'ids required' });
+      if (!statusRaw && !assetTypeRaw) {
+        return res.status(400).json({ ok: false, error: 'status or asset_type required' });
+      }
+
       const valid = ['Active', 'Inactive', 'Out of Service', 'Sold', 'In Shop', 'Accident'];
-      const normalized = valid.find(s => s.toLowerCase() === statusRaw.toLowerCase()) || statusRaw;
-      const { rowCount } = await dbQuery(
-        'UPDATE fleet_assets SET status=$2, updated_at=now() WHERE unit_number = ANY($1::text[])',
-        [ids, normalized]
-      );
+      const updates = [];
+      const params = [ids];
+
+      if (statusRaw) {
+        const normalized = valid.find(s => s.toLowerCase() === statusRaw.toLowerCase()) || statusRaw;
+        updates.push('status=$' + String(params.length + 1));
+        params.push(normalized);
+      }
+
+      if (assetTypeRaw) {
+        updates.push('asset_type=$' + String(params.length + 1));
+        params.push(assetTypeRaw);
+      }
+
+      const sql = 'UPDATE fleet_assets SET ' + updates.join(', ') + ', updated_at=now() WHERE unit_number = ANY($1::text[])';
+      const { rowCount } = await dbQuery(sql, params);
       return res.json({ ok: true, updated: Number(rowCount || 0) });
     } catch (e) {
       logError('PATCH /api/fleet/assets/bulk', e);

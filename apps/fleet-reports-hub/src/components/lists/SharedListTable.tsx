@@ -47,6 +47,7 @@ type Props<T extends Record<string, unknown>> = {
   toolbarExtra?: ReactNode
   bulkActions?: SharedListBulkAction<T>[]
   onBulkStatusChange?: (status: string, rows: T[]) => void | Promise<void>
+  onBulkTypeChange?: (type: string, rows: T[]) => void | Promise<void>
 }
 
 const PAGE_OPTS = [10, 25, 50] as const
@@ -93,6 +94,7 @@ export function SharedListTable<T extends Record<string, unknown>>({
   toolbarExtra,
   bulkActions = [],
   onBulkStatusChange,
+  onBulkTypeChange,
 }: Props<T>) {
   const uid = useId()
   const [q, setQ] = useState('')
@@ -401,6 +403,10 @@ export function SharedListTable<T extends Record<string, unknown>>({
         onStatusChange={(status) => {
           if (!onBulkStatusChange) return
           void onBulkStatusChange(status, selectedRows)
+        }}
+        onTypeChange={(type) => {
+          if (!onBulkTypeChange) return
+          void onBulkTypeChange(type, selectedRows)
         }}
       />
 

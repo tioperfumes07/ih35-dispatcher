@@ -48,6 +48,9 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'permanently_removed', label: 'Permanently Removed' },
 ]
 
+const STATUS_FILTER_TABS = ['All', 'Active', 'Inactive', 'Out of Service', 'In Shop', 'Accident', 'Sold'] as const
+const TYPE_FILTER_TABS = ['All Types', 'Truck', 'Trailer', 'Flatbed', 'Reefer', 'Dry Van', 'Step Deck', 'Van', 'Company Vehicle'] as const
+
 function normalizeStatus(status: string | null | undefined): string {
   const s = String(status || '').trim().toLowerCase()
   if (s === 'maintenance') return 'in_shop'
@@ -58,6 +61,25 @@ function normalizeStatus(status: string | null | undefined): string {
 
 function statusLabel(value: string): string {
   return STATUS_OPTIONS.find((o) => o.value === value)?.label || value
+}
+
+function normalizeStatusForFilter(value: string | null | undefined): string {
+  const raw = String(value || '').trim().toLowerCase()
+  if (raw === 'active') return 'Active'
+  if (raw === 'inactive') return 'Inactive'
+  if (raw === 'out_of_service' || raw === 'out of service') return 'Out of Service'
+  if (raw === 'in_shop' || raw === 'in shop' || raw === 'maintenance') return 'In Shop'
+  if (raw === 'accident' || raw === 'crashed_total_loss') return 'Accident'
+  if (raw === 'sold') return 'Sold'
+  return value ? String(value) : 'Active'
+}
+
+function matchesTypeFilter(assetType: string | null | undefined, typeFilter: typeof TYPE_FILTER_TABS[number]): boolean {
+  if (typeFilter === 'All Types') return true
+  const raw = String(assetType || '').trim().toLowerCase()
+  if (!raw) return false
+  if (typeFilter === 'Company Vehicle') return raw.includes('company vehicle')
+  return raw.includes(typeFilter.toLowerCase())
 }
 
 function loadMetaMap(): Record<string, LocalMeta> {
@@ -151,6 +173,8 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [draft, setDraft] = useState<Draft>(emptyDraft())
   const [metaMap, setMetaMap] = useState<Record<string, LocalMeta>>(() => loadMetaMap())
+  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTER_TABS)[number]>('All')
+  const [typeFilter, setTypeFilter] = useState<(typeof TYPE_FILTER_TABS)[number]>('All Types')
 
   const load = useCallback(async () => {
     setErr(null)
@@ -312,7 +336,15 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     [metaMap],
   )
 
-  const data: Row[] = rows.map((r) => ({ ...r }))
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      const statusOk = statusFilter === 'All' ? true : normalizeStatusForFilter(row.status) === statusFilter
+      const typeOk = matchesTypeFilter(row.asset_type, typeFilter)
+      return statusOk && typeOk
+    })
+  }, [rows, statusFilter, typeFilter])
+
+  const data: Row[] = filteredRows.map((r) => ({ ...r }))
 
   return (
     <div className="lists-db">
@@ -403,9 +435,54 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         </div>
       </ListItemEditModal>
 
+      <div style={{ display: 'grid', gap: 8, margin: '10px 0 12px' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="muted tiny" style={{ minWidth: 56 }}>Status</span>
+          {STATUS_FILTER_TABS.map((tab) => {
+            const active = statusFilter === tab
+            return (
+              <button
+                key={tab}
+                type="button"
+                className="btn sm"
+                onClick={() => setStatusFilter(tab)}
+                style={{
+                  background: active ? '#3b82f6' : 'transparent',
+                  color: active ? '#fff' : '#94a3b8',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                }}
+              >
+                {tab}
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="muted tiny" style={{ minWidth: 56 }}>Type</span>
+          {TYPE_FILTER_TABS.map((tab) => {
+            const active = typeFilter === tab
+            return (
+              <button
+                key={tab}
+                type="button"
+                className="btn sm"
+                onClick={() => setTypeFilter(tab)}
+                style={{
+                  background: active ? '#3b82f6' : 'transparent',
+                  color: active ? '#fff' : '#94a3b8',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                }}
+              >
+                {tab}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <SharedListTable<Row>
         title="Vehicles"
-        itemCount={rows.length}
+        itemCount={filteredRows.length}
         columns={cols}
         data={data}
         rowKey={(r) => String(r.id)}
@@ -432,6 +509,29 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
               return
             }
             setSamMsg(`${Number(data.updated || 0)} unit(s) set to ${status}.`)
+            await load()
+          } catch (e) {
+            setErr(String((e as Error).message || e))
+          }
+        }}
+        onBulkTypeChange={async (type, selectedRows) => {
+          const ids = selectedRows
+            .map((row) => String((row as AssetRow).unit_number || '').trim())
+            .filter(Boolean)
+          if (!ids.length) return
+          setErr(null)
+          try {
+            const resp = await fetch('/api/fleet/assets/bulk', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids, asset_type: type }),
+            })
+            const data = await resp.json().catch(() => ({ ok: false, error: 'Invalid server response' }))
+            if (!resp.ok || !data?.ok) {
+              setErr(String(data?.error || 'Bulk type update failed'))
+              return
+            }
+            setSamMsg(`${Number(data.updated || 0)} unit(s) type set to ${type}.`)
             await load()
           } catch (e) {
             setErr(String((e as Error).message || e))
