@@ -1140,6 +1140,53 @@ export function mountErpCoreApi(app, opts = {}) {
 
 
 
+  app.post('/api/fleet/assets/import', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const trailers = Array.isArray(req.body?.trailers) ? req.body.trailers : [];
+      let imported = 0;
+      let updated = 0;
+
+      for (const t of trailers) {
+        const unit = String(t?.unit_number || '').trim();
+        if (!unit) continue;
+        const { rows } = await dbQuery(
+          `INSERT INTO fleet_assets (unit_number, make, model, year, vin, asset_type, license_plate, status, notes, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
+           ON CONFLICT (unit_number) DO UPDATE SET
+             make=EXCLUDED.make,
+             model=EXCLUDED.model,
+             year=EXCLUDED.year,
+             vin=EXCLUDED.vin,
+             asset_type=EXCLUDED.asset_type,
+             license_plate=EXCLUDED.license_plate,
+             status=EXCLUDED.status,
+             notes=EXCLUDED.notes,
+             updated_at=now()
+           RETURNING (xmax = 0) AS inserted`,
+          [
+            unit,
+            String(t?.make || '').trim() || null,
+            String(t?.model || '').trim() || null,
+            Number.isFinite(Number(t?.year)) ? Number(t?.year) : null,
+            String(t?.vin || '').trim() || null,
+            String(t?.asset_type || 'Trailer').trim() || 'Trailer',
+            String(t?.license_plate || '').trim() || null,
+            String(t?.status || 'Active').trim() || 'Active',
+            String(t?.notes || '').trim() || null,
+          ]
+        );
+        if (rows?.[0]?.inserted) imported++;
+        else updated++;
+      }
+
+      return res.json({ ok: true, imported, updated });
+    } catch (e) {
+      logError('POST /api/fleet/assets/import', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.patch('/api/fleet/assets/bulk', async (req, res) => {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
