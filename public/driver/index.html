@@ -138,7 +138,9 @@
         <button class="tap-card" type="button" data-nav="screen-checklist">🔧 Equipment checklist</button>
         <button class="tap-card" type="button" data-nav="screen-damage">📷 Report damage</button>
         <button class="tap-card" type="button" data-nav="screen-schedule">📅 My schedule</button>
-        <button class="tap-card" type="button" id="inspectionPlaceholder">📋 Pre-trip inspection</button>
+        <button class="tap-card" type="button" data-nav="screen-fuel">⛽ Fuel expense</button>
+        <button class="tap-card" type="button" data-nav="screen-leave">📅 Request time off</button>
+        <button class="tap-card" type="button" id="inspectionPlaceholder" data-nav="screen-pretrip">📋 Pre-trip inspection</button>
       </div>
       <div class="status-bar">
         <div class="row" style="gap:8px"><span class="dot green"></span> <strong>Samsara connected</strong></div>
@@ -201,7 +203,7 @@
   </main>
 
   <script>
-    const SCREEN_IDS = ['screen-login', 'screen-home', 'screen-checklist', 'screen-damage', 'screen-schedule']
+    const SCREEN_IDS = ['screen-login', 'screen-home', 'screen-checklist', 'screen-damage', 'screen-schedule', 'screen-fuel', 'screen-leave', 'screen-pretrip']
     const STORAGE_KEY = 'ih35_driver_profile_v1'
     const LEAVE_COLORS = {
       'Vacacion': { bg:'#1e3a5f', text:'#93c5fd', label:'Vac' },
@@ -430,7 +432,7 @@
       document.querySelectorAll('[data-nav]').forEach((btn) => {
         btn.addEventListener('click', () => showScreen(btn.getAttribute('data-nav')))
       })
-      document.getElementById('inspectionPlaceholder').addEventListener('click', () => alert('Pre-trip inspection screen coming soon.'))
+      const inspectionPlaceholder = document.getElementById('inspectionPlaceholder'); if (inspectionPlaceholder && !inspectionPlaceholder.hasAttribute('data-nav')) inspectionPlaceholder.addEventListener('click', () => alert('Pre-trip inspection screen coming soon.'))
       document.getElementById('submitChecklistBtn').addEventListener('click', submitChecklist)
       document.getElementById('submitDamageBtn').addEventListener('click', submitDamageReport)
     }
@@ -446,5 +448,373 @@
     bindDamagePhotos()
     setGeoField()
   </script>
+
+
+    <section id="screen-fuel" class="screen">
+      <div class="row between card">
+        <h2 class="title" style="margin:0">Fuel Expense</h2>
+        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+      </div>
+      <div class="card">
+        <label>Unit</label>
+        <input id="fuelUnit" readonly />
+        <label>Driver</label>
+        <input id="fuelDriver" readonly />
+        <label>Gallons</label>
+        <input id="fuelGallons" type="number" step="0.1" min="0" placeholder="0.0" />
+        <label>Price per gallon</label>
+        <input id="fuelPrice" type="number" step="0.001" min="0" placeholder="0.000" />
+        <label>Total</label>
+        <input id="fuelTotal" readonly placeholder="0.00" />
+        <label>Station name</label>
+        <input id="fuelStation" type="text" placeholder="Station name" />
+        <label>Location</label>
+        <input id="fuelLocation" type="text" placeholder="Auto-filled from GPS" />
+        <label>Receipt photo</label>
+        <input id="fuelReceipt" type="file" accept="image/*" capture="environment" />
+        <div id="fuelReceiptThumbWrap" style="margin-top:8px;display:none">
+          <img id="fuelReceiptThumb" class="thumb" alt="Receipt preview" />
+        </div>
+      </div>
+      <button id="submitFuelBtn" type="button">Submit fuel expense</button>
+      <p id="fuelMsg" class="muted"></p>
+    </section>
+
+    <section id="screen-leave" class="screen">
+      <div class="row between card">
+        <h2 class="title" style="margin:0">Request Time Off</h2>
+        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+      </div>
+      <div class="card">
+        <label>Start date</label>
+        <input id="leaveStartDate" type="date" />
+        <label>End date</label>
+        <input id="leaveEndDate" type="date" />
+        <label>Days count</label>
+        <input id="leaveDays" readonly placeholder="0" />
+        <label>Type</label>
+        <select id="leaveType">
+          <option value="Vacation">Vacation</option>
+          <option value="Personal">Personal</option>
+          <option value="Sick">Sick</option>
+          <option value="Other">Other</option>
+        </select>
+        <label>Note (optional)</label>
+        <textarea id="leaveNotes" rows="3" placeholder="Optional note"></textarea>
+      </div>
+      <button id="submitLeaveBtn" type="button">Submit request</button>
+      <p id="leaveMsg" class="muted"></p>
+      <div class="card">
+        <h3 style="margin:0 0 10px">My requests</h3>
+        <div id="leaveRequestsList" class="muted">Loading…</div>
+      </div>
+    </section>
+
+    <section id="screen-pretrip" class="screen">
+      <div class="row between card">
+        <h2 class="title" style="margin:0">Pre-trip Inspection</h2>
+        <button class="small secondary" type="button" data-nav="screen-home" style="width:auto;min-width:90px">Back</button>
+      </div>
+      <div class="card">
+        <label>Odometer reading</label>
+        <input id="pretripOdometer" type="number" min="0" placeholder="Enter odometer" />
+        <div id="pretripChecklistRows"></div>
+        <label>Overall result</label>
+        <input id="pretripOverall" readonly placeholder="Pass" />
+        <label>Driver signature</label>
+        <input id="pretripSignature" type="text" placeholder="Type full name to sign" />
+      </div>
+      <button id="submitPretripBtn" type="button">Submit inspection</button>
+      <p id="pretripMsg" class="muted"></p>
+    </section>
+
+  <script>
+    const PRETRIP_ITEMS = [
+      'Headlights', 'Taillights', 'Turn signals', 'Brake lights',
+      'Parking brake', 'Brake lines', 'Spare tire', 'Oil level',
+      'Coolant', 'Fuel level', 'Mirrors', 'Seatbelt', 'Horn', 'Wipers',
+      'Registration', 'Insurance card', 'Medical card'
+    ]
+
+    let fuelReceiptBase64 = ''
+
+    function calcMoney(v) {
+      return (Number(v || 0) || 0).toFixed(2)
+    }
+
+    function updateFuelTotal() {
+      const gallons = Number(document.getElementById('fuelGallons').value || 0)
+      const price = Number(document.getElementById('fuelPrice').value || 0)
+      document.getElementById('fuelTotal').value = calcMoney(gallons * price)
+    }
+
+    function bindFuelReceiptThumb() {
+      const input = document.getElementById('fuelReceipt')
+      if (!input) return
+      input.addEventListener('change', () => {
+        const f = input.files && input.files[0]
+        if (!f) return
+        const rd = new FileReader()
+        rd.onload = () => {
+          fuelReceiptBase64 = String(rd.result || '')
+          const wrap = document.getElementById('fuelReceiptThumbWrap')
+          const img = document.getElementById('fuelReceiptThumb')
+          img.src = fuelReceiptBase64
+          wrap.style.display = 'block'
+        }
+        rd.readAsDataURL(f)
+      })
+    }
+
+    function autoFillFuelLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          document.getElementById('fuelLocation').value =
+            pos.coords.latitude.toFixed(4) + ',' + pos.coords.longitude.toFixed(4)
+        })
+      }
+    }
+
+    async function submitFuelExpense() {
+      const msg = document.getElementById('fuelMsg')
+      const body = {
+        unit: auth.unit,
+        driver: auth.driver,
+        gallons: Number(document.getElementById('fuelGallons').value || 0),
+        price_per_gallon: Number(document.getElementById('fuelPrice').value || 0),
+        total_amount: Number(document.getElementById('fuelTotal').value || 0),
+        station: String(document.getElementById('fuelStation').value || '').trim(),
+        location: String(document.getElementById('fuelLocation').value || '').trim(),
+        receipt_photo_base64: fuelReceiptBase64
+      }
+      msg.className = 'muted'
+      msg.textContent = 'Submitting…'
+      const d = await jsonFetch('/api/fuel/driver-expense', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      })
+      if (d && d.ok) {
+        msg.className = 'ok'
+        msg.textContent = 'Expense submitted'
+      } else {
+        msg.className = 'err'
+        msg.textContent = d.error || 'Could not submit expense.'
+      }
+    }
+
+    function calcLeaveDays() {
+      const start = document.getElementById('leaveStartDate').value
+      const end = document.getElementById('leaveEndDate').value
+      const out = document.getElementById('leaveDays')
+      if (!start || !end) { out.value = '0'; return }
+      const s = new Date(start + 'T00:00:00')
+      const e = new Date(end + 'T00:00:00')
+      const days = Math.floor((e - s) / 86400000) + 1
+      out.value = String(days > 0 ? days : 0)
+    }
+
+    async function loadLeaveRequests() {
+      const unit = encodeURIComponent(auth.unit || 'T120')
+      const host = document.getElementById('leaveRequestsList')
+      host.textContent = 'Loading…'
+      const d = await jsonFetch(`/api/drivers/leave-requests?unit=${unit}`)
+      const rows = Array.isArray(d.rows) ? d.rows : []
+      if (!rows.length) {
+        host.innerHTML = '<p class="muted" style="margin:0">No requests yet.</p>'
+        return
+      }
+      host.innerHTML = rows.map((r) => {
+        const start = String(r.start_date || '').slice(0,10)
+        const end = String(r.end_date || '').slice(0,10)
+        const type = r.leave_type || 'Other'
+        const status = r.status || 'Pending'
+        return `<div class="item-row">${start} to ${end} | ${type} | <strong>${status}</strong></div>`
+      }).join('')
+    }
+
+    async function submitLeaveRequest() {
+      const msg = document.getElementById('leaveMsg')
+      const body = {
+        unit: auth.unit,
+        driver: auth.driver,
+        start_date: document.getElementById('leaveStartDate').value,
+        end_date: document.getElementById('leaveEndDate').value,
+        leave_type: document.getElementById('leaveType').value,
+        notes: String(document.getElementById('leaveNotes').value || '').trim()
+      }
+      msg.className = 'muted'
+      msg.textContent = 'Submitting…'
+      const d = await jsonFetch('/api/drivers/leave-request', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      })
+      if (d && d.ok) {
+        msg.className = 'ok'
+        msg.textContent = 'Request submitted — pending approval'
+        await loadLeaveRequests()
+      } else {
+        msg.className = 'err'
+        msg.textContent = d.error || 'Could not submit request.'
+      }
+    }
+
+    function pretripRow(item, idx) {
+      if (item === 'Air pressure (PSI input)') {
+        return `<div class="item-row">
+          <div><strong>${item}</strong></div>
+          <input id="pretrip-psi-${idx}" type="number" min="0" placeholder="PSI" />
+          <label style="margin-top:8px">Notes</label>
+          <input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" />
+        </div>`
+      }
+      if (item === 'All tires condition (Good/Low/Flat)') {
+        return `<div class="item-row">
+          <div><strong>${item}</strong></div>
+          <select id="pretrip-tires-${idx}">
+            <option value="Good">Good</option>
+            <option value="Low">Low</option>
+            <option value="Flat">Flat</option>
+          </select>
+          <label style="margin-top:8px">Notes</label>
+          <input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" />
+        </div>`
+      }
+      return `<div class="item-row">
+        <div><strong>${item}</strong></div>
+        <div class="row" style="margin-top:8px;gap:14px;justify-content:flex-start">
+          <label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Pass" checked style="width:auto" /> Pass</label>
+          <label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Fail" style="width:auto" /> Fail</label>
+        </div>
+        <label style="margin-top:8px">Notes</label>
+        <input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" />
+      </div>`
+    }
+
+    function renderPretripChecklist() {
+      const items = [
+        'Headlights', 'Taillights', 'Turn signals', 'Brake lights',
+        'Air pressure (PSI input)', 'Parking brake', 'Brake lines',
+        'All tires condition (Good/Low/Flat)', 'Spare tire',
+        'Oil level', 'Coolant', 'Fuel level',
+        'Mirrors', 'Seatbelt', 'Horn', 'Wipers',
+        'Registration', 'Insurance card', 'Medical card'
+      ]
+      const host = document.getElementById('pretripChecklistRows')
+      host.innerHTML = items.map((it, idx) => pretripRow(it, idx)).join('')
+      host.dataset.items = JSON.stringify(items)
+      bindPretripOverallCalc()
+      calcPretripOverall()
+    }
+
+    function calcPretripOverall() {
+      const host = document.getElementById('pretripChecklistRows')
+      const items = JSON.parse(host.dataset.items || '[]')
+      let overall = 'Pass'
+      items.forEach((item, idx) => {
+        if (item === 'All tires condition (Good/Low/Flat)') {
+          const v = document.getElementById(`pretrip-tires-${idx}`)?.value || 'Good'
+          if (v !== 'Good') overall = 'Fail'
+          return
+        }
+        if (item === 'Air pressure (PSI input)') {
+          const psi = Number(document.getElementById(`pretrip-psi-${idx}`)?.value || 0)
+          if (psi <= 0) overall = 'Fail'
+          return
+        }
+        const selected = document.querySelector(`input[name="pretrip-${idx}"]:checked`)
+        if (!selected || selected.value !== 'Pass') overall = 'Fail'
+      })
+      document.getElementById('pretripOverall').value = overall
+    }
+
+    function bindPretripOverallCalc() {
+      const host = document.getElementById('pretripChecklistRows')
+      host.querySelectorAll('input, select').forEach((el) => {
+        el.addEventListener('change', calcPretripOverall)
+        el.addEventListener('input', calcPretripOverall)
+      })
+    }
+
+    async function submitPretripInspection() {
+      const host = document.getElementById('pretripChecklistRows')
+      const items = JSON.parse(host.dataset.items || '[]')
+      const rows = items.map((item, idx) => {
+        if (item === 'Air pressure (PSI input)') {
+          return { item, value: Number(document.getElementById(`pretrip-psi-${idx}`).value || 0), notes: String(document.getElementById(`pretrip-notes-${idx}`).value || '').trim() }
+        }
+        if (item === 'All tires condition (Good/Low/Flat)') {
+          return { item, value: document.getElementById(`pretrip-tires-${idx}`).value, notes: String(document.getElementById(`pretrip-notes-${idx}`).value || '').trim() }
+        }
+        const selected = document.querySelector(`input[name="pretrip-${idx}"]:checked`)
+        return { item, value: selected ? selected.value : 'Fail', notes: String(document.getElementById(`pretrip-notes-${idx}`).value || '').trim() }
+      })
+
+      const msg = document.getElementById('pretripMsg')
+      const body = {
+        unit: auth.unit,
+        driver: auth.driver,
+        odometer_reading: Number(document.getElementById('pretripOdometer').value || 0),
+        checklist: rows,
+        overall_result: document.getElementById('pretripOverall').value || 'Fail',
+        driver_signature: String(document.getElementById('pretripSignature').value || '').trim()
+      }
+      msg.className = 'muted'
+      msg.textContent = 'Submitting…'
+      const d = await jsonFetch('/api/pre-trip/submit', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      })
+      if (d && d.ok) {
+        msg.className = 'ok'
+        msg.textContent = 'Inspection submitted'
+      } else {
+        msg.className = 'err'
+        msg.textContent = d.error || 'Could not submit inspection.'
+      }
+    }
+
+    function bindNewDriverScreens() {
+      const gallons = document.getElementById('fuelGallons')
+      const price = document.getElementById('fuelPrice')
+      if (gallons) gallons.addEventListener('input', updateFuelTotal)
+      if (price) price.addEventListener('input', updateFuelTotal)
+
+      const leaveStart = document.getElementById('leaveStartDate')
+      const leaveEnd = document.getElementById('leaveEndDate')
+      if (leaveStart) leaveStart.addEventListener('change', calcLeaveDays)
+      if (leaveEnd) leaveEnd.addEventListener('change', calcLeaveDays)
+
+      const fuelBtn = document.getElementById('submitFuelBtn')
+      if (fuelBtn) fuelBtn.addEventListener('click', submitFuelExpense)
+
+      const leaveBtn = document.getElementById('submitLeaveBtn')
+      if (leaveBtn) leaveBtn.addEventListener('click', submitLeaveRequest)
+
+      const pretripBtn = document.getElementById('submitPretripBtn')
+      if (pretripBtn) pretripBtn.addEventListener('click', submitPretripInspection)
+
+      bindFuelReceiptThumb()
+      renderPretripChecklist()
+      autoFillFuelLocation()
+    }
+
+    const _showScreen = showScreen
+    showScreen = function(id) {
+      _showScreen(id)
+      if (id === 'screen-fuel') {
+        document.getElementById('fuelUnit').value = auth.unit || ''
+        document.getElementById('fuelDriver').value = auth.driver || ''
+        autoFillFuelLocation()
+      }
+      if (id === 'screen-leave') loadLeaveRequests()
+      if (id === 'screen-pretrip') calcPretripOverall()
+    }
+
+    bindNewDriverScreens()
+  </script>
+
 </body>
 </html>
