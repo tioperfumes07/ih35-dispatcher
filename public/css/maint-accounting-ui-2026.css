@@ -3830,3 +3830,59 @@ body.maint-wo-modal-open #maintWorkOrderFormMount .maint-field-cell select {
   max-width: 100%;
   box-sizing: border-box;
 }
+
+
+/* ============================================================================
+   ITEM 5 — uniform modal 3/2/1 layout rules
+   ============================================================================ */
+/* Use modal-body container width (not viewport) for consistent responsive forms. */
+body.erp-maintenance #erpDedicatedFormModal .erp-dedicated-form-modal__body,
+body.erp-maintenance #maintWorkOrderModal #maintWorkOrderModalBody,
+body.erp-maintenance .maint-modal.erp-qb-dialog .erp-qb-dialog__body,
+body.erp-maintenance #erpDrawer #erpDrawerBody {
+  container-type: inline-size;
+  container-name: erp-modal-form;
+}
+
+/* Base: 1 column inside modal forms. */
+body.erp-maintenance #erpDedicatedFormModal .ap-exp-grid,
+body.erp-maintenance #erpDedicatedFormModal .fuel-manual-exp-grid,
+body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row--3,
+body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row--4,
+body.erp-maintenance .maint-modal.erp-qb-dialog .erp-qb-dialog__body .search-row,
+body.erp-maintenance #erpDrawer #erpDrawerBody .search-row {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/* Keep controls aligned to row bottoms across modal forms. */
+body.erp-maintenance #erpDedicatedFormModal .ap-exp-grid,
+body.erp-maintenance #erpDedicatedFormModal .fuel-manual-exp-grid,
+body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row,
+body.erp-maintenance .maint-modal.erp-qb-dialog .erp-qb-dialog__body .search-row,
+body.erp-maintenance #erpDrawer #erpDrawerBody .search-row {
+  align-items: end;
+}
+
+/* Medium modal widths: 2 columns. */
+@container erp-modal-form (min-width: 760px) {
+  body.erp-maintenance #erpDedicatedFormModal .ap-exp-grid,
+  body.erp-maintenance #erpDedicatedFormModal .fuel-manual-exp-grid,
+  body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row--3,
+  body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row--4,
+  body.erp-maintenance .maint-modal.erp-qb-dialog .erp-qb-dialog__body .search-row,
+  body.erp-maintenance #erpDrawer #erpDrawerBody .search-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Large modal widths: 3 columns for uniform density. */
+@container erp-modal-form (min-width: 1120px) {
+  body.erp-maintenance #erpDedicatedFormModal .ap-exp-grid,
+  body.erp-maintenance #erpDedicatedFormModal .fuel-manual-exp-grid,
+  body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row--3,
+  body.maint-wo-modal-open #maintWorkOrderModalBody #maintWorkOrderFormMount .maint-form-grid__row--4,
+  body.erp-maintenance .maint-modal.erp-qb-dialog .erp-qb-dialog__body .search-row,
+  body.erp-maintenance #erpDrawer #erpDrawerBody .search-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
