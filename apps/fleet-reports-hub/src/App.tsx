@@ -23,6 +23,7 @@ import {
 } from './components/accounting/ListsCatalogsWorkspace'
 import type { AccountingMaintNavTarget } from './components/accounting/accountingNav'
 import { FuelTransactionForm } from './components/fuel/FuelTransactionForm'
+import { FuelSettingsPage } from './components/fuel/FuelSettingsPage'
 import {
   FUEL_TRANSACTION_TYPE_LABELS,
   fuelTransactionTypesAlphabetical,
@@ -85,6 +86,7 @@ type AppSection =
   | 'reports'
   | 'safety'
   | 'fuel'
+  | 'fuel-settings'
   | 'loads'
   | 'scheduler'
   | 'drivers'
@@ -98,6 +100,7 @@ const APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'reports', label: 'Reports' },
   { id: 'safety', label: 'Safety' },
   { id: 'fuel', label: 'Fuel' },
+  { id: 'fuel-settings', label: 'Fuel settings' },
   { id: 'loads', label: 'Loads' },
   { id: 'scheduler', label: 'Scheduler' },
   { id: 'drivers', label: 'Drivers' },
@@ -171,6 +174,7 @@ const SECTION_DESCRIPTIONS: Record<AppSection, string> = {
   reports: 'Use filters and search to open report viewers and exports by domain.',
   safety: 'Review safety report cards and open related audits and drill-downs.',
   fuel: 'Open fuel report cards and launch transaction workflows directly.',
+  'fuel-settings': 'Map driver fuel types to QuickBooks accounts/items for auto-posting.',
   loads: 'Review operations and load-facing reporting surfaces.',
   scheduler: 'Plan monthly vacation / leave schedule with HOS status and exports.',
   drivers: 'Manage driver profiles, expirations, and schedule links.',
@@ -940,7 +944,7 @@ export default function App() {
               </p>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <button type="button" className="btn sm" onClick={() => { window.location.href = '/maintenance.html' }}>
-                  Maintenance view
+                  ← Maintenance
                 </button>
                 <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
                   Fleet reports view
@@ -980,7 +984,7 @@ export default function App() {
               </p>
               <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                 <button type="button" className="btn sm" onClick={() => { window.location.href = '/maintenance.html' }}>
-                  Maintenance view
+                  ← Maintenance
                 </button>
                 <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
                   Fleet reports view
@@ -1173,6 +1177,10 @@ export default function App() {
               ) : activeSection === 'equipment' ? (
                 <ErrorBoundary name="Equipment">
                   <EquipmentPage />
+                </ErrorBoundary>
+              ) : activeSection === 'fuel-settings' ? (
+                <ErrorBoundary name="Fuel settings">
+                  <FuelSettingsPage />
                 </ErrorBoundary>
               ) : activeSection === 'safety' ? (
                 <ErrorBoundary name="Safety">

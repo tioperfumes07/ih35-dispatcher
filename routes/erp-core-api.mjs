@@ -22,6 +22,7 @@ import {
 } from '../lib/fleet-mileage-settings.mjs';
 import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-catalog.mjs';
 import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
+import { createQboApiClient } from '../lib/qbo-api-client.mjs';
 import { getVehicles, samsaraGet } from '../services/samsara.js';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
@@ -1380,6 +1381,45 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+
+  app.get('/api/damage/reports', async (_req, res) => {
+    try {
+      const pool = getPool();
+      if (!pool) return res.json({ ok: true, reports: [] });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS damage_reports (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          damage_type TEXT,
+          description TEXT,
+          photos JSONB,
+          location JSONB,
+          reported_at TIMESTAMPTZ DEFAULT NOW(),
+          status TEXT DEFAULT 'new'
+        )`
+      );
+      const { rows } = await dbQuery('SELECT * FROM damage_reports ORDER BY reported_at DESC LIMIT 50');
+      res.json({ ok: true, reports: rows || [] });
+    } catch (e) {
+      logError('GET /api/damage/reports', e);
+      res.json({ ok: true, reports: [] });
+    }
+  });
+
+  app.post('/api/damage/reports/:id/acknowledge', async (req, res) => {
+    try {
+      const pool = getPool();
+      if (pool) {
+        await dbQuery("UPDATE damage_reports SET status='acknowledged' WHERE id=$1", [req.params.id]);
+      }
+      res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/damage/reports/:id/acknowledge', e);
+      res.json({ ok: false });
+    }
+  });
+
   app.get('/api/equipment/submissions', async (req, res) => {
     const unit = req.query.unit;
     try {
@@ -1406,43 +1446,139 @@ export function mountErpCoreApi(app, opts = {}) {
   });
 
 
+
+  async function ensureFuelExpenseTables() {
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS fuel_expenses (
+        id SERIAL PRIMARY KEY,
+        unit_number TEXT,
+        driver_name TEXT,
+        fuel_type TEXT,
+        gallons NUMERIC,
+        price_per_gallon NUMERIC,
+        total_amount NUMERIC,
+        load_number TEXT,
+        station_name TEXT,
+        location TEXT,
+        receipt_photo TEXT,
+        submitted_at TIMESTAMPTZ DEFAULT NOW(),
+        qbo_posted BOOLEAN DEFAULT false,
+        qbo_txn_id TEXT
+      )`
+    );
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS fuel_type TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS load_number TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_txn_id TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_posted BOOLEAN DEFAULT false');
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS fuel_qbo_settings (
+        id SERIAL PRIMARY KEY,
+        fuel_type TEXT UNIQUE,
+        qbo_account_id TEXT,
+        qbo_account_name TEXT,
+        qbo_item_id TEXT,
+        qbo_item_name TEXT,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`
+    );
+  }
+
+  function normalizeFuelTypeKey(v) {
+    const key = String(v || '').trim().toLowerCase();
+    if (key === 'truck_diesel' || key === 'reefer_diesel' || key === 'def') return key;
+    return '';
+  }
+
+  async function postFuelExpenseToQbo(expenseRow) {
+    try {
+      const fuelType = normalizeFuelTypeKey(expenseRow?.fuel_type);
+      if (!fuelType) return { ok: false, reason: 'missing_fuel_type' };
+      const { rows: mapRows } = await dbQuery(
+        `SELECT * FROM fuel_qbo_settings WHERE fuel_type = $1 LIMIT 1`,
+        [fuelType]
+      );
+      const setting = mapRows?.[0] || null;
+      if (!setting || !String(setting.qbo_account_id || '').trim()) {
+        return { ok: false, reason: 'mapping_missing' };
+      }
+
+      const qbo = createQboApiClient();
+      const amount = Number(expenseRow.total_amount || 0);
+      const unit = String(expenseRow.unit_number || '').trim();
+      const load = String(expenseRow.load_number || '').trim();
+      const driver = String(expenseRow.driver_name || '').trim();
+      const station = String(expenseRow.station_name || '').trim();
+      const gallons = String(expenseRow.gallons ?? '').trim();
+      const description = `${fuelType} - Unit ${unit || 'N/A'} - Load ${load || 'N/A'}`;
+
+      const payload = {
+        PaymentType: 'Cash',
+        AccountRef: { value: String(setting.qbo_account_id), name: String(setting.qbo_account_name || '').trim() || undefined },
+        TxnDate: new Date().toISOString().slice(0, 10),
+        PrivateNote: `Driver: ${driver || 'N/A'} | Station: ${station || 'N/A'} | Gallons: ${gallons || '0'}`,
+        Line: [
+          {
+            Amount: Number.isFinite(amount) ? amount : 0,
+            Description: description,
+            DetailType: 'AccountBasedExpenseLineDetail',
+            AccountBasedExpenseLineDetail: {
+              AccountRef: { value: String(setting.qbo_account_id), name: String(setting.qbo_account_name || '').trim() || undefined }
+            }
+          }
+        ]
+      };
+      if (String(setting.qbo_item_id || '').trim()) {
+        payload.Line[0].AccountBasedExpenseLineDetail.ItemBasedExpenseLineDetail = {
+          ItemRef: {
+            value: String(setting.qbo_item_id),
+            name: String(setting.qbo_item_name || '').trim() || undefined
+          }
+        };
+      }
+
+      const resp = await qbo.qboPost('purchase', payload);
+      const txnId = String(resp?.Purchase?.Id || resp?.Purchase?.id || '').trim();
+      if (!txnId) return { ok: false, reason: 'qbo_no_txn_id' };
+
+      await dbQuery('UPDATE fuel_expenses SET qbo_posted = true, qbo_txn_id = $2 WHERE id = $1', [expenseRow.id, txnId]);
+      return { ok: true, txnId };
+    } catch (e) {
+      return { ok: false, reason: e?.message || String(e) };
+    }
+  }
+
   app.post('/api/fuel/driver-expense', async (req, res) => {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
       const b = req.body && typeof req.body === 'object' ? req.body : {};
-      await dbQuery(
-        `CREATE TABLE IF NOT EXISTS fuel_expenses (
-          id SERIAL PRIMARY KEY,
-          unit_number TEXT,
-          driver_name TEXT,
-          gallons NUMERIC,
-          price_per_gallon NUMERIC,
-          total_amount NUMERIC,
-          station_name TEXT,
-          location TEXT,
-          receipt_photo TEXT,
-          submitted_at TIMESTAMPTZ DEFAULT NOW(),
-          qbo_posted BOOLEAN DEFAULT false
-        )`
-      );
+      await ensureFuelExpenseTables();
+      const fuelType = normalizeFuelTypeKey(b.fuel_type || b.fuelType);
       const { rows } = await dbQuery(
         `INSERT INTO fuel_expenses (
-          unit_number, driver_name, gallons, price_per_gallon, total_amount,
-          station_name, location, receipt_photo
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id`,
+          unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
+          load_number, station_name, location, receipt_photo, qbo_posted
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,false)
+        RETURNING *`,
         [
           String(b.unit || b.unit_number || '').trim() || null,
           String(b.driver || b.driver_name || '').trim() || null,
+          fuelType || null,
           b.gallons == null ? null : Number(b.gallons),
           b.price_per_gallon == null ? null : Number(b.price_per_gallon),
           b.total_amount == null ? null : Number(b.total_amount),
+          String(b.load_number || b.loadNumber || '').trim() || null,
           String(b.station || b.station_name || '').trim() || null,
           String(b.location || '').trim() || null,
           String(b.receipt_photo_base64 || b.receipt_photo || '').trim() || null,
         ]
       );
-      return res.json({ ok: true, expense_id: rows?.[0]?.id || null });
+      const expense = rows?.[0] || null;
+      let qboPosted = false;
+      if (expense?.id) {
+        const posted = await postFuelExpenseToQbo(expense);
+        qboPosted = posted.ok === true;
+      }
+      return res.json({ ok: true, expense_id: expense?.id || null, qbo_posted: qboPosted });
     } catch (e) {
       logError('POST /api/fuel/driver-expense', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -1452,21 +1588,7 @@ export function mountErpCoreApi(app, opts = {}) {
   app.get('/api/fuel/expenses', async (req, res) => {
     try {
       if (!getPool()) return res.json({ ok: true, expenses: [] });
-      await dbQuery(
-        `CREATE TABLE IF NOT EXISTS fuel_expenses (
-          id SERIAL PRIMARY KEY,
-          unit_number TEXT,
-          driver_name TEXT,
-          gallons NUMERIC,
-          price_per_gallon NUMERIC,
-          total_amount NUMERIC,
-          station_name TEXT,
-          location TEXT,
-          receipt_photo TEXT,
-          submitted_at TIMESTAMPTZ DEFAULT NOW(),
-          qbo_posted BOOLEAN DEFAULT false
-        )`
-      );
+      await ensureFuelExpenseTables();
       const unit = String(req.query?.unit || '').trim();
       const sql = unit
         ? 'SELECT * FROM fuel_expenses WHERE unit_number = $1 ORDER BY submitted_at DESC'
@@ -1476,6 +1598,94 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/fuel/expenses', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), expenses: [] });
+    }
+  });
+
+  app.get('/api/fuel/qbo-accounts', (_req, res) => {
+    try {
+      const erp = readFullErpJson();
+      const cache = erp?.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
+      const accounts = Array.isArray(cache.accounts) ? cache.accounts : [];
+      const items = Array.isArray(cache.items) ? cache.items : [];
+      const needles = ['diesel', 'fuel', 'def', 'energy', 'fleet'];
+      const keep = (v) => {
+        const s = String(v || '').toLowerCase();
+        return needles.some((k) => s.includes(k));
+      };
+      const filteredAccounts = accounts
+        .map((a) => ({ id: String(a.id || a.Id || '').trim(), name: String(a.name || a.Name || '').trim() }))
+        .filter((a) => a.id && a.name && keep(a.name));
+      const filteredItems = items
+        .map((i) => ({ id: String(i.id || i.Id || '').trim(), name: String(i.name || i.Name || '').trim() }))
+        .filter((i) => i.id && i.name && keep(i.name));
+      return res.json({ ok: true, accounts: filteredAccounts, items: filteredItems });
+    } catch (e) {
+      logError('GET /api/fuel/qbo-accounts', e);
+      return res.json({ ok: true, accounts: [], items: [] });
+    }
+  });
+
+  app.get('/api/fuel/settings', async (_req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, settings: [] });
+      await ensureFuelExpenseTables();
+      const { rows } = await dbQuery('SELECT * FROM fuel_qbo_settings ORDER BY fuel_type');
+      return res.json({ ok: true, settings: rows || [] });
+    } catch (e) {
+      logError('GET /api/fuel/settings', e);
+      return res.json({ ok: true, settings: [] });
+    }
+  });
+
+  app.post('/api/fuel/settings', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureFuelExpenseTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const fuelType = normalizeFuelTypeKey(b.fuel_type || b.fuelType);
+      if (!fuelType) return res.status(400).json({ ok: false, error: 'fuel_type is required' });
+      const { rows } = await dbQuery(
+        `INSERT INTO fuel_qbo_settings (
+          fuel_type, qbo_account_id, qbo_account_name, qbo_item_id, qbo_item_name, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,NOW())
+        ON CONFLICT (fuel_type)
+        DO UPDATE SET
+          qbo_account_id = EXCLUDED.qbo_account_id,
+          qbo_account_name = EXCLUDED.qbo_account_name,
+          qbo_item_id = EXCLUDED.qbo_item_id,
+          qbo_item_name = EXCLUDED.qbo_item_name,
+          updated_at = NOW()
+        RETURNING *`,
+        [
+          fuelType,
+          String(b.qbo_account_id || '').trim() || null,
+          String(b.qbo_account_name || '').trim() || null,
+          String(b.qbo_item_id || '').trim() || null,
+          String(b.qbo_item_name || '').trim() || null,
+        ]
+      );
+      return res.json({ ok: true, setting: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/fuel/settings', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/fuel/post-to-qbo', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureFuelExpenseTables();
+      const expenseId = Number(req.body?.expense_id);
+      if (!Number.isFinite(expenseId)) return res.status(400).json({ ok: false, error: 'expense_id required' });
+      const { rows } = await dbQuery('SELECT * FROM fuel_expenses WHERE id = $1 LIMIT 1', [expenseId]);
+      const expense = rows?.[0] || null;
+      if (!expense) return res.status(404).json({ ok: false, error: 'Fuel expense not found' });
+      const posted = await postFuelExpenseToQbo(expense);
+      if (posted.ok) return res.json({ ok: true, qbo_txn_id: posted.txnId || null });
+      return res.json({ ok: false, error: posted.reason || 'QBO post failed' });
+    } catch (e) {
+      logError('POST /api/fuel/post-to-qbo', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 

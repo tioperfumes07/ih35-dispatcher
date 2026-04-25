@@ -473,6 +473,9 @@
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="safety" title="Safety &amp; compliance" onclick="openSection('safety', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">◎</span><span class="erp-icon-nav__lbl">Safety</span>
       </button>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="drivers" title="Drivers — leave and fuel submissions" onclick="openSection('drivers', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">👤</span><span class="erp-icon-nav__lbl">Drivers</span>
+      </button>
 
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="fuel" title="Fuel planner — routes, stops, fuel ledger" onclick="openSection('fuel', this)">
         <span class="erp-icon-nav__glyph" aria-hidden="true">⛽</span><span class="erp-icon-nav__lbl">Fuel</span>
@@ -720,7 +723,7 @@
           </div>
           <div class="erp-topbar__actions print-hide-actions">
             <button type="button" title="Open maintenance view" onclick="openSectionByName('maintenance')">Maintenance view</button>
-            <button type="button" title="Open fleet reports view" onclick="window.location.href='/fleet-reports?section=reports'">Fleet reports view</button>
+            <button type="button" style="background:#2563eb;border-color:#1d4ed8;color:#fff" title="Open Fleet Hub" onclick="window.location.href='/fleet-reports/'">⇄ Fleet Hub</button>
             <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>
             <button type="button" title="Verify QuickBooks OAuth and API reachability" onclick="testQuickBooks()">Test QuickBooks connection</button>
             <button type="button" title="Reload vendors, items, and accounts from QuickBooks" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
@@ -762,6 +765,11 @@
             <div class="metric-value" id="dashQboVendors">0</div>
             <div class="metric-sub muted">From last list sync</div>
           </div>
+          <div class="metric mr-kpi-card" id="dashDamageReportsCard">
+            <div class="metric-label">Open damage reports</div>
+            <div class="metric-value" id="dashOpenDamageReports">0</div>
+            <div class="metric-sub muted">New / unresolved</div>
+          </div>
         </div>
 
         <div class="grid grid-2" style="margin-top:12px;">
@@ -796,6 +804,31 @@
             </div>
           </div>
         </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="section-fuel" class="section">
@@ -808,6 +841,31 @@
           </div>
           <div class="panel-body" style="padding:0">
             <iframe class="erp-iframe" src="/fuel.html?embed=1" title="Fuel planner"></iframe>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -1073,6 +1131,59 @@
             </table>
           </div>
           <div id="driverFilesPagerHost" style="margin-top:8px" hidden></div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-drivers" class="section">
+        <div class="grid grid-3 erp-kpi-grid" style="margin-bottom:12px">
+          <div class="metric"><div class="metric-label">Pending requests</div><div class="metric-value" id="driversKpiPendingLeave">0</div><div class="metric-sub muted">Leave requests awaiting approval</div></div>
+          <div class="metric"><div class="metric-label">Open damage reports</div><div class="metric-value" id="driversKpiOpenDamage">0</div><div class="metric-sub muted">New / acknowledged not resolved</div></div>
+          <div class="metric"><div class="metric-label">Fuel submitted today</div><div class="metric-value" id="driversKpiFuelToday">0</div><div class="metric-sub muted">Driver mobile submissions</div></div>
+        </div>
+
+        <div class="panel" style="margin-bottom:12px">
+          <div class="panel-head"><div class="panel-title" style="margin:0">Leave requests</div></div>
+          <div class="panel-body table-wrap">
+            <table class="table">
+              <thead><tr><th>Driver</th><th>Unit</th><th>Dates</th><th>Type</th><th>Submitted</th><th>Action</th></tr></thead>
+              <tbody id="driversLeaveRequestsBody"><tr><td colspan="6" class="muted">Loading leave requests…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title" style="margin:0">Fuel submissions today</div></div>
+          <div class="panel-body table-wrap">
+            <table class="table">
+              <thead><tr><th>Unit</th><th>Driver</th><th>Type</th><th>Gallons</th><th>Total</th><th>Station</th><th>QBO</th><th>Action</th></tr></thead>
+              <tbody id="driversFuelTodayBody"><tr><td colspan="8" class="muted">Loading fuel submissions…</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -2041,6 +2152,31 @@
             </div>
         </div>
         </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="section-tracking" class="section erp-ops-section">
@@ -2564,6 +2700,31 @@
               
             </div>
             <div id="trackingSummaryText">No tracking data loaded yet.</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -4115,6 +4276,31 @@
             </div>
           </div>
         </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="section-dedupe" class="section">
@@ -4784,6 +4970,31 @@
             </div>
           </div>
         </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="section-catalog" class="section">
@@ -4963,6 +5174,31 @@
                 <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
                 <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -5177,6 +5413,31 @@
                 <div class="mr-upload-section-h">Recent imports</div>
                 <div id="upRecent-other" class="mr-upload-recent"></div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head">
+            <div class="panel-title" style="margin:0">Recent damage reports</div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Driver</th>
+                    <th>Type</th>
+                    <th>Time ago</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardDamageReportsBody">
+                  <tr><td colspan="6" class="muted">Loading damage reports…</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -5753,6 +6014,7 @@
       maintenance: 'Maintenance',
       fuel: 'Fuel planner',
       safety: 'Safety',
+      drivers: 'Drivers',
       tracking: 'Tracking',
       accounting: 'Accounting',
       catalog: 'Lists & catalogs',
@@ -9531,7 +9793,7 @@
     }
 
     function openSection(name, btn) {
-      const REACT_SECTIONS = { 'lists': 'lists', 'reports': 'reports', 'scheduler': 'scheduler', 'drivers': 'drivers' };
+      const REACT_SECTIONS = { 'lists': 'lists', 'reports': 'reports', 'scheduler': 'scheduler' };
       if (REACT_SECTIONS[name]) {
         window.location.href = '/fleet-reports?section=' + REACT_SECTIONS[name];
         return;
@@ -15240,6 +15502,8 @@
 
     function loadWorkspaceKpis() {
       renderDashboardHome();
+      refreshDashboardDamageReports();
+      refreshDriversDashboardPanels();
     }
 
     function renderDashboardHome() {
@@ -15329,6 +15593,204 @@
         Bill payments logged (QBO): ${(erp.qboBillPaymentLog || []).length}<br>
         Tire alerts: ${tireAlerts.length}
       `;
+    }
+
+
+    function damageStatusBadge(statusRaw) {
+      const s = String(statusRaw || 'new').toLowerCase();
+      if (s === 'resolved') return '<span class="status status-good">Resolved</span>';
+      if (s === 'acknowledged') return '<span class="status status-soon">Acknowledged</span>';
+      return '<span class="status status-error">New</span>';
+    }
+
+    function damageTimeAgo(isoRaw) {
+      const ts = Date.parse(String(isoRaw || ''));
+      if (!Number.isFinite(ts)) return '—';
+      const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+      if (sec < 60) return sec + 's ago';
+      const min = Math.floor(sec / 60);
+      if (min < 60) return min + 'm ago';
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return hr + 'h ago';
+      const day = Math.floor(hr / 24);
+      return day + 'd ago';
+    }
+
+    function erpCreateWoFromDamageReport(id) {
+      const row = (window.__dashboardDamageReports || []).find((r) => String(r.id) === String(id));
+      if (!row) return;
+      const unit = String(row.unit_number || '').trim();
+      if (unit) {
+        try { selectUnit(unit); } catch (_) {}
+      }
+      erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Damage report' });
+      erpNotify('Opened new work order for damage report ' + String(id), 'info');
+    }
+
+    async function erpAcknowledgeDamageReport(id) {
+      try {
+        await j('/api/damage/reports/' + encodeURIComponent(String(id)) + '/acknowledge', { method: 'POST' });
+      } catch (_) {}
+      await refreshDashboardDamageReports();
+    }
+
+    async function refreshDashboardDamageReports() {
+      let reports = [];
+      try {
+        const d = await j('/api/damage/reports');
+        reports = Array.isArray(d?.reports) ? d.reports : [];
+      } catch (_) {
+        reports = [];
+      }
+      window.__dashboardDamageReports = reports;
+      const openCount = reports.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved').length;
+      const kpiEl = document.getElementById('dashOpenDamageReports');
+      if (kpiEl) kpiEl.textContent = String(openCount);
+      const kpiCard = document.getElementById('dashDamageReportsCard');
+      if (kpiCard) {
+        kpiCard.classList.toggle('mr-kpi-card--bad', openCount > 0);
+        kpiCard.classList.toggle('mr-kpi-card--ok', openCount === 0);
+      }
+
+      const body = document.getElementById('dashboardDamageReportsBody');
+      if (!body) return;
+      if (!reports.length) {
+        body.innerHTML = '<tr><td colspan="6" class="muted">No damage reports found.</td></tr>';
+        return;
+      }
+      body.innerHTML = reports.map((r) => {
+        const id = String(r.id || '');
+        const unit = escapeHtml(String(r.unit_number || '—'));
+        const driver = escapeHtml(String(r.driver_name || '—'));
+        const type = escapeHtml(String(r.damage_type || '—'));
+        const ago = escapeHtml(damageTimeAgo(r.reported_at));
+        const status = damageStatusBadge(r.status);
+        return `
+          <tr>
+            <td>${unit}</td>
+            <td>${driver}</td>
+            <td>${type}</td>
+            <td>${ago}</td>
+            <td>${status}</td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button type="button" class="btn btn--small" onclick="erpCreateWoFromDamageReport('${id.replace(/'/g, "\'")}')">Create WO</button>
+                <button type="button" class="btn btn--small ghost" onclick="erpAcknowledgeDamageReport('${id.replace(/'/g, "\'")}')">Acknowledge</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+
+    function shortDate(value) {
+      const d = new Date(String(value || ''));
+      if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString();
+    }
+
+    function isTodayIso(value) {
+      const d = new Date(String(value || ''));
+      if (Number.isNaN(d.getTime())) return false;
+      const now = new Date();
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    }
+
+    async function driversApproveLeaveRequest(id) {
+      try {
+        await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/approve', { method: 'POST' });
+      } catch (_) {}
+      await refreshDriversDashboardPanels();
+    }
+
+    async function driversDenyLeaveRequest(id) {
+      try {
+        await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/deny', { method: 'POST' });
+      } catch (_) {}
+      await refreshDriversDashboardPanels();
+    }
+
+    async function driversPostFuelToQbo(expenseId) {
+      try {
+        await j('/api/fuel/post-to-qbo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expense_id: expenseId })
+        });
+      } catch (_) {}
+      await refreshDriversDashboardPanels();
+    }
+
+    async function refreshDriversDashboardPanels() {
+      if (!document.getElementById('section-drivers')) return;
+      let leaveRows = [];
+      let fuelRows = [];
+      let damageRows = [];
+      try {
+        const [leaveRes, fuelRes, dmgRes] = await Promise.all([
+          j('/api/drivers/leave-requests').catch(() => ({ requests: [] })),
+          j('/api/fuel/expenses').catch(() => ({ expenses: [] })),
+          j('/api/damage/reports').catch(() => ({ reports: [] }))
+        ]);
+        leaveRows = Array.isArray(leaveRes?.requests) ? leaveRes.requests : [];
+        fuelRows = Array.isArray(fuelRes?.expenses) ? fuelRes.expenses : [];
+        damageRows = Array.isArray(dmgRes?.reports) ? dmgRes.reports : [];
+      } catch (_) {}
+
+      const pendingLeave = leaveRows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
+      const openDamage = damageRows.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved');
+      const fuelToday = fuelRows.filter((r) => isTodayIso(r.submitted_at));
+
+      const k1 = document.getElementById('driversKpiPendingLeave');
+      const k2 = document.getElementById('driversKpiOpenDamage');
+      const k3 = document.getElementById('driversKpiFuelToday');
+      if (k1) k1.textContent = String(pendingLeave.length);
+      if (k2) k2.textContent = String(openDamage.length);
+      if (k3) k3.textContent = String(fuelToday.length);
+
+      const leaveBody = document.getElementById('driversLeaveRequestsBody');
+      if (leaveBody) {
+        if (!leaveRows.length) {
+          leaveBody.innerHTML = '<tr><td colspan="6" class="muted">No leave requests found.</td></tr>';
+        } else {
+          leaveBody.innerHTML = leaveRows.map((r) => `
+            <tr>
+              <td>${escapeHtml(String(r.driver_name || '—'))}</td>
+              <td>${escapeHtml(String(r.unit_number || '—'))}</td>
+              <td>${escapeHtml(shortDate(r.start_date))} → ${escapeHtml(shortDate(r.end_date))}</td>
+              <td>${escapeHtml(String(r.leave_type || '—'))}</td>
+              <td>${escapeHtml(damageTimeAgo(r.created_at))}</td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button type="button" class="btn btn--small" onclick="driversApproveLeaveRequest('${String(r.id).replace(/'/g, "\'")}')">Approve</button>
+                  <button type="button" class="btn btn--small ghost" onclick="driversDenyLeaveRequest('${String(r.id).replace(/'/g, "\'")}')">Deny</button>
+                </div>
+              </td>
+            </tr>`).join('');
+        }
+      }
+
+      const fuelBody = document.getElementById('driversFuelTodayBody');
+      if (fuelBody) {
+        if (!fuelToday.length) {
+          fuelBody.innerHTML = '<tr><td colspan="8" class="muted">No fuel submissions today.</td></tr>';
+        } else {
+          fuelBody.innerHTML = fuelToday.map((r) => {
+            const qboMark = r.qbo_posted ? '✅' : '—';
+            return `
+              <tr>
+                <td>${escapeHtml(String(r.unit_number || '—'))}</td>
+                <td>${escapeHtml(String(r.driver_name || '—'))}</td>
+                <td>${escapeHtml(String(r.fuel_type || '—'))}</td>
+                <td>${escapeHtml(String(r.gallons ?? '—'))}</td>
+                <td>${escapeHtml(String(r.total_amount ?? '—'))}</td>
+                <td>${escapeHtml(String(r.station_name || '—'))}</td>
+                <td>${qboMark}</td>
+                <td><button type="button" class="btn btn--small" onclick="driversPostFuelToQbo('${String(r.id).replace(/'/g, "\'")}')">Post to QBO</button></td>
+              </tr>`;
+          }).join('');
+        }
+      }
     }
 
     // Dispatch board removed (maintenance/safety/diesel focus).
