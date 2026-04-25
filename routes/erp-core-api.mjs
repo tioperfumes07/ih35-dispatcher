@@ -263,33 +263,38 @@ function qboConnectionFlags() {
 
 async function ensureDriverSchedulerTables() {
   if (!getPool()) return false;
-  await dbQuery(`CREATE TABLE IF NOT EXISTS driver_profiles (
-    id BIGSERIAL PRIMARY KEY,
-    full_name TEXT,
-    unit_number TEXT UNIQUE,
-    team TEXT,
-    manager TEXT,
-    cdl_number TEXT,
-    cdl_expiry DATE,
-    medical_expiry DATE,
-    phone TEXT,
-    email TEXT,
-    status TEXT DEFAULT 'Active',
-    notes TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-  )`);
-  await dbQuery(`CREATE TABLE IF NOT EXISTS driver_schedules (
-    id BIGSERIAL PRIMARY KEY,
-    unit_number TEXT,
-    driver_id BIGINT,
-    date DATE NOT NULL,
-    leave_type TEXT,
-    notes TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-  )`);
-  return true;
+  try {
+    await dbQuery(`CREATE TABLE IF NOT EXISTS driver_schedules (
+      id SERIAL PRIMARY KEY,
+      unit_number TEXT NOT NULL,
+      driver_id TEXT,
+      date DATE NOT NULL,
+      leave_type TEXT NOT NULL,
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(unit_number, date)
+    )`);
+    await dbQuery(`CREATE TABLE IF NOT EXISTS driver_profiles (
+      id SERIAL PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      unit_number TEXT UNIQUE,
+      team TEXT,
+      manager TEXT,
+      cdl_number TEXT,
+      cdl_expiry DATE,
+      medical_expiry DATE,
+      phone TEXT,
+      email TEXT,
+      status TEXT DEFAULT 'Active',
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+    return true;
+  } catch (e) {
+    logError('[drivers] ensureDriverSchedulerTables warning', e);
+    return false;
+  }
 }
 
 function dedupeCatalogNames(names = []) {
@@ -1171,12 +1176,18 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!unit || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).json({ ok: false, error: 'unit_number and date (YYYY-MM-DD) are required' });
       }
-      const leaveType = String(b.leave_type || '').trim() || null;
+      const leaveType = String(b.leave_type || '').trim() || 'Working';
       const notes = String(b.notes || '').trim() || null;
-      const driverId = Number.isFinite(Number(b.driver_id)) ? Number(b.driver_id) : null;
+      const driverId = String(b.driver_id || '').trim() || null;
       const { rows } = await dbQuery(
         `INSERT INTO driver_schedules (unit_number, driver_id, date, leave_type, notes, created_at, updated_at)
          VALUES ($1,$2,$3,$4,$5,now(),now())
+         ON CONFLICT (unit_number, date)
+         DO UPDATE SET
+           driver_id = EXCLUDED.driver_id,
+           leave_type = EXCLUDED.leave_type,
+           notes = EXCLUDED.notes,
+           updated_at = now()
          RETURNING *`,
         [unit, driverId, date, leaveType, notes]
       );

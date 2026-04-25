@@ -413,8 +413,27 @@
   </div>
   <datalist id="unitOptions"></datalist>
   <datalist id="serviceOptions"></datalist>
+  <datalist id="serviceTypeList">
+    <option value="Oil Change"></option>
+    <option value="Tire Rotation"></option>
+    <option value="Brake Inspection"></option>
+    <option value="PM Service A"></option>
+    <option value="PM Service B"></option>
+    <option value="Tire Replace"></option>
+    <option value="Engine Repair"></option>
+    <option value="Transmission"></option>
+    <option value="AC Repair"></option>
+    <option value="DOT Inspection"></option>
+    <option value="Annual Inspection"></option>
+    <option value="Coolant Flush"></option>
+    <option value="Air Filter"></option>
+    <option value="Fuel Filter"></option>
+    <option value="DPF Clean"></option>
+  </datalist>
+
   <datalist id="partsOptions"></datalist>
   <datalist id="qboVendorOptions"></datalist>
+  <datalist id="vendorList"></datalist>
   <datalist id="qboItemOptions"></datalist>
   <datalist id="qboAccountOptions"></datalist>
   <datalist id="qboAccountExpenseOptions"></datalist>
@@ -794,7 +813,7 @@
             <div id="safetyMapMeta" class="mini-note">Loading map…</div>
           </div>
           <div class="panel-body" style="padding:10px">
-            <div id="safetyLiveMap" style="height:min(58vh,520px);width:100%;border:1px solid var(--color-border);border-radius:8px"></div>
+            <div id="safetyLiveMap" style="height:420px;width:100%;border:1px solid var(--color-border);border-radius:8px"></div>
           </div>
         </div>
         <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
@@ -1238,7 +1257,7 @@
                         <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Service type
                           
                         </span>
-                        <input id="serviceSearchInput" class="qb-in maint-field" list="serviceOptions" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
+                        <input id="serviceSearchInput" class="qb-in maint-field" list="serviceTypeList" placeholder="Service description" autocomplete="off" oninput="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" onblur="resolveServiceSearch(); syncPrimaryServiceToFirstCostLine();" title="Catalog + free text" />
                         <input id="serviceTypeInput" type="hidden">
                         <input id="customServiceTypeInput" class="qb-in maint-field hidden" placeholder="Other — short label (optional)" oninput="toggleRecordFields()" title="Shown when record type is Other" />
                       </div>
@@ -7685,6 +7704,53 @@
       return String(v?.name || v?.displayName || v?.companyName || v?.vendorName || '').trim();
     }
 
+
+    function wireVendorListInputs() {
+      const ids = [
+        'mbVendorSearch',
+        'vendorInput',
+        'apVendorSearch',
+        'bpVendorSearch',
+        'bpLogVendorSearch',
+        'fuelManualVendorSearch',
+        'sqVendor'
+      ];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('list', 'vendorList');
+      });
+      document.querySelectorAll('input[id*="Vendor"], input[id*="vendor"]').forEach((el) => {
+        if (el instanceof HTMLInputElement) el.setAttribute('list', 'vendorList');
+      });
+    }
+
+    async function hydrateVendorListDatalist() {
+      try {
+        const data = await fetch('/api/qbo/master').then((r) => r.json());
+        const vendors = Array.isArray(data.vendors) ? data.vendors : [];
+        const dl = document.getElementById('vendorList');
+        if (!dl) return;
+        dl.innerHTML = '';
+        vendors.forEach((v) => {
+          const opt = document.createElement('option');
+          opt.value = typeof v === 'string' ? v : (v.DisplayName || v.name || v.CompanyName || '');
+          if (opt.value) dl.appendChild(opt);
+        });
+      } catch (_) {
+        const dl = document.getElementById('vendorList');
+        if (!dl) return;
+        const vendorValues = Array.from(
+          new Set(
+            cacheVendors()
+              .map((v) => qboVendorDisplayName(v))
+              .filter(Boolean)
+          )
+        ).sort((a, b) => a.localeCompare(b));
+        dl.innerHTML = vendorValues.map((v) => `<option value="${escapeHtml(v)}"></option>`).join('');
+      }
+      wireVendorListInputs();
+    }
+
     function normalizeQboVendorRows(rows) {
       if (!Array.isArray(rows)) return [];
       return rows
@@ -9459,6 +9525,7 @@
       }
       if (name === 'safety') {
         requestAnimationFrame(() => renderSafetyLiveMap());
+        setTimeout(() => { if (window.safetyLiveMap) window.safetyLiveMap.invalidateSize(); }, 200);
       }
       if (name === 'reports') {
         loadReportsData();
@@ -9649,10 +9716,12 @@
       if (!host || typeof L === 'undefined') return false;
       if (!safetyLiveMap) {
         safetyLiveMap = L.map(host, { zoomControl: true }).setView([31.7619, -106.485], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
+          attribution: '© OpenStreetMap contributors',
+          crossOrigin: true
         }).addTo(safetyLiveMap);
+        window.safetyLiveMap = safetyLiveMap;
         safetyLiveMapLayer = L.layerGroup().addTo(safetyLiveMap);
       }
       return true;
@@ -11116,6 +11185,7 @@
           refreshedAt: data.refreshedAt || ''
         };
         fillDataLists();
+        await hydrateVendorListDatalist();
         bootQbPickers();
         renderQboMaster();
         renderDashboardHome();
@@ -12015,6 +12085,14 @@
       ).sort((a, b) => a.localeCompare(b));
       document.getElementById('serviceOptions').innerHTML =
         serviceValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      const serviceTypeList = document.getElementById('serviceTypeList');
+      if (serviceTypeList) {
+        const fallback = [
+          'Oil Change','Tire Rotation','Brake Inspection','PM Service A','PM Service B','Tire Replace','Engine Repair','Transmission','AC Repair','DOT Inspection','Annual Inspection','Coolant Flush','Air Filter','Fuel Filter','DPF Clean'
+        ];
+        const vals = Array.from(new Set([...(Array.isArray(catalogServiceNames) ? catalogServiceNames : []), ...serviceValues, ...fallback].filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+        serviceTypeList.innerHTML = vals.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      }
       __servicePresetList = serviceValues;
       bindMaintCostLinesDelegation();
       bindMaintCostGlobalModeSeg();
@@ -12029,6 +12107,9 @@
       ).sort((a, b) => a.localeCompare(b));
       document.getElementById('qboVendorOptions').innerHTML =
         vendorValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      const vendorList = document.getElementById('vendorList');
+      if (vendorList) vendorList.innerHTML = vendorValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+      wireVendorListInputs();
 
       const partValues = Array.from(new Set((catalogPartNames || []).map(v => String(v || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
       const partsDl = document.getElementById('partsOptions');

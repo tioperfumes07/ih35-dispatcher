@@ -15,9 +15,18 @@ type Props = {
   onOpenDriverProfile: (unitNumber: string) => void
 }
 
-const LEAVE_TYPES = ['', 'Vacation', 'Sick', 'Personal', 'Sin Aviso', 'Bank Holiday', 'WFH']
+type SchedulerDriverRow = {
+  id: number
+  unit_number: string
+  full_name: string | null
+  team: string | null
+  manager: string | null
+  status: string
+}
+
+const LEAVE_TYPES = ['', 'Vacacion', 'Sick', 'Personal', 'Sin Aviso', 'Bank Holiday', 'WFH']
 const LEAVE_COLORS: Record<string, string> = {
-  Vacation: '#3B82F6',
+  Vacacion: '#3B82F6',
   Sick: '#F97316',
   Personal: '#EAB308',
   'Sin Aviso': '#EF4444',
@@ -47,18 +56,30 @@ function toIsoDay(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
+function fallbackUnits(): SchedulerDriverRow[] {
+  return Array.from({ length: 58 }, (_, i) => ({
+    id: 100000 + i,
+    unit_number: `T${120 + i}`,
+    full_name: 'Vacante',
+    team: '',
+    manager: '',
+    status: 'Vacante',
+  }))
+}
+
 export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   const [monthDate, setMonthDate] = useState(() => {
     const d = new Date()
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))
   })
-  const [drivers, setDrivers] = useState<DriverProfile[]>([])
+  const [drivers, setDrivers] = useState<SchedulerDriverRow[]>([])
   const [scheduleRows, setScheduleRows] = useState<DriverScheduleRow[]>([])
   const [hosRows, setHosRows] = useState<Array<Record<string, unknown>>>([])
   const [teamFilter, setTeamFilter] = useState('')
   const [managerFilter, setManagerFilter] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editingCell, setEditingCell] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -70,10 +91,24 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         fetchDriverSchedule(m),
         fetchDriverHosStatus(),
       ])
-      setDrivers(Array.isArray(profiles.drivers) ? profiles.drivers : [])
+      const p = Array.isArray(profiles.drivers) ? profiles.drivers : []
+      const rows: SchedulerDriverRow[] =
+        p.length > 0
+          ? p.map((d: DriverProfile) => ({
+              id: d.id,
+              unit_number: d.unit_number,
+              full_name: d.full_name,
+              team: d.team,
+              manager: d.manager,
+              status: d.status,
+            }))
+          : fallbackUnits()
+      setDrivers(rows)
       setScheduleRows(Array.isArray(schedule.rows) ? schedule.rows : [])
       setHosRows(Array.isArray(hos.rows) ? hos.rows : [])
     } catch (e) {
+      setDrivers(fallbackUnits())
+      setScheduleRows([])
       setError(String((e as Error).message || e))
     } finally {
       setLoading(false)
@@ -86,7 +121,9 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   useEffect(() => {
     const t = window.setInterval(() => {
-      void fetchDriverHosStatus().then((x) => setHosRows(Array.isArray(x.rows) ? x.rows : [])).catch(() => {})
+      void fetchDriverHosStatus()
+        .then((x) => setHosRows(Array.isArray(x.rows) ? x.rows : []))
+        .catch(() => {})
     }, 60000)
     return () => window.clearInterval(t)
   }, [])
@@ -105,9 +142,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   const scheduleMap = useMemo(() => {
     const m = new Map<string, DriverScheduleRow>()
-    scheduleRows.forEach((r) => {
-      m.set(`${r.unit_number}|${r.date}`, r)
-    })
+    scheduleRows.forEach((r) => m.set(`${r.unit_number}|${r.date}`, r))
     return m
   }, [scheduleRows])
 
@@ -122,15 +157,27 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   }, [hosRows])
 
   const updateCell = async (unit: string, date: string, leaveType: string) => {
-    const cur = scheduleMap.get(`${unit}|${date}`)
-    if (!leaveType) {
-      if (cur) await deleteDriverScheduleEntry(cur.id)
-      await load()
-      return
+    const key = `${unit}|${date}`
+    const cur = scheduleMap.get(key)
+    setEditingCell(null)
+    try {
+      if (!leaveType) {
+        if (cur) {
+          await deleteDriverScheduleEntry(cur.id)
+          setScheduleRows((prev) => prev.filter((r) => r.id !== cur.id))
+        }
+        return
+      }
+      const saved = await saveDriverScheduleEntry({ unit_number: unit, date, leave_type: leaveType })
+      if (saved.row) {
+        setScheduleRows((prev) => {
+          const rest = prev.filter((r) => !(r.unit_number === unit && r.date === date))
+          return [...rest, saved.row as DriverScheduleRow]
+        })
+      }
+    } catch (e) {
+      setError(String((e as Error).message || e))
     }
-    if (cur) await deleteDriverScheduleEntry(cur.id)
-    await saveDriverScheduleEntry({ unit_number: unit, date, leave_type: leaveType })
-    await load()
   }
 
   const exportExcel = () => {
@@ -156,17 +203,20 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
     return filteredDrivers.map((d) => {
       const unit = d.unit_number
       const entries = days.map((day) => scheduleMap.get(`${unit}|${toIsoDay(day)}`)?.leave_type || '')
-      const vacation = entries.filter((x) => x === 'Vacation').length
+      const vacacion = entries.filter((x) => x === 'Vacacion').length
       const sick = entries.filter((x) => x === 'Sick').length
+      const personal = entries.filter((x) => x === 'Personal').length
+      const sinAviso = entries.filter((x) => x === 'Sin Aviso').length
       const wfh = entries.filter((x) => x === 'WFH').length
-      const other = entries.filter((x) => !!x && !['Vacation', 'Sick', 'WFH'].includes(x)).length
+      const totalAbsence = entries.filter((x) => !!x && x !== 'WFH').length
       return {
         driver: d.full_name || 'Vacante',
         unit,
-        total: vacation + sick + other,
-        vacation,
+        totalAbsence,
+        vacacion,
         sick,
-        other,
+        personal,
+        sinAviso,
         wfh,
       }
     })
@@ -177,26 +227,68 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   return (
     <section className="panel" style={{ padding: 10 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
         <h2 style={{ margin: 0 }}>Driver / Vacation Scheduler</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" className="btn sm" onClick={() => setMonthDate((d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)))}>Previous</button>
-          <strong style={{ alignSelf: 'center' }}>{monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' })}</strong>
-          <button type="button" className="btn sm" onClick={() => setMonthDate((d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)))}>Next</button>
-          <button type="button" className="btn sm ghost" onClick={exportExcel}>Export to Excel</button>
+          <button
+            type="button"
+            className="btn sm"
+            onClick={() =>
+              setMonthDate((d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)))
+            }
+          >
+            Previous
+          </button>
+          <strong style={{ alignSelf: 'center' }}>
+            {monthDate.toLocaleDateString(undefined, {
+              month: 'long',
+              year: 'numeric',
+              timeZone: 'UTC',
+            })}
+          </strong>
+          <button
+            type="button"
+            className="btn sm"
+            onClick={() =>
+              setMonthDate((d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)))
+            }
+          >
+            Next
+          </button>
+          <button type="button" className="btn sm ghost" onClick={exportExcel}>
+            Export to Excel
+          </button>
         </div>
       </header>
 
       <div style={{ display: 'flex', gap: 8, margin: '8px 0', flexWrap: 'wrap' }}>
         <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
           <option value="">All teams</option>
-          {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+          {teams.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
         <select value={managerFilter} onChange={(e) => setManagerFilter(e.target.value)}>
           <option value="">All managers</option>
-          {managers.map((m) => <option key={m} value={m}>{m}</option>)}
+          {managers.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
         </select>
-        <button type="button" className="btn sm ghost" onClick={() => void load()}>{loading ? 'Refreshing...' : 'Refresh'}</button>
+        <button type="button" className="btn sm ghost" onClick={() => void load()}>
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
       {error ? <p className="nm-banner nm-banner--err">{error}</p> : null}
@@ -207,7 +299,13 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
             <tr>
               <th>Unit / Driver</th>
               {days.map((d) => (
-                <th key={toIsoDay(d)}>{d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', timeZone: 'UTC' })}</th>
+                <th key={toIsoDay(d)}>
+                  {d.toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    day: 'numeric',
+                    timeZone: 'UTC',
+                  })}
+                </th>
               ))}
             </tr>
           </thead>
@@ -218,32 +316,65 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
               return (
                 <tr key={driver.id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <button type="button" className="btn sm ghost" onClick={() => onOpenDriverProfile(driver.unit_number)}>
+                    <button
+                      type="button"
+                      className="btn sm ghost"
+                      onClick={() => onOpenDriverProfile(driver.unit_number)}
+                    >
                       {driver.unit_number} · {driver.full_name || 'Vacante'}
                     </button>
-                    <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: dutyColor, marginLeft: 6 }} />
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: dutyColor,
+                        marginLeft: 6,
+                      }}
+                    />
                   </td>
                   {days.map((d) => {
                     const dayIso = toIsoDay(d)
-                    const cur = scheduleMap.get(`${driver.unit_number}|${dayIso}`)
+                    const cellKey = `${driver.unit_number}|${dayIso}`
+                    const cur = scheduleMap.get(cellKey)
                     const leaveType = cur?.leave_type || ''
+                    const editing = editingCell === cellKey
                     return (
                       <td key={dayIso}>
-                        <select
-                          value={leaveType}
-                          onChange={(e) => {
-                            void updateCell(driver.unit_number, dayIso, e.target.value)
-                          }}
-                          style={{
-                            minWidth: 92,
-                            background: leaveType ? `${LEAVE_COLORS[leaveType] || '#f3f4f6'}22` : undefined,
-                            borderColor: leaveType ? LEAVE_COLORS[leaveType] || '#d1d5db' : undefined,
-                          }}
-                        >
-                          {LEAVE_TYPES.map((t) => (
-                            <option key={t || 'working'} value={t}>{t || 'Working'}</option>
-                          ))}
-                        </select>
+                        {editing ? (
+                          <select
+                            autoFocus
+                            value={leaveType}
+                            onBlur={() => setEditingCell(null)}
+                            onChange={(e) => {
+                              void updateCell(driver.unit_number, dayIso, e.target.value)
+                            }}
+                            style={{ minWidth: 110 }}
+                          >
+                            {LEAVE_TYPES.map((t) => (
+                              <option key={t || 'working'} value={t}>
+                                {t || 'Working'}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn sm ghost"
+                            onClick={() => setEditingCell(cellKey)}
+                            style={{
+                              minWidth: 110,
+                              borderColor: leaveType ? LEAVE_COLORS[leaveType] || '#d1d5db' : '#d1d5db',
+                              background: leaveType
+                                ? `${LEAVE_COLORS[leaveType] || '#e5e7eb'}22`
+                                : 'transparent',
+                            }}
+                            title="Click to set leave type"
+                          >
+                            {leaveType || 'Working'}
+                          </button>
+                        )}
                       </td>
                     )
                   })}
@@ -257,16 +388,28 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
       <h3 style={{ marginTop: 14 }}>Monthly totals</h3>
       <div className="table-wrap" style={{ maxHeight: '28vh' }}>
         <table>
-          <thead><tr><th>Driver</th><th>Unit</th><th>Total Absence</th><th>Vacation</th><th>Sick</th><th>Other</th><th>WFH</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>Unit</th>
+              <th>Total Absence</th>
+              <th>Vacation</th>
+              <th>Sick</th>
+              <th>Personal</th>
+              <th>Sin Aviso</th>
+              <th>WFH</th>
+            </tr>
+          </thead>
           <tbody>
             {summaryRows.map((r) => (
               <tr key={`${r.unit}-sum`}>
                 <td>{r.driver}</td>
                 <td>{r.unit}</td>
-                <td>{r.total}</td>
-                <td>{r.vacation}</td>
+                <td>{r.totalAbsence}</td>
+                <td>{r.vacacion}</td>
                 <td>{r.sick}</td>
-                <td>{r.other}</td>
+                <td>{r.personal}</td>
+                <td>{r.sinAviso}</td>
                 <td>{r.wfh}</td>
               </tr>
             ))}
