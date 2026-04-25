@@ -60,16 +60,16 @@ export function FuelSettingsPage() {
 
       const acc = rawAccounts
         .map((a: any) => ({
-          id: String(a?.Id || a?.id || '').trim(),
-          name: String(a?.Name || a?.name || '').trim(),
-          accountType: String(a?.AccountType || a?.accountType || '').trim(),
+          id: String(a?.qboId || a?.Id || a?.id || '').trim(),
+          name: String(a?.name || a?.Name || '').trim(),
+          accountType: String(a?.accountType || a?.AccountType || '').trim(),
         }))
         .filter((a: QboAccount) => Boolean(a.id && a.name))
       const itm = rawItems
         .map((i: any) => ({
-          id: String(i?.Id || i?.id || '').trim(),
-          name: String(i?.Name || i?.name || '').trim(),
-          itemType: String(i?.Type || i?.type || '').trim(),
+          id: String(i?.qboId || i?.Id || i?.id || '').trim(),
+          name: String(i?.name || i?.Name || '').trim(),
+          itemType: String(i?.type || i?.Type || '').trim(),
         }))
         .filter((i: QboItem) => Boolean(i.id && i.name))
 

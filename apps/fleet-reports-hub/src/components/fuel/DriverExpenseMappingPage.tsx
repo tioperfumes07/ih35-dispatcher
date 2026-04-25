@@ -92,26 +92,26 @@ function defaultRow(expenseType: string): MappingRow {
 }
 
 function toAccount(a: any): QboAccount | null {
-  const id = String(a?.Id || a?.id || '').trim()
-  const name = String(a?.Name || a?.name || '').trim()
-  const accountType = String(a?.AccountType || a?.accountType || '').trim()
+  const id = String(a?.qboId || a?.Id || a?.id || '').trim()
+  const name = String(a?.name || a?.Name || '').trim()
+  const accountType = String(a?.accountType || a?.AccountType || '').trim()
   const active = a?.Active !== false
   if (!id || !name) return null
   return { id, name, accountType, active }
 }
 
 function toItem(i: any): QboItem | null {
-  const id = String(i?.Id || i?.id || '').trim()
-  const name = String(i?.Name || i?.name || '').trim()
-  const itemType = String(i?.Type || i?.type || '').trim()
+  const id = String(i?.qboId || i?.Id || i?.id || '').trim()
+  const name = String(i?.name || i?.Name || '').trim()
+  const itemType = String(i?.type || i?.Type || '').trim()
   const active = i?.Active !== false
   if (!id || !name) return null
   return { id, name, itemType, active }
 }
 
 function toVendor(v: any): QboVendor | null {
-  const id = String(v?.Id || v?.id || '').trim()
-  const name = String(v?.DisplayName || v?.display_name || v?.Name || v?.name || '').trim()
+  const id = String(v?.qboId || v?.Id || v?.id || '').trim()
+  const name = String(v?.name || v?.DisplayName || v?.display_name || v?.Name || '').trim()
   const active = v?.Active !== false
   if (!id || !name) return null
   return { id, name, active }
