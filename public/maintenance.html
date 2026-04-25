@@ -12915,10 +12915,102 @@ body.erp-maintenance.erp-modal-lock {
       qbPickerAttachEl(input, opts);
     }
 
-    function qbPickerApplySelectionToInput(input, label) {
+    function qbPickerBindSelectionIds(input, listId, selected) {
+      if (!input) return;
+      const row = input.closest && input.closest('.wo-line, .maint-cost-line');
+      const pickedId = String((selected && selected.id) || '').trim();
+      if (!pickedId) return;
+
+      if (listId === 'paymentMethodOptions') {
+        const map = {
+          apPaymentMethodSearch: 'apPaymentMethodId',
+          linkedPaymentMethodSearch: 'linkedPaymentMethodId',
+          fuelManualPaymentMethodSearch: 'fuelManualPaymentMethodId'
+        };
+        const hid = document.getElementById(map[input.id] || '');
+        if (hid) hid.value = pickedId;
+        return;
+      }
+
+      if (listId === 'qboBankAccountOptions') {
+        const map = {
+          apBankAccountSearch: 'apBankAccountQboId',
+          linkedBankAccountSearch: 'linkedBankAccountQboId',
+          bpBankSearch: 'bpBankQboId',
+          fuelManualBankSearch: 'fuelManualBankQboId',
+          fuelExpBankSearch: 'fuelExpBankQboId'
+        };
+        const hid = document.getElementById(map[input.id] || '');
+        if (hid) hid.value = pickedId;
+        return;
+      }
+
+      if (listId === 'vendorList' || listId === 'qboVendorOptions') {
+        const map = {
+          apVendorSearch: 'apVendorQboId',
+          bpVendorSearch: 'bpVendorQboId',
+          fuelManualVendorSearch: 'fuelManualVendorQboId',
+          mbVendorSearch: 'mbVendorQboId'
+        };
+        const hid = document.getElementById(map[input.id] || '');
+        if (hid) hid.value = pickedId;
+        return;
+      }
+
+      if (listId === 'qboExpenseCategoryOptions' || listId === 'qboAccountExpenseOptions' || listId === 'qboAccountOptions') {
+        const hid = row && (row.querySelector('.wo-acct-id') || row.querySelector('.maint-line-acct-id'));
+        if (hid) hid.value = pickedId;
+        return;
+      }
+
+      if (listId === 'qboProductServiceOptions' || listId === 'qboItemOptions') {
+        const hid = row && (row.querySelector('.wo-item-id') || row.querySelector('.maint-line-item-id'));
+        if (hid) hid.value = pickedId;
+        try {
+          if (row && row.querySelector('.wo-item-id')) syncWoLineItemSku(row);
+          if (row && row.querySelector('.maint-line-item-id')) syncMaintLineItemSku(row);
+        } catch (_) {}
+        return;
+      }
+
+      if (listId === 'qboCustomerOptions') {
+        const hid = row && (row.querySelector('.wo-cust-id') || row.querySelector('.maint-line-cust-id'));
+        if (hid) {
+          hid.value = pickedId;
+          return;
+        }
+        if (input.id === 'apHeaderDriverSearch') {
+          const h = document.getElementById('apHeaderDriverQboId');
+          if (h) h.value = pickedId;
+        }
+        return;
+      }
+
+      if (listId === 'qboClassOptions') {
+        const hid = row && (row.querySelector('.wo-class-id') || row.querySelector('.maint-line-class-id'));
+        if (hid) hid.value = pickedId;
+        return;
+      }
+
+      if (listId === 'maintDriverOptions') {
+        const map = {
+          maintRecordDriverSearch: 'maintRecordDriverId',
+          accidentDriverSearch: 'accidentDriverId',
+          apErpDriverSearch: 'apErpDriverId',
+          fuelManualDriverSearch: 'fuelManualDriverId'
+        };
+        const hid = document.getElementById(map[input.id] || '');
+        if (hid) hid.value = pickedId;
+        return;
+      }
+    }
+
+    function qbPickerApplySelectionToInput(input, label, selected) {
       if (!input) return;
       input.value = label || '';
-      // Let existing resolve* handlers populate hidden ids.
+      const listId = (input.getAttribute('list') || input.dataset.qbPickerListId || '').trim();
+      qbPickerBindSelectionIds(input, listId, selected || null);
+      // Let existing resolve* handlers populate hidden ids + follow-up UI.
       try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
       try { input.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
       try { input.dispatchEvent(new Event('blur', { bubbles: true })); } catch (_) {}
@@ -12935,40 +13027,48 @@ body.erp-maintenance.erp-modal-lock {
 
       if (listId === 'qboVendorOptions' || listId === 'vendorList') {
         return {
-          rows: () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          rows: () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || ''), id: String(v.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('vendor', typed)
         };
       }
       if (listId === 'qboItemOptions') {
         return {
-          rows: () => cacheItems().map(i => ({ label: i.name || i.qboId, meta: String(i.qboId || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          rows: () => cacheItems().map(i => ({ label: i.name || i.qboId, meta: String(i.qboId || ''), id: String(i.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('item', typed)
         };
       }
       if (listId === 'qboProductServiceOptions') {
         return {
-          rows: () =>
-            cacheItemsForProductServicePicker().map(i => ({
+          rows: () => {
+            const rows = cacheItemsForProductServicePicker();
+            const src = rows.length ? rows : cacheItems();
+            return src.map(i => ({
               label: i.name || i.qboId,
-              meta: [i.type, i.sku].filter(Boolean).join(' · ') || String(i.qboId || '')
-            })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+              meta: [i.type, i.sku].filter(Boolean).join(' · ') || String(i.qboId || ''),
+              id: String(i.qboId || '')
+            }));
+          },
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('item', typed)
         };
       }
       if (listId === 'qboAccountOptions') {
         return {
-          rows: () => cacheAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          rows: () => cacheAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || ''), id: String(a.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('account', typed)
         };
       }
       if (listId === 'qboAccountExpenseOptions' || listId === 'qboExpenseCategoryOptions') {
         return {
-          rows: () => cacheExpenseCategoryAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          rows: () => {
+            const expenseRows = cacheExpenseCategoryAccounts();
+            const src = expenseRows.length ? expenseRows : cacheAccounts();
+            return src.map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || ''), id: String(a.qboId || '') }));
+          },
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('account', typed)
         };
       }
@@ -12983,9 +13083,9 @@ body.erp-maintenance.erp-modal-lock {
               if (type && label && type.toLowerCase() === String(label).toLowerCase()) {
                 meta = id.length > 10 ? `…${id.slice(-8)}` : id;
               }
-              return { label, meta };
+              return { label, meta, id: id };
             }),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('account', typed) // create Bank/CreditCard account via same form
         };
       }
@@ -12996,7 +13096,7 @@ body.erp-maintenance.erp-modal-lock {
               label: String(n || ''),
               meta: 'Service'
             })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
           onAddNew: typed => qbPickerAddNewRoute('service', typed)
         };
       }
@@ -13005,9 +13105,10 @@ body.erp-maintenance.erp-modal-lock {
           rows: () =>
             cacheQboCustomers().map(c => ({
               label: c.name || c.qboId,
-              meta: String(c.qboId || '')
+              meta: String(c.qboId || ''),
+              id: String(c.qboId || '')
             })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label)
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
         };
       }
       if (listId === 'qboClassOptions') {
@@ -13015,15 +13116,48 @@ body.erp-maintenance.erp-modal-lock {
           rows: () =>
             cacheQboClasses().map(c => ({
               label: c.name || c.qboId,
-              meta: String(c.qboId || '')
+              meta: String(c.qboId || ''),
+              id: String(c.qboId || '')
             })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label)
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
         };
       }
       if (listId === 'paymentMethodOptions') {
         return {
-          rows: () => paymentMethods().map(p => ({ label: p.name || p.id, meta: String(p.qboType || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label)
+          rows: () => paymentMethods().map(p => ({ label: p.name || p.id, meta: String(p.qboType || ''), id: String(p.id || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
+        };
+      }
+      if (listId === 'maintDriverOptions') {
+        return {
+          rows: () =>
+            (driverProfiles || []).map(d => ({
+              label: String(d.name || '').trim(),
+              meta: String(d.id || '').trim(),
+              id: String(d.id || '').trim()
+            })).filter(r => r.label),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
+        };
+      }
+      if (listId === 'serviceTypeList') {
+        return {
+          rows: () =>
+            maintEffectiveServiceCatalog().map(n => ({
+              label: String(n || ''),
+              meta: 'Service type'
+            })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          onAddNew: typed => qbPickerAddNewRoute('service', typed)
+        };
+      }
+      if (listId === 'partsOptions') {
+        return {
+          rows: () =>
+            (catalogPartNames || []).map(n => ({
+              label: String(n || ''),
+              meta: 'Parts catalog'
+            })).filter(r => r.label),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
         };
       }
       return null;
