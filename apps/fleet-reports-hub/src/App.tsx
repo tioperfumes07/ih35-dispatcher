@@ -934,6 +934,14 @@ export default function App() {
               <p className="reports-page__subtitle">
                 {SECTION_DESCRIPTIONS.reports}
               </p>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <button type="button" className="btn sm" onClick={() => { window.location.href = '/maintenance.html' }}>
+                  Maintenance view
+                </button>
+                <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
+                  Fleet reports view
+                </button>
+              </div>
               <nav
                 className="tabs reports-tabs"
                 role="tablist"
@@ -966,6 +974,14 @@ export default function App() {
                   ? `${SECTION_DESCRIPTIONS.home} ${homeKpis.lastKpiRefreshSub}.`
                   : SECTION_DESCRIPTIONS[activeSection]}
               </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="btn sm" onClick={() => { window.location.href = '/maintenance.html' }}>
+                  Maintenance view
+                </button>
+                <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
+                  Fleet reports view
+                </button>
+              </div>
             </header>
           ) : null}
 

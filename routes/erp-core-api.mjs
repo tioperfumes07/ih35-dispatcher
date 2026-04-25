@@ -824,6 +824,18 @@ export function mountErpCoreApi(app, opts = {}) {
           logError('[board] samsara call failed', e);
         }
       }
+      if (!vehicles.length && token) {
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const payload = await getVehicles(token);
+          const { rows } = summarizeSamsaraVehiclesPayload(payload);
+          const statsById = await fetchSamsaraVehicleStatsMap(token, rows, logError, 'board-retry');
+          vehicles = rows.map((row) => mapSamsaraVehicleRow(row, statsById)).filter(Boolean);
+          console.log('[board] samsara retry:', vehicles.length, 'vehicles');
+        } catch (_e) {
+          // Keep fallback behavior below.
+        }
+      }
       if (!vehicles.length) {
         const erp = readFullErpJson();
         vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];

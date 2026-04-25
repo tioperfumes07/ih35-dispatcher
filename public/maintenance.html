@@ -715,6 +715,8 @@
             </div>
           </div>
           <div class="erp-topbar__actions print-hide-actions">
+            <button type="button" title="Open maintenance view" onclick="openSectionByName('maintenance')">Maintenance view</button>
+            <button type="button" title="Open fleet reports view" onclick="window.location.href='/fleet-reports?section=reports'">Fleet reports view</button>
             <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>
             <button type="button" title="Verify QuickBooks OAuth and API reachability" onclick="testQuickBooks()">Test QuickBooks connection</button>
             <button type="button" title="Reload vendors, items, and accounts from QuickBooks" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
@@ -11749,11 +11751,9 @@
         const startupFailures = [];
         if (!dashRes || dashRes.ok !== true) startupFailures.push('/api/maintenance/dashboard');
         if (!healthRes || healthRes.ok !== true) startupFailures.push('/api/health');
-        if (!qboStatusRes || qboStatusRes.ok !== true) startupFailures.push('/api/qbo/status');
-        if (startupFailures.length) {
+                if (startupFailures.length) {
           erpShowStartupConnectionIssue(startupFailures);
           renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
-          return;
         }
 
         setTmsUiEnabled(!!dbRes);
