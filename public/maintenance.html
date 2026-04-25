@@ -475,10 +475,10 @@
       </button>
 
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="fuel" title="Fuel planner — routes, stops, fuel ledger" onclick="openSection('fuel', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">⛽</span><span class="erp-icon-nav__lbl">Fuel planner</span>
+        <span class="erp-icon-nav__glyph" aria-hidden="true">⛽</span><span class="erp-icon-nav__lbl">Fuel</span>
       </button>
       <button type="button" class="erp-icon-nav__btn nav-btn" data-section="accounting" title="Accounting — expenses, bills, QuickBooks" onclick="openSection('accounting', this)">
-        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Accounting</span>
+        <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Acctg</span>
         <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks sync needs attention">0</span>
       </button>
       <button
@@ -813,7 +813,7 @@
             <div id="safetyMapMeta" class="mini-note">Loading map…</div>
           </div>
           <div class="panel-body" style="padding:10px">
-            <div id="safetyLiveMap" style="height:420px;width:100%;border:1px solid var(--color-border);border-radius:8px"></div>
+            <div id="safetyLiveMap" style="height:420px;width:100%;display:block;border:1px solid var(--color-border);border-radius:8px"></div>
           </div>
         </div>
         <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
@@ -1078,7 +1078,7 @@
               
             </div>
             <div class="maint-kpi-cards">
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets">0</div></div>
+              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets" class="kpi-tracked-assets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
@@ -5806,6 +5806,7 @@
     let __hydratingMaintenanceRecord = false;
     let __syncMaintLinkAcctRaf = null;
     let __partsLookupFetchTimer = null;
+    let __workspaceKpiRetriedOnce = false;
     let safetyLiveMap = null;
     let safetyLiveMapLayer = null;
     /** Service catalog option names (width hints + legacy helpers). */
@@ -9525,7 +9526,12 @@
       }
       if (name === 'safety') {
         requestAnimationFrame(() => renderSafetyLiveMap());
-        setTimeout(() => { if (window.safetyLiveMap) window.safetyLiveMap.invalidateSize(); }, 200);
+        setTimeout(() => {
+          if (window.safetyLiveMap) {
+            window.safetyLiveMap.invalidateSize();
+            window.safetyLiveMap.setView([29.7604, -95.3698], 8);
+          }
+        }, 300);
       }
       if (name === 'reports') {
         loadReportsData();
@@ -9715,7 +9721,7 @@
       const host = document.getElementById('safetyLiveMap');
       if (!host || typeof L === 'undefined') return false;
       if (!safetyLiveMap) {
-        safetyLiveMap = L.map(host, { zoomControl: true }).setView([31.7619, -106.485], 5);
+        safetyLiveMap = L.map(host, { zoomControl: true }).setView([29.4241, -98.4936], 7);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '© OpenStreetMap contributors',
@@ -11188,7 +11194,7 @@
         await hydrateVendorListDatalist();
         bootQbPickers();
         renderQboMaster();
-        renderDashboardHome();
+        loadWorkspaceKpis();
         if (activeSection === 'reports') loadReportsData();
       } catch (e) {
         erpNotify('QBO refresh failed: ' + e.message, 'error');
@@ -11816,7 +11822,7 @@
         fillDataLists();
         initFuelExpenseTableDelegation();
         bootQbPickers();
-        renderDashboardHome();
+        loadWorkspaceKpis();
         renderMaintenanceCategoryChips();
         renderMaintenanceUnitList();
         renderRetiredAssetsPanel();
@@ -15187,6 +15193,10 @@
       return set;
     }
 
+    function loadWorkspaceKpis() {
+      renderDashboardHome();
+    }
+
     function renderDashboardHome() {
       const assigned = assignedVehicleNames();
       const past = dashboard.filter(x => x.status === 'past due').length;
@@ -15220,6 +15230,17 @@
       if (mAs) mAs.textContent = String(assigned.size);
       if (mPd) mPd.textContent = String(past);
       if (mQv) mQv.textContent = String(nVendors);
+
+      if (vehicles.length > 0 || nVendors > 0) {
+        __workspaceKpiRetriedOnce = false;
+      } else if (!__workspaceKpiRetriedOnce) {
+        __workspaceKpiRetriedOnce = true;
+        setTimeout(() => {
+          if (document.querySelector('.kpi-tracked-assets')?.textContent === '0') {
+            loadWorkspaceKpis();
+          }
+        }, 3000);
+      }
 
       const maintSum = document.getElementById('maintDashSummaryLine');
       if (maintSum) {
@@ -25014,6 +25035,11 @@
     } catch (e) {
       console.error('initMaintNotesNumbered', e);
     }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => loadWorkspaceKpis(), { once: true });
+    } else {
+      loadWorkspaceKpis();
+    }
     loadAll();
     setInterval(loadAll, AUTO_REFRESH_MS);
     if (typeof erpInitResizableModals === 'function') {
@@ -25123,6 +25149,42 @@
       window.erpBindUniversalSearchSuggestions = erpBindUniversalSearchSuggestions;
     })();
   </script>
+
+
+  <style id="erpSidebarNavFix2026">
+    #erpIconNav.erp-icon-nav {
+      width: 72px !important;
+      min-width: 72px !important;
+      max-width: 72px !important;
+    }
+    #erpIconNav .erp-icon-nav__btn,
+    #erpIconNav .erp-icon-nav__link {
+      min-height: 52px !important;
+      padding: 8px 4px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 0 !important;
+    }
+    #erpIconNav .erp-icon-nav__glyph {
+      font-size: 18px !important;
+      line-height: 1 !important;
+    }
+    #erpIconNav .erp-icon-nav__lbl {
+      font-size: 10px !important;
+      margin-top: 3px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 62px !important;
+      line-height: 1.1 !important;
+    }
+    #erpIconNav .erp-icon-nav__btn.active {
+      background: rgba(255,255,255,0.08) !important;
+      border-left: 3px solid var(--color-border-focus, #3b82f6) !important;
+    }
+  </style>
 
 </body>
 </html>

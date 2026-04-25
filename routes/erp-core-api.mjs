@@ -1034,46 +1034,86 @@ export function mountErpCoreApi(app, opts = {}) {
       let inserted = 0;
       let updated = 0;
       let errors = 0;
+
+      // Ensure unit_number can be used for UPSERT conflict target.
+      try {
+        await dbQuery('ALTER TABLE fleet_assets ADD CONSTRAINT fleet_assets_unit_number_key UNIQUE (unit_number)');
+      } catch (_) {
+        /* already exists or duplicates; fallback path below handles update-by-select */
+      }
+
       for (const r of rows) {
         try {
           const unit = String(r?.unit_number || '').trim();
           if (!unit) continue;
-          const sid = String(r?.samsara_id || `local-${unit.toUpperCase()}`).trim();
-          const existing = await dbQuery('SELECT samsara_id FROM fleet_assets WHERE lower(unit_number)=lower($1) LIMIT 1', [unit]);
-          const useId = String(existing.rows?.[0]?.samsara_id || sid).trim();
-          await dbQuery(
-            `INSERT INTO fleet_assets (
-              samsara_id, unit_number, asset_type, status,
-              vin_override, license_plate_override, year_override,
-              make_override, model_override, notes, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
-            ON CONFLICT (samsara_id)
-            DO UPDATE SET
-              unit_number = EXCLUDED.unit_number,
-              asset_type = EXCLUDED.asset_type,
-              status = EXCLUDED.status,
-              vin_override = EXCLUDED.vin_override,
-              license_plate_override = EXCLUDED.license_plate_override,
-              year_override = EXCLUDED.year_override,
-              make_override = EXCLUDED.make_override,
-              model_override = EXCLUDED.model_override,
-              notes = EXCLUDED.notes,
-              updated_at = now()`,
-            [
-              useId,
-              unit,
-              String(r?.asset_type || normalizeFleetAssetType(unit, '')).trim() || 'Trailer',
-              String(r?.status || 'Active').trim() || 'Active',
-              String(r?.vin || '').trim() || null,
-              String(r?.license_plate || '').trim() || null,
-              Number.isFinite(Number(r?.year)) ? Number(r?.year) : null,
-              String(r?.make || '').trim() || null,
-              String(r?.model || '').trim() || null,
-              String(r?.notes || '').trim() || null,
-            ]
-          );
-          if (existing.rows?.length) updated++;
-          else inserted++;
+          const cleanUnit = unit.toUpperCase();
+          const payload = [
+            cleanUnit,
+            String(r?.asset_type || normalizeFleetAssetType(cleanUnit, '')).trim() || 'Trailer',
+            String(r?.status || 'Active').trim() || 'Active',
+            String(r?.vin || '').trim() || null,
+            String(r?.license_plate || '').trim() || null,
+            Number.isFinite(Number(r?.year)) ? Number(r?.year) : null,
+            String(r?.make || '').trim() || null,
+            String(r?.model || '').trim() || null,
+            String(r?.notes || '').trim() || null,
+          ];
+
+          try {
+            const { rows: upRows } = await dbQuery(
+              `INSERT INTO fleet_assets (
+                samsara_id, unit_number, asset_type, status,
+                vin_override, license_plate_override, year_override,
+                make_override, model_override, notes, updated_at
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+              ON CONFLICT (unit_number)
+              DO UPDATE SET
+                asset_type = EXCLUDED.asset_type,
+                status = EXCLUDED.status,
+                vin_override = EXCLUDED.vin_override,
+                license_plate_override = EXCLUDED.license_plate_override,
+                year_override = EXCLUDED.year_override,
+                make_override = EXCLUDED.make_override,
+                model_override = EXCLUDED.model_override,
+                notes = EXCLUDED.notes,
+                updated_at = now()
+              RETURNING (xmax = 0) AS inserted`,
+              [String(r?.samsara_id || `local-${cleanUnit}`).trim(), ...payload]
+            );
+            const wasInserted = !!upRows?.[0]?.inserted;
+            if (wasInserted) inserted++;
+            else updated++;
+          } catch {
+            // Fallback when UNIQUE(unit_number) is unavailable in existing DBs.
+            const existing = await dbQuery('SELECT samsara_id FROM fleet_assets WHERE lower(unit_number)=lower($1) LIMIT 1', [cleanUnit]);
+            if (existing.rows?.length) {
+              await dbQuery(
+                `UPDATE fleet_assets
+                   SET asset_type=$2,
+                       status=$3,
+                       vin_override=$4,
+                       license_plate_override=$5,
+                       year_override=$6,
+                       make_override=$7,
+                       model_override=$8,
+                       notes=$9,
+                       updated_at=now()
+                 WHERE lower(unit_number)=lower($1)`,
+                [cleanUnit, ...payload.slice(1)]
+              );
+              updated++;
+            } else {
+              await dbQuery(
+                `INSERT INTO fleet_assets (
+                  samsara_id, unit_number, asset_type, status,
+                  vin_override, license_plate_override, year_override,
+                  make_override, model_override, notes, updated_at
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())`,
+                [String(r?.samsara_id || `local-${cleanUnit}`).trim(), ...payload]
+              );
+              inserted++;
+            }
+          }
         } catch {
           errors++;
         }
@@ -1084,6 +1124,7 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
+
 
   app.get('/api/drivers/profiles', async (_req, res) => {
     try {

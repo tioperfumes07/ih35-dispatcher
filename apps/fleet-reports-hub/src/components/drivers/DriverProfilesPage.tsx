@@ -5,7 +5,25 @@ type Props = {
   onViewSchedule: (unitNumber: string) => void
 }
 
-const STATUSES: DriverProfile['status'][] = ['Active', 'On Vacation', 'Sick', 'Terminated']
+type DriverTableRow = {
+  id: number
+  full_name: string | null
+  unit_number: string
+  team: string | null
+  manager: string | null
+  cdl_number: string | null
+  cdl_expiry: string | null
+  medical_expiry: string | null
+  phone: string | null
+  email: string | null
+  status: string
+  notes: string | null
+  placeholder?: boolean
+  make?: string | null
+  model?: string | null
+}
+
+const STATUSES: string[] = ['Active', 'On Vacation', 'Sick', 'Terminated', 'Vacante']
 
 function daysUntil(iso: string | null | undefined): number {
   if (!iso) return Number.POSITIVE_INFINITY
@@ -14,7 +32,7 @@ function daysUntil(iso: string | null | undefined): number {
   return Math.floor((t - Date.now()) / 86400000)
 }
 
-function emptyDraft(): Partial<DriverProfile> {
+function emptyDraft(): Partial<DriverTableRow> {
   return {
     full_name: '',
     unit_number: '',
@@ -30,20 +48,92 @@ function emptyDraft(): Partial<DriverProfile> {
   }
 }
 
+function fallbackUnitsRows(): DriverTableRow[] {
+  return Array.from({ length: 58 }, (_, i) => ({
+    id: i + 1,
+    unit_number: `T${120 + i}`,
+    full_name: 'Vacante',
+    team: '',
+    manager: '',
+    cdl_number: '',
+    cdl_expiry: null,
+    medical_expiry: null,
+    phone: '',
+    email: '',
+    status: 'Vacante',
+    notes: '',
+    placeholder: true,
+  }))
+}
+
+async function fetchFleetUnitsRows(): Promise<DriverTableRow[]> {
+  try {
+    const r = await fetch('/api/fleet/assets')
+    if (!r.ok) return fallbackUnitsRows()
+    const data = await r.json()
+    const assets = Array.isArray(data?.assets) ? data.assets : []
+    const trucks = assets.filter((a: Record<string, unknown>) => /^T\d{3}$/i.test(String(a.unit_number || '')))
+    if (!trucks.length) return fallbackUnitsRows()
+    return trucks
+      .map((a: Record<string, unknown>, idx: number) => ({
+        id: idx + 1,
+        unit_number: String(a.unit_number || '').trim(),
+        full_name: 'Vacante',
+        team: '',
+        manager: '',
+        cdl_number: '',
+        cdl_expiry: null,
+        medical_expiry: null,
+        phone: '',
+        email: '',
+        status: 'Vacante',
+        notes: '',
+        placeholder: true,
+        make: String(a.make || '').trim() || null,
+        model: String(a.model || '').trim() || null,
+      }))
+      .sort((a: DriverTableRow, b: DriverTableRow) => a.unit_number.localeCompare(b.unit_number))
+  } catch {
+    return fallbackUnitsRows()
+  }
+}
+
 export function DriverProfilesPage({ onViewSchedule }: Props) {
-  const [rows, setRows] = useState<DriverProfile[]>([])
+  const [rows, setRows] = useState<DriverTableRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [draft, setDraft] = useState<Partial<DriverProfile> | null>(null)
+  const [draft, setDraft] = useState<Partial<DriverTableRow> | null>(null)
 
   const load = async () => {
     setLoading(true)
     setError(null)
     try {
       const data = await fetchDriverProfiles()
-      setRows(Array.isArray(data.drivers) ? data.drivers : [])
+      const apiRows = Array.isArray(data.drivers) ? data.drivers : []
+      if (apiRows.length) {
+        setRows(
+          apiRows.map((d: DriverProfile) => ({
+            id: d.id,
+            full_name: d.full_name,
+            unit_number: d.unit_number,
+            team: d.team,
+            manager: d.manager,
+            cdl_number: d.cdl_number,
+            cdl_expiry: d.cdl_expiry,
+            medical_expiry: d.medical_expiry,
+            phone: d.phone,
+            email: d.email,
+            status: d.status,
+            notes: d.notes,
+            placeholder: false,
+          })),
+        )
+      } else {
+        setRows(await fetchFleetUnitsRows())
+      }
     } catch (e) {
+      setRows(await fetchFleetUnitsRows())
       setError(String((e as Error).message || e))
     } finally {
       setLoading(false)
@@ -57,9 +147,7 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return rows
-    return rows.filter((r) =>
-      `${r.unit_number || ''} ${r.full_name || ''}`.toLowerCase().includes(q),
-    )
+    return rows.filter((r) => `${r.unit_number || ''} ${r.full_name || ''}`.toLowerCase().includes(q))
   }, [rows, search])
 
   const save = async () => {
@@ -79,7 +167,7 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
         medical_expiry: String(draft.medical_expiry || '').trim() || null,
         phone: String(draft.phone || '').trim() || null,
         email: String(draft.email || '').trim() || null,
-        status: (draft.status as DriverProfile['status']) || 'Active',
+        status: (String(draft.status || 'Active') as DriverProfile['status']) || 'Active',
         notes: String(draft.notes || '').trim() || null,
       })
       setDraft(null)
@@ -122,12 +210,13 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
               const warning = !critical && cdlDays < 60
               return (
                 <tr
-                  key={r.id}
+                  key={`${r.unit_number}-${r.id}`}
                   style={{
+                    opacity: r.placeholder ? 0.72 : 1,
                     background: critical ? 'rgba(239,68,68,.12)' : warning ? 'rgba(234,179,8,.12)' : undefined,
                   }}
                 >
-                  <td>{r.unit_number || '—'}</td>
+                  <td title={r.make || r.model ? `${r.make || ''} ${r.model || ''}`.trim() : ''}>{r.unit_number || '—'}</td>
                   <td>
                     <button type="button" className="btn sm ghost" onClick={() => setDraft({ ...r })}>{r.full_name || 'Vacante'}</button>
                   </td>
@@ -181,7 +270,7 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
                 <span className="muted">Status</span>
                 <select
                   value={String(draft.status || 'Active')}
-                  onChange={(e) => setDraft((prev) => ({ ...(prev || {}), status: e.target.value as DriverProfile['status'] }))}
+                  onChange={(e) => setDraft((prev) => ({ ...(prev || {}), status: e.target.value }))}
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>{s}</option>

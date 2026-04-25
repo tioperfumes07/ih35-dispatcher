@@ -43,35 +43,42 @@ function normalizeRow(raw: Record<string, unknown>): TrailerImportRow | null {
 export function ImportTrailersPanel({ onCloseList }: { onCloseList: () => void }) {
   const [rows, setRows] = useState<TrailerImportRow[]>([])
   const [message, setMessage] = useState<string>('Upload .xlsx or .csv to preview trailer rows before import.')
+  const [messageTone, setMessageTone] = useState<'neutral' | 'success' | 'error'>('neutral')
   const [loading, setLoading] = useState(false)
 
   const canImport = rows.length > 0 && !loading
 
   const parseFile = async (file: File) => {
     setMessage('Reading file...')
+    setMessageTone('neutral')
     const buf = await file.arrayBuffer()
     const wb = XLSX.read(buf, { type: 'array' })
     const ws = wb.Sheets[wb.SheetNames[0] || '']
     if (!ws) {
       setRows([])
       setMessage('No worksheet found in file.')
+      setMessageTone('error')
       return
     }
     const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
     const next = raw.map(normalizeRow).filter((r): r is TrailerImportRow => !!r)
     setRows(next)
     setMessage(`Loaded ${next.length} rows. Expected columns: ${EXPECTED_COLUMNS.join(', ')}`)
+    setMessageTone('neutral')
   }
 
   const doImport = async () => {
     if (!canImport) return
     setLoading(true)
     setMessage('Importing rows...')
+    setMessageTone('neutral')
     try {
       const res = await importFleetAssetsBulk(rows)
-      setMessage(`Import complete: ${res.inserted} inserted, ${res.updated} updated, ${res.errors} errors (total ${res.total}).`)
+      setMessage(`✅ Import complete: ${res.inserted} inserted, ${res.updated} updated, ${res.errors} errors`)
+      setMessageTone('success')
     } catch (e) {
       setMessage(`Import failed: ${String((e as Error).message || e)}`)
+      setMessageTone('error')
     } finally {
       setLoading(false)
     }
@@ -98,7 +105,16 @@ export function ImportTrailersPanel({ onCloseList }: { onCloseList: () => void }
           {loading ? 'Importing...' : 'Import'}
         </button>
       </div>
-      <p className="muted" style={{ marginTop: 0 }}>{message}</p>
+      <p
+        className="muted"
+        style={{
+          marginTop: 0,
+          color: messageTone === 'success' ? '#16a34a' : messageTone === 'error' ? '#dc2626' : undefined,
+          fontWeight: messageTone === 'success' ? 600 : 400,
+        }}
+      >
+        {message}
+      </p>
       {sample.length ? (
         <div className="table-wrap" style={{ maxHeight: '58vh' }}>
           <table>
