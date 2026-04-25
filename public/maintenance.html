@@ -6114,6 +6114,9 @@ body.erp-maintenance.erp-modal-lock {
     let __syncMaintLinkAcctRaf = null;
     let __partsLookupFetchTimer = null;
     let __workspaceKpiRetriedOnce = false;
+    let __loadAllInFlight = false;
+    let __lastLoadAllAt = 0;
+    let __autoRefreshTimer = null;
     let safetyLiveMap = null;
     let safetyLiveMapLayer = null;
     /** Service catalog option names (width hints + legacy helpers). */
@@ -12042,7 +12045,76 @@ body.erp-maintenance.erp-modal-lock {
       }
     }
 
-    async function loadAll() {
+    function erpMaintenanceUserBusy() {
+      if (document.hidden) return true;
+      if (typeof erpAnyModalOpen === 'function' && erpAnyModalOpen()) return true;
+      const ae = document.activeElement;
+      if (!ae || typeof ae.closest !== 'function') return false;
+      if (!ae.closest('#section-maintenance')) return false;
+      const tag = String(ae.tagName || '').toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || ae.isContentEditable;
+    }
+
+    function erpUpdateFleetRefreshMeta(dashRes, boardRes) {
+      const fleetAt = dashRes && dashRes.refreshedAt
+        ? new Date(dashRes.refreshedAt).toLocaleString()
+        : new Date().toLocaleString();
+      const lastUpdated = document.getElementById('sidebarLastUpdated');
+      if (lastUpdated) {
+        lastUpdated.textContent =
+          'Samsara live data: ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
+      }
+      const nVeh = Array.isArray(boardRes && boardRes.vehicles) ? boardRes.vehicles.length : 0;
+      const brAt = boardRes && boardRes.refreshedAt ? new Date(boardRes.refreshedAt).toLocaleString() : '—';
+      const sf = document.getElementById('sidebarFleetStatus');
+      if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
+    }
+
+    async function refreshMaintenanceHomeLite() {
+      const [dashRes, boardRes, sqRes] = await Promise.all([
+        j('/api/maintenance/dashboard').catch(() => ({ ok: false, vehicles: [], dashboard: [], tireAlerts: [] })),
+        j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
+        j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] }))
+      ]);
+
+      if (dashRes && dashRes.ok) {
+        const veh = Array.isArray(dashRes.vehicles) ? dashRes.vehicles : [];
+        if (veh.length) vehicles = veh.sort(byUnitOrder);
+        dashboard = Array.isArray(dashRes.dashboard) ? dashRes.dashboard : dashboard;
+        tireAlerts = Array.isArray(dashRes.tireAlerts) ? dashRes.tireAlerts : tireAlerts;
+      }
+      if (boardRes && typeof boardRes === 'object') board = boardRes;
+      if (sqRes && sqRes.ok && Array.isArray(sqRes.queue)) shopQueueCache = sqRes.queue;
+
+      loadWorkspaceKpis();
+      refreshFleetShopOverviewPanels();
+      erpUpdateFleetRefreshMeta(dashRes, boardRes || board);
+    }
+
+    async function erpAutoRefreshTick() {
+      if (__loadAllInFlight) return;
+      if (activeSection === 'maintenance') {
+        if (erpMaintenanceUserBusy()) return;
+        try {
+          await refreshMaintenanceHomeLite();
+        } catch (_) {
+          await loadAll({ source: 'auto-fallback' });
+        }
+        return;
+      }
+      await loadAll({ source: 'auto' });
+    }
+
+    function startAutoRefreshLoop() {
+      if (__autoRefreshTimer) window.clearInterval(__autoRefreshTimer);
+      __autoRefreshTimer = window.setInterval(() => {
+        void erpAutoRefreshTick();
+      }, AUTO_REFRESH_MS);
+    }
+
+    async function loadAll(opts) {
+      if (__loadAllInFlight) return;
+      __loadAllInFlight = true;
       const bar = document.getElementById('authBanner');
       try {
         const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes] =
@@ -12209,15 +12281,7 @@ body.erp-maintenance.erp-modal-lock {
           refreshQboMaster().catch(() => {});
         }
 
-        const fleetAt = dashRes.refreshedAt
-          ? new Date(dashRes.refreshedAt).toLocaleString()
-          : new Date().toLocaleString();
-        document.getElementById('sidebarLastUpdated').textContent =
-          'Samsara live data: ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
-        const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
-        const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
-        const sf = document.getElementById('sidebarFleetStatus');
-        if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
+        erpUpdateFleetRefreshMeta(dashRes, board);
         requestAnimationFrame(() => {
           uploadCenterBindUploadUiOnce();
           uploadCenterPaintConnectionCards();
@@ -12247,6 +12311,9 @@ body.erp-maintenance.erp-modal-lock {
         } catch (e3) {
           console.error('fillDataLists after load failure', e3);
         }
+      } finally {
+        __loadAllInFlight = false;
+        __lastLoadAllAt = Date.now();
       }
     }
 
@@ -25701,7 +25768,7 @@ body.erp-maintenance.erp-modal-lock {
         if(typeof loadWorkspaceKpis==='function') loadWorkspaceKpis();
       }
     }, 3000);
-    setInterval(loadAll, AUTO_REFRESH_MS);
+    startAutoRefreshLoop();
     if (typeof erpInitResizableModals === 'function') {
       try {
         erpInitResizableModals();
