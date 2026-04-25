@@ -187,7 +187,7 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
         <table>
           <thead>
             <tr>
-              <th>Unit</th><th>Full Name</th><th>Team</th><th>Manager</th><th>CDL #</th><th>CDL Expiry</th><th>Medical Expiry</th><th>Phone</th><th>Status</th><th>Schedule</th>
+              <th>Unit</th><th>Full Name</th><th>Team</th><th>Manager</th><th>CDL #</th><th>CDL Expiry</th><th>Medical Expiry</th><th>Phone</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -195,21 +195,19 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
               const cdlDays = daysUntil(r.cdl_expiry)
               const medDays = daysUntil(r.medical_expiry)
               const critical = cdlDays < 30 || medDays < 30
-              const warning = !critical && cdlDays < 60
+              const warning = !critical && (cdlDays < 60 || medDays < 60)
               return (
                 <tr
                   key={`${r.unit_number}-${r.id}`}
                   style={{
-                    opacity: r.placeholder ? 0.72 : 1,
+                    opacity: r.placeholder ? 0.5 : 1,
                     fontStyle: r.placeholder ? 'italic' : 'normal',
                     color: r.placeholder ? 'var(--color-text-label)' : undefined,
                     background: critical ? 'rgba(239,68,68,.12)' : warning ? 'rgba(234,179,8,.12)' : undefined,
                   }}
                 >
                   <td title={r.make || r.model ? `${r.make || ''} ${r.model || ''}`.trim() : ''}>{r.unit_number || '—'}</td>
-                  <td>
-                    <button type="button" className="btn sm ghost" onClick={() => setDraft({ ...r })}>{r.full_name || 'Vacante'}</button>
-                  </td>
+                  <td>{r.full_name || 'Vacante'}</td>
                   <td>{r.team || '—'}</td>
                   <td>{r.manager || '—'}</td>
                   <td>{r.cdl_number || '—'}</td>
@@ -217,7 +215,12 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
                   <td>{r.medical_expiry || '—'}</td>
                   <td>{r.phone || '—'}</td>
                   <td>{r.status || '—'}</td>
-                  <td><button type="button" className="btn sm" onClick={() => onViewSchedule(r.unit_number)}>View Schedule</button></td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <button type="button" className="btn sm ghost" onClick={() => setDraft({ ...r })}>Edit</button>
+                      <button type="button" className="btn sm" onClick={() => onViewSchedule(r.unit_number)}>Schedule</button>
+                    </div>
+                  </td>
                 </tr>
               )
             })}

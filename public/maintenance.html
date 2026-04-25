@@ -1107,6 +1107,9 @@
               <span class="maint-fleet-inline__label">Fleet</span>
               <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:nowrap;gap:6px;align-items:center"></span>
             </div>
+            <div id="fleetByTypeContainer" class="maint-section-card" style="margin-top:8px;overflow:auto">
+              <p style="padding:16px;color:#888;margin:0">Loading fleet...</p>
+            </div>
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
             <button type="button" class="maint-nav-tab" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
@@ -1895,6 +1898,7 @@
                 <span style="min-width:0;flex:1 1 200px">Stack updates on <strong>Refresh alerts</strong>, window, search, or severity — same API family as Tracking shop integrity.</span>
                 
               </div>
+              <div id="maintIntegritySummary" class="mini-note" style="margin:0 0 10px">Loading integrity summary…</div>
               <div id="maintSecurityAlertsBody" class="mini-note">Loading…</div>
               </div>
               <div id="maintRmSubpaneDue" class="hidden">
@@ -6640,6 +6644,30 @@
       }
     }
 
+    async function loadMaintIntegrityDashboardSummary() {
+      const summary = document.getElementById('maintIntegritySummary');
+      const body = document.getElementById('maintSecurityAlertsBody');
+      if (summary) summary.textContent = 'Loading integrity summary…';
+      try {
+        const d = await j('/api/integrity/dashboard');
+        const kpi = d?.kpi || {};
+        if (summary) {
+          summary.innerHTML =
+            '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+              '<span class="status status-current">Active alerts: ' + escapeHtml(String(kpi.active ?? 0)) + '</span>' +
+              '<span class="status status-error">Red: ' + escapeHtml(String(kpi.red ?? 0)) + '</span>' +
+              '<span class="status status-soon">Amber: ' + escapeHtml(String(kpi.amber ?? 0)) + '</span>' +
+            '</div>';
+        }
+        const alerts = Array.isArray(d?.alerts) ? d.alerts : [];
+        if (!alerts.length && body) {
+          body.innerHTML = '<p class="mini-note" style="margin:0;padding:8px 0">No integrity alerts — all checks passing.</p>';
+        }
+      } catch (e) {
+        if (summary) summary.textContent = 'Integrity summary unavailable.';
+      }
+    }
+
     function maintRmSwitchSubtab(which, _btn) {
       document.querySelectorAll('.maint-rm-subtab').forEach(b => {
         b.classList.toggle('active', b.getAttribute('data-maint-rm-sub') === which);
@@ -6648,6 +6676,7 @@
       const du = document.getElementById('maintRmSubpaneDue');
       if (al) al.classList.toggle('hidden', which !== 'alerts');
       if (du) du.classList.toggle('hidden', which !== 'due');
+      if (which === 'alerts') loadMaintIntegrityDashboardSummary();
       if (which === 'due') loadMaintRmDueSchedule().catch(() => {});
     }
 
@@ -7726,20 +7755,24 @@
     }
 
     async function hydrateVendorListDatalist() {
+      const dl = document.getElementById('vendorList');
+      if (!dl) return;
       try {
-        const data = await fetch('/api/qbo/master').then((r) => r.json());
-        const vendors = Array.isArray(data.vendors) ? data.vendors : [];
-        const dl = document.getElementById('vendorList');
-        if (!dl) return;
+        let data = await fetch('/api/qbo/master').then((r) => r.json());
+        let vendors = Array.isArray(data?.vendors) ? data.vendors : [];
+        if (!vendors.length) {
+          const fallback = await fetch('/api/qbo/vendors').then((r) => r.json()).catch(() => ({}));
+          vendors = Array.isArray(fallback?.vendors) ? fallback.vendors : [];
+        }
         dl.innerHTML = '';
         vendors.forEach((v) => {
+          const name = typeof v === 'string' ? v : (v.DisplayName || v.name || v.CompanyName || '');
+          if (!name) return;
           const opt = document.createElement('option');
-          opt.value = typeof v === 'string' ? v : (v.DisplayName || v.name || v.CompanyName || '');
+          opt.value = String(name).trim();
           if (opt.value) dl.appendChild(opt);
         });
       } catch (_) {
-        const dl = document.getElementById('vendorList');
-        if (!dl) return;
         const vendorValues = Array.from(
           new Set(
             cacheVendors()
@@ -11824,6 +11857,7 @@
         bootQbPickers();
         loadWorkspaceKpis();
         renderMaintenanceCategoryChips();
+        renderFleetByType(activeAssetCategory || 'Trucks');
         renderMaintenanceUnitList();
         renderRetiredAssetsPanel();
         renderSelectedUnit();
@@ -15236,7 +15270,7 @@
       } else if (!__workspaceKpiRetriedOnce) {
         __workspaceKpiRetriedOnce = true;
         setTimeout(() => {
-          if (document.querySelector('.kpi-tracked-assets')?.textContent === '0') {
+          if ((document.getElementById('maintDashTrackedAssets')?.textContent || '').trim() === '0') {
             loadWorkspaceKpis();
           }
         }, 3000);
@@ -15301,9 +15335,55 @@
         .join('');
     }
 
+    function renderFleetByType(type) {
+      const container = document.getElementById('fleetByTypeContainer');
+      if (!container) return;
+      const map = {
+        'Trucks': 'truck',
+        'Refrigerated Vans': 'van',
+        'Flatbeds': 'flatbed',
+        'Dry Vans': 'dry',
+        'Company Vehicles': 'company'
+      };
+      const needle = String(map[type] || type || 'truck').toLowerCase();
+      container.innerHTML = '<p style="padding:16px;color:#888;margin:0">Loading fleet...</p>';
+      fetch('/api/fleet/assets')
+        .then(r => r.json())
+        .then(data => {
+          const assets = Array.isArray(data?.assets) ? data.assets : [];
+          const filtered = type === 'all'
+            ? assets
+            : assets.filter((a) => String(a?.asset_type || 'truck').toLowerCase().includes(needle));
+          if (!filtered.length) {
+            container.innerHTML = '<p style="padding:16px;color:#888;margin:0">No vehicles in this category.</p>';
+            return;
+          }
+          container.innerHTML =
+            '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+            '<thead><tr style="text-align:left;border-bottom:1px solid #eee">' +
+            '<th style="padding:8px">Unit</th><th style="padding:8px">Make</th><th style="padding:8px">Model</th><th style="padding:8px">Status</th><th style="padding:8px">Odometer</th>' +
+            '</tr></thead><tbody>' +
+            filtered.map((a) => {
+              const odo = Number(a?.odometerMiles || 0);
+              return '<tr style="border-bottom:0.5px solid #eee">' +
+                '<td style="padding:6px 8px;font-weight:600">' + escapeHtml(String(a?.unit_number || a?.name || '')) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(String(a?.make || '—')) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(String(a?.model || '—')) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(String(a?.status || 'Active')) + '</td>' +
+                '<td style="padding:6px 8px">' + (Number.isFinite(odo) && odo > 0 ? escapeHtml(String(Math.round(odo))) + ' mi' : '—') + '</td>' +
+              '</tr>';
+            }).join('') +
+            '</tbody></table>';
+        })
+        .catch(() => {
+          container.innerHTML = '<p style="padding:16px;color:#b91c1c;margin:0">Could not load fleet assets.</p>';
+        });
+    }
+
     function setAssetCategory(cat) {
       activeAssetCategory = cat;
       renderMaintenanceCategoryChips();
+      renderFleetByType(cat);
       renderMaintenanceUnitList();
       // Do not auto-select a unit; user chooses the asset they want to view.
       if (selectedUnit && !(vehiclesByCategory()[activeAssetCategory] || []).find(v => v.name === selectedUnit)) {
@@ -25036,19 +25116,19 @@
       console.error('initMaintNotesNumbered', e);
     }
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => loadWorkspaceKpis(), { once: true });
+      document.addEventListener('DOMContentLoaded', () => {
+        loadWorkspaceKpis();
+        hydrateVendorListDatalist();
+      }, { once: true });
     } else {
       loadWorkspaceKpis();
+      hydrateVendorListDatalist();
     }
     loadAll();
-    setTimeout(function() {
-      var vals = document.querySelectorAll('.kpi-val, .acct-hub__kpi-val, [class*="kpi"]');
-      var hasZero = false;
-      vals.forEach(function(el){ if(el.textContent.trim()==='0') hasZero=true; });
-      if(hasZero) {
-        if(typeof loadAll==='function') loadAll();
-        else if(typeof erpLoadDashboard==='function') erpLoadDashboard();
-        else if(typeof refreshAll==='function') refreshAll();
+    setTimeout(function(){
+      var tracked = document.getElementById('maintDashTrackedAssets');
+      if(tracked && (tracked.textContent.trim()==='0' || tracked.textContent.trim()==='')) {
+        if(typeof loadWorkspaceKpis==='function') loadWorkspaceKpis();
       }
     }, 3000);
     setInterval(loadAll, AUTO_REFRESH_MS);
