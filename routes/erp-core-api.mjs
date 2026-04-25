@@ -1143,17 +1143,30 @@ export function mountErpCoreApi(app, opts = {}) {
   app.patch('/api/fleet/assets/bulk', async (req, res) => {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(v => String(v)).filter(Boolean) : [];
+      const statusRaw = String(req.body?.status || '').trim();
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required' });
+      const validStatuses = ['Active','Inactive','Out of Service','Sold','In Shop'];
+      const normalized = validStatuses.find(s => s.toLowerCase() === statusRaw.toLowerCase()) || statusRaw;
+      const { rowCount } = await dbQuery(
+        'UPDATE fleet_assets SET status=$2, updated_at=now() WHERE unit_number = ANY($1::text[])',
+        [ids, normalized]
+      );
+      return res.json({ ok: true, updated: Number(rowCount || 0) });
+    } catch (e) {
+      logError('PATCH /api/fleet/assets/bulk', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
       const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
       const statusRaw = String(req.body?.status || '').trim().toLowerCase();
       if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required' });
-      if (statusRaw !== 'active' && statusRaw !== 'inactive') {
-        return res.status(400).json({ ok: false, error: "status must be 'active' or 'inactive'" });
-      }
-      const mappedStatus = statusRaw === 'active' ? 'Active' : 'Out of Service';
+      const statusMap = { active: 'Active', inactive: 'Inactive' };
+      const mappedStatus = statusMap[statusRaw.toLowerCase()] || statusRaw;
       const { rowCount } = await dbQuery(
         `UPDATE fleet_assets
            SET status = $2, updated_at = now()
-         WHERE id = ANY($1::int[])`,
+         WHERE unit_number = ANY($1::text[])`,
         [ids, mappedStatus]
       );
       return res.json({ ok: true, updated: Number(rowCount || 0) });
@@ -1175,7 +1188,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const { rowCount } = await dbQuery(
         `UPDATE drivers
            SET status = $2, updated_at = now()
-         WHERE id = ANY($1::int[])`,
+         WHERE unit_number = ANY($1::text[])`,
         [ids, statusRaw]
       );
       return res.json({ ok: true, updated: Number(rowCount || 0) });
@@ -1474,7 +1487,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
       if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required', updated: 0 });
       const { rowCount } = await dbQuery(
-        "UPDATE damage_reports SET status='acknowledged' WHERE id = ANY($1::int[])",
+        "UPDATE damage_reports SET status='acknowledged' WHERE unit_number = ANY($1::text[])",
         [ids]
       );
       return res.json({ ok: true, updated: Number(rowCount || 0) });
@@ -2136,7 +2149,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const { rows } = await dbQuery(
         `UPDATE leave_requests
            SET status = 'approved', reviewed_at = NOW()
-         WHERE id = ANY($1::int[])
+         WHERE unit_number = ANY($1::text[])
          RETURNING *`,
         [ids]
       );
@@ -2185,7 +2198,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const { rowCount } = await dbQuery(
         `UPDATE leave_requests
            SET status = 'denied', reviewed_at = NOW()
-         WHERE id = ANY($1::int[])`,
+         WHERE unit_number = ANY($1::text[])`,
         [ids]
       );
       return res.json({ ok: true, updated: Number(rowCount || 0) });
