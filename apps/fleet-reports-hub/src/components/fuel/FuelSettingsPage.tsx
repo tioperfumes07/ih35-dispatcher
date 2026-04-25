@@ -258,9 +258,12 @@ export function FuelSettingsPage() {
       </div>
 
       {FUEL_TYPES.map((row) => {
-        const val = settings[row.key] || { fuel_type: row.key }
+        const fuelType = row.key
+        const accountName = accountInputs[fuelType] || ''
+        const val = settings[fuelType] || { fuel_type: fuelType }
+        const qboAccts = accounts.map((a) => ({ qboId: a.id, name: a.name, accountType: a.accountType }))
         return (
-          <div className="panel" key={row.key}>
+          <div className="panel" key={fuelType}>
             <div className="panel-head">
               <div className="panel-title" style={{ margin: 0 }}>{row.label}</div>
             </div>
@@ -268,11 +271,18 @@ export function FuelSettingsPage() {
               <label>
                 QBO Account
                 <input
-                  list="fuelSettingsAccountOptions"
-                  value={accountInputs[row.key] || ''}
-                  onChange={(e) => syncAccount(row.key, e.target.value)}
-                  placeholder="Search account..."
+                  type="text"
+                  list={`qboAccts_${fuelType}`}
+                  placeholder="Type to search QBO accounts..."
+                  value={accountName}
+                  onChange={e => syncAccount(fuelType, e.target.value)}
+                  style={{width:'100%',padding:'8px 10px',background:'#1a1f2e',
+                          border:'1px solid rgba(255,255,255,0.15)',borderRadius:'6px',
+                          color:'#e2e8f0',fontSize:'13px',marginTop:'4px'}}
                 />
+                <datalist id={`qboAccts_${fuelType}`}>
+                  {qboAccts.map(a => <option key={a.qboId} value={a.name} />)}
+                </datalist>
               </label>
 
               <label>
