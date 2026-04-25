@@ -248,7 +248,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   }
 
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', height: '100%', color: '#c8d0dc', fontFamily: 'inherit' }}>
+    <section style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, color: '#c8d0dc', fontFamily: 'inherit' }}>
       <style>{`@media print { @page { size: landscape; margin: 8mm; } .ds-no-print, nav, aside { display: none !important; } .ds-grid-wrap { max-height: none !important; overflow: visible !important; } .ds-table th, .ds-table td { font-size: 8px !important; border: 0.5px solid rgba(0,0,0,0.28) !important; } .ds-left-col { position: static !important; } }`}</style>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '8px 12px' }}>
@@ -269,7 +269,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>{Object.entries(LEAVE_COLORS).map(([label, color]) => <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#aeb7c5' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: color.dot }} />{label}</span>)}</div>
       </div>
-      <div className="ds-grid-wrap" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 260px)', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="ds-grid-wrap" style={{ flex: '1 1 auto', overflowX: 'auto', overflowY: 'auto', minHeight: '300px', maxHeight: 'calc(100vh - 280px)', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <table className="ds-table" style={{ borderCollapse: 'collapse', minWidth: `${190 + days.length * 38}px`, width: 'max-content' }}>
           <thead><tr>
             <th className="ds-left-col" style={{ position: 'sticky', left: 0, top: 0, zIndex: 3, minWidth: 150, padding: '8px 12px', background: '#1e2433', color: '#8892a4', fontSize: 11, textAlign: 'left' }}>Unit / Driver</th>
