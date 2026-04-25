@@ -37,11 +37,6 @@
 .erp-icon-nav__btn, .erp-icon-nav__link {
   width: 104px !important;
 }
-
-body.erp-maintenance.erp-modal-lock {
-  overflow: hidden !important;
-  overscroll-behavior: contain;
-}
 </style>
 </head>
 <body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
@@ -297,7 +292,7 @@ body.erp-maintenance.erp-modal-lock {
               <button type="button" class="btn btn-erp-mb-blue" id="mbPostAllBtn" onclick="mbPostAllCreated()">Post all to QuickBooks</button>
               <button type="button" class="btn secondary" onclick="mbViewSeriesInHistory()">View in expense history</button>
               <button type="button" class="btn secondary" onclick="mbViewSeriesInBillHistory()">View in bill history</button>
-              <button type="button" class="btn secondary" data-erp-mb-close="1">Cancel</button>
+              <button type="button" class="btn secondary" data-erp-mb-close="1">Close</button>
             </div>
           </div>
         </div>
@@ -380,7 +375,7 @@ body.erp-maintenance.erp-modal-lock {
           <button type="button" class="btn btn--small secondary" id="maintWoFsBtn" onclick="maintWoToggleFullscreen()" title="Fill viewport (Esc to exit full screen)" aria-pressed="false">Full screen</button>
           <button type="button" class="erp-modal-expand-btn" data-erp-modal-expand-btn title="Fill window (layout)" aria-label="Expand to full window" aria-pressed="false">⛶</button>
         </div>
-        <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Cancel</button>
+        <button type="button" class="btn erp-qb-sheet-close" onclick="closeMaintWorkOrderModal()">Close</button>
       </div>
       <div id="maintWorkOrderModalBody" class="maint-workorder-fullmodal__body"></div>
     </div>
@@ -418,10 +413,7 @@ body.erp-maintenance.erp-modal-lock {
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintFleetTableModalTitle" onclick="event.stopPropagation()" style="max-width:min(1120px,95vw)">
       <header class="erp-qb-dialog__head maint-modal-head-draggable" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <h3 id="maintFleetTableModalTitle" class="erp-qb-dialog__title" style="margin:0">Fleet table · Active trucks</h3>
-        <div style="display:flex;align-items:center;gap:8px">
-          <button type="button" class="btn erp-qb-dialog__btn-secondary" onclick="closeMaintFleetTableModal()">Cancel</button>
-          <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
-        </div>
+        <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
       </header>
       <div class="erp-qb-dialog__body">
         <div class="mini-note" id="maintFleetTableMeta" style="margin:0 0 10px">Loading active trucks…</div>
@@ -2797,17 +2789,6 @@ body.erp-maintenance.erp-modal-lock {
           </div>
           <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
 
-          <details id="erpEntryAuditMatrix" class="maint-section-card" style="margin:0 0 12px;padding:10px 12px">
-            <summary style="cursor:pointer;font-weight:600">Entry-point audit matrix</summary>
-            <div class="mini-note" style="margin:8px 0">Checks that + New, sidebar shortcuts, and Accounting board cards open the same canonical modal routes.</div>
-            <div class="table-wrap">
-              <table class="table" style="font-size:12px">
-                <thead><tr><th>Entry key</th><th>Target</th><th>+ New</th><th>Sidebar</th><th>Board</th></tr></thead>
-                <tbody id="erpEntryAuditBody"><tr><td colspan="5" class="muted">Loading audit matrix…</td></tr></tbody>
-              </table>
-            </div>
-          </details>
-
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Expenses</h3>
             <div class="acct-type-list">
@@ -2825,26 +2806,26 @@ body.erp-maintenance.erp-modal-lock {
                 </div>
                 <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); window.open('/form-425c.html', '_blank')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('fuel-expense')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Fuel expense</div>
                   <div class="acct-type-row__desc">Fuel purchase expense — QBO vendor auto-link</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('fuel-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('maintenance-expense')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('maintenance-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Maintenance expense</div>
                   <div class="acct-type-row__desc">Maintenance-related expense — can link to a work order</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('maintenance-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('maintenance-expense')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('repair-expense')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('repair-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Repair expense</div>
                   <div class="acct-type-row__desc">Repair-related expense record</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('repair-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('repair-expense')">Open →</button>
               </div>
             </div>
             <div id="acctBoardExpDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -2870,47 +2851,47 @@ body.erp-maintenance.erp-modal-lock {
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bills</h3>
             <div class="acct-type-list">
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('driver-bill')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('driver-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Driver bill</div>
                   <div class="acct-type-row__desc">Driver-related expense bill — links to driver vendor in QuickBooks</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('driver-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('driver-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('fuel-bill')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Fuel bill</div>
                   <div class="acct-type-row__desc">Fuel purchase — vendor address auto-fills, unit = QBO Class automatically</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('fuel-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('maintenance-bill')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Maintenance bill</div>
                   <div class="acct-type-row__desc">Shop or repair vendor bill — can link to an existing work order</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('maintenance-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('maintenance-bill')">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('multi-bills')">
+              <div class="acct-type-row" onclick="erpOpenMultiBillsModal()">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Multiple bills</div>
                   <div class="acct-type-row__desc">Enter multiple bills at once from a vendor statement</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('multi-bills')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenMultiBillsModal()">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('repair-bill')">
+              <div class="acct-type-row" onclick="erpOpenRepairBill()">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Repair bill</div>
                   <div class="acct-type-row__desc">Repair order related bill — syncs to QBO expense record</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('repair-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenRepairBill()">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('vendor-bill')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('vendor-bill')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Vendor bill</div>
                   <div class="acct-type-row__desc">General vendor bill — any QuickBooks vendor</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('vendor-bill')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('vendor-bill')">Open →</button>
               </div>
             </div>
             <div id="acctBoardBillsDateFilterHost" class="erp-date-filter-bar-host"></div>
@@ -2937,19 +2918,19 @@ body.erp-maintenance.erp-modal-lock {
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Bill payment</h3>
             <div class="acct-type-list">
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('bill-payment')">
+              <div class="acct-type-row" onclick="erpNewPayBills()">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Bill payment</div>
                   <div class="acct-type-row__desc">Pay a standard vendor bill — links to QuickBooks and auto-posts</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('bill-payment')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpNewPayBills()">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('driver-bill-payment')">
+              <div class="acct-type-row" onclick="erpOpenDriverBillPay()">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Driver bill payment</div>
                   <div class="acct-type-row__desc">Pay a driver bill — auto-links to driver vendor in QuickBooks</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('driver-bill-payment')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDriverBillPay()">Open →</button>
               </div>
               <div class="acct-type-row" onclick="openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'))">
                 <div class="acct-type-row__info">
@@ -2990,12 +2971,12 @@ body.erp-maintenance.erp-modal-lock {
                 </div>
                 <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="erpOpenFromNewMenu('fuel-expense')">
+              <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Open Fuel/DEF combined ↗</div>
                   <div class="acct-type-row__desc">Open the combined fuel/DEF workspace in full view</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenFromNewMenu('fuel-expense')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpOpenDedicatedAccountingForm('fuel-expense')">Open →</button>
               </div>
             </div>
           </div>
@@ -3439,7 +3420,7 @@ body.erp-maintenance.erp-modal-lock {
                   
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                  <button type="button" onclick="erpOpenFromNewMenu('multi-bills')">Multiple bills</button>
+                  <button type="button" onclick="erpOpenMultiBillsModal()">Multiple bills</button>
                   <button type="button" onclick="downloadWorkOrdersCsv()">Export work orders CSV</button>
                   <button type="button" onclick="downloadExpenseTransactionsCsv()">Export AP transactions CSV</button>
                 </div>
@@ -3697,7 +3678,7 @@ body.erp-maintenance.erp-modal-lock {
                 
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <button type="button" class="qb-btn-add" onclick="erpOpenFromNewMenu('fuel-expense')">
+                <button type="button" class="qb-btn-add" onclick="erpOpenDedicatedAccountingForm('fuel-expense')">
                   Open fuel fast entry ↗
                 </button>
                 <button type="button" class="qb-btn-add" onclick="loadFuelExpenseTab()">Refresh fuel purchases</button>
@@ -6125,9 +6106,6 @@ body.erp-maintenance.erp-modal-lock {
     let __syncMaintLinkAcctRaf = null;
     let __partsLookupFetchTimer = null;
     let __workspaceKpiRetriedOnce = false;
-    let __loadAllInFlight = false;
-    let __lastLoadAllAt = 0;
-    let __autoRefreshTimer = null;
     let safetyLiveMap = null;
     let safetyLiveMapLayer = null;
     /** Service catalog option names (width hints + legacy helpers). */
@@ -6674,7 +6652,6 @@ body.erp-maintenance.erp-modal-lock {
       modal.setAttribute('aria-hidden', 'false');
       window.__maintWoModalOpen = true;
       document.body.classList.add('maint-wo-modal-open');
-      erpSyncBodyModalLock();
       requestAnimationFrame(() => {
         const mb = document.getElementById('maintWorkOrderModalBody');
         if (mb) mb.scrollTop = 0;
@@ -6710,7 +6687,6 @@ body.erp-maintenance.erp-modal-lock {
       dockMaintWorkOrderFormToRecordPanel();
       window.__maintWoModalOpen = false;
       document.body.classList.remove('maint-wo-modal-open');
-      erpSyncBodyModalLock();
     }
 
     function maintWoToggleMaximize() {
@@ -6795,25 +6771,6 @@ body.erp-maintenance.erp-modal-lock {
       }
       shell.classList.remove('erp-qb-dialog--viewport-max', 'erp-qb-dialog--viewport-fs');
     }
-
-    function erpAnyModalOpen() {
-      const ded = document.getElementById('erpDedicatedFormModal');
-      const mb = document.getElementById('erpMultiBillsModal');
-      const dr = document.getElementById('erpDrawer');
-      return !!(
-        document.querySelector('.maint-modal-bg.on') ||
-        (ded && !ded.classList.contains('hidden')) ||
-        (mb && !mb.classList.contains('hidden')) ||
-        (dr && dr.classList.contains('is-open'))
-      );
-    }
-
-    function erpSyncBodyModalLock() {
-      const body = document.body;
-      if (!body) return;
-      body.classList.toggle('erp-modal-lock', erpAnyModalOpen());
-    }
-
 
     function renderMaintLocationBoard() {
       const host = document.getElementById('maintLocationBoardHost');
@@ -8416,7 +8373,6 @@ body.erp-maintenance.erp-modal-lock {
             'Shortcuts',
             true,
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;maintenance&quot;);">Maintenance center</button>' +
-              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;tracking&quot;);">Fleet / loads</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;fuel&quot;);">Fuel &amp; route planning</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSectionByName(&quot;accounting&quot;);">Accounting</button>'
           ) +
@@ -8425,8 +8381,9 @@ body.erp-maintenance.erp-modal-lock {
             'reports-hint',
             'Reports',
             false,
-            '<p class="mini-note" style="margin:0;line-height:1.45">Use the <strong>Reports</strong> icon (≡) for reporting. Home sidebar stays operations-only.</p>'
-          );
+            '<p class="mini-note" style="margin:0;line-height:1.45">Open the <strong>Reports</strong> icon (≡) in company navigation for financial and operational reports.</p>'
+          ) +
+          erpSbGroup('dashboard', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
         return;
       }
       if (name === 'fuel') {
@@ -8484,27 +8441,27 @@ body.erp-maintenance.erp-modal-lock {
         }
 
         const expensesBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;fuel-expense&quot;)">Fuel expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot; })">Fuel expense</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;repair-expense&quot;)">Repair expense</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
         const billsBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;fuel-bill&quot;)">Fuel bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('repair-bill')">Repair bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('multi-bills')">Multiple bills</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;driver-bill&quot;)">Driver bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu(&quot;vendor-bill&quot;)">Vendor bill</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenRepairBill()">Repair bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenMultiBillsModal()">Multiple bills</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-bill&quot;)">Vendor bill</button>';
         const billPayBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenFromNewMenu('bill-payment')">Bill payment</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenFromNewMenu('driver-bill-payment')">Driver bill payment</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpNewPayBills()">Bill payment</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
         const specializedBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('fuel-fast-entry')">Fuel &amp; DEF fast entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel &amp; DEF fast entry</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('journal-entry')">Journal entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenFromNewMenu('transfer')">Transfer</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-expense-history" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-history" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-fuel-expense" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
@@ -8673,7 +8630,6 @@ body.erp-maintenance.erp-modal-lock {
       }
       m.classList.remove('hidden');
       m.setAttribute('aria-hidden', 'false');
-      erpSyncBodyModalLock();
       if (b) b.setAttribute('aria-expanded', 'true');
       requestAnimationFrame(() => {
         erpPositionNewMenu();
@@ -8723,102 +8679,31 @@ body.erp-maintenance.erp-modal-lock {
       erpOpenDedicatedAccountingForm('standard-bill');
     }
 
-    const ERP_UNIFIED_ENTRY_REGISTRY = {
-      expense: { label: 'Expense', open: () => erpNewExpense(), newMenu: true, sidebar: true, board: true },
-      bill: { label: 'Bill', open: () => erpNewBill(), newMenu: true, sidebar: false, board: false },
-      'maintenance-expense': { label: 'Maintenance expense', open: () => erpOpenDedicatedAccountingForm('maintenance-expense'), newMenu: true, sidebar: true, board: true },
-      'repair-expense': { label: 'Repair expense', open: () => erpOpenDedicatedAccountingForm('repair-expense'), newMenu: true, sidebar: true, board: true },
-      'fuel-expense': { label: 'Fuel expense', open: () => erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense' }), newMenu: true, sidebar: true, board: true },
-      'fuel-fast-entry': { label: 'Fuel/DEF fast entry', open: () => erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' }), newMenu: true, sidebar: true, board: false },
-      'maintenance-bill': { label: 'Maintenance bill', open: () => erpOpenDedicatedAccountingForm('maintenance-bill'), newMenu: true, sidebar: true, board: true },
-      'repair-bill': { label: 'Repair bill', open: () => erpOpenDedicatedAccountingForm('repair-bill'), newMenu: true, sidebar: true, board: true },
-      'fuel-bill': { label: 'Fuel bill', open: () => erpOpenDedicatedAccountingForm('fuel-bill'), newMenu: true, sidebar: true, board: true },
-      'driver-bill': { label: 'Driver bill', open: () => erpOpenDedicatedAccountingForm('driver-bill'), newMenu: true, sidebar: true, board: true },
-      'vendor-bill': { label: 'Vendor bill', open: () => erpOpenDedicatedAccountingForm('vendor-bill'), newMenu: true, sidebar: true, board: true },
-      'multi-bills': { label: 'Multiple bills', open: () => erpOpenMultiBillsModal(), newMenu: true, sidebar: true, board: true },
-      'bill-payment': { label: 'Bill payment', open: () => erpNavigateBillPaymentWorkspace({ driverMode: false }), newMenu: true, sidebar: true, board: true },
-      'driver-bill-payment': { label: 'Driver bill payment', open: () => erpNavigateBillPaymentWorkspace({ driverMode: true }), newMenu: true, sidebar: true, board: true },
-      check: { label: 'Check', open: () => erpOpenDedicatedAccountingForm('check-expense'), newMenu: true, sidebar: false, board: false },
-      'vendor-credit': { label: 'Vendor credit', open: () => erpOpenDedicatedAccountingForm('vendor-credit-bill'), newMenu: true, sidebar: false, board: false },
-      'item-receipt': { label: 'Item receipt', open: () => erpOpenDedicatedAccountingForm('item-receipt-expense'), newMenu: true, sidebar: false, board: false },
-      'purchase-order': { label: 'Purchase order', open: () => erpOpenDedicatedAccountingForm('purchase-order-bill'), newMenu: true, sidebar: false, board: false },
-      transfer: { label: 'Transfer', open: () => erpOpenLedgerStubModal('transfer'), newMenu: true, sidebar: true, board: false },
-      'journal-entry': { label: 'Journal entry', open: () => erpOpenLedgerStubModal('journal'), newMenu: true, sidebar: true, board: false },
-      'work-order-blank': { label: 'Work order', open: () => erpNewWorkOrder(''), newMenu: true, sidebar: false, board: false },
-      'wo-repair': { label: 'Repair order', open: () => erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair order' }), newMenu: true, sidebar: false, board: false },
-      'wo-maintenance': { label: 'Maintenance order', open: () => erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance order' }), newMenu: true, sidebar: false, board: false },
-      'wo-accident': {
-        label: 'Accident repair',
-        open: () =>
-          erpNewWorkOrder('accident', {
-            driverRow: true,
-            driverRequired: true,
-            expandAccident: true,
-            recordTypeLabel: 'Accident repair'
-          }),
-        newMenu: true,
-        sidebar: false,
-        board: false
-      },
-      'wo-pm': { label: 'PM service', open: () => erpNewWorkOrder('pm', { recordTypeLabel: 'PM service' }), newMenu: true, sidebar: false, board: false },
-      'wo-inspection': { label: 'Inspection', open: () => erpNewWorkOrder('inspection', { expandInspection: true, recordTypeLabel: 'Inspection' }), newMenu: true, sidebar: false, board: false },
-      'wo-tire': { label: 'Tire record', open: () => erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire record' }), newMenu: true, sidebar: false, board: false },
-      'wo-air-bag': { label: 'Air bag record', open: () => erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag record' }), newMenu: true, sidebar: false, board: false },
-      'wo-battery': { label: 'Battery record', open: () => erpNewWorkOrder('battery', { recordTypeLabel: 'Battery record' }), newMenu: true, sidebar: false, board: false }
-    };
-
-    function erpOpenUnifiedEntry(kind, opts) {
-      const k = String(kind || '').trim();
-      const def = ERP_UNIFIED_ENTRY_REGISTRY[k];
-      if (!def || typeof def.open !== 'function') return false;
-      const o = opts || {};
-      if (o.closeMenu !== false) erpCloseNewMenu();
-      def.open();
-      return true;
-    }
-
-    function renderErpEntryAuditMatrix() {
-      const body = document.getElementById('erpEntryAuditBody');
-      if (!body) return;
-      const yesNo = v => (v ? 'Yes' : '—');
-      const rows = Object.entries(ERP_UNIFIED_ENTRY_REGISTRY).map(([key, def]) =>
-        `<tr>
-          <td><code>${escapeHtml(key)}</code></td>
-          <td>${escapeHtml(def.label || key)}</td>
-          <td>${yesNo(!!def.newMenu)}</td>
-          <td>${yesNo(!!def.sidebar)}</td>
-          <td>${yesNo(!!def.board)}</td>
-        </tr>`
-      );
-      body.innerHTML = rows.join('');
-    }
-
     /** + New menu: single entry point (keeps modal wiring in one place). */
     function erpOpenFromNewMenu(kind) {
       const k = String(kind || '').trim();
       if (!k) return;
-      if (erpOpenUnifiedEntry(k, { source: 'new-menu', closeMenu: true })) return;
       erpCloseNewMenu();
       if (k === 'expense') return erpNewExpense();
       if (k === 'bill') return erpNewBill();
-      if (k === 'maintenance-expense') return erpOpenUnifiedEntry('maintenance-expense', { source: 'new-menu' });
-      if (k === 'repair-expense') return erpOpenUnifiedEntry('repair-expense', { source: 'new-menu' });
-      if (k === 'fuel-expense') return erpOpenUnifiedEntry('fuel-expense', { source: 'new-menu' });
-      if (k === 'fuel-fast-entry') return erpOpenUnifiedEntry('fuel-fast-entry', { source: 'new-menu' });
-      if (k === 'maintenance-bill') return erpOpenUnifiedEntry('maintenance-bill', { source: 'new-menu' });
-      if (k === 'repair-bill') return erpOpenUnifiedEntry('repair-bill', { source: 'new-menu' });
-      if (k === 'fuel-bill') return erpOpenUnifiedEntry('fuel-bill', { source: 'new-menu' });
-      if (k === 'driver-bill') return erpOpenUnifiedEntry('driver-bill', { source: 'new-menu' });
-      if (k === 'vendor-bill') return erpOpenUnifiedEntry('vendor-bill', { source: 'new-menu' });
-      if (k === 'multi-bills') return erpOpenUnifiedEntry('multi-bills', { source: 'new-menu' });
-      if (k === 'bill-payment') return erpOpenUnifiedEntry('bill-payment', { source: 'new-menu' });
-      if (k === 'driver-bill-payment') return erpOpenUnifiedEntry('driver-bill-payment', { source: 'new-menu' });
-      if (k === 'check') return erpOpenUnifiedEntry('check', { source: 'new-menu' });
-      if (k === 'vendor-credit') return erpOpenUnifiedEntry('vendor-credit', { source: 'new-menu' });
-      if (k === 'item-receipt') return erpOpenUnifiedEntry('item-receipt', { source: 'new-menu' });
-      if (k === 'purchase-order') return erpOpenUnifiedEntry('purchase-order', { source: 'new-menu' });
-      if (k === 'transfer') return erpOpenUnifiedEntry('transfer', { source: 'new-menu' });
-      if (k === 'journal-entry') return erpOpenUnifiedEntry('journal-entry', { source: 'new-menu' });
+      if (k === 'maintenance-expense') return erpOpenDedicatedAccountingForm('maintenance-expense');
+      if (k === 'repair-expense') return erpOpenDedicatedAccountingForm('repair-expense');
+      if (k === 'fuel-expense') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense' });
+      if (k === 'fuel-fast-entry') return erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fast-entry' });
+      if (k === 'maintenance-bill') return erpOpenDedicatedAccountingForm('maintenance-bill');
+      if (k === 'repair-bill') return erpOpenDedicatedAccountingForm('repair-bill');
+      if (k === 'fuel-bill') return erpOpenDedicatedAccountingForm('fuel-bill');
+      if (k === 'driver-bill') return erpOpenDedicatedAccountingForm('driver-bill');
+      if (k === 'vendor-bill') return erpOpenDedicatedAccountingForm('vendor-bill');
+      if (k === 'multi-bills') return erpOpenMultiBillsModal();
+      if (k === 'bill-payment') return erpNavigateBillPaymentWorkspace({ driverMode: false });
+      if (k === 'driver-bill-payment') return erpNavigateBillPaymentWorkspace({ driverMode: true });
+      if (k === 'check') return erpOpenDedicatedAccountingForm('check-expense');
+      if (k === 'vendor-credit') return erpOpenDedicatedAccountingForm('vendor-credit-bill');
+      if (k === 'item-receipt') return erpOpenDedicatedAccountingForm('item-receipt-expense');
+      if (k === 'purchase-order') return erpOpenDedicatedAccountingForm('purchase-order-bill');
+      if (k === 'transfer') return erpOpenLedgerStubModal('transfer');
+      if (k === 'journal-entry') return erpOpenLedgerStubModal('journal');
       if (k === 'find-merge-dupes') {
         erpCloseNewMenu();
         if (typeof openDedupeTool === 'function') return openDedupeTool();
@@ -8829,15 +8714,22 @@ body.erp-maintenance.erp-modal-lock {
         if (typeof openNameMgmtTool === 'function') return openNameMgmtTool();
         return openSectionByName('name-mgmt');
       }
-      if (k === 'work-order-blank') return erpOpenUnifiedEntry('work-order-blank', { source: 'new-menu' });
-      if (k === 'wo-repair') return erpOpenUnifiedEntry('wo-repair', { source: 'new-menu' });
-      if (k === 'wo-maintenance') return erpOpenUnifiedEntry('wo-maintenance', { source: 'new-menu' });
-      if (k === 'wo-accident') return erpOpenUnifiedEntry('wo-accident', { source: 'new-menu' });
-      if (k === 'wo-pm') return erpOpenUnifiedEntry('wo-pm', { source: 'new-menu' });
-      if (k === 'wo-inspection') return erpOpenUnifiedEntry('wo-inspection', { source: 'new-menu' });
-      if (k === 'wo-tire') return erpOpenUnifiedEntry('wo-tire', { source: 'new-menu' });
-      if (k === 'wo-air-bag') return erpOpenUnifiedEntry('wo-air-bag', { source: 'new-menu' });
-      if (k === 'wo-battery') return erpOpenUnifiedEntry('wo-battery', { source: 'new-menu' });
+      if (k === 'work-order-blank') return erpNewWorkOrder('');
+      if (k === 'wo-repair') return erpNewWorkOrder('repair', { driverRow: true, recordTypeLabel: 'Repair order' });
+      if (k === 'wo-maintenance') return erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Maintenance order' });
+      if (k === 'wo-accident')
+        return erpNewWorkOrder('accident', {
+          driverRow: true,
+          driverRequired: true,
+          expandAccident: true,
+          recordTypeLabel: 'Accident repair'
+        });
+      if (k === 'wo-pm') return erpNewWorkOrder('pm', { recordTypeLabel: 'PM service' });
+      if (k === 'wo-inspection')
+        return erpNewWorkOrder('inspection', { expandInspection: true, recordTypeLabel: 'Inspection' });
+      if (k === 'wo-tire') return erpNewWorkOrder('tire', { expandTireParts: true, recordTypeLabel: 'Tire record' });
+      if (k === 'wo-air-bag') return erpNewWorkOrder('air_bag', { recordTypeLabel: 'Air bag record' });
+      if (k === 'wo-battery') return erpNewWorkOrder('battery', { recordTypeLabel: 'Battery record' });
     }
 
     function erpNewRepairExpense() {
@@ -9683,7 +9575,6 @@ body.erp-maintenance.erp-modal-lock {
       modal.setAttribute('aria-hidden', 'true');
       modal.removeAttribute('data-erp-ap-preset');
       document.body.classList.remove('erp-dedicated-modal-open');
-      erpSyncBodyModalLock();
       erpDedicatedModalBindEscape(false);
       const mt = document.getElementById('erpDedModalTitle');
       if (mt) mt.textContent = '';
@@ -10035,7 +9926,6 @@ body.erp-maintenance.erp-modal-lock {
           syncAcctDashFromQboPayload();
           showAccountingHomeOnly();
           syncAccountingSidebarActive();
-          renderErpEntryAuditMatrix();
         });
       }
     }
@@ -10109,7 +9999,6 @@ body.erp-maintenance.erp-modal-lock {
       if (!modal) return;
       modal.classList.remove('on');
       modal.setAttribute('aria-hidden', 'true');
-      erpSyncBodyModalLock();
     }
 
     function schedulePartsLookupFetch() {
@@ -11758,7 +11647,6 @@ body.erp-maintenance.erp-modal-lock {
       d.classList.add('is-open');
       b.classList.add('is-open');
       d.setAttribute('aria-hidden', 'false');
-      erpSyncBodyModalLock();
       setTimeout(() => {
         const el = focusSelector ? body.querySelector(focusSelector) : null;
         el?.focus?.();
@@ -11771,7 +11659,6 @@ body.erp-maintenance.erp-modal-lock {
       if (d) d.classList.remove('is-open');
       if (b) b.classList.remove('is-open');
       if (d) d.setAttribute('aria-hidden', 'true');
-      erpSyncBodyModalLock();
       try { __drawerReturnFocusEl?.focus?.(); } catch (_) {}
       __drawerReturnFocusEl = null;
     }
@@ -12121,76 +12008,7 @@ body.erp-maintenance.erp-modal-lock {
       }
     }
 
-    function erpMaintenanceUserBusy() {
-      if (document.hidden) return true;
-      if (typeof erpAnyModalOpen === 'function' && erpAnyModalOpen()) return true;
-      const ae = document.activeElement;
-      if (!ae || typeof ae.closest !== 'function') return false;
-      if (!ae.closest('#section-maintenance')) return false;
-      const tag = String(ae.tagName || '').toLowerCase();
-      return tag === 'input' || tag === 'textarea' || tag === 'select' || ae.isContentEditable;
-    }
-
-    function erpUpdateFleetRefreshMeta(dashRes, boardRes) {
-      const fleetAt = dashRes && dashRes.refreshedAt
-        ? new Date(dashRes.refreshedAt).toLocaleString()
-        : new Date().toLocaleString();
-      const lastUpdated = document.getElementById('sidebarLastUpdated');
-      if (lastUpdated) {
-        lastUpdated.textContent =
-          'Samsara live data: ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
-      }
-      const nVeh = Array.isArray(boardRes && boardRes.vehicles) ? boardRes.vehicles.length : 0;
-      const brAt = boardRes && boardRes.refreshedAt ? new Date(boardRes.refreshedAt).toLocaleString() : '—';
-      const sf = document.getElementById('sidebarFleetStatus');
-      if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
-    }
-
-    async function refreshMaintenanceHomeLite() {
-      const [dashRes, boardRes, sqRes] = await Promise.all([
-        j('/api/maintenance/dashboard').catch(() => ({ ok: false, vehicles: [], dashboard: [], tireAlerts: [] })),
-        j('/api/board').catch(() => ({ vehicles: [], live: [], hos: [], assignments: [] })),
-        j('/api/maintenance/shop-queue').catch(() => ({ ok: false, queue: [] }))
-      ]);
-
-      if (dashRes && dashRes.ok) {
-        const veh = Array.isArray(dashRes.vehicles) ? dashRes.vehicles : [];
-        if (veh.length) vehicles = veh.sort(byUnitOrder);
-        dashboard = Array.isArray(dashRes.dashboard) ? dashRes.dashboard : dashboard;
-        tireAlerts = Array.isArray(dashRes.tireAlerts) ? dashRes.tireAlerts : tireAlerts;
-      }
-      if (boardRes && typeof boardRes === 'object') board = boardRes;
-      if (sqRes && sqRes.ok && Array.isArray(sqRes.queue)) shopQueueCache = sqRes.queue;
-
-      loadWorkspaceKpis();
-      refreshFleetShopOverviewPanels();
-      erpUpdateFleetRefreshMeta(dashRes, boardRes || board);
-    }
-
-    async function erpAutoRefreshTick() {
-      if (__loadAllInFlight) return;
-      if (activeSection === 'maintenance') {
-        if (erpMaintenanceUserBusy()) return;
-        try {
-          await refreshMaintenanceHomeLite();
-        } catch (_) {
-          await loadAll({ source: 'auto-fallback' });
-        }
-        return;
-      }
-      await loadAll({ source: 'auto' });
-    }
-
-    function startAutoRefreshLoop() {
-      if (__autoRefreshTimer) window.clearInterval(__autoRefreshTimer);
-      __autoRefreshTimer = window.setInterval(() => {
-        void erpAutoRefreshTick();
-      }, AUTO_REFRESH_MS);
-    }
-
-    async function loadAll(opts) {
-      if (__loadAllInFlight) return;
-      __loadAllInFlight = true;
+    async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
         const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes] =
@@ -12353,12 +12171,19 @@ body.erp-maintenance.erp-modal-lock {
         renderQboSyncAlerts(qboSyncRes);
         runPostingPreflight();
         syncAcctDashFromQboPayload();
-        renderErpEntryAuditMatrix();
         if (document.getElementById('maintAutoQboMasterRefresh')?.checked) {
           refreshQboMaster().catch(() => {});
         }
 
-        erpUpdateFleetRefreshMeta(dashRes, board);
+        const fleetAt = dashRes.refreshedAt
+          ? new Date(dashRes.refreshedAt).toLocaleString()
+          : new Date().toLocaleString();
+        document.getElementById('sidebarLastUpdated').textContent =
+          'Samsara live data: ' + fleetAt + ' · Auto-refresh every ' + Math.round(AUTO_REFRESH_MS / 1000) + 's';
+        const nVeh = Array.isArray(board.vehicles) ? board.vehicles.length : 0;
+        const brAt = board.refreshedAt ? new Date(board.refreshedAt).toLocaleString() : '—';
+        const sf = document.getElementById('sidebarFleetStatus');
+        if (sf) sf.textContent = `Samsara: ${nVeh} vehicles · last refresh ${brAt}`;
         requestAnimationFrame(() => {
           uploadCenterBindUploadUiOnce();
           uploadCenterPaintConnectionCards();
@@ -12388,9 +12213,6 @@ body.erp-maintenance.erp-modal-lock {
         } catch (e3) {
           console.error('fillDataLists after load failure', e3);
         }
-      } finally {
-        __loadAllInFlight = false;
-        __lastLoadAllAt = Date.now();
       }
     }
 
@@ -12708,32 +12530,9 @@ body.erp-maintenance.erp-modal-lock {
     // ---- QuickBooks-style pickers (dropdown with + Add new) ----
     let __qbPickerBooted = false;
     let __qbPickerMenu = null;
-    let __qbPickerActive = null; // { input, rows, onPick, onAddNew, activeIdx, query, host }
+    let __qbPickerActive = null; // { input, rows, onPick, onAddNew, activeIdx, query }
 
-    function qbPickerResolveHost(input) {
-      const inp = input || (__qbPickerActive && __qbPickerActive.input);
-      if (!inp || typeof inp.closest !== 'function') return document.body;
-      const host =
-        inp.closest('.erp-dedicated-form-modal__body') ||
-        inp.closest('.erp-mb-modal__dialog') ||
-        inp.closest('.maint-modal.erp-qb-dialog') ||
-        inp.closest('.maint-workorder-fullmodal__shell') ||
-        inp.closest('.erp-drawer__body') ||
-        inp.closest('.erp-drawer') ||
-        document.body;
-      try {
-        if (host && window.getComputedStyle(host).position === 'static' && host !== document.body) {
-          host.style.position = 'relative';
-        }
-      } catch (_) {}
-      return host;
-    }
-
-    function qbPickerEnsureMenu(targetHost) {
-      const host = targetHost || qbPickerResolveHost();
-      if (__qbPickerMenu && __qbPickerMenu.parentElement !== host) {
-        host.appendChild(__qbPickerMenu);
-      }
+    function qbPickerEnsureMenu() {
       if (__qbPickerMenu) return __qbPickerMenu;
       const el = document.createElement('div');
       el.id = 'qbPickerMenuHost';
@@ -12741,7 +12540,7 @@ body.erp-maintenance.erp-modal-lock {
       el.setAttribute('role', 'listbox');
       el.setAttribute('aria-label', 'Suggestions');
       el.setAttribute('aria-hidden', 'true');
-      host.appendChild(el);
+      document.body.appendChild(el);
       __qbPickerMenu = el;
 
       document.addEventListener('mousedown', e => {
@@ -12789,24 +12588,16 @@ body.erp-maintenance.erp-modal-lock {
 
     function qbPickerPosition() {
       if (!__qbPickerActive || !__qbPickerMenu) return;
-      const host = __qbPickerActive.host || qbPickerResolveHost(__qbPickerActive.input);
       const r = __qbPickerActive.input.getBoundingClientRect();
-      const hr = host.getBoundingClientRect();
-      const hostScrollLeft = host === document.body ? window.scrollX : host.scrollLeft;
-      const hostScrollTop = host === document.body ? window.scrollY : host.scrollTop;
       const minW = Math.max(260, Math.round(r.width));
       const maxW = Math.min(620, Math.max(minW, Math.round(r.width * 1.35)));
-      const menuH = Math.min(220, __qbPickerMenu.scrollHeight || 220);
-      const spaceBelow = Math.min(window.innerHeight, hr.bottom) - r.bottom;
-      const spaceAbove = r.top - Math.max(0, hr.top);
-      const shouldFlip = spaceBelow < Math.min(220, menuH) && spaceAbove > 150;
-
-      const rawLeft = r.left - hr.left + hostScrollLeft;
-      const hostClientWidth = host === document.body ? window.innerWidth : host.clientWidth;
-      const left = Math.max(8, Math.min(rawLeft, hostScrollLeft + hostClientWidth - maxW - 8));
-      const top = shouldFlip
-        ? Math.max(hostScrollTop + 8, r.top - hr.top + hostScrollTop - menuH - 6)
-        : r.bottom - hr.top + hostScrollTop + 6;
+      const left = Math.max(10, Math.min(window.scrollX + r.left, window.scrollX + window.innerWidth - maxW - 10));
+      const belowTop = window.scrollY + r.bottom + 6;
+      const aboveTop = window.scrollY + r.top - 6;
+      const menuH = Math.min(200, __qbPickerMenu.scrollHeight || 200);
+      const spaceBelow = window.innerHeight - r.bottom;
+      const shouldFlip = spaceBelow < Math.min(220, menuH) && r.top > 180;
+      const top = shouldFlip ? Math.max(10 + window.scrollY, aboveTop - menuH) : belowTop;
 
       __qbPickerMenu.style.left = left + 'px';
       __qbPickerMenu.style.top = top + 'px';
@@ -12816,7 +12607,7 @@ body.erp-maintenance.erp-modal-lock {
 
     function qbPickerRender() {
       if (!__qbPickerActive) return;
-      const menu = qbPickerEnsureMenu(__qbPickerActive && __qbPickerActive.host);
+      const menu = qbPickerEnsureMenu();
       const q = String(__qbPickerActive.query || '').toLowerCase().trim();
       const rows = (__qbPickerActive.rows || [])
         .filter(r => {
@@ -12916,17 +12707,14 @@ body.erp-maintenance.erp-modal-lock {
     }
 
     function qbPickerOpen(input, opts) {
-      const host = qbPickerResolveHost(input);
       __qbPickerActive = {
         input,
         rows: typeof opts.rows === 'function' ? opts.rows() : (opts.rows || []),
         onPick: opts.onPick,
         onAddNew: opts.onAddNew || null,
         activeIdx: 0,
-        query: input.value || '',
-        host
+        query: input.value || ''
       };
-      qbPickerEnsureMenu(host);
       qbPickerRender();
     }
 
@@ -12992,102 +12780,10 @@ body.erp-maintenance.erp-modal-lock {
       qbPickerAttachEl(input, opts);
     }
 
-    function qbPickerBindSelectionIds(input, listId, selected) {
-      if (!input) return;
-      const row = input.closest && input.closest('.wo-line, .maint-cost-line');
-      const pickedId = String((selected && selected.id) || '').trim();
-      if (!pickedId) return;
-
-      if (listId === 'paymentMethodOptions') {
-        const map = {
-          apPaymentMethodSearch: 'apPaymentMethodId',
-          linkedPaymentMethodSearch: 'linkedPaymentMethodId',
-          fuelManualPaymentMethodSearch: 'fuelManualPaymentMethodId'
-        };
-        const hid = document.getElementById(map[input.id] || '');
-        if (hid) hid.value = pickedId;
-        return;
-      }
-
-      if (listId === 'qboBankAccountOptions') {
-        const map = {
-          apBankAccountSearch: 'apBankAccountQboId',
-          linkedBankAccountSearch: 'linkedBankAccountQboId',
-          bpBankSearch: 'bpBankQboId',
-          fuelManualBankSearch: 'fuelManualBankQboId',
-          fuelExpBankSearch: 'fuelExpBankQboId'
-        };
-        const hid = document.getElementById(map[input.id] || '');
-        if (hid) hid.value = pickedId;
-        return;
-      }
-
-      if (listId === 'vendorList' || listId === 'qboVendorOptions') {
-        const map = {
-          apVendorSearch: 'apVendorQboId',
-          bpVendorSearch: 'bpVendorQboId',
-          fuelManualVendorSearch: 'fuelManualVendorQboId',
-          mbVendorSearch: 'mbVendorQboId'
-        };
-        const hid = document.getElementById(map[input.id] || '');
-        if (hid) hid.value = pickedId;
-        return;
-      }
-
-      if (listId === 'qboExpenseCategoryOptions' || listId === 'qboAccountExpenseOptions' || listId === 'qboAccountOptions') {
-        const hid = row && (row.querySelector('.wo-acct-id') || row.querySelector('.maint-line-acct-id'));
-        if (hid) hid.value = pickedId;
-        return;
-      }
-
-      if (listId === 'qboProductServiceOptions' || listId === 'qboItemOptions') {
-        const hid = row && (row.querySelector('.wo-item-id') || row.querySelector('.maint-line-item-id'));
-        if (hid) hid.value = pickedId;
-        try {
-          if (row && row.querySelector('.wo-item-id')) syncWoLineItemSku(row);
-          if (row && row.querySelector('.maint-line-item-id')) syncMaintLineItemSku(row);
-        } catch (_) {}
-        return;
-      }
-
-      if (listId === 'qboCustomerOptions') {
-        const hid = row && (row.querySelector('.wo-cust-id') || row.querySelector('.maint-line-cust-id'));
-        if (hid) {
-          hid.value = pickedId;
-          return;
-        }
-        if (input.id === 'apHeaderDriverSearch') {
-          const h = document.getElementById('apHeaderDriverQboId');
-          if (h) h.value = pickedId;
-        }
-        return;
-      }
-
-      if (listId === 'qboClassOptions') {
-        const hid = row && (row.querySelector('.wo-class-id') || row.querySelector('.maint-line-class-id'));
-        if (hid) hid.value = pickedId;
-        return;
-      }
-
-      if (listId === 'maintDriverOptions') {
-        const map = {
-          maintRecordDriverSearch: 'maintRecordDriverId',
-          accidentDriverSearch: 'accidentDriverId',
-          apErpDriverSearch: 'apErpDriverId',
-          fuelManualDriverSearch: 'fuelManualDriverId'
-        };
-        const hid = document.getElementById(map[input.id] || '');
-        if (hid) hid.value = pickedId;
-        return;
-      }
-    }
-
-    function qbPickerApplySelectionToInput(input, label, selected) {
+    function qbPickerApplySelectionToInput(input, label) {
       if (!input) return;
       input.value = label || '';
-      const listId = (input.getAttribute('list') || input.dataset.qbPickerListId || '').trim();
-      qbPickerBindSelectionIds(input, listId, selected || null);
-      // Let existing resolve* handlers populate hidden ids + follow-up UI.
+      // Let existing resolve* handlers populate hidden ids.
       try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
       try { input.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
       try { input.dispatchEvent(new Event('blur', { bubbles: true })); } catch (_) {}
@@ -13104,48 +12800,40 @@ body.erp-maintenance.erp-modal-lock {
 
       if (listId === 'qboVendorOptions' || listId === 'vendorList') {
         return {
-          rows: () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || ''), id: String(v.qboId || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          rows: () => cacheVendors().map(v => ({ label: v.name || v.qboId, meta: String(v.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('vendor', typed)
         };
       }
       if (listId === 'qboItemOptions') {
         return {
-          rows: () => cacheItems().map(i => ({ label: i.name || i.qboId, meta: String(i.qboId || ''), id: String(i.qboId || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          rows: () => cacheItems().map(i => ({ label: i.name || i.qboId, meta: String(i.qboId || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('item', typed)
         };
       }
       if (listId === 'qboProductServiceOptions') {
         return {
-          rows: () => {
-            const rows = cacheItemsForProductServicePicker();
-            const src = rows.length ? rows : cacheItems();
-            return src.map(i => ({
+          rows: () =>
+            cacheItemsForProductServicePicker().map(i => ({
               label: i.name || i.qboId,
-              meta: [i.type, i.sku].filter(Boolean).join(' · ') || String(i.qboId || ''),
-              id: String(i.qboId || '')
-            }));
-          },
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+              meta: [i.type, i.sku].filter(Boolean).join(' · ') || String(i.qboId || '')
+            })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('item', typed)
         };
       }
       if (listId === 'qboAccountOptions') {
         return {
-          rows: () => cacheAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || ''), id: String(a.qboId || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          rows: () => cacheAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('account', typed)
         };
       }
       if (listId === 'qboAccountExpenseOptions' || listId === 'qboExpenseCategoryOptions') {
         return {
-          rows: () => {
-            const expenseRows = cacheExpenseCategoryAccounts();
-            const src = expenseRows.length ? expenseRows : cacheAccounts();
-            return src.map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || ''), id: String(a.qboId || '') }));
-          },
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          rows: () => cacheExpenseCategoryAccounts().map(a => ({ label: a.name || a.qboId, meta: String(a.accountType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('account', typed)
         };
       }
@@ -13160,9 +12848,9 @@ body.erp-maintenance.erp-modal-lock {
               if (type && label && type.toLowerCase() === String(label).toLowerCase()) {
                 meta = id.length > 10 ? `…${id.slice(-8)}` : id;
               }
-              return { label, meta, id: id };
+              return { label, meta };
             }),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('account', typed) // create Bank/CreditCard account via same form
         };
       }
@@ -13173,7 +12861,7 @@ body.erp-maintenance.erp-modal-lock {
               label: String(n || ''),
               meta: 'Service'
             })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label),
           onAddNew: typed => qbPickerAddNewRoute('service', typed)
         };
       }
@@ -13182,10 +12870,9 @@ body.erp-maintenance.erp-modal-lock {
           rows: () =>
             cacheQboCustomers().map(c => ({
               label: c.name || c.qboId,
-              meta: String(c.qboId || ''),
-              id: String(c.qboId || '')
+              meta: String(c.qboId || '')
             })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
+          onPick: it => qbPickerApplySelectionToInput(input, it.label)
         };
       }
       if (listId === 'qboClassOptions') {
@@ -13193,48 +12880,15 @@ body.erp-maintenance.erp-modal-lock {
           rows: () =>
             cacheQboClasses().map(c => ({
               label: c.name || c.qboId,
-              meta: String(c.qboId || ''),
-              id: String(c.qboId || '')
+              meta: String(c.qboId || '')
             })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
+          onPick: it => qbPickerApplySelectionToInput(input, it.label)
         };
       }
       if (listId === 'paymentMethodOptions') {
         return {
-          rows: () => paymentMethods().map(p => ({ label: p.name || p.id, meta: String(p.qboType || ''), id: String(p.id || '') })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
-        };
-      }
-      if (listId === 'maintDriverOptions') {
-        return {
-          rows: () =>
-            (driverProfiles || []).map(d => ({
-              label: String(d.name || '').trim(),
-              meta: String(d.id || '').trim(),
-              id: String(d.id || '').trim()
-            })).filter(r => r.label),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
-        };
-      }
-      if (listId === 'serviceTypeList') {
-        return {
-          rows: () =>
-            maintEffectiveServiceCatalog().map(n => ({
-              label: String(n || ''),
-              meta: 'Service type'
-            })),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it),
-          onAddNew: typed => qbPickerAddNewRoute('service', typed)
-        };
-      }
-      if (listId === 'partsOptions') {
-        return {
-          rows: () =>
-            (catalogPartNames || []).map(n => ({
-              label: String(n || ''),
-              meta: 'Parts catalog'
-            })).filter(r => r.label),
-          onPick: it => qbPickerApplySelectionToInput(input, it.label, it)
+          rows: () => paymentMethods().map(p => ({ label: p.name || p.id, meta: String(p.qboType || '') })),
+          onPick: it => qbPickerApplySelectionToInput(input, it.label)
         };
       }
       return null;
@@ -16248,13 +15902,11 @@ body.erp-maintenance.erp-modal-lock {
         titleEl.classList.remove('hidden');
       }
       document.getElementById('maintCatModal').classList.add('on');
-      erpSyncBodyModalLock();
     }
 
     function closeMaintCatModal() {
       erpResetQbDialogViewport('maintCatModal');
       document.getElementById('maintCatModal').classList.remove('on');
-      erpSyncBodyModalLock();
       pendingMaintFlow = null;
       const titleEl = document.getElementById('maintModalFlowTitle');
       if (titleEl) {
@@ -16453,7 +16105,6 @@ body.erp-maintenance.erp-modal-lock {
         if (r.status === 400 && data.requiresDelayReason) {
           pendingShopPatch = { id, body };
           document.getElementById('shopDelayModal').classList.add('on');
-          erpSyncBodyModalLock();
           return false;
         }
         erpNotify(data.error || 'Update failed', 'error');
@@ -16542,20 +16193,17 @@ body.erp-maintenance.erp-modal-lock {
       document.getElementById('sqEstH').value = '';
       document.getElementById('sqVendor').value = '';
       document.getElementById('shopQueueAddModal').classList.add('on');
-      erpSyncBodyModalLock();
       setTimeout(() => document.getElementById('sqUnit')?.focus(), 50);
     }
 
     function closeShopQueueModal() {
       erpResetQbDialogViewport('shopQueueAddModal');
       document.getElementById('shopQueueAddModal').classList.remove('on');
-      erpSyncBodyModalLock();
     }
 
     function closeShopDelayModal() {
       erpResetQbDialogViewport('shopDelayModal');
       document.getElementById('shopDelayModal').classList.remove('on');
-      erpSyncBodyModalLock();
       pendingShopPatch = null;
       renderShopQueues();
     }
@@ -16568,7 +16216,6 @@ body.erp-maintenance.erp-modal-lock {
       pendingShopPatch = null;
       erpResetQbDialogViewport('shopDelayModal');
       document.getElementById('shopDelayModal').classList.remove('on');
-      erpSyncBodyModalLock();
       document.getElementById('sqDelayNote').value = '';
       await patchShopQueueEntry(p.id, { ...p.body, delayReasonCode: code, delayReasonNote: note });
     }
@@ -20003,7 +19650,6 @@ body.erp-maintenance.erp-modal-lock {
       if (!m) return;
       m.classList.add('hidden');
       m.setAttribute('aria-hidden', 'true');
-      erpSyncBodyModalLock();
       document.getElementById('mbConfirmLayer')?.classList.add('hidden');
       document.getElementById('mbSuccessLayer')?.classList.add('hidden');
       document.getElementById('mbMainFlow')?.classList.remove('hidden');
@@ -20054,7 +19700,6 @@ body.erp-maintenance.erp-modal-lock {
       mbRecomputePreview();
       m.classList.remove('hidden');
       m.setAttribute('aria-hidden', 'false');
-      erpSyncBodyModalLock();
       const mbDlg = document.querySelector('#erpMultiBillsModal .erp-mb-modal__dialog');
       if (mbDlg && typeof erpRestoreModalRect === 'function') {
         erpRestoreModalRect(mbDlg, 'multi_bills', { minW: 520, minH: 400 });
@@ -25979,7 +25624,7 @@ body.erp-maintenance.erp-modal-lock {
         if(typeof loadWorkspaceKpis==='function') loadWorkspaceKpis();
       }
     }, 3000);
-    startAutoRefreshLoop();
+    setInterval(loadAll, AUTO_REFRESH_MS);
     if (typeof erpInitResizableModals === 'function') {
       try {
         erpInitResizableModals();
