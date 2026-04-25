@@ -136,6 +136,10 @@ async function start() {
     })
   );
 
+  app.use('/driver', express.static(path.join(__dirname, 'public', 'driver')));
+  app.get('/driver', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'driver', 'index.html')));
+  app.get('/driver/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'driver', 'index.html')));
+
   app.use(
     express.static(publicDir, {
       setHeaders: (res, filePath) => {
