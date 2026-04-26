@@ -16745,15 +16745,20 @@
     }
 
     async function approveLeave(id) {
+      const rid = encodeURIComponent(String(id));
       let ok = false;
       try {
-        const d = await j('/api/drivers/leave-request/approve/' + encodeURIComponent(String(id)), { method: 'POST' });
+        const d = await j('/api/drivers/leave-request/' + rid + '/approve', { method: 'POST' });
         ok = !!(d?.ok || d?.success || d?.approved);
       } catch (_) {}
       if (!ok) {
         try {
-          await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/approve', { method: 'POST' });
-          ok = true;
+          const d2 = await j('/api/drivers/leave-requests/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: [String(id)] })
+          });
+          ok = !!(d2?.ok || d2?.success || d2?.approved);
         } catch (_) {}
       }
       if (ok) erpShowToast('Leave approved');
@@ -16762,15 +16767,20 @@
     }
 
     async function denyLeave(id) {
+      const rid = encodeURIComponent(String(id));
       let ok = false;
       try {
-        const d = await j('/api/drivers/leave-request/deny/' + encodeURIComponent(String(id)), { method: 'POST' });
+        const d = await j('/api/drivers/leave-request/' + rid + '/deny', { method: 'POST' });
         ok = !!(d?.ok || d?.success || d?.denied);
       } catch (_) {}
       if (!ok) {
         try {
-          await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/deny', { method: 'POST' });
-          ok = true;
+          const d2 = await j('/api/drivers/leave-requests/deny', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: [String(id)] })
+          });
+          ok = !!(d2?.ok || d2?.success || d2?.denied);
         } catch (_) {}
       }
       if (ok) erpShowToast('Leave denied');
