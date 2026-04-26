@@ -853,10 +853,14 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-    app.get('/api/fleet/assets', async (_req, res) => {
+    app.get('/api/fleet/assets', async (req, res) => {
     try {
+      const statusQ = String(req.query?.status || '').trim().toLowerCase();
       const assets = await getMergedFleetAssetProfiles(logError);
-      return res.json({ ok: true, assets, count: assets.length });
+      const filtered = statusQ
+        ? assets.filter((a) => String(a?.status || '').trim().toLowerCase() === statusQ)
+        : assets;
+      return res.json({ ok: true, assets: filtered, count: filtered.length });
     } catch (e) {
       logError('GET /api/fleet/assets', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), assets: [] });

@@ -49,7 +49,7 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 ]
 
 const STATUS_FILTER_TABS = ['All', 'Active', 'Inactive', 'Out of Service', 'In Shop', 'Accident', 'Sold'] as const
-const TYPE_FILTER_TABS = ['All Types', 'Truck', 'Trailer', 'Flatbed', 'Reefer', 'Dry Van', 'Step Deck', 'Van', 'Company Vehicle'] as const
+const TYPE_FILTER_TABS = ['All Types', 'Trucks', 'Reefer Trailers', 'Flatbeds', 'Dry Vans', 'Step Decks', 'Vans', 'Company Vehicles', 'Other'] as const
 
 function normalizeStatus(status: string | null | undefined): string {
   const s = String(status || '').trim().toLowerCase()
@@ -74,12 +74,30 @@ function normalizeStatusForFilter(value: string | null | undefined): string {
   return value ? String(value) : 'Active'
 }
 
-function matchesTypeFilter(assetType: string | null | undefined, typeFilter: typeof TYPE_FILTER_TABS[number]): boolean {
-  if (typeFilter === 'All Types') return true
+function isTruckUnit(unitNumber: string | null | undefined): boolean {
+  const unit = String(unitNumber || '').trim().toUpperCase()
+  return unit.startsWith('T1')
+}
+
+function classifyType(assetType: string | null | undefined, unitNumber: string | null | undefined): Exclude<(typeof TYPE_FILTER_TABS)[number], 'All Types'> {
   const raw = String(assetType || '').trim().toLowerCase()
-  if (!raw) return false
-  if (typeFilter === 'Company Vehicle') return raw.includes('company vehicle')
-  return raw.includes(typeFilter.toLowerCase())
+  if (raw.includes('truck') || isTruckUnit(unitNumber)) return 'Trucks'
+  if (raw.includes('reefer') || raw.includes("53' reefer")) return 'Reefer Trailers'
+  if (raw.includes('flatbed')) return 'Flatbeds'
+  if (raw.includes('dry') || raw.includes('dry van')) return 'Dry Vans'
+  if (raw.includes('step')) return 'Step Decks'
+  if (raw.includes('van') && !raw.includes('dry')) return 'Vans'
+  if (raw.includes('company')) return 'Company Vehicles'
+  return 'Other'
+}
+
+function matchesTypeFilter(
+  assetType: string | null | undefined,
+  unitNumber: string | null | undefined,
+  typeFilter: typeof TYPE_FILTER_TABS[number],
+): boolean {
+  if (typeFilter === 'All Types') return true
+  return classifyType(assetType, unitNumber) === typeFilter
 }
 
 function loadMetaMap(): Record<string, LocalMeta> {
@@ -175,6 +193,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [metaMap, setMetaMap] = useState<Record<string, LocalMeta>>(() => loadMetaMap())
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTER_TABS)[number]>('All')
   const [typeFilter, setTypeFilter] = useState<(typeof TYPE_FILTER_TABS)[number]>('All Types')
+  const [showInactive, setShowInactive] = useState(false)
 
   const load = useCallback(async () => {
     setErr(null)
@@ -338,11 +357,13 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
-      const statusOk = statusFilter === 'All' ? true : normalizeStatusForFilter(row.status) === statusFilter
-      const typeOk = matchesTypeFilter(row.asset_type, typeFilter)
-      return statusOk && typeOk
+      const normalizedStatus = normalizeStatusForFilter(row.status)
+      const statusTabOk = statusFilter === 'All' ? true : normalizedStatus === statusFilter
+      const activeVisibilityOk = showInactive ? true : normalizedStatus === 'Active'
+      const typeOk = matchesTypeFilter(row.asset_type, row.unit_number, typeFilter)
+      return statusTabOk && activeVisibilityOk && typeOk
     })
-  }, [rows, statusFilter, typeFilter])
+  }, [rows, statusFilter, typeFilter, showInactive])
 
   const data: Row[] = filteredRows.map((r) => ({ ...r }))
 
@@ -355,7 +376,20 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
             Master vehicle records for maintenance/accounting. Pulls from Samsara and remains editable locally.
           </p>
         </div>
-        <div className="lists-db__actions">
+        <div className="lists-db__actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn sm ghost shared-list__head-btn"
+            onClick={() => setShowInactive((v) => !v)}
+            style={{
+              background: showInactive ? '#3b82f6' : 'transparent',
+              color: showInactive ? '#fff' : '#8892a4',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '6px',
+            }}
+          >
+            {showInactive ? 'Hide inactive' : 'Show inactive'}
+          </button>
           <button type="button" className="btn sm primary shared-list__head-btn" onClick={openAdd}>
             + Add vehicle
           </button>
@@ -448,8 +482,9 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
                 onClick={() => setStatusFilter(tab)}
                 style={{
                   background: active ? '#3b82f6' : 'transparent',
-                  color: active ? '#fff' : '#94a3b8',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: active ? '#fff' : '#8892a4',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '6px',
                 }}
               >
                 {tab}
@@ -469,8 +504,9 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
                 onClick={() => setTypeFilter(tab)}
                 style={{
                   background: active ? '#3b82f6' : 'transparent',
-                  color: active ? '#fff' : '#94a3b8',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: active ? '#fff' : '#8892a4',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '6px',
                 }}
               >
                 {tab}
