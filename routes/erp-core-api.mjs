@@ -1145,6 +1145,11 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
       const trailers = Array.isArray(req.body?.trailers) ? req.body.trailers : [];
       if (!trailers.length) return res.json({ ok: true, imported: 0, updated: 0 });
+      await dbQuery(`
+        ALTER TABLE fleet_assets 
+        ADD CONSTRAINT IF NOT EXISTS fleet_assets_unit_number_key 
+        UNIQUE (unit_number)
+      `).catch(() => {});
       let imported = 0;
       for (const t of trailers) {
         const unit = String(t.unit_number || '').trim();
