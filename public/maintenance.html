@@ -468,6 +468,14 @@
       </header>
       <div class="erp-qb-dialog__body">
         <div class="mini-note" id="maintFleetTableMeta" style="margin:0 0 10px">Loading active trucks…</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin:0 0 10px">
+          <div>
+            <label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:4px">QuickBooks Class</label>
+            <input type="text" id="unitQboClass" list="qboClassList" placeholder="Type to search QBO classes..." class="qb-in" />
+            <input type="hidden" id="unitQboClassUnit" />
+          </div>
+          <button type="button" class="btn btn--small" onclick="saveUnitQboClass()">Save Class</button>
+        </div>
         <div class="table-wrap erp-table-scroll" style="max-height:min(66vh,640px)">
           <table>
             <thead>
@@ -485,10 +493,12 @@
   <datalist id="unitOptions"></datalist>
   <datalist id="fleetQboClassOptions"></datalist>
   <datalist id="filteredUnitList"></datalist>
+  <datalist id="erpFilteredUnitList"></datalist>
   <datalist id="partsCatalogList"></datalist>
   <datalist id="paymentMethodList"></datalist>
   <datalist id="qboBankList"></datalist>
   <datalist id="driverList"></datalist>
+  <datalist id="driverProfileList"></datalist>
   <datalist id="serviceOptions"></datalist>
   <datalist id="serviceTypeList">
     <option value="Oil Change"></option>
@@ -527,6 +537,7 @@
   <datalist id="qboBankAccountOptions"></datalist>
   <datalist id="qboCustomerOptions"></datalist>
   <datalist id="qboClassOptions"></datalist>
+  <datalist id="qboClassList"></datalist>
   <datalist id="loadNumberOptions"></datalist>
   <datalist id="maintDriverOptions"></datalist>
   <datalist id="repairLocationOptions"></datalist>
@@ -1434,7 +1445,7 @@
             <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px">
               <button type="button" class="btn btn--small ghost" onclick="driversAcknowledgeDamageFromModal()">Acknowledge</button>
               <button type="button" class="btn btn--small" onclick="driversCreateWoFromDamage()">Create work order</button>
-              <button type="button" class="btn btn--small" onclick="driversResolveCreateWorkOrderFromModal()" style="background:#16a34a;border-color:#16a34a;color:#fff">✅ Resolve & Create Work Order</button>
+              <button type="button" class="btn btn--small" onclick="driversResolveCreateWorkOrderFromModal()" style="background:#16a34a;color:white;padding:8px 16px;border-radius:6px;font-size:13px;border:1px solid #16a34a">✅ Resolve & Create Work Order</button>
             </div>
           </div>
         </div>
@@ -6913,6 +6924,10 @@
       const mount = getMaintWorkOrderFormMount();
       if (!modal || !body || !mount) return;
       body.appendChild(mount);
+      erpPopulateLiveCatalogDatalists();
+      erpInitTwoStepUnitPickers();
+      erpEnsureModalCancelButtons();
+      erpNormalizeExpenseBillLayouts();
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
       window.__maintWoModalOpen = true;
@@ -8540,6 +8555,24 @@
       }
     }
 
+    function saveUnitQboClass(unit_number) {
+      const unit = String(unit_number || document.getElementById('unitQboClassUnit')?.value || window.__maintFleetSelectedUnit || '').trim();
+      if (!unit) {
+        erpShowToast('Select a unit first', 'error');
+        return;
+      }
+      saveFleetQboClassFromModal(unit);
+    }
+
+    function selectFleetUnitForClass(unit) {
+      const normalized = String(unit || '').trim();
+      window.__maintFleetSelectedUnit = normalized;
+      const unitEl = document.getElementById('unitQboClassUnit');
+      if (unitEl) unitEl.value = normalized;
+      const inp = document.getElementById('unitQboClass');
+      if (inp) inp.value = fleetQboClassNameForUnit(normalized);
+    }
+
     async function saveFleetQboClassFromModal(unit) {
       const key = String(unit || '').trim();
       if (!key) return;
@@ -8601,7 +8634,10 @@
 
     function erpUpdateHomeKpis() {
       const dmg = Array.isArray(erp?.damageReports) ? erp.damageReports : [];
-      const openDamage = dmg.filter((r) => String(r?.status || '').toLowerCase() !== 'resolved').length;
+      const openDamage = dmg.filter((r) => {
+        const s = String(r?.status || '').toLowerCase().trim();
+        return s !== 'resolved' && s !== 'acknowledged';
+      }).length;
       const openDamageEl = document.getElementById('maintDashOpenDamage');
       if (openDamageEl) openDamageEl.textContent = String(openDamage);
       const activeDrivers = Array.isArray(board?.hos) ? board.hos.filter((r) => String(r?.dutyStatus || '').toLowerCase() !== 'off_duty').length : 0;
@@ -8621,7 +8657,7 @@
     function erpClassifyUnitType(asset) {
       const unit = String(asset?.unit_number || asset?.name || '').trim().toLowerCase();
       const type = String(asset?.asset_type || '').trim().toLowerCase();
-      if (unit.startsWith('t') || type.includes('truck')) return 'truck';
+      if (/^t\d/.test(unit) || type.includes('truck')) return 'truck';
       if (type.includes('reefer')) return 'reefer';
       if (type.includes('flatbed') || unit.startsWith('fb')) return 'flatbed';
       if (type.includes('dry') || type.includes('van')) return 'dry_van';
@@ -8629,33 +8665,73 @@
       return 'other';
     }
 
-    function erpFilteredUnitsByType(type) {
-      const t = String(type || '').trim();
-      const rows = Array.isArray(window._cachedUnits) ? window._cachedUnits : [];
-      const activeRows = rows.filter((r) => String(r?.status || 'Active').trim().toLowerCase() === 'active');
-      if (!t) return [];
-      return activeRows.filter((r) => erpClassifyUnitType(r) === t);
-    }
+    function erpFilterUnits(select) {
+      if (!select) return;
+      var type = String(select.value || '').trim();
+      var row = select.nextElementSibling;
+      if (!row) return;
+      if (!type) { row.style.display = 'none'; return; }
+      var units = Array.isArray(window._cachedUnits) ? window._cachedUnits : [];
+      var filtered = units.filter(function(u) {
+        var at = String(u?.asset_type || '').toLowerCase();
+        var un = String(u?.unit_number || '').toUpperCase();
+        if (type === 'truck') return /^T\d/.test(un) || at.includes('truck');
+        if (type === 'reefer') return at.includes('reefer');
+        if (type === 'flatbed') return at.includes('flatbed') || un.startsWith('FB');
+        if (type === 'dry_van') return at.includes('dry') || at.includes('van');
+        if (type === 'company') return at.includes('company');
+        return true;
+      }).filter(function(u) {
+        return String(u?.status || 'Active').toLowerCase() === 'active';
+      });
 
-    function filterUnitsByType(type, pickerId) {
-      const key = String(pickerId || 'default');
-      const rows = erpFilteredUnitsByType(type);
-      const dl = document.getElementById('filteredUnitList_' + key) || document.getElementById('filteredUnitList');
-      if (dl) dl.innerHTML = rows.map((r) => `<option value="${escapeHtml(String(r?.unit_number || r?.name || ''))}"></option>`).join('');
-      return rows;
+      var control = row.querySelector('.erp-unit-input');
+      if (!control) return;
+
+      if (control.tagName && control.tagName.toLowerCase() === 'select') {
+        control.innerHTML = filtered.map(function(u) {
+          var un = String(u?.unit_number || '').trim();
+          if (!un) return '';
+          var make = String(u?.make_override || u?.make || '').trim();
+          var suffix = make ? ' — ' + make : '';
+          return '<option value="' + escapeHtml(un) + '">' + escapeHtml(un + suffix) + '</option>';
+        }).join('');
+        if (!control.value && filtered.length) control.value = String(filtered[0]?.unit_number || '');
+      } else {
+        var dl = document.getElementById('erpFilteredUnitList');
+        if (dl) {
+          dl.innerHTML = filtered.map(function(u){
+            var un = String(u?.unit_number || '').trim();
+            if (!un) return '';
+            var make = String(u?.make_override || u?.make || '').trim();
+            var suffix = make ? ' — ' + make : '';
+            return '<option value="' + escapeHtml(un) + '"></option>';
+          }).join('');
+        }
+        control.value = '';
+      }
+      row.style.display = 'block';
+      if (typeof control.focus === 'function') control.focus();
+      if (typeof control.dispatchEvent === 'function') {
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+        control.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
 
     function erpInitTwoStepUnitPicker(targetId) {
-      const target = document.getElementById(targetId);
+      var target = document.getElementById(targetId);
       if (!target || target.dataset.twoStepReady === '1') return;
       target.dataset.twoStepReady = '1';
-      const wrap = document.createElement('div');
+
+      var wrap = document.createElement('div');
       wrap.className = 'erp-two-step-unit';
       wrap.style.display = 'grid';
       wrap.style.gap = '8px';
 
-      const typeSel = document.createElement('select');
-      typeSel.className = 'qb-in';
+      var typeSel = document.createElement('select');
+      typeSel.className = 'erp-unit-type-filter';
+      typeSel.setAttribute('onchange', 'erpFilterUnits(this)');
+      typeSel.style.cssText = 'width:100%;padding:8px;margin-bottom:6px;border:1px solid #d1d5db;border-radius:6px';
       typeSel.innerHTML = [
         '<option value="">-- Select vehicle type --</option>',
         '<option value="truck">Trucks (T120-T177)</option>',
@@ -8663,50 +8739,35 @@
         '<option value="flatbed">Flatbeds</option>',
         '<option value="dry_van">Dry Vans</option>',
         '<option value="company">Company Vehicles</option>',
-        '<option value="other">Other</option>'
+        '<option value="other">Other / All</option>'
       ].join('');
 
-      const key = String(targetId).replace(/[^a-z0-9_-]/gi, '_');
-      const dl = document.createElement('datalist');
-      dl.id = 'filteredUnitList_' + key;
+      var row = document.createElement('div');
+      row.className = 'erp-unit-input-row';
+      row.style.display = 'none';
 
-      const clone = target.cloneNode(true);
-      clone.setAttribute('list', dl.id);
-      clone.setAttribute('placeholder', clone.getAttribute('placeholder') || 'Type unit number...');
-
-      const holder = document.createElement('div');
-      holder.style.display = 'none';
-      holder.appendChild(clone);
+      var clone = target.cloneNode(true);
+      clone.classList.add('erp-unit-input');
+      clone.style.width = '100%';
+      clone.style.padding = '8px';
+      clone.style.border = '1px solid #d1d5db';
+      clone.style.borderRadius = '6px';
+      if (!(clone.tagName && clone.tagName.toLowerCase() === 'select')) {
+        clone.setAttribute('list', 'erpFilteredUnitList');
+        clone.setAttribute('placeholder', clone.getAttribute('placeholder') || 'Type unit number...');
+      }
 
       target.parentNode.insertBefore(wrap, target);
       wrap.appendChild(typeSel);
-      wrap.appendChild(holder);
-      wrap.appendChild(dl);
+      wrap.appendChild(row);
+      row.appendChild(clone);
       target.remove();
-
-      const syncVal = () => {
-        const rows = filterUnitsByType(typeSel.value, key);
-        holder.style.display = typeSel.value ? '' : 'none';
-        if (clone.tagName && clone.tagName.toLowerCase() === 'select') {
-          const options = rows.map((r) => String(r?.unit_number || r?.name || '').trim()).filter(Boolean);
-          clone.innerHTML = options.map((v) => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-          if (!options.includes(String(clone.value || ''))) clone.value = options[0] || '';
-          return;
-        }
-        if (!typeSel.value) clone.value = '';
-        else if (clone.value) {
-          const ok = rows.some((r) => String(r?.unit_number || r?.name || '') === String(clone.value || ''));
-          if (!ok) clone.value = '';
-        }
-      };
-
-      typeSel.addEventListener('change', syncVal);
-      syncVal();
     }
 
     function erpInitTwoStepUnitPickers() {
       ['sqUnit', 'apAssetUnit', 'fuelManualUnit', 'mbAssetUnit'].forEach((id) => erpInitTwoStepUnitPicker(id));
     }
+
 
     function erpPopulateLiveCatalogDatalists() {
       const payDl = document.getElementById('paymentMethodList');
@@ -8715,21 +8776,54 @@
         payDl.innerHTML = methods.map((m) => `<option value="${escapeHtml(m)}"></option>`).join('');
       }
 
-      const bankDl = document.getElementById('qboBankList');
-      if (bankDl) {
+      const svcDl = document.getElementById('serviceTypeList');
+      j('/api/maintenance/service-types').then((d) => {
+        const rows = Array.isArray(d?.types) ? d.types : Array.isArray(d?.names) ? d.names : Array.isArray(d) ? d : [];
+        if (!svcDl) return;
+        svcDl.innerHTML = rows
+          .map((t) => typeof t === 'string' ? t : String(t?.name || t?.label || t?.value || ''))
+          .filter(Boolean)
+          .map((name) => `<option value="${escapeHtml(name)}"></option>`)
+          .join('');
+      }).catch(() => {});
+
+      j('/api/qbo/master').then((d) => {
+        const acctsRaw = Array.isArray(d?.accounts) ? d.accounts : Array.isArray(d?.accountsExpense) ? d.accountsExpense : [];
+        const accts = acctsRaw.filter((a) => {
+          const t = String(a?.accountType || a?.AccountType || '').toLowerCase();
+          return t === 'bank' || t === 'credit card';
+        });
+        const bankDl = document.getElementById('qboBankList');
+        if (bankDl) bankDl.innerHTML = accts.map((a) => `<option value="${escapeHtml(String(a?.name || a?.Name || ''))}"></option>`).join('');
+      }).catch(() => {
+        const bankDl = document.getElementById('qboBankList');
+        if (!bankDl) return;
         const acc = Array.isArray(erp?.qboCache?.accounts) ? erp.qboCache.accounts : [];
         const banks = acc.filter((a) => {
           const t = String(a?.accountType || a?.AccountType || '').toLowerCase();
           return t === 'bank' || t === 'credit card';
         });
         bankDl.innerHTML = banks.map((b) => `<option value="${escapeHtml(String(b?.name || b?.Name || ''))}"></option>`).join('');
-      }
+      });
 
-      const drvDl = document.getElementById('driverList');
-      if (drvDl) {
+      j('/api/drivers/profiles').then((d) => {
+        const rows = Array.isArray(d?.drivers) ? d.drivers : [];
+        const names = rows
+          .map((dr) => String(dr?.driver_name || dr?.full_name || '').trim())
+          .filter((nm) => nm && nm !== 'Unassigned');
+        const html = Array.from(new Set(names)).sort((a, b) => a.localeCompare(b)).map((n) => `<option value="${escapeHtml(n)}"></option>`).join('');
+        const drvDl = document.getElementById('driverProfileList');
+        if (drvDl) drvDl.innerHTML = html;
+        const drvDlLegacy = document.getElementById('driverList');
+        if (drvDlLegacy) drvDlLegacy.innerHTML = html;
+      }).catch(() => {
         const names = (Array.isArray(driverProfiles) ? driverProfiles : []).map((d) => String(d?.full_name || d?.name || '').trim()).filter(Boolean);
-        drvDl.innerHTML = Array.from(new Set(names)).sort((a,b)=>a.localeCompare(b)).map((n)=>`<option value="${escapeHtml(n)}"></option>`).join('');
-      }
+        const html = Array.from(new Set(names)).sort((a,b)=>a.localeCompare(b)).map((n)=>`<option value="${escapeHtml(n)}"></option>`).join('');
+        const drvDl = document.getElementById('driverProfileList');
+        if (drvDl) drvDl.innerHTML = html;
+        const drvDlLegacy = document.getElementById('driverList');
+        if (drvDlLegacy) drvDlLegacy.innerHTML = html;
+      });
 
       const partsDl = document.getElementById('partsCatalogList');
       if (partsDl) {
@@ -8746,13 +8840,14 @@
       ['linkedBankAccountSearch','fuelManualBankSearch','fuelExpBankSearch'].forEach((id)=>{
         const el = document.getElementById(id); if (el) el.setAttribute('list','qboBankList');
       });
-      ['driverInput','apDriverSearch','maintDriverInput'].forEach((id)=>{
-        const el = document.getElementById(id); if (el) el.setAttribute('list','driverList');
+      ['driverInput','apDriverSearch','maintDriverInput','apErpDriverSearch'].forEach((id)=>{
+        const el = document.getElementById(id); if (el) el.setAttribute('list','driverProfileList');
       });
       document.querySelectorAll('input[id*="parts" i], input[name*="parts" i]').forEach((el)=>{
         if (el && !el.getAttribute('list')) el.setAttribute('list','partsCatalogList');
       });
     }
+
 
     function erpEnsureUnitClassBadges() {
       const pairs = [
@@ -8810,7 +8905,7 @@
     }
 
     function erpEnsureModalCancelButtons() {
-      const footerSelectors = ['.erp-qb-dialog__foot', '.maint-save-toolbar--qb', '.qb-save-actions', '.maint-save-toolbar'];
+      const footerSelectors = ['.erp-qb-dialog__foot', '.maint-save-toolbar--qb', '.qb-save-actions', '.maint-save-toolbar', '.qb-doc-footer__right', '.qb-doc-footer'];
       footerSelectors.forEach((sel) => {
         document.querySelectorAll(sel).forEach((ft) => {
           if (ft.querySelector('[data-erp-auto-cancel="1"]')) return;
@@ -8832,6 +8927,32 @@
         });
       });
     }
+
+    function erpNormalizeExpenseBillLayouts() {
+      const scopes = ['#erpDedicatedFormModalBody', '#acct-transactions', '#maintWorkOrderModalBody', '#maintWorkOrderFormMount'];
+      scopes.forEach((scopeSel) => {
+        const root = document.querySelector(scopeSel);
+        if (!root) return;
+        root.querySelectorAll('.search-row, .ap-exp-grid, .wo-line-grid').forEach((el) => {
+          if (!(el instanceof HTMLElement)) return;
+          el.style.display = 'grid';
+          el.style.gridTemplateColumns = '1fr 1fr 1fr';
+          el.style.gap = '16px';
+        });
+        root.querySelectorAll('textarea').forEach((el) => {
+          const h = el.closest('div, label');
+          if (h && h.style) h.style.gridColumn = '1 / -1';
+        });
+        root.querySelectorAll('input[type="file"]').forEach((el) => {
+          const h = el.closest('div, label');
+          if (h && h.style) h.style.gridColumn = '1 / -1';
+        });
+        root.querySelectorAll('.qb-doc-memo-row, .ap-exp-row--pdf, .qb-doc-footer, .qb-save-actions, .maint-save-toolbar, .maint-save-toolbar--qb').forEach((el) => {
+          if (el && el.style) el.style.gridColumn = '1 / -1';
+        });
+      });
+    }
+
     function cacheIncomeAccounts() { return erp.qboCache?.accountsIncome || []; }
     function cacheExpenseAccounts() { return erp.qboCache?.accountsExpense || []; }
     function paymentMethods() {
@@ -10320,7 +10441,7 @@
           const wantPreset = presetMapEarly[mode] || '';
           if (window.__erpDedicatedModalKind === 'ap' && (window.__erpDedicatedApPreset || '') === wantPreset) {
             syncErpDedicatedModalChrome();
-            requestAnimationFrame(() => erpApplyApDedicatedUiAfterOpen(mode));
+            requestAnimationFrame(() => { erpApplyApDedicatedUiAfterOpen(mode); erpPopulateLiveCatalogDatalists(); erpInitTwoStepUnitPickers(); erpEnsureModalCancelButtons(); erpNormalizeExpenseBillLayouts(); });
             if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('ap');
             return;
           }
@@ -10359,6 +10480,10 @@
         erpDedicatedModalBindEscape(true);
         if (!fromHash) window.location.hash = 'accounting-fuel-expense-new';
         syncErpDedicatedModalChrome();
+        erpPopulateLiveCatalogDatalists();
+        erpInitTwoStepUnitPickers();
+        erpEnsureModalCancelButtons();
+        erpNormalizeExpenseBillLayouts();
         if (typeof erpRestoreDedicatedModalGeometry === 'function') erpRestoreDedicatedModalGeometry('fuel');
         return;
       }
@@ -10583,6 +10708,7 @@
       erpInitTwoStepUnitPickers();
       erpUpdateHomeKpis();
       erpEnsureUnitClassBadges();
+      erpNormalizeExpenseBillLayouts();
       if (name === 'accounting') {
         requestAnimationFrame(() => {
           syncAcctDashFromQboPayload();
@@ -10657,7 +10783,7 @@
         body.innerHTML = trucks.map(r => {
           const unit = String(r.unit_number || '');
           const svc = byUnit.get(unit) || { d: '', due: '' };
-          return `<tr>
+          return `<tr data-unit="${escapeHtml(unit)}" onclick="selectFleetUnitForClass(this.getAttribute('data-unit') || '')">
             <td><strong>${escapeHtml(unit)}</strong></td>
             <td>${escapeHtml(fleetDisplayMake(r))}</td>
             <td>${escapeHtml(fleetDisplayModel(r))}</td>
@@ -10677,6 +10803,8 @@
         }).join('');
         const classDl = document.getElementById('fleetQboClassOptions');
         if (classDl) classDl.innerHTML = fleetQboClassOptionsHtml();
+        const classDlAlias = document.getElementById('qboClassList');
+        if (classDlAlias) classDlAlias.innerHTML = fleetQboClassOptionsHtml();
         if (meta) meta.textContent = `${trucks.length} active trucks`;
       } catch (e) {
         body.innerHTML = `<tr><td colspan="11" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
@@ -10787,44 +10915,66 @@
       boardVehicles.forEach(addRow);
       assetVehicles.forEach(addRow);
 
+      if (merged.length) {
+        console.log('[safety-map gps sample]', merged.slice(0, 3).map((v) => ({
+          unit: v?.unit_number || v?.name || '',
+          lastGpsLat: v?.lastGpsLat,
+          lastGpsLng: v?.lastGpsLng,
+          gps_lat: v?.gps_lat,
+          gps_lng: v?.gps_lng,
+          lastLocation: v?.lastLocation || null,
+          raw: v,
+        })));
+      }
+
       const markers = [];
       let gpsCount = 0;
       merged.forEach((v) => {
-        const rawLat = v?.lastGpsLat ?? v?.gps_lat ?? v?.lat ?? v?.lastLocation?.lat;
-        const rawLng = v?.lastGpsLng ?? v?.gps_lng ?? v?.lng ?? v?.lastLocation?.lng;
-        const lat = Number(rawLat);
-        const lng = Number(rawLng);
-        const hasLat = rawLat !== null && rawLat !== undefined && Number.isFinite(lat) && lat !== 0;
-        const hasLng = rawLng !== null && rawLng !== undefined && Number.isFinite(lng) && lng !== 0;
-        const nestedOk = !(v?.lastLocation) || (
-          Number(v?.lastLocation?.lat || 0) !== 0 && Number(v?.lastLocation?.lng || 0) !== 0
-        );
-        if (!hasLat || !hasLng || !nestedOk) return;
-
-        const unit = String(v?.unit_number || v?.name || v?.vehicleName || 'Unit');
-        const locObj = v?.lastLocation;
-        const locText = typeof locObj === 'string'
-          ? locObj
-          : String(locObj?.address || v?.location_text || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-        const marker = L.marker([lat, lng])
-          .bindPopup('<b>' + escapeHtml(unit) + '</b><br>' + escapeHtml(locText || ''))
-          .addTo(safetyLiveMapLayer);
-        markers.push(marker);
-        gpsCount += 1;
+        const lat = parseFloat(v?.lastGpsLat || v?.gps_lat || (v?.lastLocation && v?.lastLocation.lat) || 0);
+        const lng = parseFloat(v?.lastGpsLng || v?.gps_lng || (v?.lastLocation && v?.lastLocation.lng) || 0);
+        if (lat && lng && lat !== 0 && lng !== 0 && Math.abs(lat) > 1 && Math.abs(lng) > 1) {
+          const unit = String(v?.unit_number || v?.name || v?.vehicleName || 'Unit');
+          const locObj = v?.lastLocation;
+          const locText = typeof locObj === 'string'
+            ? locObj
+            : String(locObj?.address || v?.location_text || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          const marker = L.marker([lat, lng])
+            .bindPopup('<b>' + escapeHtml(unit) + '</b><br>' + escapeHtml(locText || ''))
+            .addTo(safetyLiveMapLayer);
+          markers.push(marker);
+          gpsCount += 1;
+        }
       });
+
+      if (!markers.length) {
+        merged.forEach((v) => {
+          const unit = String(v?.unit_number || v?.name || v?.vehicleName || 'Unit');
+          const marker = L.marker([27.5036, -99.5075])
+            .bindPopup('<b>' + escapeHtml(unit) + '</b><br>GPS data not available — home base')
+            .addTo(safetyLiveMapLayer);
+          markers.push(marker);
+        });
+      }
 
       if (markers.length > 0) {
         const group = L.featureGroup(markers);
         try {
           safetyLiveMap.fitBounds(group.getBounds().pad(0.1));
-        } catch (_) {}
+        } catch (_) {
+          safetyLiveMap.setView([27.5036, -99.5075], 10);
+        }
       } else {
         safetyLiveMap.setView([27.5036, -99.5075], 10);
       }
 
-      if (meta) meta.textContent = `${gpsCount} / ${merged.length} vehicles with GPS · refresh 60s`;
+      if (meta) {
+        meta.textContent = gpsCount > 0
+          ? `${gpsCount} trucks · GPS updating...`
+          : `${merged.length} trucks · GPS data not available — vehicles shown at home base`;
+      }
       setTimeout(() => { try { safetyLiveMap.invalidateSize(true); } catch (_) {} }, 200);
     }
+
 
     function applyNavHash(opts) {
       if (opts instanceof Event) opts = {};
@@ -11026,6 +11176,9 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       var nav = document.getElementById('erpIconNav');
+      if (!Array.isArray(window._cachedUnits) || !window._cachedUnits.length) {
+        fetch('/api/fleet/assets').then(function(r){ return r.json(); }).then(function(d){ window._cachedUnits = d.assets || []; }).catch(function(){});
+      }
       if (nav) {
         nav.addEventListener('click', function(e) {
           var btn = e.target.closest('button[data-section], a[data-section]');
@@ -16571,109 +16724,61 @@
     async function driversResolveAndCreateWorkOrder(id) {
       const row = (window.__driversDamageReports || []).find((r) => String(r.id) === String(id));
       if (!row) return;
-      const unit = String(row.unit_number || '').trim();
+      const reportId = String(id || '').trim();
+      const unitNum = String(row.unit_number || '').trim();
       const damageType = String(row.damage_type || '').trim() || 'Road Service';
-      const serviceType = 'Road Service - ' + damageType;
-      const description = String(row.description || '').trim() || serviceType;
+      const description = String(row.description || '').trim() || ('Road Service - ' + damageType);
       const vendorName = String(row.vendor_name || row.shop_name || '').trim();
       const estimatedCostNum = Number(row.estimated_cost || 0);
       const estimatedCost = Number.isFinite(estimatedCostNum) && estimatedCostNum > 0 ? estimatedCostNum : 0;
-      const vendorQboId = driversVendorQboIdByName(vendorName);
-      const ll = damageReportLatLng(row);
-      const locationText = Number.isFinite(ll.lat) && Number.isFinite(ll.lng)
-        ? `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`
-        : String(row.location_text || row?.location?.text || row.location || '').trim();
-      const nowIso = new Date().toISOString();
-      const today = nowIso.slice(0, 10);
-
-      if (!unit) {
-        erpShowToast('Unit missing on report', 'error');
+      if (!reportId || !unitNum) {
+        erpShowToast('Missing report/unit data', 'error');
         return;
       }
 
-      let recordId = '';
       try {
-        const woOut = await j('/api/maintenance/record', {
+        const wo = await fetch('/api/work-orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            unit,
-            recordType: 'maintenance_order',
-            serviceType,
-            serviceDate: today,
+            unit_number: unitNum,
+            service_type: 'Road Service - ' + damageType,
+            description: description,
             vendor: vendorName,
-            cost: estimatedCost ? String(estimatedCost) : '',
-            notes: [description, locationText ? `Location: ${locationText}` : ''].filter(Boolean).join('\n'),
-            repairStatus: 'in_progress',
-            priority: 'Urgent'
+            estimated_cost: estimatedCost,
+            priority: 'Urgent',
+            status: 'In Progress'
           })
-        });
-        recordId = String(woOut?.record?.id || '');
+        }).then((r) => r.json());
+
+        if (estimatedCost) {
+          await fetch('/api/expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              unit_number: unitNum,
+              amount: estimatedCost,
+              vendor_name: vendorName,
+              description: 'Road Service - ' + damageType,
+              expense_type: 'road_repair',
+              work_order_id: wo?.id || wo?.record?.id || ''
+            })
+          }).catch(() => null);
+        }
+
+        await fetch('/api/damage/reports/' + encodeURIComponent(reportId) + '/acknowledge', { method: 'POST' }).catch(() => null);
+
+        driversResolvedDamageIds().add(String(reportId));
+        driversCloseDamageDetail();
+        erpShowToast('✅ Work order created + expense logged', 'success');
+        await Promise.all([
+          refreshDashboardDamageReports(),
+          refreshDriversDashboardPanels(),
+          loadAll().catch(() => null)
+        ]);
       } catch (e) {
-        erpShowToast('Could not create work order: ' + (e?.message || 'Unknown error'), 'error');
-        return;
+        erpShowToast('Could not resolve report: ' + (e?.message || 'Unknown error'), 'error');
       }
-
-      try {
-        await j('/api/work-orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
-          body: JSON.stringify({
-            unit,
-            assetCategory: activeAssetCategory || '',
-            repairLocationType: 'roadside',
-            repairLocationLabel: 'Road Service',
-            serviceDate: today,
-            txnType: 'expense',
-            dueDate: today,
-            qboTermId: '',
-            qboVendorId: vendorQboId,
-            serviceType,
-            paymentMethodId: '',
-            qboBankAccountId: '',
-            loadNumber: '',
-            internalWorkOrderNumber: recordId ? `RS-${recordId}` : '',
-            vendorInvoiceNumber: '',
-            notes: description,
-            linkedWorkOrderId: recordId,
-            category: 'Maintenance expense',
-            lines: [
-              {
-                description: serviceType,
-                amount: estimatedCost,
-                detailMode: 'category',
-                qboAccountId: '',
-                qboAccountName: '',
-                qboItemId: '',
-                qboItemName: '',
-                qboClassId: '',
-                qboClassName: '',
-                serviceType,
-                vendorName
-              }
-            ]
-          })
-        });
-      } catch (_) {
-        // Keep flow moving even if expense endpoint rejects optional fields.
-      }
-
-      try {
-        await j('/api/damage/reports/' + encodeURIComponent(String(id)) + '/acknowledge', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'resolved' })
-        });
-      } catch (_) {}
-
-      driversResolvedDamageIds().add(String(id));
-      driversCloseDamageDetail();
-      erpShowToast('Work order created + expense logged', 'success');
-      await Promise.all([
-        refreshDashboardDamageReports(),
-        refreshDriversDashboardPanels(),
-        loadAll().catch(() => null)
-      ]);
     }
 
 
@@ -16687,9 +16792,14 @@
       }
       window.__dashboardDamageReports = reports;
       const resolvedIds = driversResolvedDamageIds();
-      const openCount = reports.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved' && !resolvedIds.has(String(r.id || ''))).length;
+      const openCount = reports.filter((r) => {
+        const s = String(r.status || 'new').toLowerCase().trim();
+        return s !== 'resolved' && s !== 'acknowledged' && !resolvedIds.has(String(r.id || ''));
+      }).length;
       const kpiEl = document.getElementById('dashOpenDamageReports');
       if (kpiEl) kpiEl.textContent = String(openCount);
+      const maintKpiEl = document.getElementById('maintDashOpenDamage');
+      if (maintKpiEl) maintKpiEl.textContent = String(openCount);
       const kpiCard = document.getElementById('dashDamageReportsCard');
       if (kpiCard) {
         kpiCard.classList.toggle('mr-kpi-card--bad', openCount > 0);
