@@ -436,6 +436,15 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     () => [
       { id: 'unit', label: 'Unit#', width: 70, render: (r) => <span className="lists-db__pill lists-db__pill--info">{r.unit_number}</span> },
       { id: 'name', label: 'Name', width: 100, render: (r) => metaMap[String(r.id)]?.name || r.unit_number },
+      {
+        id: 'currentDriver',
+        label: 'Current Driver',
+        width: 130,
+        render: (r) => {
+          const driver = String((r as any).currentDriver || (r as any).currentDriverName || (r as any).current_driver_name || '').trim()
+          return driver || '—'
+        },
+      },
       { id: 'make', label: 'Make', width: 80, render: (r) => String((r as any).make || (r as any).make_override || '').trim() || '—' },
       { id: 'model', label: 'Model', width: 80, render: (r) => String((r as any).model || (r as any).model_override || '').trim() || '—' },
       { id: 'year', label: 'Year', width: 56, render: (r) => (r.year ?? (r as any).year_override ?? '—') },
@@ -653,7 +662,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         data={data}
         rowKey={(r) => String(r.id)}
         searchPlaceholder="Search unit, name, VIN, make, model…"
-        searchKeys={['unit_number', 'vin', 'make', 'model', 'asset_type', 'status']}
+        searchKeys={['unit_number', 'vin', 'make', 'model', 'asset_type', 'status', 'currentDriver', 'currentDriverName', 'current_driver_name']}
         exportFilename="VehiclesDatabase"
         onCloseList={onCloseList}
         onAddNew={openAdd}

@@ -314,6 +314,12 @@ async function ensureDriverSchedulerTables() {
       await dbQuery(sql);
     }
 
+    await dbQuery(`
+      CREATE UNIQUE INDEX IF NOT EXISTS driver_profiles_samsara_id_idx
+      ON driver_profiles (samsara_driver_id)
+      WHERE samsara_driver_id IS NOT NULL
+    `);
+
     return true;
   } catch (e) {
     logError('[drivers] ensureDriverSchedulerTables warning', e);
@@ -854,6 +860,7 @@ export function mountErpCoreApi(app, opts = {}) {
     try {
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       let vehicles = [];
+      let assignmentList = [];
       if (token) {
         try {
           const payload = await getVehicles(token);
@@ -864,6 +871,13 @@ export function mountErpCoreApi(app, opts = {}) {
         } catch (e) {
           logError('[board] samsara call failed', e);
         }
+        assignmentList = await getDriverVehicleAssignments(token, {}).then((assignments) => (
+          Array.isArray(assignments?.data)
+            ? assignments.data
+            : Array.isArray(assignments)
+              ? assignments
+              : []
+        )).catch(() => []);
       }
       if (!vehicles.length && token) {
         await new Promise((r) => setTimeout(r, 2000));
@@ -881,10 +895,31 @@ export function mountErpCoreApi(app, opts = {}) {
         const erp = readFullErpJson();
         vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
       }
+
+      const vehiclesWithAssignments = vehicles.map((vehicle) => {
+        const vehicleSamsaraId = String(vehicle?.samsara_id || vehicle?.samsaraId || vehicle?.id || '').trim();
+        const unitNeedle = String(vehicle?.unit_number || vehicle?.unitNumber || vehicle?.name || '').trim();
+        const match = assignmentList.find((a) => {
+          const assignmentVehicleId = String(a?.vehicle?.id || '').trim();
+          const assignmentVehicleName = String(a?.vehicle?.name || '').trim();
+          if (vehicleSamsaraId && assignmentVehicleId) return assignmentVehicleId === vehicleSamsaraId;
+          if (unitNeedle && assignmentVehicleName) return assignmentVehicleName === unitNeedle;
+          return false;
+        });
+        const currentDriver = String(match?.driver?.name || '').trim();
+        const currentDriverId = String(match?.driver?.id || '').trim();
+        if (!currentDriver && !currentDriverId) return vehicle;
+        return {
+          ...vehicle,
+          currentDriver: currentDriver || null,
+          currentDriverId: currentDriverId || null,
+        };
+      });
+
       return res.json({
-        vehicles, live: [], hos: [], assignments: [],
+        vehicles: vehiclesWithAssignments, live: [], hos: [], assignments: [],
         refreshedAt: new Date().toISOString(),
-        source: vehicles.length > 0 ? 'samsara-live' : 'empty'
+        source: vehiclesWithAssignments.length > 0 ? 'samsara-live' : 'empty'
       });
     } catch (e) {
       logError('GET /api/board', e);
@@ -897,9 +932,38 @@ export function mountErpCoreApi(app, opts = {}) {
     try {
       const statusQ = String(req.query?.status || '').trim().toLowerCase();
       const assets = await getMergedFleetAssetProfiles(logError);
+
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      let assignList = [];
+      if (token) {
+        const assignments = await getDriverVehicleAssignments(token, {}).catch(() => ({ data: [] }));
+        assignList = Array.isArray(assignments?.data)
+          ? assignments.data
+          : Array.isArray(assignments)
+            ? assignments
+            : [];
+      }
+
+      const assetsWithAssignments = assets.map((asset) => {
+        const match = assignList.find((a) =>
+          String(a?.vehicle?.id || '') === String(asset?.samsara_id || '')
+        );
+        const driverName = String(match?.driver?.name || '').trim();
+        const driverId = String(match?.driver?.id || '').trim();
+        if (!driverName && !driverId) return asset;
+        return {
+          ...asset,
+          current_driver_name: driverName,
+          currentDriverName: driverName,
+          currentDriver: driverName || null,
+          currentDriverId: driverId || null,
+          driver_name: driverName,
+        };
+      });
+
       const filtered = statusQ
-        ? assets.filter((a) => String(a?.status || '').trim().toLowerCase() === statusQ)
-        : assets;
+        ? assetsWithAssignments.filter((a) => String(a?.status || '').trim().toLowerCase() === statusQ)
+        : assetsWithAssignments;
       return res.json({ ok: true, assets: filtered, count: filtered.length });
     } catch (e) {
       logError('GET /api/fleet/assets', e);
@@ -1675,6 +1739,51 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/drivers/samsara-list', e);
       return res.json({ ok: true, drivers: [], error: e?.message || String(e) });
+    }
+  });
+
+
+  app.post('/api/drivers/sync-from-samsara', async (_req, res) => {
+    try {
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      if (!token) return res.json({ ok: false, error: 'no token' });
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+
+      const driversData = await samsaraGet('/fleet/drivers', token, { limit: 200 }).catch(() => ({ data: [] }));
+      const drivers = Array.isArray(driversData?.data) ? driversData.data : [];
+
+      let imported = 0;
+      for (const d of drivers) {
+        const name = String(d?.name || '').trim();
+        if (!name) continue;
+        const samsaraId = String(d?.id || '').trim();
+        if (!samsaraId) continue;
+
+        await dbQuery(
+          `INSERT INTO driver_profiles (
+             full_name, samsara_driver_id, license_number,
+             cdl_state, status, unit_number, updated_at, created_at
+           ) VALUES ($1,$2,$3,$4,'active','Unassigned',now(),now())
+           ON CONFLICT (samsara_driver_id) DO UPDATE SET
+             full_name=EXCLUDED.full_name,
+             license_number=EXCLUDED.license_number,
+             cdl_state=EXCLUDED.cdl_state,
+             updated_at=now()`,
+          [
+            name,
+            samsaraId,
+            d?.licenseNumber || null,
+            d?.licenseState || null,
+          ]
+        ).catch(() => null);
+        imported++;
+      }
+
+      return res.json({ ok: true, imported });
+    } catch (e) {
+      logError('POST /api/drivers/sync-from-samsara', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 

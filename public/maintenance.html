@@ -480,11 +480,11 @@
           <table>
             <thead>
               <tr>
-                <th>Unit#</th><th>Make</th><th>Model</th><th>Year</th><th>VIN</th><th>License Plate</th>
+                <th>Unit#</th><th>Current Driver</th><th>Make</th><th>Model</th><th>Year</th><th>VIN</th><th>License Plate</th>
                 <th>Type</th><th>Status</th><th>QuickBooks Class</th><th>Last Service</th><th>Due Date</th>
               </tr>
             </thead>
-            <tbody id="maintFleetTableModalBody"><tr><td colspan="11" class="mini-note">Loading…</td></tr></tbody>
+            <tbody id="maintFleetTableModalBody"><tr><td colspan="12" class="mini-note">Loading…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -10795,7 +10795,7 @@
       if (!modal || !body) return;
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
-      body.innerHTML = '<tr><td colspan="11" class="mini-note">Loading…</td></tr>';
+      body.innerHTML = '<tr><td colspan="12" class="mini-note">Loading…</td></tr>';
       if (meta) meta.textContent = 'Loading active trucks…';
       try {
         const data = await j('/api/fleet/assets');
@@ -10811,15 +10811,17 @@
           if (!cur || d > cur.d) byUnit.set(u, { d, due: r.nextDueDate || r.dueDate || '' });
         });
         if (!trucks.length) {
-          body.innerHTML = '<tr><td colspan="11" class="mini-note">No active trucks found.</td></tr>';
+          body.innerHTML = '<tr><td colspan="12" class="mini-note">No active trucks found.</td></tr>';
           if (meta) meta.textContent = '0 active trucks';
           return;
         }
         body.innerHTML = trucks.map(r => {
           const unit = String(r.unit_number || '');
           const svc = byUnit.get(unit) || { d: '', due: '' };
+          const currentDriver = String(r.currentDriver || r.currentDriverName || r.current_driver_name || r.driver_name || '').trim() || '—';
           return `<tr data-unit="${escapeHtml(unit)}" onclick="selectFleetUnitForClass(this.getAttribute('data-unit') || '')">
             <td><strong>${escapeHtml(unit)}</strong></td>
+            <td>${escapeHtml(currentDriver)}</td>
             <td>${escapeHtml(fleetDisplayMake(r))}</td>
             <td>${escapeHtml(fleetDisplayModel(r))}</td>
             <td>${escapeHtml(fleetDisplayYearValue(r))}</td>
@@ -10844,7 +10846,7 @@
         if (classDlAlias2) classDlAlias2.innerHTML = fleetQboClassOptionsHtml();
         if (meta) meta.textContent = `${trucks.length} active trucks`;
       } catch (e) {
-        body.innerHTML = `<tr><td colspan="11" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="12" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
         if (meta) meta.textContent = 'Load failed';
       }
     }

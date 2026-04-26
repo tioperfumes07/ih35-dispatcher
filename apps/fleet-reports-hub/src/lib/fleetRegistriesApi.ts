@@ -66,6 +66,10 @@ export type AssetRow = {
   qbo_class_name: string | null
   qbo_synced: boolean
   status: string
+  currentDriver?: string | null
+  currentDriverName?: string | null
+  current_driver_name?: string | null
+  currentDriverId?: string | null
   samsara_synced_at: string | null
   created_at: string
   updated_at: string
@@ -88,6 +92,10 @@ export type FleetAssetProfile = {
   lastGpsLat: number | null
   lastGpsLng: number | null
   lastGpsTime: string | null
+  currentDriver?: string | null
+  currentDriverName?: string | null
+  current_driver_name?: string | null
+  currentDriverId?: string | null
   updated_at: string | null
 }
 

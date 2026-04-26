@@ -195,12 +195,45 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   }, [leavePicker])
 
   const loadDrivers = async () => {
+    const assignmentByUnit = new Map<string, string>()
+    try {
+      const assetsPayload = await fetch('/api/fleet/assets', { headers: { Accept: 'application/json' } })
+        .then((r) => r.json())
+        .catch(() => ({ assets: [] }))
+      const assets = Array.isArray(assetsPayload?.assets) ? assetsPayload.assets : []
+      assets.forEach((asset: any) => {
+        const unit = String(asset?.unit_number || '').trim().toUpperCase()
+        const driverName = String(
+          asset?.currentDriver || asset?.currentDriverName || asset?.current_driver_name || asset?.driver_name || ''
+        ).trim()
+        if (unit && driverName) assignmentByUnit.set(unit, driverName)
+      })
+    } catch {
+      // leave assignment map empty
+    }
+
     try {
       const data = await fetchDriverProfiles()
       const list = Array.isArray(data.drivers) ? data.drivers : []
-      setDrivers(list.length ? normalizeProfilesToRows(list) : fallbackDrivers())
+      const baseRows = list.length ? normalizeProfilesToRows(list) : fallbackDrivers()
+      const mergedRows = baseRows.map((row) => {
+        const unitKey = String(row.unit_number || '').trim().toUpperCase()
+        const assigned = assignmentByUnit.get(unitKey)
+        const rowName = String(row.full_name || '').trim().toLowerCase()
+        const shouldUseAssigned = Boolean(assigned) && (!rowName || rowName === 'unassigned' || rowName === 'vacante')
+        if (!shouldUseAssigned) return row
+        return { ...row, full_name: assigned || row.full_name }
+      })
+      setDrivers(mergedRows)
     } catch {
-      setDrivers(fallbackDrivers())
+      const baseRows = fallbackDrivers()
+      const mergedRows = baseRows.map((row) => {
+        const unitKey = String(row.unit_number || '').trim().toUpperCase()
+        const assigned = assignmentByUnit.get(unitKey)
+        if (!assigned) return row
+        return { ...row, full_name: assigned }
+      })
+      setDrivers(mergedRows)
     }
   }
 
