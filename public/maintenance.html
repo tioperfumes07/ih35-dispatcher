@@ -964,7 +964,7 @@
             <div id="safetyMapMeta" class="mini-note">Loading map…</div>
           </div>
           <div class="panel-body" style="padding:10px">
-            <div id="safetyLiveMap" style="height:400px; width:100%; display:block; border:1px solid var(--color-border); border-radius:8px"></div>
+            <div id="safetyLiveMap" style="height:450px;width:100%;background:#e8e8e8; display:block; border:1px solid var(--color-border); border-radius:8px"></div>
           </div>
         </div>
         <div id="safetyHomeKpis" class="grid grid-3 erp-kpi-grid" style="margin-bottom:12px">
@@ -1295,11 +1295,17 @@
         </div>
 
         <div class="panel" style="margin-bottom:12px">
-          <div class="panel-head"><div class="panel-title" style="margin:0">Leave requests</div></div>
+          <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <div class="panel-title" style="margin:0">Pending leave requests</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn--small" onclick="driversApproveAllLeaveRequests()">Approve all</button>
+              <button type="button" class="btn btn--small ghost" onclick="driversDenyAllLeaveRequests()">Deny all</button>
+            </div>
+          </div>
           <div class="panel-body table-wrap">
             <table class="table">
-              <thead><tr><th>Driver</th><th>Unit</th><th>Dates</th><th>Type</th><th>Submitted</th><th>Action</th></tr></thead>
-              <tbody id="driversLeaveRequestsBody"><tr><td colspan="6" class="muted">Loading leave requests…</td></tr></tbody>
+              <thead><tr><th>Driver</th><th>Unit</th><th>Dates</th><th>Type</th><th>Note</th><th>Submitted</th><th>Action</th></tr></thead>
+              <tbody id="driversLeaveRequestsBody"><tr><td colspan="7" class="muted">Loading leave requests…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -1308,8 +1314,8 @@
           <div class="panel-head"><div class="panel-title" style="margin:0">Fuel submissions today</div></div>
           <div class="panel-body table-wrap">
             <table class="table">
-              <thead><tr><th>Unit</th><th>Driver</th><th>Type</th><th>Gallons</th><th>Total</th><th>Station</th><th>QBO</th><th>Action</th></tr></thead>
-              <tbody id="driversFuelTodayBody"><tr><td colspan="8" class="muted">Loading fuel submissions…</td></tr></tbody>
+              <thead><tr><th>Unit</th><th>Driver</th><th>Type</th><th>Gallons</th><th>Total</th><th>Station</th><th>Load #</th><th>QBO</th><th>Action</th></tr></thead>
+              <tbody id="driversFuelTodayBody"><tr><td colspan="9" class="muted">Loading fuel submissions…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -8975,39 +8981,42 @@
         inner.innerHTML =
           erpSbGroup(
             'fuel',
-            'planner',
-            'Planner',
+            'fuel-only',
+            'Fuel',
             true,
-            '<a class="erp-sb-link sidebar-child-item" href="/fuel.html" target="_blank" rel="noopener" style="display:inline-block">Open fuel planner (full screen)</a>' +
-              '<p class="mini-note" style="margin:8px 0 0">Embedded planner runs below; full screen opens a dedicated tab.</p>'
-          ) +
-          erpSbGroup('fuel', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;accounting&quot;, document.querySelector(&quot;.nav-btn[data-section=accounting]&quot;)); openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel expenses</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;accounting&quot;, document.querySelector(&quot;.nav-btn[data-section=accounting]&quot;)); openAccountingTab(&quot;acct-fuel-settings&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel settings</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;accounting&quot;, document.querySelector(&quot;.nav-btn[data-section=accounting]&quot;)); openAccountingTab(&quot;acct-fuel-settings&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Expense mapping</button>'
+          );
         return;
       }
       if (name === 'safety') {
         const safetyViewsBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-active&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-active\\\']&quot;));">Active / in service</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-assign&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-assign\\\']&quot;));">Assignments</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-files\\\']&quot;));">Driver files</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-fleet&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-fleet\\\']&quot;));">Fleet snapshot</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\\\'safe-hos\\\']&quot;));">HOS clocks</button>';
-        const safetyToolsBody =
-          '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="window.open(&quot;https://cloud.samsara.com&quot;,&quot;_blank&quot;,&quot;noopener&quot;);">Video library (Samsara)</button>' +
-          '<button type="button" class="erp-sb-link erp-sb-link--muted sidebar-child-item" onclick="window.open(&quot;https://www.samsara.com/products/cm31&quot;,&quot;_blank&quot;,&quot;noopener&quot;);">Cameras (product info)</button>';
-        inner.innerHTML =
-          erpSbGroup('safety', 'views', 'Safety', true, safetyViewsBody) +
-          erpSbGroup('safety', 'tools', 'Tools', false, safetyToolsBody) +
-          adm;
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-active&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-active\']&quot;));">Active / in service</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-assign&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-assign\']&quot;));">Assignments</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-files\']&quot;));">Driver files</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-fleet&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-fleet\']&quot;));">Fleet snapshot</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-hos&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-hos\']&quot;));">HOS clocks</button>';
+        inner.innerHTML = erpSbGroup('safety', 'views', 'Safety', true, safetyViewsBody);
+        return;
+      }
+      if (name === 'drivers') {
+        const driversBody =
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="document.getElementById(&quot;driversLeaveRequestsBody&quot;)?.scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">Leave requests</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="document.getElementById(&quot;driversFuelTodayBody&quot;)?.scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">Fuel submissions</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-files\']&quot;)); openSection(&quot;safety&quot;, document.querySelector(&quot;.nav-btn[data-section=safety]&quot;));">Driver profiles</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;drivers&quot;, document.querySelector(&quot;.nav-btn[data-section=drivers]&quot;));">Scheduler</button>';
+        inner.innerHTML = erpSbGroup('drivers', 'views', 'Drivers', true, driversBody);
         return;
       }
       if (name === 'tracking') {
         const trackLiveBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-assets\\\']&quot;));">Vehicles</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-drivers&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-drivers\\\']&quot;));">Drivers</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-map\\\']&quot;));">Live map</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-assets&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\'tr-assets\']&quot;));">Vehicles</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-drivers&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\'tr-drivers\']&quot;));">Drivers</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-map&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\'tr-map\']&quot;));">Live map</button>';
         const trackOpsBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-maint-shop\\\']&quot;));">Shop &amp; maintenance</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\\\'tr-idle\\\']&quot;));">Yard &amp; idle</button>';
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-maint-shop&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\'tr-maint-shop\']&quot;));">Shop &amp; maintenance</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openTrackingTab(&quot;tr-idle&quot;, document.querySelector(&quot;#section-tracking .subtab[onclick*=\'tr-idle\']&quot;));">Yard &amp; idle</button>';
         inner.innerHTML =
           erpSbGroup('tracking', 'live', 'Live', true, trackLiveBody) +
           erpSbGroup('tracking', 'ops', 'Operations', false, trackOpsBody) +
@@ -9015,60 +9024,12 @@
         return;
       }
       if (name === 'accounting') {
-        try {
-          ['expenses', 'bills', 'billpay'].forEach(g => {
-            localStorage.removeItem('ih35_sb_accounting_' + g);
-            localStorage.removeItem('ih35_sb_v2_accounting_' + g);
-            localStorage.setItem('ih35_sb_v2_accounting_' + g, '0');
-          });
-        } catch (_) {
-          /* ignore */
-        }
-
-        const expensesBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Maintenance expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-expense&quot;, { fuelVariant: &quot;fuel-expense&quot; })">Fuel expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewExpense()">Expense</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;repair-expense&quot;)">Repair expense</button>';
-        const billsBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;fuel-bill&quot;)">Fuel bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Maintenance bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenRepairBill()">Repair bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenMultiBillsModal()">Multiple bills</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;driver-bill&quot;)">Driver bill</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;vendor-bill&quot;)">Vendor bill</button>';
-        const billPayBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpNewPayBills()">Bill payment</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="erpOpenDriverBillPay()">Driver bill payment</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-pay" onclick="openAccountingTab(&quot;acct-bill-pay&quot;, document.getElementById(&quot;acctBillPayStub&quot;));">Payment history</button>';
-        const specializedBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewFuelRecord()">Fuel &amp; DEF fast entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewDriverSettlement()">Driver settlement</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpNewLoadsEntry()">Load / TMS entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;journal-entry&quot;)">Journal entry</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenAcctWorkflowModal(&quot;transfer&quot;)">Transfer</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-expense-history" onclick="openAccountingTab(&quot;acct-expense-history&quot;, document.getElementById(&quot;acctLogsDdTrigger&quot;));">Expense history</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-bill-history" onclick="openAccountingTab(&quot;acct-bill-history&quot;, document.getElementById(&quot;acctBillHistTrigger&quot;));">Bill history</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-fuel-expense" onclick="openAccountingTab(&quot;acct-fuel-expense&quot;, document.getElementById(&quot;acctFuelDdTrigger&quot;));">Fuel &amp; DEF ledger</button>';
-        const qbBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-qbo-rollback" onclick="openAccountingTab(&quot;acct-qbo-rollback&quot;, document.getElementById(&quot;acctQboRollbackStub&quot;));">QBO rollback &amp; imports</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" data-erp-acct-tab="acct-qbo" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks live master</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="testQuickBooks()">Test QuickBooks connection</button>';
-        const acctToolsBody = erpSbAccountingToolsDataBody();
-        const connLead =
-          '<div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.4;color:var(--color-text-label)">' +
-          '<span style="min-width:0;flex:1 1 160px">QBO status + refresh snapshot — only the bordered box below updates each poll.</span>' +
-          '</div>';
-        const connBody = connLead + '<div id="erpAcctSbConnectionsBody" class="erp-acct-sb-conn"></div>';
-        inner.innerHTML =
-          erpSbGroup('accounting', 'expenses', 'Expenses', false, expensesBody) +
-          erpSbGroup('accounting', 'bills', 'Bills', false, billsBody) +
-          erpSbGroup('accounting', 'billpay', 'Bill payment', false, billPayBody) +
-          erpSbGroup('accounting', 'specialized', 'Specialized', false, specializedBody) +
-          erpSbGroup('accounting', 'quickbooks', 'QuickBooks', false, qbBody) +
-          erpSbGroup('accounting', 'tools', 'Tools &amp; data', false, acctToolsBody) +
-          erpSbGroup('accounting', 'connections', 'Connections', false, connBody);
-        requestAnimationFrame(() => paintAcctSidebarConnections());
+        const accountingBody =
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Expenses</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Bills</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks sync</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;catalog&quot;, document.querySelector(&quot;.nav-btn[data-section=catalog]&quot;)); openCatalogSubpanel(&quot;vendors&quot;);">Vendors</button>';
+        inner.innerHTML = erpSbGroup('accounting', 'core', 'Accounting', true, accountingBody);
         return;
       }
       if (name === 'reports') {
@@ -10443,12 +10404,11 @@
       }
       if (name === 'safety') {
         requestAnimationFrame(() => renderSafetyLiveMap());
-        setTimeout(function() {
-          if(window.safetyLiveMap) {
-            window.safetyLiveMap.invalidateSize();
-            window.safetyLiveMap.setView([27.5036, -99.5075], 7);
+        setTimeout(function(){
+          if(window.safetyMap) {
+            window.safetyMap.invalidateSize(true);
           }
-        }, 300);
+        }, 200);
       }
       if (name === 'reports') {
         loadReportsData();
@@ -10671,13 +10631,14 @@
       const host = document.getElementById('safetyLiveMap');
       if (!host || typeof L === 'undefined') return false;
       if (!safetyLiveMap) {
-        safetyLiveMap = L.map(host, { zoomControl: true }).setView([29.4241, -98.4936], 7);
+        safetyLiveMap = L.map(host, { zoomControl: true }).setView([27.5036, -99.5075], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors',
-          maxZoom: 19,
-          subdomains: ['a','b','c']
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 18,
+          crossOrigin: true
         }).addTo(safetyLiveMap);
         window.safetyLiveMap = safetyLiveMap;
+        window.safetyMap = safetyLiveMap;
         safetyLiveMapLayer = L.layerGroup().addTo(safetyLiveMap);
       }
       return true;
@@ -10690,27 +10651,24 @@
         return;
       }
       const veh = Array.isArray(board?.vehicles) ? board.vehicles : [];
-      const withGps = veh.filter(v => Number.isFinite(Number(v.lastGpsLat)) && Number.isFinite(Number(v.lastGpsLng)));
+      const withGps = veh.filter(v => Number.isFinite(Number(v.lastGpsLat)) && Number.isFinite(Number(v.lastGpsLng)) && Number(v.lastGpsLat) !== 0 && Number(v.lastGpsLng) !== 0);
       safetyLiveMapLayer.clearLayers();
-      if (!withGps.length) {
-        if (meta) meta.textContent = 'No GPS points available';
-        return;
-      }
-      const bounds = [];
+      const markers = [];
       withGps.forEach(v => {
         const lat = Number(v.lastGpsLat);
         const lng = Number(v.lastGpsLng);
-        bounds.push([lat, lng]);
-        const unit = String(v.name || v.unit_number || v.vehicleName || 'Unit');
-        const locationLabel = Number.isFinite(lat) && Number.isFinite(lng) ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : 'Location unavailable';
-        const popup = `<b>${escapeHtml(unit)}</b><br>${escapeHtml(locationLabel)}`;
-        L.marker([lat, lng]).bindPopup(popup).addTo(safetyLiveMapLayer);
+        const unit = String(v.unit_number || v.name || v.vehicleName || 'Unit');
+        const location = String(v.lastLocation || `${lat.toFixed(4)}, ${lng.toFixed(4)}` || '');
+        const marker = L.marker([lat, lng]).bindPopup('<b>' + escapeHtml(unit) + '</b><br>' + escapeHtml(location)).addTo(safetyLiveMapLayer);
+        markers.push(marker);
       });
-      if (bounds.length) {
-        try { safetyLiveMap.fitBounds(bounds, { padding: [18, 18], maxZoom: 11 }); } catch (_) {}
+      if (markers.length > 0) {
+        try { safetyLiveMap.fitBounds(markers.map(m => m.getLatLng())); } catch (_) {}
+      } else {
+        safetyLiveMap.setView([27.5036, -99.5075], 10);
       }
       if (meta) meta.textContent = `${withGps.length} / ${veh.length} vehicles with GPS · refresh 60s`;
-      setTimeout(() => { try { safetyLiveMap.invalidateSize(); } catch (_) {} }, 300);
+      setTimeout(() => { try { safetyLiveMap.invalidateSize(true); } catch (_) {} }, 200);
     }
 
     function applyNavHash(opts) {
@@ -16611,17 +16569,79 @@
       return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
     }
 
-    async function driversApproveLeaveRequest(id) {
+    async function driversFetchLeaveRequests() {
       try {
-        await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/approve', { method: 'POST' });
+        const d = await j('/api/drivers/leave-request');
+        if (Array.isArray(d?.requests)) return d.requests;
       } catch (_) {}
+      try {
+        const d2 = await j('/api/drivers/leave-requests');
+        if (Array.isArray(d2?.requests)) return d2.requests;
+      } catch (_) {}
+      return [];
+    }
+
+    async function driversApproveLeaveRequest(id) {
+      const rid = encodeURIComponent(String(id));
+      let ok = false;
+      try {
+        await j('/api/drivers/leave-request/approve/' + rid, { method: 'POST' });
+        ok = true;
+      } catch (_) {
+        try {
+          await j('/api/drivers/leave-request/' + rid + '/approve', { method: 'POST' });
+          ok = true;
+        } catch (_) {}
+      }
+      erpShowToast(ok ? 'Leave approved' : 'Could not approve leave', ok ? 'success' : 'error');
       await refreshDriversDashboardPanels();
     }
 
     async function driversDenyLeaveRequest(id) {
+      const rid = encodeURIComponent(String(id));
+      let ok = false;
       try {
-        await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/deny', { method: 'POST' });
-      } catch (_) {}
+        await j('/api/drivers/leave-request/deny/' + rid, { method: 'POST' });
+        ok = true;
+      } catch (_) {
+        try {
+          await j('/api/drivers/leave-request/' + rid + '/deny', { method: 'POST' });
+          ok = true;
+        } catch (_) {}
+      }
+      erpShowToast(ok ? 'Leave denied' : 'Could not deny leave', ok ? 'success' : 'error');
+      await refreshDriversDashboardPanels();
+    }
+
+    async function driversApproveAllLeaveRequests() {
+      const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows : [];
+      const pending = rows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
+      for (const r of pending) {
+        try {
+          await j('/api/drivers/leave-request/approve/' + encodeURIComponent(String(r.id)), { method: 'POST' });
+        } catch (_) {
+          try {
+            await j('/api/drivers/leave-request/' + encodeURIComponent(String(r.id)) + '/approve', { method: 'POST' });
+          } catch (_) {}
+        }
+      }
+      erpShowToast('Leave approved', 'success');
+      await refreshDriversDashboardPanels();
+    }
+
+    async function driversDenyAllLeaveRequests() {
+      const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows : [];
+      const pending = rows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
+      for (const r of pending) {
+        try {
+          await j('/api/drivers/leave-request/deny/' + encodeURIComponent(String(r.id)), { method: 'POST' });
+        } catch (_) {
+          try {
+            await j('/api/drivers/leave-request/' + encodeURIComponent(String(r.id)) + '/deny', { method: 'POST' });
+          } catch (_) {}
+        }
+      }
+      erpShowToast('Leave denied', 'success');
       await refreshDriversDashboardPanels();
     }
 
@@ -16632,7 +16652,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ expense_id: expenseId })
         });
-      } catch (_) {}
+        erpShowToast('Posted to QuickBooks', 'success');
+      } catch (_) {
+        erpShowToast('Could not post to QuickBooks', 'error');
+      }
       await refreshDriversDashboardPanels();
     }
 
@@ -16643,7 +16666,7 @@
       let damageRows = [];
       try {
         const [leaveRes, fuelRes, dmgRes] = await Promise.all([
-          j('/api/drivers/leave-requests').catch(() => ({ requests: [] })),
+          driversFetchLeaveRequests().then((rows) => ({ requests: rows })).catch(() => ({ requests: [] })),
           j('/api/fuel/expenses').catch(() => ({ expenses: [] })),
           j('/api/damage/reports').catch(() => ({ reports: [] }))
         ]);
@@ -16652,6 +16675,7 @@
         damageRows = Array.isArray(dmgRes?.reports) ? dmgRes.reports : [];
       } catch (_) {}
 
+      window.__driversLeaveRows = leaveRows.slice();
       window.__driversDamageReports = damageRows.slice();
       const pendingLeave = leaveRows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
       const resolvedIds = driversResolvedDamageIds();
@@ -16693,48 +16717,58 @@
 
       const leaveBody = document.getElementById('driversLeaveRequestsBody');
       if (leaveBody) {
-        if (!leaveRows.length) {
-          leaveBody.innerHTML = '<tr><td colspan="6" class="muted">No leave requests found.</td></tr>';
+        if (!pendingLeave.length) {
+          leaveBody.innerHTML = '<tr><td colspan="7" class="muted">No pending leave requests found.</td></tr>';
         } else {
-          leaveBody.innerHTML = leaveRows.map((r) => `
+          leaveBody.innerHTML = pendingLeave.map((r) => {
+            const id = String(r.id || '').replace(/'/g, "\'");
+            return `
             <tr>
               <td>${escapeHtml(String(r.driver_name || '—'))}</td>
               <td>${escapeHtml(String(r.unit_number || '—'))}</td>
               <td>${escapeHtml(shortDate(r.start_date))} → ${escapeHtml(shortDate(r.end_date))}</td>
               <td>${escapeHtml(String(r.leave_type || '—'))}</td>
-              <td>${escapeHtml(damageTimeAgo(r.created_at))}</td>
+              <td title="${escapeHtml(String(r.notes || r.note || ''))}">${escapeHtml(truncateDamageDescription(String(r.notes || r.note || ''), 60))}</td>
+              <td>${escapeHtml(formatDamageSubmittedAt(r.created_at || r.submitted_at))}</td>
               <td>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <button type="button" class="btn btn--small" onclick="driversApproveLeaveRequest('${String(r.id).replace(/'/g, "\'")}')">Approve</button>
-                  <button type="button" class="btn btn--small ghost" onclick="driversDenyLeaveRequest('${String(r.id).replace(/'/g, "\'")}')">Deny</button>
+                  <button type="button" class="btn btn--small" onclick="driversApproveLeaveRequest('${id}')">✅ Approve</button>
+                  <button type="button" class="btn btn--small ghost" onclick="driversDenyLeaveRequest('${id}')">❌ Deny</button>
                 </div>
               </td>
-            </tr>`).join('');
+            </tr>`;
+          }).join('');
         }
       }
 
       const fuelBody = document.getElementById('driversFuelTodayBody');
       if (fuelBody) {
         if (!fuelToday.length) {
-          fuelBody.innerHTML = '<tr><td colspan="8" class="muted">No fuel submissions today.</td></tr>';
+          fuelBody.innerHTML = '<tr><td colspan="9" class="muted">No fuel submissions today.</td></tr>';
         } else {
           fuelBody.innerHTML = fuelToday.map((r) => {
-            const qboMark = r.qbo_posted ? '✅' : '—';
+            const posted = !!r.qbo_posted;
+            const badge = posted
+              ? '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#14532d;color:#bbf7d0">Posted</span>'
+              : '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#78350f;color:#fde68a">Pending</span>';
+            const id = String(r.id || '').replace(/'/g, "\'");
             return `
               <tr>
                 <td>${escapeHtml(String(r.unit_number || '—'))}</td>
                 <td>${escapeHtml(String(r.driver_name || '—'))}</td>
                 <td>${escapeHtml(String(r.fuel_type || '—'))}</td>
                 <td>${escapeHtml(String(r.gallons ?? '—'))}</td>
-                <td>${escapeHtml(String(r.total_amount ?? '—'))}</td>
+                <td>${escapeHtml(Number(r.total_amount || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' }))}</td>
                 <td>${escapeHtml(String(r.station_name || '—'))}</td>
-                <td>${qboMark}</td>
-                <td><button type="button" class="btn btn--small" onclick="driversPostFuelToQbo('${String(r.id).replace(/'/g, "\'")}')">Post to QBO</button></td>
+                <td>${escapeHtml(String(r.load_number || '—'))}</td>
+                <td>${badge}</td>
+                <td>${posted ? '—' : `<button type="button" class="btn btn--small" onclick="driversPostFuelToQbo('${id}')">Post to QBO</button>`}</td>
               </tr>`;
           }).join('');
         }
       }
     }
+
 
     // Dispatch board removed (maintenance/safety/diesel focus).
 
