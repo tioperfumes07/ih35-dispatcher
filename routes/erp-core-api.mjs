@@ -1142,51 +1142,47 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/fleet/assets/import', async (req, res) => {
     try {
-      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
       const trailers = Array.isArray(req.body?.trailers) ? req.body.trailers : [];
+      if (!trailers.length) return res.json({ ok: true, imported: 0, updated: 0 });
       let imported = 0;
-      let updated = 0;
-
       for (const t of trailers) {
-        const unit = String(t?.unit_number || '').trim();
+        const unit = String(t.unit_number || '').trim();
         if (!unit) continue;
-        const { rows } = await dbQuery(
-          `INSERT INTO fleet_assets (unit_number, make, model, year, vin, asset_type, license_plate, status, notes, updated_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
-           ON CONFLICT (unit_number) DO UPDATE SET
-             make=EXCLUDED.make,
-             model=EXCLUDED.model,
-             year=EXCLUDED.year,
-             vin=EXCLUDED.vin,
-             asset_type=EXCLUDED.asset_type,
-             license_plate=EXCLUDED.license_plate,
-             status=EXCLUDED.status,
-             notes=EXCLUDED.notes,
-             updated_at=now()
-           RETURNING (xmax = 0) AS inserted`,
-          [
-            unit,
-            String(t?.make || '').trim() || null,
-            String(t?.model || '').trim() || null,
-            Number.isFinite(Number(t?.year)) ? Number(t?.year) : null,
-            String(t?.vin || '').trim() || null,
-            String(t?.asset_type || 'Trailer').trim() || 'Trailer',
-            String(t?.license_plate || t?.licensePlate || '').trim() || null,
-            String(t?.status || 'Active').trim() || 'Active',
-            String(t?.notes || '').trim() || null,
-          ]
-        );
-        if (rows?.[0]?.inserted) imported++;
-        else updated++;
-      }
-
-      return res.json({ ok: true, imported, updated });
-    } catch (e) {
-      console.error('[import] error:', e?.message || String(e), e?.stack || '');
-      logError('POST /api/fleet/assets/import', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+        await dbQuery(
+          `INSERT INTO fleet_assets 
+          (unit_number, asset_type, status, year, make, model, vin, license_plate, notes, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
+         ON CONFLICT (unit_number) DO UPDATE SET
+          asset_type=EXCLUDED.asset_type,
+          status=EXCLUDED.status,
+          year=EXCLUDED.year,
+          make=EXCLUDED.make,
+          model=EXCLUDED.model,
+          vin=EXCLUDED.vin,
+          license_plate=EXCLUDED.license_plate,
+          notes=EXCLUDED.notes,
+          updated_at=now()`,
+        [
+          unit,
+          String(t.asset_type || 'Trailer').trim(),
+          String(t.status || 'Active').trim(),
+          parseInt(t.year) || 0,
+          String(t.make || '').trim(),
+          String(t.model || '').trim(),
+          String(t.vin || '').trim(),
+          String(t.licensePlate || t.license_plate || '').trim(),
+          String(t.notes || '').trim(),
+        ]
+      );
+      imported++;
     }
-  });
+    return res.json({ ok: true, imported, updated: imported });
+  } catch (e) {
+    logError('POST /api/fleet/assets/import', e);
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
   app.patch('/api/fleet/assets/bulk', async (req, res) => {
     try {
