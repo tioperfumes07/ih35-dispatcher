@@ -1171,7 +1171,7 @@ export function mountErpCoreApi(app, opts = {}) {
             Number.isFinite(Number(t?.year)) ? Number(t?.year) : null,
             String(t?.vin || '').trim() || null,
             String(t?.asset_type || 'Trailer').trim() || 'Trailer',
-            String(t?.license_plate || '').trim() || null,
+            String(t?.license_plate || t?.licensePlate || '').trim() || null,
             String(t?.status || 'Active').trim() || 'Active',
             String(t?.notes || '').trim() || null,
           ]
@@ -1182,6 +1182,7 @@ export function mountErpCoreApi(app, opts = {}) {
 
       return res.json({ ok: true, imported, updated });
     } catch (e) {
+      console.error('[import] error:', e?.message || String(e), e?.stack || '');
       logError('POST /api/fleet/assets/import', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
