@@ -39,6 +39,7 @@ type AddDriverDraft = {
 
 const LEAVE_COLORS: Record<string, { bg: string; text: string; dot: string; label: string }> = {
   Vacacion: { bg: '#1e3a5f', text: '#93c5fd', dot: '#3b82f6', label: 'Vac' },
+  Vacation: { bg: '#1e3a5f', text: '#93c5fd', dot: '#3b82f6', label: 'Vac' },
   Sick: { bg: '#431407', text: '#fed7aa', dot: '#f97316', label: 'Sick' },
   Personal: { bg: '#422006', text: '#fde68a', dot: '#eab308', label: 'Per' },
   'Sin Aviso': { bg: '#450a0a', text: '#fca5a5', dot: '#ef4444', label: 'SA' },
@@ -72,6 +73,39 @@ const toIsoDay = (y: number, m: number, d: number) => `${toIsoMonth(y, m)}-${Str
 const monthLabel = (y: number, m: number) => new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date(y, m, 1))
 const dayAbbrev = (y: number, m: number, d: number) => new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(y, m, d))
 const normalizeDutyStatus = (raw: unknown) => String(raw || '').replace(/[_\s-]+/g, '').trim().toLowerCase()
+type ApprovedLeaveRequest = {
+  id?: number
+  unit_number?: string | null
+  start_date?: string | null
+  end_date?: string | null
+  leave_type?: string | null
+  status?: string | null
+}
+
+const normalizeLeaveType = (raw: unknown): string => {
+  const value = String(raw || '').trim()
+  const k = value.toLowerCase().replace(/[_\-]+/g, ' ')
+  if (k === 'vacation' || k === 'vacacion') return 'Vacacion'
+  if (k === 'sick') return 'Sick'
+  if (k === 'personal' || k === 'other' || k === 'leave') return 'Personal'
+  if (k === 'sin aviso') return 'Sin Aviso'
+  if (k === 'bank holiday' || k === 'holiday') return 'Bank Holiday'
+  if (k === 'wfh' || k === 'work from home') return 'WFH'
+  return value
+}
+
+async function fetchApprovedLeaveRequests(month: string): Promise<ApprovedLeaveRequest[]> {
+  const res = await fetch(`/api/drivers/leave-request?month=${encodeURIComponent(month)}&status=approved`)
+  if (!res.ok) throw new Error('Failed to fetch approved leave requests')
+  const data = (await res.json()) as { requests?: ApprovedLeaveRequest[]; leaveRequests?: ApprovedLeaveRequest[] }
+  const rows = Array.isArray(data?.requests)
+    ? data.requests
+    : Array.isArray(data?.leaveRequests)
+      ? data.leaveRequests
+      : []
+  return rows.filter((r) => String(r?.status || '').toLowerCase() === 'approved')
+}
+
 const emptyAddDriverDraft = (): AddDriverDraft => ({ full_name: '', unit_number: '', team: '', manager: '', phone: '', email: '', cdl_number: '', cdl_expiry: '', medical_expiry: '', status: 'Active', notes: '' })
 const sortByUnit = (a: SchedulerDriverRow, b: SchedulerDriverRow) => String(a.unit_number || '').localeCompare(String(b.unit_number || ''))
 
@@ -135,13 +169,36 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   const loadSchedule = async () => {
     try {
-      const data = await fetchDriverSchedule(toIsoMonth(curYear, curMonth))
-      const rows = Array.isArray(data.rows) ? data.rows : []
+      const month = toIsoMonth(curYear, curMonth)
+      const [schedData, approvedLeaveRows] = await Promise.all([
+        fetchDriverSchedule(month),
+        fetchApprovedLeaveRequests(month).catch(() => []),
+      ])
+
+      const scheduleRows = Array.isArray(schedData.rows) ? schedData.rows : []
       const next: Record<string, ScheduleEntry> = {}
-      rows.forEach((r: DriverScheduleRow) => {
+
+      scheduleRows.forEach((r: DriverScheduleRow) => {
         const key = `${String(r.unit_number)}_${String(r.date).slice(0, 10)}`
-        next[key] = { id: r.id, leave_type: String(r.leave_type || '') }
+        next[key] = { id: r.id, leave_type: normalizeLeaveType(r.leave_type || '') }
       })
+
+      approvedLeaveRows.forEach((reqRow) => {
+        const unit = String(reqRow?.unit_number || '').trim()
+        const start = String(reqRow?.start_date || '').slice(0, 10)
+        const end = String(reqRow?.end_date || '').slice(0, 10)
+        if (!unit || !/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) return
+        const leaveType = normalizeLeaveType(reqRow?.leave_type || 'Leave')
+        let d = new Date(`${start}T00:00:00Z`)
+        const until = new Date(`${end}T00:00:00Z`)
+        while (d <= until) {
+          const iso = d.toISOString().slice(0, 10)
+          const key = `${unit}_${iso}`
+          if (!next[key]) next[key] = { id: reqRow?.id, leave_type: leaveType }
+          d.setUTCDate(d.getUTCDate() + 1)
+        }
+      })
+
       setScheduleMap(next)
     } catch {
       setScheduleMap({})

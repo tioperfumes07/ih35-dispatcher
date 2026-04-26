@@ -71,7 +71,7 @@
 
     <section id="screen-schedule" class="screen"><div class="row between card"><div><h2 class="title" style="margin:0">My Schedule</h2><p class="subtitle" style="margin:0" id="scheduleMonth">Current month</p></div><button class="small secondary" type="button" data-nav="screen-home" style="background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:8px;font-size:14px">← Back</button></div><div class="card calendar" id="scheduleCalendar">Loading schedule…</div><div class="card" id="scheduleHos">HOS status: --</div></section>
 
-    <section id="screen-fuel" class="screen" style="display:none; padding-top:0; max-width:480px; margin:0 auto;"><div class="row between" style="position:sticky;top:0;background:#0f1219;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.1);min-height:56px"><h2 class="title" style="margin:0">Fuel Expense</h2><button class="small secondary" type="button" data-nav="screen-home" style="background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:8px;font-size:14px">← Back</button></div><div class="card" style="padding:16px;margin:0"><label>Unit</label><input id="fuelUnit" readonly /><label>Driver</label><input id="fuelDriver" readonly /><label>Fuel type</label><div class="fuel-type-grid"><button type="button" class="fuel-type-btn" data-fuel-type="truck_diesel" onclick="setFuelType('truck_diesel')">Truck Diesel</button><button type="button" class="fuel-type-btn" data-fuel-type="reefer_diesel" onclick="setFuelType('reefer_diesel')">Reefer Diesel</button><button type="button" class="fuel-type-btn" data-fuel-type="def" onclick="setFuelType('def')">DEF</button></div><input id="fuelType" type="hidden" /><div id="reeferUnitRow" style="display:none"><label style="color:#8892a4;font-size:13px">Reefer unit # (required for reefer fuel)</label><input type="text" id="reeferUnitNumber" placeholder="e.g. R-101, TR-45" inputmode="text" style="width:100%;padding:14px;background:#1a1f2e;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#e2e8f0;font-size:16px;margin-top:6px"></div><label>Load # (optional)</label><input id="fuelLoadNumber" type="text" placeholder="e.g. LD-2024-001" /><label>Gallons</label><input id="fuelGallons" type="number" inputmode="decimal" pattern="[0-9]*" step="0.1" min="0" placeholder="0.0" oninput="calcFuelTotal()" /><label>Price per gallon</label><input id="fuelPrice" type="number" inputmode="decimal" pattern="[0-9]*" step="0.001" min="0" placeholder="0.000" oninput="calcFuelTotal()" /><label>Total</label><input id="fuelTotal" type="number" inputmode="decimal" pattern="[0-9]*" readonly placeholder="0.00" style="opacity:0.7;cursor:not-allowed;background:#111827" /><label>Station name</label><input id="fuelStation" type="text" placeholder="Station name" /><label>Location</label><input id="fuelLocation" type="text" placeholder="Auto-filled from GPS" /><label>Receipt photo</label><div id="receiptArea_fuel"><button type="button" onclick="document.getElementById('receiptInput_fuel').click()" style="width:100%;height:80px;background:#1a1f2e;border:2px dashed rgba(255,255,255,0.2);border-radius:12px;color:#8892a4;font-size:15px;cursor:pointer">📷 Take photo / Choose from gallery</button><input type="file" id="receiptInput_fuel" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this,'receiptPreview_fuel','receiptImg_fuel')"><div id="receiptPreview_fuel" style="display:none;margin-top:8px;position:relative"><img id="receiptImg_fuel" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover"><button type="button" onclick="clearPhoto('receiptInput_fuel','receiptPreview_fuel','receiptImg_fuel')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer">×</button></div></div></div><button type="button" onclick="showScreen('screen-home')" style="width:100%;height:52px;background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);border-radius:12px;font-size:16px;margin-bottom:8px;cursor:pointer">Cancel</button><button id="submitFuelBtn" type="button">Submit fuel expense</button><p id="fuelMsg" class="muted"></p></section>
+    <section id="screen-fuel" class="screen" style="display:none; padding-top:0; max-width:480px; margin:0 auto;"><div class="row between" style="position:sticky;top:0;background:#0f1219;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.1);min-height:56px"><h2 class="title" style="margin:0">Fuel Expense</h2><button class="small secondary" type="button" data-nav="screen-home" style="background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:8px;font-size:14px">← Back</button></div><div class="card" style="padding:16px;margin:0"><label>Unit</label><input id="fuelUnit" readonly /><label>Driver</label><input id="fuelDriver" readonly /><label>Fuel type</label><div class="fuel-type-grid"><button type="button" class="fuel-type-btn" data-fuel-type="truck_diesel" onclick="setFuelType('truck_diesel')">Truck Diesel</button><button type="button" class="fuel-type-btn" data-fuel-type="reefer_diesel" onclick="setFuelType('reefer_diesel')">Reefer Diesel</button><button type="button" class="fuel-type-btn" data-fuel-type="def" onclick="setFuelType('def')">DEF</button></div><input id="fuelType" type="hidden" /><div id="reeferUnitRow" style="display:none"><label style="color:#8892a4;font-size:13px">Reefer unit # (required for reefer fuel)</label><input type="text" id="reeferUnitNumber" placeholder="e.g. R-101, TR-45" inputmode="text" style="width:100%;padding:14px;background:#1a1f2e;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#e2e8f0;font-size:16px;margin-top:6px"></div><label style="color:#8892a4;font-size:13px">Load # <span style="color:#ef4444">*required</span></label><input id="fuelLoadNumber" type="text" placeholder="e.g. LD-2024-001" /><label>Gallons</label><input id="fuelGallons" type="number" inputmode="decimal" pattern="[0-9]*" step="0.1" min="0" placeholder="0.0" oninput="calcFuelTotal()" /><label>Price per gallon</label><input id="fuelPrice" type="number" inputmode="decimal" pattern="[0-9]*" step="0.001" min="0" placeholder="0.000" oninput="calcFuelTotal()" /><label>Total</label><input id="fuelTotal" type="number" inputmode="decimal" pattern="[0-9]*" readonly placeholder="0.00" style="opacity:0.7;cursor:not-allowed;background:#111827" /><label>Station name</label><input id="fuelStation" type="text" placeholder="Station name" /><label>Location</label><input id="fuelLocation" type="text" placeholder="Auto-filled from GPS" /><label>Receipt photo</label><div id="receiptArea_fuel"><button type="button" onclick="document.getElementById('receiptInput_fuel').click()" style="width:100%;height:80px;background:#1a1f2e;border:2px dashed rgba(255,255,255,0.2);border-radius:12px;color:#8892a4;font-size:15px;cursor:pointer">📷 Take photo / Choose from gallery</button><input type="file" id="receiptInput_fuel" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this,'receiptPreview_fuel','receiptImg_fuel')"><div id="receiptPreview_fuel" style="display:none;margin-top:8px;position:relative"><img id="receiptImg_fuel" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover"><button type="button" onclick="clearPhoto('receiptInput_fuel','receiptPreview_fuel','receiptImg_fuel')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer">×</button></div></div></div><button type="button" onclick="showScreen('screen-home')" style="width:100%;height:52px;background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);border-radius:12px;font-size:16px;margin-bottom:8px;cursor:pointer">Cancel</button><button id="submitFuelBtn" type="button">Submit fuel expense</button><p id="fuelMsg" class="muted"></p></section>
 
     <section id="screen-leave" class="screen"><div class="row between card"><h2 class="title" style="margin:0">Request Time Off</h2><button class="small secondary" type="button" data-nav="screen-home" style="background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:8px;font-size:14px">← Back</button></div><div class="card"><label>Start date</label><input id="leaveStartDate" type="date" /><label>End date</label><input id="leaveEndDate" type="date" /><label>Type</label><select id="leaveType"><option value="Vacation">Vacation</option><option value="Personal">Personal</option><option value="Sick">Sick</option><option value="Other">Other</option></select><label>Note</label><textarea id="leaveNotes" rows="3" placeholder="Optional note"></textarea></div><button onclick="showScreen('screen-home')" style="width:100%;height:52px;background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);border-radius:12px;font-size:16px;margin-bottom:8px;cursor:pointer">Cancel</button><button id="submitLeaveBtn" type="button">Submit request</button><p id="leaveMsg" class="muted"></p></section>
 
@@ -157,7 +157,17 @@
     window.driverAttachChecklistPhoto=(idx,input)=>{const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{checklistState[idx].photo_base64=String(rd.result||'')};rd.readAsDataURL(f)};
 
     async function loadChecklist(){const host=document.getElementById('checklistItems');host.textContent='Loading checklist…';const d=await jsonFetch(`/api/equipment/checklist?unit=${encodeURIComponent(auth.unit||'')}`);const items=Array.isArray(d.items)?d.items:[];checklistState=items.map(i=>({...i,status:'confirmed',photo_base64:''}));if(!checklistState.length){host.innerHTML='<p class="muted">No checklist items found for this unit.</p>';return}host.innerHTML=checklistState.map(checklistItemTemplate).join('')}
-    async function submitChecklist(){const btn=document.getElementById('submitChecklistBtn'),msg=document.getElementById('checklistMsg');btn.disabled=true;msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/equipment/checklist/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,items:checklistState.map(i=>({item_id:i.id,status:i.status||'confirmed',photo_base64:i.photo_base64||''})),timestamp:new Date().toISOString()})});btn.disabled=false;if(d&&d.ok){showSuccess('Checklist submitted!','All items recorded')}else{msg.className='err';msg.textContent=d.error||'Could not submit checklist.'}}
+    async function submitChecklist(){
+      const btn=document.getElementById('submitChecklistBtn'),msg=document.getElementById('checklistMsg');
+      btn.disabled=true;msg.className='muted';msg.textContent='Submitting…';
+      const d=await jsonFetch('/api/equipment/checklist/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,items:checklistState.map(i=>({item_id:i.id,status:i.status||'confirmed',photo_base64:i.photo_base64||''})),timestamp:new Date().toISOString()})});
+      btn.disabled=false;
+      if(d&&d.ok){
+        showSuccess('Checklist submitted!','All items recorded');
+        resetChecklistForm();
+      }else{msg.className='err';msg.textContent=d.error||'Could not submit checklist.'}
+    }
+
 
     function handlePhoto(input, previewId, imgId){
       if(!input.files||!input.files[0]) return;
@@ -182,21 +192,140 @@
       if(inputId==='receiptInput_road')roadReceiptBase64='';
     }
 
+
+    function resetFuelForm() {
+      const gallons = document.getElementById('fuelGallons'); if (gallons) gallons.value = '';
+      const price = document.getElementById('fuelPrice'); if (price) price.value = '';
+      const total = document.getElementById('fuelTotal'); if (total) total.value = '';
+      const load = document.getElementById('fuelLoadNumber'); if (load) { load.value = ''; load.style.border = '1px solid rgba(255,255,255,0.15)'; }
+      const station = document.getElementById('fuelStation'); if (station) station.value = '';
+      const reeferUnit = document.getElementById('reeferUnitNumber'); if (reeferUnit) reeferUnit.value = '';
+      const reeferRow = document.getElementById('reeferUnitRow'); if (reeferRow) reeferRow.style.display = 'none';
+      const err = document.getElementById('fuelLoadError'); if (err) err.textContent = '';
+      setFuelType('truck_diesel');
+      clearPhoto('receiptInput_fuel','receiptPreview_fuel','receiptImg_fuel');
+    }
+
+    function resetLeaveForm() {
+      const start = document.getElementById('leaveStartDate'); if (start) start.value = '';
+      const end = document.getElementById('leaveEndDate'); if (end) end.value = '';
+      const note = document.getElementById('leaveNote') || document.getElementById('leaveNotes'); if (note) note.value = '';
+      const leaveType = document.getElementById('leaveType'); if (leaveType) leaveType.selectedIndex = 0;
+    }
+
+    function resetDamageForm() {
+      const desc = document.getElementById('damageDescription') || document.getElementById('damageDesc'); if (desc) desc.value = '';
+      const type = document.getElementById('damageType'); if (type) type.selectedIndex = 0;
+      clearPhoto('receiptInput_damage','receiptPreview_damage','receiptImg_damage');
+    }
+
+    function resetRoadServiceForm() {
+      const desc = document.getElementById('rsDescription'); if (desc) desc.value = '';
+      const type = document.getElementById('rsType'); if (type) type.selectedIndex = 0;
+      const vendor = document.getElementById('rsVendor'); if (vendor) vendor.value = '';
+      const cost = document.getElementById('rsCost'); if (cost) cost.value = '';
+      const txt = document.getElementById('rsLocationText'); if (txt) txt.style.display = 'none';
+      const lat = document.getElementById('rsLat'); if (lat) lat.value = '';
+      const lng = document.getElementById('rsLng'); if (lng) lng.value = '';
+      clearPhoto('receiptInput_road','receiptPreview_road','receiptImg_road');
+    }
+
+    function resetPretripForm() {
+      const odometer = document.getElementById('pretripOdometer'); if (odometer) odometer.value = '';
+      const signature = document.getElementById('pretripSignature'); if (signature) signature.value = '';
+      document.querySelectorAll('#screen-pretrip input[type="checkbox"]').forEach((el) => { el.checked = false; });
+      document.querySelectorAll('#screen-pretrip input[type="radio"]').forEach((el) => { el.checked = false; });
+      PRETRIP_ITEMS.forEach((_i, idx) => {
+        const note = document.getElementById(`pretrip-notes-${idx}`);
+        if (note) note.value = '';
+      });
+      const overall = document.getElementById('pretripOverall'); if (overall) overall.value = '';
+    }
+
+    function resetChecklistForm() {
+      checklistState = (Array.isArray(checklistState) ? checklistState : []).map((item) => ({ ...item, status: 'confirmed', photo_base64: '' }));
+      const host = document.getElementById('checklistItems');
+      if (host && checklistState.length) host.innerHTML = checklistState.map(checklistItemTemplate).join('');
+      const msg = document.getElementById('checklistMsg'); if (msg) { msg.className = 'muted'; msg.textContent = ''; }
+    }
+
     function setDamageGeoField(){const el=document.getElementById('damageLocation');if(!navigator.geolocation){el.value='GPS unavailable';return}navigator.geolocation.getCurrentPosition(pos=>{el.value=`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`},()=>{el.value='Location not available'},{enableHighAccuracy:true,timeout:8000})}
-    async function submitDamageReport(){const msg=document.getElementById('damageMsg');msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/damage/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,damage_type:document.getElementById('damageType').value,description:String(document.getElementById('damageDesc').value||'').trim(),photos:damagePhotos,location:{text:document.getElementById('damageLocation').value},timestamp:new Date().toISOString()})});if(d&&d.ok){showSuccess('Damage reported!','Thank you')}else{msg.className='err';msg.textContent=d.error||'Could not submit report.'}}
+    async function submitDamageReport(){
+      const msg=document.getElementById('damageMsg');
+      msg.className='muted';msg.textContent='Submitting…';
+      const d=await jsonFetch('/api/damage/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,damage_type:document.getElementById('damageType').value,description:String((document.getElementById('damageDesc')||document.getElementById('damageDescription')).value||'').trim(),photos:damagePhotos,location:{text:document.getElementById('damageLocation').value},timestamp:new Date().toISOString()})});
+      if(d&&d.ok){
+        showSuccess('Damage reported!','Thank you');
+        resetDamageForm();
+      }else{msg.className='err';msg.textContent=d.error||'Could not submit report.'}
+    }
+
 
     async function loadSchedule(){const cal=document.getElementById('scheduleCalendar'),hosEl=document.getElementById('scheduleHos'),dt=new Date(),y=dt.getFullYear(),m=dt.getMonth(),month=`${y}-${String(m+1).padStart(2,'0')}`;document.getElementById('scheduleMonth').textContent=new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric'}).format(dt);const [sched,hos]=await Promise.all([jsonFetch(`/api/drivers/schedule?month=${encodeURIComponent(month)}`),jsonFetch('/api/drivers/hos-status')]);const rows=(Array.isArray(sched.rows)?sched.rows:[]).filter(r=>String(r.unit_number||'')===String(auth.unit||''));const map={};rows.forEach(r=>{map[String(r.date).slice(0,10)]=String(r.leave_type||'')});const days=new Date(y,m+1,0).getDate();let html='<table><thead><tr>'+Array.from({length:days},(_,i)=>`<th>${i+1}</th>`).join('')+'</tr></thead><tbody><tr>';for(let d=1;d<=days;d++){const iso=`${month}-${String(d).padStart(2,'0')}`,type=map[iso]||'',c=LEAVE_COLORS[type];html+=`<td>${c?`<span style="display:inline-block;padding:2px 6px;border-radius:8px;background:${c.bg};color:${c.text};font-size:11px">${c.label}</span>`:'—'}</td>`}html+='</tr></tbody></table>';cal.innerHTML=html;const hosRows=Array.isArray(hos.rows)?hos.rows:[];const matched=hosRows.find(r=>String(r.driverName||r.driver||'').toLowerCase()===String(auth.driver||'').toLowerCase()||String(r.unit_number||r.vehicleName||'').toLowerCase()===String(auth.unit||'').toLowerCase());hosEl.textContent=matched?`HOS status: ${String(matched.dutyStatus||'unknown')}`:'HOS status: not available'}
 
     function setFuelType(v){document.getElementById('fuelType').value=v;document.querySelectorAll('.fuel-type-btn').forEach(btn=>btn.classList.toggle('active',btn.getAttribute('data-fuel-type')===v));const reeferRow=document.getElementById('reeferUnitRow');const loadInput=document.getElementById('fuelLoadNumber');if(reeferRow)reeferRow.style.display=v==='reefer_diesel'?'block':'none';if(loadInput)loadInput.placeholder=v==='reefer_diesel'?'Load # - required for reefer fuel settlement':'e.g. LD-2024-001';}
     function calcFuelTotal(){var g=parseFloat(document.getElementById('fuelGallons').value)||0;var p=parseFloat(document.getElementById('fuelPrice').value)||0;var total=(g*p).toFixed(2);document.getElementById('fuelTotal').value=total;}
     function autoFillFuelLocation(){const el=document.getElementById('fuelLocation');if(navigator.geolocation){navigator.geolocation.getCurrentPosition(pos=>{el.value=pos.coords.latitude.toFixed(4)+','+pos.coords.longitude.toFixed(4)})}}
-    async function submitFuelExpense(){const msg=document.getElementById('fuelMsg'),fuelType=String(document.getElementById('fuelType').value||'').trim();if(!fuelType){msg.className='err';msg.textContent='Select fuel type before submitting.';return}msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/fuel/driver-expense',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,fuel_type:fuelType,gallons:Number(document.getElementById('fuelGallons').value||0),price_per_gallon:Number(document.getElementById('fuelPrice').value||0),total_amount:Number(document.getElementById('fuelTotal').value||0),load_number:String(document.getElementById('fuelLoadNumber').value||'').trim(),reefer_unit_number:String(document.getElementById('reeferUnitNumber')?.value||'').trim(),station:String(document.getElementById('fuelStation').value||'').trim(),location:String(document.getElementById('fuelLocation').value||'').trim(),receipt_photo_base64:fuelReceiptBase64})});if(d&&d.ok){const gallons=String(document.getElementById('fuelGallons').value||0),total=String(document.getElementById('fuelTotal').value||'0.00');showSuccess('Fuel expense submitted!',gallons+' gal · $'+total)}else{msg.className='err';msg.textContent=d.error||'Could not submit expense.'}}
-    async function submitLeaveRequest(){const msg=document.getElementById('leaveMsg');msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/drivers/leave-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,start_date:document.getElementById('leaveStartDate').value,end_date:document.getElementById('leaveEndDate').value,leave_type:document.getElementById('leaveType').value,notes:String(document.getElementById('leaveNotes').value||'').trim()})});if(d&&d.ok){showSuccess('Request submitted!','Pending approval')}else{msg.className='err';msg.textContent=d.error||'Could not submit request.'}}
+    async function submitFuelExpense(){
+      const msg=document.getElementById('fuelMsg');
+      const fuelType=String(document.getElementById('fuelType').value||'').trim();
+      const loadInput=document.getElementById('fuelLoadNumber');
+      const loadNum=loadInput?String(loadInput.value||'').trim():'';
+      if(!fuelType){msg.className='err';msg.textContent='Select fuel type before submitting.';return}
+      if(!loadNum){
+        let err=document.getElementById('fuelLoadError');
+        if(!err&&loadInput&&loadInput.parentNode){
+          err=document.createElement('div');
+          err.id='fuelLoadError';
+          err.style.cssText='color:#ef4444;font-size:13px;margin-top:4px';
+          loadInput.parentNode.appendChild(err);
+        }
+        if(err)err.textContent='⚠️ Load number is required to submit fuel expense';
+        if(loadInput){
+          loadInput.style.border='1px solid #ef4444';
+          loadInput.focus();
+          loadInput.addEventListener('input',function(){
+            this.style.border='1px solid rgba(255,255,255,0.15)';
+            const e=document.getElementById('fuelLoadError');
+            if(e)e.textContent='';
+          },{once:true});
+        }
+        return;
+      }
+      msg.className='muted';msg.textContent='Submitting…';
+      const d=await jsonFetch('/api/fuel/driver-expense',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,fuel_type:fuelType,gallons:Number(document.getElementById('fuelGallons').value||0),price_per_gallon:Number(document.getElementById('fuelPrice').value||0),total_amount:Number(document.getElementById('fuelTotal').value||0),load_number:loadNum,reefer_unit_number:String(document.getElementById('reeferUnitNumber')?.value||'').trim(),station:String(document.getElementById('fuelStation').value||'').trim(),location:String(document.getElementById('fuelLocation').value||'').trim(),receipt_photo_base64:fuelReceiptBase64})});
+      if(d&&d.ok){
+        const gallons=String(document.getElementById('fuelGallons').value||0),total=String(document.getElementById('fuelTotal').value||'0.00');
+        showSuccess('Fuel expense submitted!',gallons+' gal · $'+total);
+        resetFuelForm();
+      }else{msg.className='err';msg.textContent=d.error||'Could not submit expense.'}
+    }
+
+    async function submitLeaveRequest(){
+      const msg=document.getElementById('leaveMsg');
+      msg.className='muted';msg.textContent='Submitting…';
+      const d=await jsonFetch('/api/drivers/leave-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,start_date:document.getElementById('leaveStartDate').value,end_date:document.getElementById('leaveEndDate').value,leave_type:document.getElementById('leaveType').value,notes:String((document.getElementById('leaveNotes')||document.getElementById('leaveNote')).value||'').trim()})});
+      if(d&&d.ok){
+        showSuccess('Request submitted!','Pending approval');
+        resetLeaveForm();
+      }else{msg.className='err';msg.textContent=d.error||'Could not submit request.'}
+    }
+
 
     function pretripRow(item,idx){return `<div class="item-row"><div><strong>${item}</strong></div><div class="row" style="margin-top:8px;gap:14px;justify-content:flex-start"><label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Pass" checked style="width:auto" /> Pass</label><label style="margin:0;color:#e2e8f0;display:flex;align-items:center;gap:6px"><input type="radio" name="pretrip-${idx}" value="Fail" style="width:auto" /> Fail</label></div><label style="margin-top:8px">Notes</label><input id="pretrip-notes-${idx}" type="text" placeholder="Optional note" /></div>`}
     function renderPretripChecklist(){const host=document.getElementById('pretripChecklistRows');host.innerHTML=PRETRIP_ITEMS.map((i,idx)=>pretripRow(i,idx)).join('');host.querySelectorAll('input').forEach(el=>{el.addEventListener('change',calcPretripOverall);el.addEventListener('input',calcPretripOverall)});calcPretripOverall()}
     function calcPretripOverall(){let pass=true;PRETRIP_ITEMS.forEach((_i,idx)=>{const s=document.querySelector(`input[name="pretrip-${idx}"]:checked`);if(!s||s.value!=='Pass')pass=false});document.getElementById('pretripOverall').value=pass?'Pass':'Fail'}
-    async function submitPretripInspection(){const msg=document.getElementById('pretripMsg');const checklist=PRETRIP_ITEMS.map((item,idx)=>{const s=document.querySelector(`input[name="pretrip-${idx}"]:checked`);return{item,value:s?s.value:'Fail',notes:String(document.getElementById(`pretrip-notes-${idx}`).value||'').trim()}});msg.className='muted';msg.textContent='Submitting…';const d=await jsonFetch('/api/pre-trip/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,odometer_reading:Number(document.getElementById('pretripOdometer').value||0),checklist,overall_result:document.getElementById('pretripOverall').value||'Fail',driver_signature:String(document.getElementById('pretripSignature').value||'').trim()})});if(d&&d.ok){showSuccess('Inspection submitted!','Have a safe trip!')}else{msg.className='err';msg.textContent=d.error||'Could not submit inspection.'}}
+    async function submitPretripInspection(){
+      const msg=document.getElementById('pretripMsg');
+      const checklist=PRETRIP_ITEMS.map((item,idx)=>{const s=document.querySelector(`input[name="pretrip-${idx}"]:checked`);return{item,value:s?s.value:'Fail',notes:String(document.getElementById(`pretrip-notes-${idx}`).value||'').trim()}});
+      msg.className='muted';msg.textContent='Submitting…';
+      const d=await jsonFetch('/api/pre-trip/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:auth.unit,driver:auth.driver,odometer_reading:Number(document.getElementById('pretripOdometer').value||0),checklist,overall_result:document.getElementById('pretripOverall').value||'Fail',driver_signature:String(document.getElementById('pretripSignature').value||'').trim()})});
+      if(d&&d.ok){
+        showSuccess('Inspection submitted!','Have a safe trip!');
+        resetPretripForm();
+      }else{msg.className='err';msg.textContent=d.error||'Could not submit inspection.'}
+    }
+
 
     function getRsLocation() {
       if (!navigator.geolocation) return;
@@ -219,9 +348,8 @@
       var vendor = document.getElementById('rsVendor').value.trim();
       var cost = document.getElementById('rsCost').value;
       var img = document.getElementById('rsImg');
-      var photo = (img && img.src && img.src.startsWith('data:')) ? 
-        img.src : null;
-      
+      var photo = (img && img.src && img.src.startsWith('data:')) ? img.src : null;
+
       if (!unit) {
         alert('Please enter your unit number');
         return;
@@ -230,7 +358,7 @@
         alert('Please describe the issue');
         return;
       }
-      
+
       fetch('/api/damage/report', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
@@ -249,8 +377,8 @@
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (d.ok) {
-          showSuccess('🚨 Alert sent!', 
-            'Jorge has been notified. Help is on the way.');
+          showSuccess('🚨 Alert sent!', 'Jorge has been notified. Help is on the way.');
+          resetRoadServiceForm();
         } else {
           alert('Error sending alert. Please call Jorge directly.');
         }
@@ -259,6 +387,7 @@
         alert('Error sending alert. Please call Jorge directly.');
       });
     }
+
 
 
     function bindNav(){document.querySelectorAll('[data-nav]').forEach(btn=>btn.addEventListener('click',()=>showScreen(btn.getAttribute('data-nav'))));document.getElementById('submitChecklistBtn').addEventListener('click',submitChecklist);document.getElementById('submitDamageBtn').addEventListener('click',submitDamageReport);document.getElementById('submitFuelBtn').addEventListener('click',submitFuelExpense);document.getElementById('submitLeaveBtn').addEventListener('click',submitLeaveRequest);document.getElementById('submitPretripBtn').addEventListener('click',submitPretripInspection);document.querySelectorAll('.fuel-type-btn').forEach(btn=>btn.addEventListener('click',()=>setFuelType(btn.getAttribute('data-fuel-type')||'')))}

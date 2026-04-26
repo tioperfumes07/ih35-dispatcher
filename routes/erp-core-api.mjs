@@ -2161,6 +2161,45 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+
+  app.get('/api/drivers/leave-request', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set', requests: [], rows: [] });
+      await dbQuery(
+        `CREATE TABLE IF NOT EXISTS leave_requests (
+          id SERIAL PRIMARY KEY,
+          unit_number TEXT,
+          driver_name TEXT,
+          start_date DATE,
+          end_date DATE,
+          leave_type TEXT,
+          notes TEXT,
+          status TEXT DEFAULT 'pending',
+          reviewed_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )`
+      );
+      const unit = String(req.query?.unit || '').trim();
+      const status = String(req.query?.status || '').trim().toLowerCase();
+      const params = [];
+      let where = [];
+      if (unit) {
+        params.push(unit);
+        where.push(`unit_number = $${params.length}`);
+      }
+      if (status) {
+        params.push(status);
+        where.push(`LOWER(COALESCE(status, 'pending')) = $${params.length}`);
+      }
+      const sql = `SELECT * FROM leave_requests ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC, id DESC`;
+      const { rows } = await dbQuery(sql, params);
+      return res.json({ ok: true, requests: rows || [], rows: rows || [] });
+    } catch (e) {
+      logError('GET /api/drivers/leave-request', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), requests: [], rows: [] });
+    }
+  });
+
   app.get('/api/drivers/leave-requests', async (req, res) => {
     try {
       if (!getPool()) return res.json({ ok: true, requests: [], rows: [] });
@@ -2221,34 +2260,22 @@ export function mountErpCoreApi(app, opts = {}) {
       const reqRow = rows?.[0] || null;
       if (!reqRow) return res.status(404).json({ ok: false, error: 'Leave request not found' });
 
-      const start = String(reqRow.start_date || '').slice(0, 10);
-      const end = String(reqRow.end_date || '').slice(0, 10);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(start) && /^\d{4}-\d{2}-\d{2}$/.test(end)) {
-        const leaveType = String(reqRow.leave_type || 'Leave').trim() || 'Leave';
-        let d = new Date(`${start}T00:00:00Z`);
-        const until = new Date(`${end}T00:00:00Z`);
-        while (d <= until) {
-          const iso = d.toISOString().slice(0, 10);
-          await dbQuery(
-            `INSERT INTO driver_schedules (unit_number, driver_id, date, leave_type, notes, created_at, updated_at)
-             VALUES ($1,$2,$3,$4,$5,now(),now())
-             ON CONFLICT (unit_number, date)
-             DO UPDATE SET
-               driver_id = EXCLUDED.driver_id,
-               leave_type = EXCLUDED.leave_type,
-               notes = EXCLUDED.notes,
-               updated_at = now()`,
-            [
-              String(reqRow.unit_number || '').trim() || null,
-              String(reqRow.driver_name || '').trim() || null,
-              iso,
-              leaveType,
-              String(reqRow.notes || '').trim() || `Auto-approved leave request #${id}`,
-            ]
-          );
-          d.setUTCDate(d.getUTCDate() + 1);
-        }
-      }
+      await dbQuery(
+        `INSERT INTO driver_schedules (unit_number, driver_id, date, leave_type, notes, created_at, updated_at)
+         SELECT
+           NULLIF(TRIM(lr.unit_number), ''),
+           NULLIF(TRIM(lr.driver_name), ''),
+           gs::date,
+           NULLIF(TRIM(COALESCE(lr.leave_type, 'Leave')), ''),
+           COALESCE(NULLIF(TRIM(lr.notes), ''), $2),
+           NOW(),
+           NOW()
+         FROM leave_requests lr
+         CROSS JOIN generate_series(lr.start_date::date, lr.end_date::date, INTERVAL '1 day') gs
+         WHERE lr.id = $1
+         ON CONFLICT (unit_number, date) DO NOTHING`,
+        [id, `Auto-approved leave request #${id}`]
+      );
 
       return res.json({ ok: true });
     } catch (e) {
