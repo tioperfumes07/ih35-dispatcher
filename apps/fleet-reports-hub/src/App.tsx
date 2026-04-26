@@ -959,7 +959,7 @@ export default function App() {
                 {SECTION_DESCRIPTIONS.reports}
               </p>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                <button type="button" className="btn sm" onClick={() => { window.location.href = '/maintenance.html' }}>
+                <button type="button" className="btn sm" onClick={() => { window.parent?.postMessage('closeFleetHub', '*') }}>
                   ← Maintenance
                 </button>
                 <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
@@ -999,7 +999,7 @@ export default function App() {
                   : SECTION_DESCRIPTIONS[activeSection]}
               </p>
               <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                <button type="button" className="btn sm" onClick={() => { window.location.href = '/maintenance.html' }}>
+                <button type="button" className="btn sm" onClick={() => { window.parent?.postMessage('closeFleetHub', '*') }}>
                   ← Maintenance
                 </button>
                 <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>

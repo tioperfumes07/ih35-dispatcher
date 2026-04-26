@@ -327,7 +327,7 @@ export type DriverProfile = {
   medical_expiry: string | null
   phone: string | null
   email: string | null
-  status: 'Active' | 'On Vacation' | 'Sick' | 'Terminated'
+  status: string
   notes: string | null
   created_at: string
   updated_at: string
@@ -351,6 +351,14 @@ export async function fetchDriverProfiles() {
 export async function upsertDriverProfile(body: Partial<DriverProfile> & { unit_number: string }) {
   return j<{ ok: boolean; driver: DriverProfile | null }>('/api/drivers/profiles', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function updateDriverProfileById(id: number, body: Partial<DriverProfile>) {
+  return j<{ ok: boolean; driver: DriverProfile | null }>(`/api/drivers/profiles/${id}`, {
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })

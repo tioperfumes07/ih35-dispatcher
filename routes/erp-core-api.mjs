@@ -1318,6 +1318,16 @@ export function mountErpCoreApi(app, opts = {}) {
     try {
       if (!getPool()) return res.json({ ok: true, drivers: [] });
       await ensureDriverSchedulerTables();
+      const seedCheck = await dbQuery('SELECT COUNT(*)::int AS n FROM driver_profiles');
+      const n = Number(seedCheck?.rows?.[0]?.n || 0);
+      if (n === 0) {
+        await dbQuery(
+          `INSERT INTO driver_profiles (unit_number, full_name, status, cdl_expiry, medical_expiry, created_at, updated_at)
+           SELECT 'T' || gs::text, 'Unassigned', 'active', NULL, NULL, now(), now()
+           FROM generate_series(120, 177) AS gs
+           ON CONFLICT (unit_number) DO NOTHING`
+        );
+      }
       const { rows } = await dbQuery('SELECT * FROM driver_profiles ORDER BY unit_number NULLS LAST, full_name NULLS LAST');
       return res.json({ ok: true, drivers: rows || [] });
     } catch (e) {
@@ -1370,6 +1380,45 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({ ok: true, driver: rows?.[0] || null });
     } catch (e) {
       logError('POST /api/drivers/profiles', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/drivers/profiles/:id', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      const id = Number(req.params?.id);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'valid id is required' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      await dbQuery(
+        `UPDATE driver_profiles
+            SET full_name=$2,
+                unit_number=$3,
+                cdl_number=$4,
+                cdl_expiry=$5,
+                medical_expiry=$6,
+                phone=$7,
+                notes=$8,
+                status=$9,
+                updated_at=now()
+          WHERE id=$1`,
+        [
+          id,
+          String(b.full_name || '').trim() || null,
+          String(b.unit_number || '').trim() || null,
+          String(b.cdl_number || '').trim() || null,
+          String(b.cdl_expiry || '').trim() || null,
+          String(b.medical_expiry || '').trim() || null,
+          String(b.phone || '').trim() || null,
+          String(b.notes || '').trim() || null,
+          String(b.status || 'active').trim() || 'active',
+        ]
+      );
+      const { rows } = await dbQuery('SELECT * FROM driver_profiles WHERE id = $1 LIMIT 1', [id]);
+      return res.json({ ok: true, driver: rows?.[0] || null });
+    } catch (e) {
+      logError('PUT /api/drivers/profiles/:id', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });

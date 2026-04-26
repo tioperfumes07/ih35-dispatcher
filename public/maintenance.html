@@ -800,7 +800,7 @@
           </div>
           <div class="erp-topbar__actions print-hide-actions">
             <button type="button" title="Open maintenance view" onclick="openSectionByName('maintenance')">Maintenance view</button>
-            <button type="button" style="background:#2563eb;border-color:#1d4ed8;color:#fff" title="Open Fleet Hub" onclick="window.location.href='/fleet-reports/'">⇄ Fleet Hub</button>
+            <button type="button" style="background:#2563eb;border-color:#1d4ed8;color:#fff" title="Open Fleet Hub" onclick="openFleetHub()">⇄ Fleet Hub</button>
             <button type="button" title="Reload lists and boards (auto-refresh also runs in the background)" onclick="loadAll()">Refresh</button>
             <button type="button" title="Verify QuickBooks OAuth and API reachability" onclick="testQuickBooks()">Test QuickBooks connection</button>
             <button type="button" title="Reload vendors, items, and accounts from QuickBooks" onclick="refreshQboMaster()">Refresh QuickBooks lists</button>
@@ -964,7 +964,7 @@
             <div id="safetyMapMeta" class="mini-note">Loading map…</div>
           </div>
           <div class="panel-body" style="padding:10px">
-            <div id="safetyLiveMap" style="height:420px; width:100%; display:block; border:1px solid var(--color-border); border-radius:8px"></div>
+            <div id="safetyLiveMap" style="height:400px; width:100%; display:block; border:1px solid var(--color-border); border-radius:8px"></div>
           </div>
         </div>
         <div id="safetyHomeKpis" class="grid grid-3 erp-kpi-grid" style="margin-bottom:12px">
@@ -6149,7 +6149,32 @@
   <script src="/js/erp-report-filter-panel.js"></script>
   <script src="/js/erp-reports-catalog.js"></script>
   <script src="/js/erp-accounting-ui-enhancements.js"></script>
-  <script>
+  
+  <div id="fleetHubOverlay" style="display:none;
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    z-index:9000;background:#0f1219">
+    <div style="display:flex;align-items:center;
+      justify-content:space-between;padding:8px 16px;
+      background:#161b27;border-bottom:1px solid rgba(255,255,255,0.1)">
+      <span style="color:#e2e8f0;font-weight:600;font-size:15px">
+        ⇄ Fleet Reports Hub
+      </span>
+      <button onclick="closeFleetHub()"
+        style="background:transparent;color:#8892a4;
+               border:1px solid rgba(255,255,255,0.15);
+               padding:6px 14px;border-radius:6px;
+               font-size:13px;cursor:pointer">
+        ← Back to Maintenance
+      </button>
+    </div>
+    <iframe id="fleetHubFrame"
+      src="/fleet-reports/"
+      style="width:100%;height:calc(100vh - 45px);
+             border:none;background:#0f1219">
+    </iframe>
+  </div>
+
+<script>
     let vehicles = [];
     let fleetAssetQboClassMappings = {};
     window._cachedUnits = window._cachedUnits || [];
@@ -10423,7 +10448,7 @@
             window.safetyLiveMap.invalidateSize();
             window.safetyLiveMap.setView([27.5036, -99.5075], 7);
           }
-        }, 350);
+        }, 300);
       }
       if (name === 'reports') {
         loadReportsData();
@@ -10506,6 +10531,27 @@
       openSection(name, btn);
     }
 
+    function openFleetHub() {
+      const overlay = document.getElementById('fleetHubOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      const frame = document.getElementById('fleetHubFrame');
+      if (frame && !frame.getAttribute('src')) frame.setAttribute('src', '/fleet-reports/');
+    }
+
+    function closeFleetHub() {
+      const overlay = document.getElementById('fleetHubOverlay');
+      if (overlay) overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    if (!window.__fleetHubMessageListenerInstalled) {
+      window.__fleetHubMessageListenerInstalled = true;
+      window.addEventListener('message', function(e) {
+        if (e && e.data === 'closeFleetHub') closeFleetHub();
+      });
+    }
 
     function showAccountingHomeOnly() {
       document.querySelectorAll('.accounting-tab').forEach(el => el.classList.add('hidden'));
@@ -10626,10 +10672,10 @@
       if (!host || typeof L === 'undefined') return false;
       if (!safetyLiveMap) {
         safetyLiveMap = L.map(host, { zoomControl: true }).setView([29.4241, -98.4936], 7);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
-          crossOrigin: true
+          maxZoom: 19,
+          subdomains: ['a','b','c']
         }).addTo(safetyLiveMap);
         window.safetyLiveMap = safetyLiveMap;
         safetyLiveMapLayer = L.layerGroup().addTo(safetyLiveMap);
@@ -10655,14 +10701,16 @@
         const lat = Number(v.lastGpsLat);
         const lng = Number(v.lastGpsLng);
         bounds.push([lat, lng]);
-        const popup = `<strong>${escapeHtml(v.name || v.unit_number || 'Unit')}</strong><br/>${escapeHtml(v.driverName || 'No driver assigned')}`;
+        const unit = String(v.name || v.unit_number || v.vehicleName || 'Unit');
+        const locationLabel = Number.isFinite(lat) && Number.isFinite(lng) ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : 'Location unavailable';
+        const popup = `<b>${escapeHtml(unit)}</b><br>${escapeHtml(locationLabel)}`;
         L.marker([lat, lng]).bindPopup(popup).addTo(safetyLiveMapLayer);
       });
       if (bounds.length) {
         try { safetyLiveMap.fitBounds(bounds, { padding: [18, 18], maxZoom: 11 }); } catch (_) {}
       }
       if (meta) meta.textContent = `${withGps.length} / ${veh.length} vehicles with GPS · refresh 60s`;
-      setTimeout(() => { try { safetyLiveMap.invalidateSize(); } catch (_) {} }, 80);
+      setTimeout(() => { try { safetyLiveMap.invalidateSize(); } catch (_) {} }, 300);
     }
 
     function applyNavHash(opts) {
