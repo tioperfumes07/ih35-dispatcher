@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { showToast } from '../ui/Toast'
 import type { SharedListColumn } from './SharedListTable'
 import { SharedListTable } from './SharedListTable'
 import { ListItemEditModal } from './ListItemEditModal'
@@ -37,6 +38,17 @@ type Draft = {
   asset_type: string
   status: string
   notes: string
+}
+
+type QboClass = {
+  qboId: string
+  name: string
+}
+
+type AssetQboClassMapping = {
+  unit_number: string
+  qbo_class_id?: string | null
+  qbo_class_name?: string | null
 }
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -195,11 +207,33 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [typeFilter, setTypeFilter] = useState<(typeof TYPE_FILTER_TABS)[number]>('All Types')
   const [showInactive, setShowInactive] = useState(false)
 
+  const [qboClasses, setQboClasses] = useState<QboClass[]>([])
+  const [qboClassMappings, setQboClassMappings] = useState<Record<string, AssetQboClassMapping>>({})
+  const [qboClassInput, setQboClassInput] = useState('')
+  const [savingQboClass, setSavingQboClass] = useState(false)
+
   const load = useCallback(async () => {
     setErr(null)
     try {
-      const j = await fetchAssets()
-      setRows(j.assets)
+      const [assetsRes, mappingRes] = await Promise.all([
+        fetchAssets(),
+        fetch('/api/fleet/assets/qbo-classes', { headers: { Accept: 'application/json' } })
+          .then((r) => r.json())
+          .catch(() => ({ mappings: [] })),
+      ])
+      setRows(assetsRes.assets)
+      const nextMappings: Record<string, AssetQboClassMapping> = {}
+      const mappings = Array.isArray(mappingRes?.mappings) ? mappingRes.mappings : []
+      mappings.forEach((m: any) => {
+        const unit = String(m?.unit_number || '').trim()
+        if (!unit) return
+        nextMappings[unit] = {
+          unit_number: unit,
+          qbo_class_id: String(m?.qbo_class_id || '').trim(),
+          qbo_class_name: String(m?.qbo_class_name || '').trim(),
+        }
+      })
+      setQboClassMappings(nextMappings)
     } catch (e) {
       setErr(String((e as Error).message || e))
     }
@@ -208,6 +242,39 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadClasses = async () => {
+      const master = await fetch('/api/qbo/master', { headers: { Accept: 'application/json' } })
+        .then((r) => r.json())
+        .catch(() => ({}))
+      if (cancelled) return
+      const raw = Array.isArray((master as any)?.classes) ? (master as any).classes : []
+      const normalized = raw
+        .map((c: any) => ({
+          qboId: String(c?.qboId || '').trim(),
+          name: String(c?.name || '').trim(),
+        }))
+        .filter((c: QboClass) => Boolean(c.qboId && c.name))
+      setQboClasses(normalized)
+    }
+    void loadClasses()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!modalOpen) return
+    const unit = String(draft.unit_number || '').trim()
+    if (!unit) {
+      setQboClassInput('')
+      return
+    }
+    const mapping = qboClassMappings[unit]
+    setQboClassInput(String(mapping?.qbo_class_name || ''))
+  }, [modalOpen, draft.unit_number, qboClassMappings])
 
   const updateMetaForId = useCallback((id: number, meta: LocalMeta) => {
     setMetaMap((prev) => {
@@ -281,6 +348,44 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     setEditingId(null)
   }
 
+  const resolveQboClassFromInput = useCallback((raw: string) => {
+    const value = String(raw || '').trim()
+    if (!value) return null
+    const key = value.toLowerCase()
+    return qboClasses.find((c) => String(c.name || '').trim().toLowerCase() === key) || null
+  }, [qboClasses])
+
+  const saveQboClassMapping = useCallback(async (unitNumber: string) => {
+    const unit = String(unitNumber || '').trim()
+    if (!unit) return
+    const match = resolveQboClassFromInput(qboClassInput)
+    setSavingQboClass(true)
+    try {
+      const resp = await fetch('/api/fleet/assets/qbo-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          unit_number: unit,
+          qbo_class_id: match?.qboId || '',
+          qbo_class_name: match?.name || String(qboClassInput || '').trim(),
+        }),
+      }).then((r) => r.json())
+      if (!resp?.ok) throw new Error(String(resp?.error || 'Failed to save QBO class'))
+      const savedName = match?.name || String(qboClassInput || '').trim()
+      setQboClassMappings((prev) => ({
+        ...prev,
+        [unit]: { unit_number: unit, qbo_class_id: match?.qboId || '', qbo_class_name: savedName },
+      }))
+      setQboClassInput(savedName)
+      showToast('✅ Saved', 'success')
+    } catch (e) {
+      setErr(String((e as Error).message || e))
+      showToast('❌ Error saving QBO class', 'error')
+    } finally {
+      setSavingQboClass(false)
+    }
+  }, [qboClassInput, resolveQboClassFromInput])
+
   const persist = async () => {
     if (!draft.unit_number.trim()) {
       setErr('Unit # is required.')
@@ -331,11 +436,11 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     () => [
       { id: 'unit', label: 'Unit#', width: 70, render: (r) => <span className="lists-db__pill lists-db__pill--info">{r.unit_number}</span> },
       { id: 'name', label: 'Name', width: 100, render: (r) => metaMap[String(r.id)]?.name || r.unit_number },
-      { id: 'make', label: 'Make', width: 80, render: (r) => r.make ?? '—' },
-      { id: 'model', label: 'Model', width: 80, render: (r) => r.model ?? '—' },
-      { id: 'year', label: 'Year', width: 56, render: (r) => r.year ?? '—' },
+      { id: 'make', label: 'Make', width: 80, render: (r) => String((r as any).make || (r as any).make_override || '').trim() || '—' },
+      { id: 'model', label: 'Model', width: 80, render: (r) => String((r as any).model || (r as any).model_override || '').trim() || '—' },
+      { id: 'year', label: 'Year', width: 56, render: (r) => (r.year ?? (r as any).year_override ?? '—') },
       { id: 'vin', label: 'VIN', width: 120, render: (r) => r.vin ?? '—' },
-      { id: 'plate', label: 'License Plate', width: 92, render: (r) => r.license_plate ?? '—' },
+      { id: 'plate', label: 'License Plate', width: 92, render: (r) => String((r as any).license_plate || (r as any).licensePlate || (r as any).license_plate_override || '').trim() || '—' },
       { id: 'type', label: 'Type', width: 88, render: (r) => r.asset_type || 'truck' },
       {
         id: 'status',
@@ -461,6 +566,31 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
+          </label>
+          <label className="list-edit-field">
+            <span className="list-edit-field__lbl">QuickBooks Class</span>
+            <input
+              className="list-edit-field__inp"
+              type="text"
+              list="qboClassList"
+              placeholder="Type to search QBO classes..."
+              value={qboClassInput}
+              onChange={(e) => setQboClassInput(e.target.value)}
+            />
+            <datalist id="qboClassList">
+              {qboClasses.map((c) => (
+                <option key={c.qboId} value={c.name} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              className="btn sm ghost"
+              style={{ marginTop: 6 }}
+              onClick={() => void saveQboClassMapping(draft.unit_number)}
+              disabled={savingQboClass || !String(draft.unit_number || '').trim()}
+            >
+              {savingQboClass ? 'Saving...' : 'Save QBO class'}
+            </button>
           </label>
           <label className="list-edit-field list-edit-field--full">
             <span className="list-edit-field__lbl">Notes</span>

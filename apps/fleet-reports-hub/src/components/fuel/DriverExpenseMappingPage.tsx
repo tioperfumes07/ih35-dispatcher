@@ -56,10 +56,6 @@ const BASE_EXPENSE_TYPES: ExpenseTypeDef[] = [
   { id: 'other_expense', icon: '🔄', label: 'Other' },
 ]
 
-const accountLabel = (a: QboAccount) => `${a.name} (${a.accountType || 'Expense'})`
-const itemLabel = (i: QboItem) => i.name
-const vendorLabel = (v: QboVendor) => v.name
-
 function normalizeId(v: string): string {
   return String(v || '')
     .trim()
@@ -93,6 +89,23 @@ function defaultRow(expenseType: string): MappingRow {
   }
 }
 
+function copyRow(row: MappingRow): MappingRow {
+  return {
+    expense_type: row.expense_type,
+    qbo_account_id: row.qbo_account_id || '',
+    qbo_account_name: row.qbo_account_name || '',
+    qbo_item_id: row.qbo_item_id || '',
+    qbo_item_name: row.qbo_item_name || '',
+    default_vendor_id: row.default_vendor_id || '',
+    default_vendor_name: row.default_vendor_name || '',
+    requires_load_number: normalizeLoadMode(row.requires_load_number),
+    requires_reefer_number: Boolean(row.requires_reefer_number),
+    requires_receipt: Boolean(row.requires_receipt),
+    requires_odometer: Boolean(row.requires_odometer),
+    auto_post_qbo: Boolean(row.auto_post_qbo),
+  }
+}
+
 export function DriverExpenseMappingPage() {
   const [expenseTypes, setExpenseTypes] = useState<ExpenseTypeDef[]>(BASE_EXPENSE_TYPES)
   const [activeType, setActiveType] = useState<string>(BASE_EXPENSE_TYPES[0].id)
@@ -102,6 +115,8 @@ export function DriverExpenseMappingPage() {
   const [items, setItems] = useState<QboItem[]>([])
   const [vendors, setVendors] = useState<QboVendor[]>([])
 
+  const [editingType, setEditingType] = useState<string | null>(null)
+  const [draftRow, setDraftRow] = useState<MappingRow | null>(null)
   const [accountInput, setAccountInput] = useState('')
   const [itemInput, setItemInput] = useState('')
   const [vendorInput, setVendorInput] = useState('')
@@ -113,9 +128,21 @@ export function DriverExpenseMappingPage() {
   const [showAddCustom, setShowAddCustom] = useState(false)
   const [customName, setCustomName] = useState('')
 
-  const accountByLabel = useMemo(() => new Map(accounts.map((a) => [accountLabel(a), a])), [accounts])
-  const itemByLabel = useMemo(() => new Map(items.map((i) => [itemLabel(i), i])), [items])
-  const vendorByLabel = useMemo(() => new Map(vendors.map((v) => [vendorLabel(v), v])), [vendors])
+  const accountByName = useMemo(() => {
+    const map = new Map<string, QboAccount>()
+    accounts.forEach((a) => map.set(String(a.name || '').trim().toLowerCase(), a))
+    return map
+  }, [accounts])
+  const itemByName = useMemo(() => {
+    const map = new Map<string, QboItem>()
+    items.forEach((i) => map.set(String(i.name || '').trim().toLowerCase(), i))
+    return map
+  }, [items])
+  const vendorByName = useMemo(() => {
+    const map = new Map<string, QboVendor>()
+    vendors.forEach((v) => map.set(String(v.name || '').trim().toLowerCase(), v))
+    return map
+  }, [vendors])
 
   useEffect(() => {
     let cancelled = false
@@ -203,47 +230,84 @@ export function DriverExpenseMappingPage() {
 
   const activeExpense = useMemo(() => expenseTypes.find((t) => t.id === activeType) || expenseTypes[0], [expenseTypes, activeType])
   const activeRow = rows[activeType] || defaultRow(activeType)
+  const isEditing = editingType === activeType && draftRow != null
 
   useEffect(() => {
-    const row = rows[activeType]
-    if (!row) return
-    const a = accounts.find((x) => x.id === row.qbo_account_id)
-    const i = items.find((x) => x.id === row.qbo_item_id)
-    const v = vendors.find((x) => x.id === row.default_vendor_id)
-    setAccountInput(a ? accountLabel(a) : '')
-    setItemInput(i ? itemLabel(i) : '')
-    setVendorInput(v ? vendorLabel(v) : '')
-  }, [activeType, rows, accounts, items, vendors])
+    if (editingType && editingType !== activeType) {
+      setEditingType(null)
+      setDraftRow(null)
+      setAccountInput('')
+      setItemInput('')
+      setVendorInput('')
+    }
+  }, [activeType, editingType])
 
   const mappedCount = useMemo(() => expenseTypes.filter((t) => Boolean(rows[t.id]?.qbo_account_id)).length, [expenseTypes, rows])
   const completionPercent = expenseTypes.length ? Math.round((mappedCount / expenseTypes.length) * 100) : 0
 
-  const patchActive = (patch: Partial<MappingRow>) => {
-    setRows((prev) => ({ ...prev, [activeType]: { ...(prev[activeType] || defaultRow(activeType)), ...patch } }))
+  const beginEdit = () => {
+    const source = copyRow(rows[activeType] || defaultRow(activeType))
+    setDraftRow(source)
+    setAccountInput(source.qbo_account_name || '')
+    setItemInput(source.qbo_item_name || '')
+    setVendorInput(source.default_vendor_name || '')
+    setEditingType(activeType)
+    setSavedMsg('')
+  }
+
+  const cancelEdit = () => {
+    setEditingType(null)
+    setDraftRow(null)
+    setAccountInput('')
+    setItemInput('')
+    setVendorInput('')
+    setSavedMsg('')
+  }
+
+  const patchDraft = (patch: Partial<MappingRow>) => {
+    setDraftRow((prev) => {
+      const current = prev || copyRow(rows[activeType] || defaultRow(activeType))
+      return { ...current, ...patch }
+    })
     setSavedMsg('')
   }
 
   const syncAccount = (raw: string) => {
     setAccountInput(raw)
-    const picked = accountByLabel.get(raw) || accounts.find((a) => a.id === raw) || null
-    patchActive({ qbo_account_id: picked?.id || '', qbo_account_name: picked?.name || '' })
+    const key = String(raw || '').trim().toLowerCase()
+    const picked = accountByName.get(key) || accounts.find((a) => a.id === raw) || null
+    patchDraft({
+      qbo_account_id: picked?.id || '',
+      qbo_account_name: picked?.name || String(raw || '').trim(),
+    })
   }
 
   const syncItem = (raw: string) => {
     setItemInput(raw)
-    const picked = itemByLabel.get(raw) || items.find((i) => i.id === raw) || null
-    patchActive({ qbo_item_id: picked?.id || '', qbo_item_name: picked?.name || '' })
+    const key = String(raw || '').trim().toLowerCase()
+    const picked = itemByName.get(key) || items.find((i) => i.id === raw) || null
+    patchDraft({
+      qbo_item_id: picked?.id || '',
+      qbo_item_name: picked?.name || String(raw || '').trim(),
+    })
   }
 
   const syncVendor = (raw: string) => {
     setVendorInput(raw)
-    const picked = vendorByLabel.get(raw) || vendors.find((v) => v.id === raw) || null
-    patchActive({ default_vendor_id: picked?.id || '', default_vendor_name: picked?.name || '' })
+    const key = String(raw || '').trim().toLowerCase()
+    const picked = vendorByName.get(key) || vendors.find((v) => v.id === raw) || null
+    patchDraft({
+      default_vendor_id: picked?.id || '',
+      default_vendor_name: picked?.name || String(raw || '').trim(),
+    })
   }
 
   const saveCurrent = async () => {
-    const row = rows[activeType] || defaultRow(activeType)
-    if (!row.qbo_account_id) {
+    if (!isEditing || !draftRow) {
+      setSavedMsg('Click Edit first to change this mapping.')
+      return
+    }
+    if (!draftRow.qbo_account_id) {
       setSavedMsg('Select a QBO expense account first.')
       showToast('❌ Error saving mapping', 'error')
       return
@@ -256,21 +320,24 @@ export function DriverExpenseMappingPage() {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           expense_type: activeType,
-          qbo_account_id: row.qbo_account_id || '',
-          qbo_account_name: row.qbo_account_name || '',
-          qbo_item_id: row.qbo_item_id || '',
-          qbo_item_name: row.qbo_item_name || '',
-          default_vendor_id: row.default_vendor_id || '',
-          default_vendor_name: row.default_vendor_name || '',
-          requires_load_number: row.requires_load_number || 'optional',
-          requires_reefer_number: Boolean(row.requires_reefer_number),
-          requires_receipt: Boolean(row.requires_receipt),
-          requires_odometer: Boolean(row.requires_odometer),
-          auto_post_qbo: Boolean(row.auto_post_qbo),
+          qbo_account_id: draftRow.qbo_account_id || '',
+          qbo_account_name: draftRow.qbo_account_name || '',
+          qbo_item_id: draftRow.qbo_item_id || '',
+          qbo_item_name: draftRow.qbo_item_name || '',
+          default_vendor_id: draftRow.default_vendor_id || '',
+          default_vendor_name: draftRow.default_vendor_name || '',
+          requires_load_number: draftRow.requires_load_number || 'optional',
+          requires_reefer_number: Boolean(draftRow.requires_reefer_number),
+          requires_receipt: Boolean(draftRow.requires_receipt),
+          requires_odometer: Boolean(draftRow.requires_odometer),
+          auto_post_qbo: Boolean(draftRow.auto_post_qbo),
         }),
       }).then((r) => r.json())
       if (resp?.ok) {
+        setRows((prev) => ({ ...prev, [activeType]: copyRow(draftRow) }))
         setSavedMsg('✅ Saved')
+        setEditingType(null)
+        setDraftRow(null)
         showToast('✅ Expense mapping saved', 'success')
       } else {
         setSavedMsg(String(resp?.error || 'Save failed'))
@@ -315,24 +382,10 @@ export function DriverExpenseMappingPage() {
     }
   }
 
+  const datalistSafeType = String(activeType || 'expense').replace(/[^a-z0-9_\-]/gi, '_')
+
   return (
     <div className="acct-hub" style={{ height: '100%', minHeight: 560, gap: 10 }}>
-      <datalist id="driverExpenseAccounts">
-        {accounts.map((a) => (
-          <option key={a.id} value={accountLabel(a)} />
-        ))}
-      </datalist>
-      <datalist id="driverExpenseItems">
-        {items.map((i) => (
-          <option key={i.id} value={itemLabel(i)} />
-        ))}
-      </datalist>
-      <datalist id="driverExpenseVendors">
-        {vendors.map((v) => (
-          <option key={v.id} value={vendorLabel(v)} />
-        ))}
-      </datalist>
-
       <div className="panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 520 }}>
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
           <aside style={{ width: '35%', minWidth: 280, borderRight: '1px solid var(--border)', overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -373,57 +426,118 @@ export function DriverExpenseMappingPage() {
           <section style={{ width: '65%', overflowY: 'auto', padding: 20, display: 'grid', gap: 12 }}>
             <h3 style={{ margin: 0 }}>{activeExpense?.icon || '🔧'} {activeExpense?.label || activeType}</h3>
 
-            <div className="panel" style={{ margin: 0 }}>
-              <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
-                <label>QBO Expense Account (required)</label>
-                <input list="driverExpenseAccounts" value={accountInput} onChange={(e) => syncAccount(e.target.value)} placeholder="Search account..." />
+            {!isEditing ? (
+              <div className="panel" style={{ margin: 0 }}>
+                <div className="panel-body" style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span className="chip" style={{ background: activeRow.qbo_account_id ? 'rgba(34,197,94,0.16)' : 'rgba(148,163,184,0.16)', color: activeRow.qbo_account_id ? '#16a34a' : '#64748b' }}>
+                      Account: {activeRow.qbo_account_name || 'Not set'}
+                    </span>
+                    <span className="chip" style={{ background: activeRow.qbo_item_id ? 'rgba(34,197,94,0.16)' : 'rgba(148,163,184,0.16)', color: activeRow.qbo_item_id ? '#16a34a' : '#64748b' }}>
+                      Item: {activeRow.qbo_item_name || 'Not set'}
+                    </span>
+                    <span className="chip" style={{ background: activeRow.default_vendor_id ? 'rgba(34,197,94,0.16)' : 'rgba(148,163,184,0.16)', color: activeRow.default_vendor_id ? '#16a34a' : '#64748b' }}>
+                      Vendor: {activeRow.default_vendor_name || 'Not set'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <button type="button" className="btn" onClick={beginEdit}>Edit</button>
+                    {savedMsg ? <span className="muted">{savedMsg}</span> : null}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <datalist id={`expAccts_${datalistSafeType}`}>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.name} />
+                  ))}
+                </datalist>
+                <datalist id={`expItems_${datalistSafeType}`}>
+                  {items.map((i) => (
+                    <option key={i.id} value={i.name} />
+                  ))}
+                </datalist>
+                <datalist id={`expVendors_${datalistSafeType}`}>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.name} />
+                  ))}
+                </datalist>
 
-            <div className="panel" style={{ margin: 0 }}>
-              <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
-                <label>QBO Item/Product (optional)</label>
-                <input list="driverExpenseItems" value={itemInput} onChange={(e) => syncItem(e.target.value)} placeholder="Search item..." />
-              </div>
-            </div>
+                <div className="panel" style={{ margin: 0 }}>
+                  <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
+                    <label>QBO Expense Account (required)</label>
+                    <input
+                      type="text"
+                      list={`expAccts_${datalistSafeType}`}
+                      placeholder="Type to search QBO accounts..."
+                      value={accountInput}
+                      onChange={(e) => syncAccount(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div className="panel" style={{ margin: 0 }}>
-              <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
-                <label>Default Vendor (optional)</label>
-                <input list="driverExpenseVendors" value={vendorInput} onChange={(e) => syncVendor(e.target.value)} placeholder="Search vendor..." />
-              </div>
-            </div>
+                <div className="panel" style={{ margin: 0 }}>
+                  <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
+                    <label>QBO Item/Product (optional)</label>
+                    <input
+                      type="text"
+                      list={`expItems_${datalistSafeType}`}
+                      placeholder="Type to search QBO items..."
+                      value={itemInput}
+                      onChange={(e) => syncItem(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div className="panel" style={{ margin: 0 }}>
-              <div className="panel-body" style={{ display: 'grid', gap: 10 }}>
-                <strong>Required fields</strong>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="checkbox" checked={activeRow.requires_load_number === 'required'} onChange={(e) => patchActive({ requires_load_number: e.target.checked ? 'required' : 'optional' })} style={{ width: 18, height: 18 }} />
-                  Load number required
-                </label>
-                {activeType === 'reefer_diesel' ? (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="checkbox" checked={Boolean(activeRow.requires_reefer_number)} onChange={(e) => patchActive({ requires_reefer_number: e.target.checked })} style={{ width: 18, height: 18 }} />
-                    Reefer unit number required
-                  </label>
-                ) : null}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="checkbox" checked={Boolean(activeRow.requires_receipt)} onChange={(e) => patchActive({ requires_receipt: e.target.checked })} style={{ width: 18, height: 18 }} />
-                  Receipt photo required
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="checkbox" checked={Boolean(activeRow.auto_post_qbo)} onChange={(e) => patchActive({ auto_post_qbo: e.target.checked })} style={{ width: 18, height: 18 }} />
-                  Auto-post to QuickBooks
-                </label>
-              </div>
-            </div>
+                <div className="panel" style={{ margin: 0 }}>
+                  <div className="panel-body" style={{ display: 'grid', gap: 8 }}>
+                    <label>Default Vendor (optional)</label>
+                    <input
+                      type="text"
+                      list={`expVendors_${datalistSafeType}`}
+                      placeholder="Type to search QBO vendors..."
+                      value={vendorInput}
+                      onChange={(e) => syncVendor(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <button type="button" className="btn" onClick={() => void saveCurrent()} disabled={saving}>
-                {saving ? 'Saving...' : 'Save mapping'}
-              </button>
-              {savedMsg ? <span className="muted">{savedMsg}</span> : null}
-            </div>
+                <div className="panel" style={{ margin: 0 }}>
+                  <div className="panel-body" style={{ display: 'grid', gap: 10 }}>
+                    <strong>Required fields</strong>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input type="checkbox" checked={draftRow?.requires_load_number === 'required'} onChange={(e) => patchDraft({ requires_load_number: e.target.checked ? 'required' : 'optional' })} style={{ width: 18, height: 18 }} />
+                      Load number required
+                    </label>
+                    {activeType === 'reefer_diesel' ? (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input type="checkbox" checked={Boolean(draftRow?.requires_reefer_number)} onChange={(e) => patchDraft({ requires_reefer_number: e.target.checked })} style={{ width: 18, height: 18 }} />
+                        Reefer unit number required
+                      </label>
+                    ) : null}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input type="checkbox" checked={Boolean(draftRow?.requires_receipt)} onChange={(e) => patchDraft({ requires_receipt: e.target.checked })} style={{ width: 18, height: 18 }} />
+                      Receipt photo required
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input type="checkbox" checked={Boolean(draftRow?.auto_post_qbo)} onChange={(e) => patchDraft({ auto_post_qbo: e.target.checked })} style={{ width: 18, height: 18 }} />
+                      Auto-post to QuickBooks
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <button type="button" className="btn" onClick={() => void saveCurrent()} disabled={saving}>
+                    {saving ? 'Saving...' : 'Save mapping'}
+                  </button>
+                  <button type="button" className="btn ghost" onClick={cancelEdit} disabled={saving}>
+                    Cancel
+                  </button>
+                  {savedMsg ? <span className="muted">{savedMsg}</span> : null}
+                </div>
+              </>
+            )}
           </section>
         </div>
 

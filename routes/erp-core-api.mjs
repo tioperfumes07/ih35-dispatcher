@@ -614,6 +614,19 @@ async function getMergedFleetAssetProfiles(logError) {
   return merged;
 }
 
+async function ensureFleetAssetQboClassesTable() {
+  if (!getPool()) return false;
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS fleet_asset_qbo_classes (
+      unit_number TEXT PRIMARY KEY,
+      qbo_class_id TEXT,
+      qbo_class_name TEXT,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  return true;
+}
+
 /**
  * @param {import('express').Application} app
  * @param {{ logError?: (msg: string, err?: unknown) => void }} [opts]
@@ -864,6 +877,49 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/fleet/assets', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), assets: [] });
+    }
+  });
+
+  app.get('/api/fleet/assets/qbo-classes', async (_req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, mappings: [] });
+      await ensureFleetAssetQboClassesTable();
+      const { rows } = await dbQuery(
+        `SELECT unit_number, qbo_class_id, qbo_class_name
+           FROM fleet_asset_qbo_classes
+          ORDER BY unit_number`
+      );
+      return res.json({ ok: true, mappings: rows || [] });
+    } catch (e) {
+      logError('GET /api/fleet/assets/qbo-classes', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), mappings: [] });
+    }
+  });
+
+  app.post('/api/fleet/assets/qbo-class', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
+      await ensureFleetAssetQboClassesTable();
+      const unitNumber = String(req.body?.unit_number || '').trim();
+      const qboClassId = String(req.body?.qbo_class_id || '').trim();
+      const qboClassName = String(req.body?.qbo_class_name || '').trim();
+      if (!unitNumber) return res.status(400).json({ ok: false, error: 'unit_number required' });
+
+      await dbQuery(
+        `INSERT INTO fleet_asset_qbo_classes (unit_number, qbo_class_id, qbo_class_name, updated_at)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (unit_number)
+         DO UPDATE SET
+           qbo_class_id = EXCLUDED.qbo_class_id,
+           qbo_class_name = EXCLUDED.qbo_class_name,
+           updated_at = now()`,
+        [unitNumber, qboClassId || null, qboClassName || null]
+      );
+
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/fleet/assets/qbo-class', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 

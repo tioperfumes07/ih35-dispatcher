@@ -422,16 +422,17 @@
             <thead>
               <tr>
                 <th>Unit#</th><th>Make</th><th>Model</th><th>Year</th><th>VIN</th><th>License Plate</th>
-                <th>Type</th><th>Status</th><th>Last Service</th><th>Due Date</th>
+                <th>Type</th><th>Status</th><th>QuickBooks Class</th><th>Last Service</th><th>Due Date</th>
               </tr>
             </thead>
-            <tbody id="maintFleetTableModalBody"><tr><td colspan="10" class="mini-note">Loading…</td></tr></tbody>
+            <tbody id="maintFleetTableModalBody"><tr><td colspan="11" class="mini-note">Loading…</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
   <datalist id="unitOptions"></datalist>
+  <datalist id="fleetQboClassOptions"></datalist>
   <datalist id="serviceOptions"></datalist>
   <datalist id="serviceTypeList">
     <option value="Oil Change"></option>
@@ -6022,6 +6023,7 @@
   <script src="/js/erp-accounting-ui-enhancements.js"></script>
   <script>
     let vehicles = [];
+    let fleetAssetQboClassMappings = {};
     let dashboard = [];
     let erp = {};
     let board = {};
@@ -8171,6 +8173,115 @@
     function cacheQboClasses() {
       return Array.isArray(erp.qboCache?.classes) ? erp.qboCache.classes : [];
     }
+
+    function fleetDisplayValue(primary, overrideValue) {
+      const first = String(primary ?? '').trim();
+      if (first) return first;
+      const fallback = String(overrideValue ?? '').trim();
+      return fallback || '—';
+    }
+
+    function fleetDisplayYear(primary, overrideValue) {
+      const p = String(primary ?? '').trim();
+      if (p) return p;
+      const o = String(overrideValue ?? '').trim();
+      return o || '—';
+    }
+
+    function fleetDisplayMake(asset) {
+      return fleetDisplayValue(asset?.make, asset?.make_override);
+    }
+
+    function fleetDisplayModel(asset) {
+      return fleetDisplayValue(asset?.model, asset?.model_override);
+    }
+
+    function fleetDisplayYearValue(asset) {
+      return fleetDisplayYear(asset?.year, asset?.year_override);
+    }
+
+    function fleetDisplayPlate(asset) {
+      return fleetDisplayValue(asset?.licensePlate, asset?.license_plate_override);
+    }
+
+    function fleetQboClassMappingForUnit(unit) {
+      const key = String(unit || '').trim();
+      if (!key) return null;
+      return fleetAssetQboClassMappings[key] || null;
+    }
+
+    function fleetQboClassNameForUnit(unit) {
+      const key = String(unit || '').trim();
+      if (!key) return '';
+      const mapped = fleetQboClassMappingForUnit(key);
+      if (mapped && String(mapped.qbo_class_name || '').trim()) return String(mapped.qbo_class_name).trim();
+      const cls = cacheQboClasses().find(c => String(c?.name || '').trim().toLowerCase() === key.toLowerCase());
+      return cls ? String(cls.name || '').trim() : '';
+    }
+
+    function fleetQboClassIdForUnit(unit) {
+      const key = String(unit || '').trim();
+      if (!key) return '';
+      const mapped = fleetQboClassMappingForUnit(key);
+      if (mapped && String(mapped.qbo_class_id || '').trim()) return String(mapped.qbo_class_id).trim();
+      const cls = cacheQboClasses().find(c => String(c?.name || '').trim().toLowerCase() === key.toLowerCase());
+      return cls ? String(cls.qboId || '').trim() : '';
+    }
+
+    function fleetQboClassOptionsHtml() {
+      return cacheQboClasses()
+        .map(c => `<option value="${escapeHtml(String(c?.name || '').trim())}"></option>`)
+        .join('');
+    }
+
+    async function saveFleetAssetQboClass(unitNumber, rawClassName, opts = {}) {
+      const unit = String(unitNumber || '').trim();
+      if (!unit) return false;
+      const typed = String(rawClassName || '').trim();
+      const match = cacheQboClasses().find(c => String(c?.name || '').trim().toLowerCase() === typed.toLowerCase());
+      const payload = {
+        unit_number: unit,
+        qbo_class_id: match ? String(match.qboId || '').trim() : '',
+        qbo_class_name: match ? String(match.name || '').trim() : typed
+      };
+      const res = await j('/api/fleet/assets/qbo-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+        body: JSON.stringify(payload)
+      });
+      if (!res?.ok) throw new Error(String(res?.error || 'Failed to save QuickBooks Class'));
+      fleetAssetQboClassMappings[unit] = {
+        unit_number: unit,
+        qbo_class_id: payload.qbo_class_id || '',
+        qbo_class_name: payload.qbo_class_name || ''
+      };
+      if (!opts?.silent) showErpToast('✅ Saved', 'success');
+      return true;
+    }
+
+    async function saveMaintUnitQboClass() {
+      const unit = String(selectedUnit || '').trim();
+      const inp = document.getElementById('maintUnitQboClassSearch');
+      if (!unit || !inp) return;
+      try {
+        await saveFleetAssetQboClass(unit, inp.value);
+      } catch (e) {
+        showErpToast('Failed to save QuickBooks Class: ' + (e.message || String(e)), 'error');
+      }
+    }
+
+    async function saveFleetQboClassFromModal(unit) {
+      const key = String(unit || '').trim();
+      if (!key) return;
+      const safe = key.replace(/[^a-z0-9_-]/gi, '_');
+      const inp = document.getElementById('fleetQboClass_' + safe);
+      if (!inp) return;
+      try {
+        await saveFleetAssetQboClass(key, inp.value);
+      } catch (e) {
+        showErpToast('Failed to save QuickBooks Class: ' + (e.message || String(e)), 'error');
+      }
+    }
     function cacheQboCustomers() {
       return Array.isArray(erp.qboCache?.customers) ? erp.qboCache.customers : [];
     }
@@ -10020,7 +10131,7 @@
       if (!modal || !body) return;
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
-      body.innerHTML = '<tr><td colspan="10" class="mini-note">Loading…</td></tr>';
+      body.innerHTML = '<tr><td colspan="11" class="mini-note">Loading…</td></tr>';
       if (meta) meta.textContent = 'Loading active trucks…';
       try {
         const data = await j('/api/fleet/assets');
@@ -10036,7 +10147,7 @@
           if (!cur || d > cur.d) byUnit.set(u, { d, due: r.nextDueDate || r.dueDate || '' });
         });
         if (!trucks.length) {
-          body.innerHTML = '<tr><td colspan="10" class="mini-note">No active trucks found.</td></tr>';
+          body.innerHTML = '<tr><td colspan="11" class="mini-note">No active trucks found.</td></tr>';
           if (meta) meta.textContent = '0 active trucks';
           return;
         }
@@ -10045,20 +10156,27 @@
           const svc = byUnit.get(unit) || { d: '', due: '' };
           return `<tr>
             <td><strong>${escapeHtml(unit)}</strong></td>
-            <td>${escapeHtml(r.make || '—')}</td>
-            <td>${escapeHtml(r.model || '—')}</td>
-            <td>${escapeHtml(r.year != null ? String(r.year) : '—')}</td>
+            <td>${escapeHtml(fleetDisplayMake(r))}</td>
+            <td>${escapeHtml(fleetDisplayModel(r))}</td>
+            <td>${escapeHtml(fleetDisplayYearValue(r))}</td>
             <td>${escapeHtml(r.vin || '—')}</td>
-            <td>${escapeHtml(r.licensePlate || '—')}</td>
+            <td>${escapeHtml(fleetDisplayPlate(r))}</td>
             <td>${escapeHtml(r.asset_type || 'Truck')}</td>
             <td>${escapeHtml(r.status || 'Active')}</td>
+            <td>
+              <input id="fleetQboClass_${String(unit).replace(/[^a-z0-9_-]/gi, '_')}" class="qb-in" type="text" list="fleetQboClassOptions"
+                placeholder="Type to search QBO classes..." value="${escapeHtml(fleetQboClassNameForUnit(unit))}" style="min-width:180px" />
+              <button type="button" class="btn btn--small" style="margin-left:6px" onclick='saveFleetQboClassFromModal(${JSON.stringify(unit)})'>Save</button>
+            </td>
             <td>${escapeHtml(svc.d ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.d) : String(svc.d).slice(0,10)) : '—')}</td>
             <td>${escapeHtml(svc.due ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.due) : String(svc.due).slice(0,10)) : '—')}</td>
           </tr>`;
         }).join('');
+        const classDl = document.getElementById('fleetQboClassOptions');
+        if (classDl) classDl.innerHTML = fleetQboClassOptionsHtml();
         if (meta) meta.textContent = `${trucks.length} active trucks`;
       } catch (e) {
-        body.innerHTML = `<tr><td colspan="10" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="11" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
         if (meta) meta.textContent = 'Load failed';
       }
     }
@@ -12080,7 +12198,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes] =
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes] =
           await Promise.all([
             j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
@@ -12103,7 +12221,8 @@
             j('/api/qbo/status').catch(() => null),
             j('/api/qbo/master').catch(() => null),
             j('/api/maintenance/parts-reference').catch(() => ({ ok: false, parts: [], names: [] })),
-            j('/api/fleet/assets/units').catch(() => ({ ok: false, units: [] }))
+            j('/api/fleet/assets/units').catch(() => ({ ok: false, units: [] })),
+            j('/api/fleet/assets/qbo-classes').catch(() => ({ ok: false, mappings: [] }))
           ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -12144,6 +12263,19 @@
         const assetUnits = assetUnitsRes && assetUnitsRes.ok && Array.isArray(assetUnitsRes.units)
           ? assetUnitsRes.units
           : [];
+        const classRows = fleetQboClassMapRes && fleetQboClassMapRes.ok && Array.isArray(fleetQboClassMapRes.mappings)
+          ? fleetQboClassMapRes.mappings
+          : [];
+        fleetAssetQboClassMappings = {};
+        classRows.forEach((m) => {
+          const unit = String(m?.unit_number || '').trim();
+          if (!unit) return;
+          fleetAssetQboClassMappings[unit] = {
+            unit_number: unit,
+            qbo_class_id: String(m?.qbo_class_id || '').trim(),
+            qbo_class_name: String(m?.qbo_class_name || '').trim()
+          };
+        });
         const preferredUnits = assetUnits.map((u) => ({
           id: String(u.samsara_id || u.unit_number || '').trim(),
           name: String(u.unit_number || '').trim(),
@@ -13784,10 +13916,7 @@
     }
 
     function qboClassIdForFuelUnitName(unit) {
-      const u = String(unit || '').trim().toLowerCase();
-      if (!u) return '';
-      const hit = cacheQboClasses().find(c => String(c.name || '').trim().toLowerCase() === u);
-      return hit ? String(hit.qboId) : '';
+      return fleetQboClassIdForUnit(unit);
     }
 
     function fuelExpenseVendorByName(name) {
@@ -15916,6 +16045,10 @@
           const filtered = type === 'all'
             ? assets
             : assets.filter((a) => String(a?.asset_type || 'truck').toLowerCase().includes(needle));
+          if (!cacheQboClasses().length) {
+            const classDl = document.getElementById('fleetQboClassOptions');
+            if (classDl) classDl.innerHTML = fleetQboClassOptionsHtml();
+          }
           if (!filtered.length) {
             container.innerHTML = '<p style="padding:16px;color:#888;margin:0">No vehicles in this category.</p>';
             return;
@@ -15923,15 +16056,19 @@
           container.innerHTML =
             '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
             '<thead><tr style="text-align:left;border-bottom:1px solid #eee">' +
-            '<th style="padding:8px">Unit</th><th style="padding:8px">Make</th><th style="padding:8px">Model</th><th style="padding:8px">Status</th><th style="padding:8px">Odometer</th>' +
+            '<th style="padding:8px">Unit</th><th style="padding:8px">Make</th><th style="padding:8px">Model</th><th style="padding:8px">Status</th><th style="padding:8px">QuickBooks Class</th><th style="padding:8px">Odometer</th>' +
             '</tr></thead><tbody>' +
             filtered.map((a) => {
               const odo = Number(a?.odometerMiles || 0);
               return '<tr style="border-bottom:0.5px solid #eee">' +
                 '<td style="padding:6px 8px;font-weight:600">' + escapeHtml(String(a?.unit_number || a?.name || '')) + '</td>' +
-                '<td style="padding:6px 8px">' + escapeHtml(String(a?.make || '—')) + '</td>' +
-                '<td style="padding:6px 8px">' + escapeHtml(String(a?.model || '—')) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayMake(a)) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayModel(a)) + '</td>' +
                 '<td style="padding:6px 8px">' + escapeHtml(String(a?.status || 'Active')) + '</td>' +
+                '<td style="padding:6px 8px">' +
+                  '<input id="fleetQboType_' + String(a?.unit_number || '').replace(/[^a-z0-9_-]/gi, '_') + '" class="qb-in" type="text" list="fleetQboClassOptions" placeholder="Type to search QBO classes..." value="' + escapeHtml(fleetQboClassNameForUnit(String(a?.unit_number || ''))) + '" style="min-width:170px" />' +
+                  '<button type="button" class="btn btn--small" style="margin-left:6px" onclick="saveFleetQboClassFromModal(' + JSON.stringify(String(a?.unit_number || '')) + ')">Save</button>' +
+                '</td>' +
                 '<td style="padding:6px 8px">' + (Number.isFinite(odo) && odo > 0 ? escapeHtml(String(Math.round(odo))) + ' mi' : '—') + '</td>' +
               '</tr>';
             }).join('') +
@@ -16640,7 +16777,7 @@
             const past = rows.filter(r => r.status === 'past due').length;
             const soon = rows.filter(r => r.status === 'due soon').length;
             const fp = fuelPct(v);
-            const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
+            const ymm = [fleetDisplayYearValue(v), fleetDisplayMake(v), fleetDisplayModel(v)].filter((x) => x && x !== '—').join(' ') || '—';
             const avClass =
               past > 0 ? 'maint-unit-card__avatar--past' : soon > 0 ? 'maint-unit-card__avatar--alert' : '';
             const fillW = fp != null ? Math.max(0, Math.min(100, fp)) : 0;
@@ -20455,7 +20592,7 @@
 
       const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
       const vin = v.vin || '—';
-      const plate = v.licensePlate ? String(v.licensePlate) : '—';
+      const plate = fleetDisplayPlate(v);
       const odoStr = displayMi != null && Number.isFinite(displayMi) ? Math.round(displayMi).toLocaleString() : '—';
       const cardEl = document.getElementById('maintAssetHeaderCard');
       if (cardEl) {
@@ -20495,6 +20632,13 @@
           </div>
           <input id="assetStatusNote" class="qb-in maint-field" placeholder="Optional note (reason, ETA, service location)" value="${escapeHtml(st.note || '')}" style="margin-top:8px" />
           ${st.updatedAt ? `<div class="mini-note" style="margin-top:4px">Updated ${escapeHtml(new Date(st.updatedAt).toLocaleString())}${st.updatedBy ? ` · ${escapeHtml(st.updatedBy)}` : ''}</div>` : ''}
+        </div>
+        <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border)">
+          <span class="qb-l">QuickBooks Class</span>
+          <div class="search-row" style="grid-template-columns:1fr auto;align-items:end;gap:8px;margin-top:4px">
+            <input id="maintUnitQboClassSearch" class="qb-in maint-field" type="text" list="fleetQboClassOptions" placeholder="Type to search QBO classes..." value="${escapeHtml(fleetQboClassNameForUnit(v.name))}" />
+            <button type="button" onclick="saveMaintUnitQboClass()">Save class</button>
+          </div>
         </div>
         <div class="maint-asset-panel-block" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border)">
           <span class="qb-l" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Fleet roster
@@ -22908,7 +23052,7 @@
               v => `
         <div class="track-card ${selectedTrackingVehicle === v.name ? 'active' : ''}" onclick="selectTrackingVehicle('${v.name}')">
           <div><b>${escapeHtml(v.name)}</b></div>
-          <div class="mini-note">${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${escapeHtml(v.year || '')}</div>
+          <div class="mini-note">${escapeHtml(fleetDisplayMake(v))} ${escapeHtml(fleetDisplayModel(v))} ${escapeHtml(fleetDisplayYearValue(v))}</div>
           <div class="mini-note">Mileage: ${v.odometerMiles != null ? Number(v.odometerMiles).toLocaleString() : 'N/A'}</div>
           <div class="mini-note">Fuel: ${v.fuelPercent != null ? `${Math.round(v.fuelPercent)}%` : 'N/A'}</div>
           <div class="mini-note">Engine: ${escapeHtml(v.engineState || 'N/A')}</div>
@@ -22939,7 +23083,7 @@
 
       document.getElementById('trackingDetailBox').innerHTML = selected ? `
         <b>${escapeHtml(selected.name)}</b><br><br>
-        Make / Model / Year: ${escapeHtml(selected.make || '')} ${escapeHtml(selected.model || '')} ${escapeHtml(selected.year || '')}<br>
+        Make / Model / Year: ${escapeHtml(fleetDisplayMake(selected))} ${escapeHtml(fleetDisplayModel(selected))} ${escapeHtml(fleetDisplayYearValue(selected))}<br>
         VIN: ${escapeHtml(selected.vin || '')}<br>
         Category: ${escapeHtml(selected.assetCategory || '')}<br>
         Mileage: ${selected.odometerMiles != null ? Number(selected.odometerMiles).toLocaleString() : 'N/A'}<br>
