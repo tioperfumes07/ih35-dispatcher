@@ -23,7 +23,7 @@ import {
 import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-catalog.mjs';
 import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
 import { createQboApiClient } from '../lib/qbo-api-client.mjs';
-import { getVehicles, samsaraGet } from '../services/samsara.js';
+import { getVehicles, samsaraGet, getDriverVehicleAssignments } from '../services/samsara.js';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 const SAMSARA_HEALTH_CACHE_MS = 60 * 1000;
@@ -289,8 +289,31 @@ async function ensureDriverSchedulerTables() {
       email TEXT,
       status TEXT DEFAULT 'Active',
       notes TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     )`);
+
+    const alterCols = [
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS phone TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS email TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS cdl_number TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS cdl_state TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS cdl_expiry DATE',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS medical_expiry DATE',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS hire_date DATE',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS emergency_contact TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS emergency_phone TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS qbo_vendor_id TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS qbo_vendor_name TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS samsara_driver_id TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS license_number TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS notes TEXT',
+      'ALTER TABLE driver_profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()'
+    ];
+    for (const sql of alterCols) {
+      await dbQuery(sql);
+    }
+
     return true;
   } catch (e) {
     logError('[drivers] ensureDriverSchedulerTables warning', e);
@@ -1343,23 +1366,34 @@ export function mountErpCoreApi(app, opts = {}) {
       const b = req.body && typeof req.body === 'object' ? req.body : {};
       const unit = String(b.unit_number || '').trim();
       if (!unit) return res.status(400).json({ ok: false, error: 'unit_number is required' });
-      const fullName = String(b.full_name || '').trim();
+      const fullName = String(b.full_name || b.driver_name || '').trim();
       await dbQuery(
         `INSERT INTO driver_profiles (
-          full_name, unit_number, team, manager, cdl_number, cdl_expiry,
-          medical_expiry, phone, email, status, notes, created_at, updated_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
+          full_name, unit_number, team, manager, phone, email, status,
+          cdl_number, cdl_state, cdl_expiry, medical_expiry, hire_date,
+          emergency_contact, emergency_phone,
+          qbo_vendor_id, qbo_vendor_name, samsara_driver_id,
+          license_number, notes, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,now(),now())
         ON CONFLICT (unit_number)
         DO UPDATE SET
           full_name = EXCLUDED.full_name,
           team = EXCLUDED.team,
           manager = EXCLUDED.manager,
-          cdl_number = EXCLUDED.cdl_number,
-          cdl_expiry = EXCLUDED.cdl_expiry,
-          medical_expiry = EXCLUDED.medical_expiry,
           phone = EXCLUDED.phone,
           email = EXCLUDED.email,
           status = EXCLUDED.status,
+          cdl_number = EXCLUDED.cdl_number,
+          cdl_state = EXCLUDED.cdl_state,
+          cdl_expiry = EXCLUDED.cdl_expiry,
+          medical_expiry = EXCLUDED.medical_expiry,
+          hire_date = EXCLUDED.hire_date,
+          emergency_contact = EXCLUDED.emergency_contact,
+          emergency_phone = EXCLUDED.emergency_phone,
+          qbo_vendor_id = EXCLUDED.qbo_vendor_id,
+          qbo_vendor_name = EXCLUDED.qbo_vendor_name,
+          samsara_driver_id = EXCLUDED.samsara_driver_id,
+          license_number = EXCLUDED.license_number,
           notes = EXCLUDED.notes,
           updated_at = now()`,
         [
@@ -1367,12 +1401,20 @@ export function mountErpCoreApi(app, opts = {}) {
           unit,
           String(b.team || '').trim() || null,
           String(b.manager || '').trim() || null,
-          String(b.cdl_number || '').trim() || null,
-          String(b.cdl_expiry || '').trim() || null,
-          String(b.medical_expiry || '').trim() || null,
           String(b.phone || '').trim() || null,
           String(b.email || '').trim() || null,
           String(b.status || 'Active').trim() || 'Active',
+          String(b.cdl_number || '').trim() || null,
+          String(b.cdl_state || '').trim() || null,
+          String(b.cdl_expiry || '').trim() || null,
+          String(b.medical_expiry || '').trim() || null,
+          String(b.hire_date || '').trim() || null,
+          String(b.emergency_contact || '').trim() || null,
+          String(b.emergency_phone || '').trim() || null,
+          String(b.qbo_vendor_id || '').trim() || null,
+          String(b.qbo_vendor_name || '').trim() || null,
+          String(b.samsara_driver_id || '').trim() || null,
+          String(b.license_number || '').trim() || null,
           String(b.notes || '').trim() || null,
         ]
       );
@@ -1395,24 +1437,42 @@ export function mountErpCoreApi(app, opts = {}) {
         `UPDATE driver_profiles
             SET full_name=$2,
                 unit_number=$3,
-                cdl_number=$4,
-                cdl_expiry=$5,
-                medical_expiry=$6,
-                phone=$7,
-                notes=$8,
-                status=$9,
+                status=$4,
+                phone=$5,
+                email=$6,
+                cdl_number=$7,
+                cdl_state=$8,
+                cdl_expiry=$9,
+                medical_expiry=$10,
+                hire_date=$11,
+                emergency_contact=$12,
+                emergency_phone=$13,
+                qbo_vendor_id=$14,
+                qbo_vendor_name=$15,
+                samsara_driver_id=$16,
+                license_number=$17,
+                notes=$18,
                 updated_at=now()
           WHERE id=$1`,
         [
           id,
-          String(b.full_name || '').trim() || null,
+          String(b.full_name || b.driver_name || '').trim() || null,
           String(b.unit_number || '').trim() || null,
+          String(b.status || 'active').trim() || 'active',
+          String(b.phone || '').trim() || null,
+          String(b.email || '').trim() || null,
           String(b.cdl_number || '').trim() || null,
+          String(b.cdl_state || '').trim() || null,
           String(b.cdl_expiry || '').trim() || null,
           String(b.medical_expiry || '').trim() || null,
-          String(b.phone || '').trim() || null,
+          String(b.hire_date || '').trim() || null,
+          String(b.emergency_contact || '').trim() || null,
+          String(b.emergency_phone || '').trim() || null,
+          String(b.qbo_vendor_id || '').trim() || null,
+          String(b.qbo_vendor_name || '').trim() || null,
+          String(b.samsara_driver_id || '').trim() || null,
+          String(b.license_number || '').trim() || null,
           String(b.notes || '').trim() || null,
-          String(b.status || 'active').trim() || 'active',
         ]
       );
       const { rows } = await dbQuery('SELECT * FROM driver_profiles WHERE id = $1 LIMIT 1', [id]);
@@ -1422,6 +1482,49 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
+
+  app.post('/api/drivers/profiles/import-samsara', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureDriverSchedulerTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const samsaraId = String(b.samsara_driver_id || '').trim();
+      const name = String(b.name || b.driver_name || '').trim();
+      const unit = String(b.unit_number || '').trim();
+      if (!samsaraId && !name) {
+        return res.status(400).json({ ok: false, error: 'samsara_driver_id or name is required' });
+      }
+
+      const { rows } = await dbQuery(
+        `INSERT INTO driver_profiles (
+          full_name, unit_number, phone, cdl_state, license_number,
+          samsara_driver_id, status, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,'active',now(),now())
+        ON CONFLICT (unit_number)
+        DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          phone = EXCLUDED.phone,
+          cdl_state = EXCLUDED.cdl_state,
+          license_number = EXCLUDED.license_number,
+          samsara_driver_id = EXCLUDED.samsara_driver_id,
+          updated_at = now()
+        RETURNING *`,
+        [
+          name || null,
+          unit || `SAMSARA-${samsaraId || Date.now()}`,
+          String(b.phone || '').trim() || null,
+          String(b.licenseState || b.cdl_state || '').trim() || null,
+          String(b.licenseNumber || b.license_number || '').trim() || null,
+          samsaraId || null,
+        ]
+      );
+      return res.json({ ok: true, driver: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/drivers/profiles/import-samsara', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
 
   app.get('/api/drivers/schedule', async (req, res) => {
     try {
@@ -1500,6 +1603,46 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/drivers/hos-status', e);
       return res.json({ ok: true, rows: [] });
+    }
+  });
+
+
+  app.get('/api/drivers/samsara-list', async (_req, res) => {
+    try {
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      if (!token) return res.json({ ok: true, drivers: [] });
+
+      const assignmentsRes = await getDriverVehicleAssignments(token, {}).catch(() => ({ data: [] }));
+      const driversData = await samsaraGet('/fleet/drivers', token, { limit: 200 }).catch(() => ({ data: [] }));
+
+      const drivers = (Array.isArray(driversData?.data) ? driversData.data : []).map((d) => ({
+        samsara_id: d?.id,
+        name: d?.name,
+        username: d?.username,
+        phone: d?.phone,
+        licenseNumber: d?.licenseNumber,
+        licenseState: d?.licenseState,
+        eldExempt: d?.eldExempt,
+        currentVehicle: null,
+      }));
+
+      const assignmentList = Array.isArray(assignmentsRes?.data)
+        ? assignmentsRes.data
+        : Array.isArray(assignmentsRes)
+          ? assignmentsRes
+          : [];
+
+      assignmentList.forEach((a) => {
+        const driver = drivers.find((d) => String(d.samsara_id || '') === String(a?.driver?.id || ''));
+        if (driver && a?.vehicle) {
+          driver.currentVehicle = a.vehicle.name || a.vehicle.id || null;
+        }
+      });
+
+      return res.json({ ok: true, drivers, assignments: assignmentList });
+    } catch (e) {
+      logError('GET /api/drivers/samsara-list', e);
+      return res.json({ ok: true, drivers: [], error: e?.message || String(e) });
     }
   });
 

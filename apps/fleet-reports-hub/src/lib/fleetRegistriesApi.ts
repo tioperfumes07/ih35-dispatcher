@@ -322,12 +322,21 @@ export type DriverProfile = {
   unit_number: string
   team: string | null
   manager: string | null
-  cdl_number: string | null
-  cdl_expiry: string | null
-  medical_expiry: string | null
   phone: string | null
   email: string | null
   status: string
+  cdl_number: string | null
+  cdl_state?: string | null
+  cdl_expiry: string | null
+  medical_expiry: string | null
+  hire_date?: string | null
+  emergency_contact?: string | null
+  emergency_phone?: string | null
+  qbo_vendor_id?: string | null
+  qbo_vendor_name?: string | null
+  samsara_driver_id?: string | null
+  license_number?: string | null
+  date_of_birth?: string | null
   notes: string | null
   created_at: string
   updated_at: string

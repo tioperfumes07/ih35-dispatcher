@@ -1356,10 +1356,72 @@
   </table>
 </div>
 
+        <div id="driversProfilesPanel" style="margin-top:24px;background:white;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <strong style="font-size:14px;color:#0f172a">Driver profiles</strong>
+            <button type="button" class="btn btn--small" onclick="openDriverProfileLiteModal()">+ Add Driver</button>
+          </div>
+          <div class="table-wrap">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">
+              <thead style="background:#f8fafc">
+                <tr>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">Name</th>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">Unit</th>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">Phone</th>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">CDL Expiry</th>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">Medical Expiry</th>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">QBO Vendor</th>
+                  <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb">Edit</th>
+                </tr>
+              </thead>
+              <tbody id="driversProfilesBody">
+                <tr><td colspan="7" style="padding:12px;color:#9ca3af;text-align:center">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div id="driversHomeQuickActions" class="erp-home-quick-actions">
           <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'))">Create work order</button>
           <button type="button" class="btn" onclick="window.open('/driver/','_blank','noopener')">Open driver app</button>
           <button type="button" class="btn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'))">Open accounting</button>
+        </div>
+
+        <div id="driversProfileLiteModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.78);z-index:10011;padding:18px;overflow:auto" onclick="if(event.target===this)closeDriverProfileLiteModal()">
+          <div style="max-width:980px;margin:20px auto;background:#0b1220;border:1px solid rgba(148,163,184,0.35);border-radius:14px;padding:16px" onclick="event.stopPropagation()">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+              <div style="font-size:18px;font-weight:700;color:#e2e8f0">Driver profile</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn btn--small" onclick="importDriverFromSamsaraLite()">🔍 Import from Samsara</button>
+                <button type="button" class="btn btn--small ghost" onclick="closeDriverProfileLiteModal()">Close</button>
+              </div>
+            </div>
+            <div id="driversSamsaraImportList" style="display:none;margin-bottom:10px;max-height:150px;overflow:auto;border:1px solid rgba(148,163,184,0.35);border-radius:8px"></div>
+            <input type="hidden" id="driverProfileLiteId" />
+            <input type="hidden" id="driverProfileLiteSamsaraId" />
+            <input type="hidden" id="driverProfileLiteQboVendorId" />
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+              <label style="display:grid;gap:4px"><span>Full name</span><input id="driverProfileLiteName" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Unit number</span><input id="driverProfileLiteUnit" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Status</span><select id="driverProfileLiteStatus" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+              <label style="display:grid;gap:4px"><span>Phone</span><input id="driverProfileLitePhone" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Email</span><input id="driverProfileLiteEmail" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Hire date</span><input id="driverProfileLiteHireDate" type="date" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>CDL Number</span><input id="driverProfileLiteCdlNumber" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>CDL State</span><input id="driverProfileLiteCdlState" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>CDL Expiry</span><input id="driverProfileLiteCdlExpiry" type="date" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Medical Expiry</span><input id="driverProfileLiteMedicalExpiry" type="date" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>License number</span><input id="driverProfileLiteLicenseNumber" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Emergency contact</span><input id="driverProfileLiteEmergencyContact" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px"><span>Emergency phone</span><input id="driverProfileLiteEmergencyPhone" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px;grid-column:1/-1"><span>QBO Vendor (links expenses to this driver)</span><input id="driverProfileLiteQboVendorName" list="vendorList" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px" /></label>
+              <label style="display:grid;gap:4px;grid-column:1/-1"><span>Notes</span><textarea id="driverProfileLiteNotes" rows="3" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px"></textarea></label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+              <button type="button" class="btn btn--small ghost" onclick="closeDriverProfileLiteModal()">Cancel</button>
+              <button type="button" class="btn btn--small" onclick="saveDriverProfileLite()">Save</button>
+            </div>
+          </div>
         </div>
 
         <div id="driversDamageDetailModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.78);z-index:10010;padding:18px;overflow:auto" onclick="if(event.target===this)driversCloseDamageDetail()">
@@ -10442,6 +10504,7 @@
           refreshDriversDashboardPanels();
           loadFuelSubmissionsToday();
           loadPendingLeaveRequests();
+          loadDriversProfilesLite();
         });
       }
       if (name === 'tracking') {
@@ -10961,24 +11024,22 @@
 
     window.addEventListener('hashchange', () => applyNavHash());
 
-    (function ensureSingleClickIconNav(){
-      const nav = document.getElementById('erpIconNav');
-      if (!nav || window.__erpIconNavDelegatedClickBound) return;
-      window.__erpIconNavDelegatedClickBound = true;
-      nav.addEventListener('click', function(e){
-        const target = e.target;
-        if (!(target instanceof Element)) return;
-        const btn = target.closest('.nav-btn[data-section]');
-        if (!btn) return;
-        const section = btn.getAttribute('data-section');
-        if (!section) return;
-        if (target !== btn) {
-          e.preventDefault();
-          e.stopPropagation();
-          openSection(section, btn);
-        }
-      }, true);
-    })();
+    document.addEventListener('DOMContentLoaded', function() {
+      var nav = document.getElementById('erpIconNav');
+      if (nav) {
+        nav.addEventListener('click', function(e) {
+          var btn = e.target.closest('button[data-section], a[data-section]');
+          if (btn) {
+            e.stopPropagation();
+            var section = btn.getAttribute('data-section');
+            if (section && typeof openSection === 'function') {
+              openSection(section, btn);
+            }
+          }
+        }, true);
+      }
+    });
+
 
     /** Keep #… in sync when switching accounting subtabs (bookmark/share). Skips when a dedicated modal owns the shell. */
     function erpSyncAccountingTabHash(tabId) {
@@ -16875,6 +16936,186 @@
           '</td>' +
           '</tr>';
       }).join('');
+    }
+
+    function openDriversProfilesPanel() {
+      openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
+      loadDriversProfilesLite();
+      const panel = document.getElementById('driversProfilesPanel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function profileExpiryTag(value) {
+      const d = new Date(String(value || ''));
+      if (Number.isNaN(d.getTime())) return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#4b5563;color:#e5e7eb">—</span>';
+      const days = Math.floor((d.getTime() - Date.now()) / 86400000);
+      if (days < 30) return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#991b1b;color:#fecaca">' + escapeHtml(String(value)) + '</span>';
+      if (days < 60) return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#92400e;color:#fde68a">' + escapeHtml(String(value)) + '</span>';
+      return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#14532d;color:#bbf7d0">' + escapeHtml(String(value)) + '</span>';
+    }
+
+    async function loadDriversProfilesLite() {
+      const body = document.getElementById('driversProfilesBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="7" style="padding:12px;color:#9ca3af;text-align:center">Loading...</td></tr>';
+      try {
+        const d = await j('/api/drivers/profiles');
+        const rows = Array.isArray(d?.drivers) ? d.drivers : [];
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="7" style="padding:12px;color:#9ca3af;text-align:center">No driver profiles</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.map((r) => {
+          const id = String(r?.id || '').replace(/'/g, "\'");
+          return '<tr style="border-bottom:1px solid #e5e7eb">' +
+            '<td style="padding:8px 12px">' + escapeHtml(String(r?.full_name || '—')) + '</td>' +
+            '<td style="padding:8px 12px">' + escapeHtml(String(r?.unit_number || '—')) + '</td>' +
+            '<td style="padding:8px 12px">' + escapeHtml(String(r?.phone || '—')) + '</td>' +
+            '<td style="padding:8px 12px">' + profileExpiryTag(r?.cdl_expiry) + '</td>' +
+            '<td style="padding:8px 12px">' + profileExpiryTag(r?.medical_expiry) + '</td>' +
+            '<td style="padding:8px 12px">' + escapeHtml(String(r?.qbo_vendor_name || '—')) + '</td>' +
+            '<td style="padding:8px 12px"><button type="button" class="btn btn--small" onclick="openDriverProfileLiteModal(&quot;' + id + '&quot;)">Edit</button></td>' +
+            '</tr>';
+        }).join('');
+      } catch (_) {
+        body.innerHTML = '<tr><td colspan="7" style="padding:12px;color:#fca5a5;text-align:center">Could not load driver profiles</td></tr>';
+      }
+    }
+
+    function closeDriverProfileLiteModal() {
+      const modal = document.getElementById('driversProfileLiteModal');
+      if (modal) modal.style.display = 'none';
+      const importList = document.getElementById('driversSamsaraImportList');
+      if (importList) importList.style.display = 'none';
+    }
+
+    async function openDriverProfileLiteModal(id) {
+      const modal = document.getElementById('driversProfileLiteModal');
+      if (!modal) return;
+      ['driverProfileLiteId','driverProfileLiteSamsaraId','driverProfileLiteQboVendorId'].forEach((fid)=>{ const el = document.getElementById(fid); if (el) el.value = ''; });
+      ['driverProfileLiteName','driverProfileLiteUnit','driverProfileLitePhone','driverProfileLiteEmail','driverProfileLiteHireDate','driverProfileLiteCdlNumber','driverProfileLiteCdlState','driverProfileLiteCdlExpiry','driverProfileLiteMedicalExpiry','driverProfileLiteLicenseNumber','driverProfileLiteEmergencyContact','driverProfileLiteEmergencyPhone','driverProfileLiteQboVendorName','driverProfileLiteNotes'].forEach((fid)=>{ const el = document.getElementById(fid); if (el) el.value = ''; });
+      const st = document.getElementById('driverProfileLiteStatus'); if (st) st.value = 'active';
+      if (id) {
+        try {
+          const d = await j('/api/drivers/profiles');
+          const rows = Array.isArray(d?.drivers) ? d.drivers : [];
+          const row = rows.find((r) => String(r.id) === String(id));
+          if (row) {
+            const set = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = String(val || ''); };
+            set('driverProfileLiteId', row.id);
+            set('driverProfileLiteName', row.full_name);
+            set('driverProfileLiteUnit', row.unit_number);
+            set('driverProfileLiteStatus', row.status || 'active');
+            set('driverProfileLitePhone', row.phone);
+            set('driverProfileLiteEmail', row.email);
+            set('driverProfileLiteHireDate', row.hire_date);
+            set('driverProfileLiteCdlNumber', row.cdl_number);
+            set('driverProfileLiteCdlState', row.cdl_state);
+            set('driverProfileLiteCdlExpiry', row.cdl_expiry);
+            set('driverProfileLiteMedicalExpiry', row.medical_expiry);
+            set('driverProfileLiteLicenseNumber', row.license_number);
+            set('driverProfileLiteEmergencyContact', row.emergency_contact);
+            set('driverProfileLiteEmergencyPhone', row.emergency_phone);
+            set('driverProfileLiteQboVendorName', row.qbo_vendor_name);
+            set('driverProfileLiteQboVendorId', row.qbo_vendor_id);
+            set('driverProfileLiteSamsaraId', row.samsara_driver_id);
+            set('driverProfileLiteNotes', row.notes);
+          }
+        } catch (_) {}
+      }
+      modal.style.display = 'block';
+    }
+
+    async function importDriverFromSamsaraLite() {
+      const host = document.getElementById('driversSamsaraImportList');
+      if (!host) return;
+      host.style.display = 'block';
+      host.innerHTML = '<div style="padding:10px;color:#93c5fd">Loading Samsara drivers...</div>';
+      try {
+        const d = await j('/api/drivers/samsara-list');
+        const rows = Array.isArray(d?.drivers) ? d.drivers : [];
+        if (!rows.length) {
+          host.innerHTML = '<div style="padding:10px;color:#9ca3af">No Samsara drivers found.</div>';
+          return;
+        }
+        host.innerHTML = rows.map((r) => {
+          const payload = encodeURIComponent(JSON.stringify(r || {}));
+          return '<button type="button" style="display:block;width:100%;text-align:left;padding:8px 10px;background:transparent;border:none;border-bottom:1px solid rgba(148,163,184,0.2);color:#e2e8f0;cursor:pointer" onclick="applySamsaraDriverLite(&quot;' + payload + '&quot;)">' +
+            escapeHtml(String(r?.name || 'Unnamed')) + ' · ' + escapeHtml(String(r?.currentVehicle || 'No unit')) +
+            '</button>';
+        }).join('');
+      } catch (_) {
+        host.innerHTML = '<div style="padding:10px;color:#fca5a5">Could not load Samsara drivers.</div>';
+      }
+    }
+
+    function applySamsaraDriverLite(encoded) {
+      try {
+        const row = JSON.parse(decodeURIComponent(String(encoded || '')));
+        const set = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = String(val || ''); };
+        set('driverProfileLiteName', row?.name);
+        set('driverProfileLitePhone', row?.phone);
+        set('driverProfileLiteLicenseNumber', row?.licenseNumber);
+        set('driverProfileLiteCdlState', row?.licenseState);
+        set('driverProfileLiteSamsaraId', row?.samsara_id);
+        if (row?.currentVehicle) set('driverProfileLiteUnit', row.currentVehicle);
+        erpShowToast('Imported from Samsara', 'success');
+      } catch (_) {}
+    }
+
+    async function saveDriverProfileLite() {
+      const payload = {
+        full_name: String(document.getElementById('driverProfileLiteName')?.value || '').trim(),
+        unit_number: String(document.getElementById('driverProfileLiteUnit')?.value || '').trim(),
+        status: String(document.getElementById('driverProfileLiteStatus')?.value || 'active').trim(),
+        phone: String(document.getElementById('driverProfileLitePhone')?.value || '').trim(),
+        email: String(document.getElementById('driverProfileLiteEmail')?.value || '').trim(),
+        hire_date: String(document.getElementById('driverProfileLiteHireDate')?.value || '').trim(),
+        cdl_number: String(document.getElementById('driverProfileLiteCdlNumber')?.value || '').trim(),
+        cdl_state: String(document.getElementById('driverProfileLiteCdlState')?.value || '').trim(),
+        cdl_expiry: String(document.getElementById('driverProfileLiteCdlExpiry')?.value || '').trim(),
+        medical_expiry: String(document.getElementById('driverProfileLiteMedicalExpiry')?.value || '').trim(),
+        license_number: String(document.getElementById('driverProfileLiteLicenseNumber')?.value || '').trim(),
+        emergency_contact: String(document.getElementById('driverProfileLiteEmergencyContact')?.value || '').trim(),
+        emergency_phone: String(document.getElementById('driverProfileLiteEmergencyPhone')?.value || '').trim(),
+        qbo_vendor_name: String(document.getElementById('driverProfileLiteQboVendorName')?.value || '').trim(),
+        qbo_vendor_id: String(document.getElementById('driverProfileLiteQboVendorId')?.value || '').trim(),
+        samsara_driver_id: String(document.getElementById('driverProfileLiteSamsaraId')?.value || '').trim(),
+        notes: String(document.getElementById('driverProfileLiteNotes')?.value || '').trim(),
+      };
+      if (!payload.unit_number) {
+        erpShowToast('Unit number is required', 'error');
+        return;
+      }
+
+      const vendName = payload.qbo_vendor_name.toLowerCase();
+      const vendors = Array.isArray(erp?.qboCache?.vendors) ? erp.qboCache.vendors : [];
+      const hitVendor = vendors.find((v) => String(v?.name || v?.displayName || '').trim().toLowerCase() === vendName);
+      if (hitVendor) {
+        payload.qbo_vendor_id = String(hitVendor.id || payload.qbo_vendor_id || '');
+      }
+
+      const id = String(document.getElementById('driverProfileLiteId')?.value || '').trim();
+      try {
+        if (id) {
+          await j('/api/drivers/profiles/' + encodeURIComponent(id), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await j('/api/drivers/profiles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+        erpShowToast('✅ Saved', 'success');
+        closeDriverProfileLiteModal();
+        await loadDriversProfilesLite();
+      } catch (_) {
+        erpShowToast('Could not save driver profile', 'error');
+      }
     }
 
     async function refreshDriversDashboardPanels() {

@@ -400,6 +400,16 @@ export default function App() {
     if (section === 'reports') setTab('overview')
     setListsDeepLink(null)
   }, [])
+
+  const goToMaintenance = useCallback(() => {
+    if (typeof window === 'undefined') return
+    if (window.parent !== window) {
+      window.parent.postMessage('closeFleetHub', '*')
+    } else {
+      window.location.href = '/maintenance.html'
+    }
+  }, [])
+
   const openListsSection = useCallback(
     (
       tabId: ListsCatalogsTab = 'fleet-samsara',
@@ -959,7 +969,7 @@ export default function App() {
                 {SECTION_DESCRIPTIONS.reports}
               </p>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                <button type="button" className="btn sm" onClick={() => { window.parent?.postMessage('closeFleetHub', '*') }}>
+                <button type="button" className="btn sm" onClick={goToMaintenance}>
                   ← Maintenance
                 </button>
                 <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
@@ -999,7 +1009,7 @@ export default function App() {
                   : SECTION_DESCRIPTIONS[activeSection]}
               </p>
               <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                <button type="button" className="btn sm" onClick={() => { window.parent?.postMessage('closeFleetHub', '*') }}>
+                <button type="button" className="btn sm" onClick={goToMaintenance}>
                   ← Maintenance
                 </button>
                 <button type="button" className="btn sm ghost" onClick={() => openSection('reports')}>
