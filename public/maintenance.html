@@ -10961,6 +10961,25 @@
 
     window.addEventListener('hashchange', () => applyNavHash());
 
+    (function ensureSingleClickIconNav(){
+      const nav = document.getElementById('erpIconNav');
+      if (!nav || window.__erpIconNavDelegatedClickBound) return;
+      window.__erpIconNavDelegatedClickBound = true;
+      nav.addEventListener('click', function(e){
+        const target = e.target;
+        if (!(target instanceof Element)) return;
+        const btn = target.closest('.nav-btn[data-section]');
+        if (!btn) return;
+        const section = btn.getAttribute('data-section');
+        if (!section) return;
+        if (target !== btn) {
+          e.preventDefault();
+          e.stopPropagation();
+          openSection(section, btn);
+        }
+      }, true);
+    })();
+
     /** Keep #… in sync when switching accounting subtabs (bookmark/share). Skips when a dedicated modal owns the shell. */
     function erpSyncAccountingTabHash(tabId) {
       const kind = String(window.__erpDedicatedModalKind || '').trim();

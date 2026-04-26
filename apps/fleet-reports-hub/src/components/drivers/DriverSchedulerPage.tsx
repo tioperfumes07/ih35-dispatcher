@@ -68,10 +68,9 @@ const inputStyle: CSSProperties = {
 function fallbackDrivers(): SchedulerDriverRow[] {
   return Array.from({ length: 58 }, (_, i) => ({ id: -(i + 1), unit_number: `T${120 + i}`, full_name: 'Vacante', team: '', manager: '', status: 'Vacante' }))
 }
-const toIsoMonth = (y: number, m: number) => `${String(y)}-${String(m + 1).padStart(2, '0')}`
-const toIsoDay = (y: number, m: number, d: number) => `${toIsoMonth(y, m)}-${String(d).padStart(2, '0')}`
-const monthLabel = (y: number, m: number) => new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date(y, m, 1))
-const dayAbbrev = (y: number, m: number, d: number) => new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(y, m, d))
+const dayAbbrevIso = (iso: string) => new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(`${iso}T00:00:00`))
+const fmtRangePart = (iso: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${iso}T00:00:00`))
+const fmtRangeYear = (iso: string) => new Intl.DateTimeFormat('en-US', { year: 'numeric' }).format(new Date(`${iso}T00:00:00`))
 const normalizeDutyStatus = (raw: unknown) => String(raw || '').replace(/[_\s-]+/g, '').trim().toLowerCase()
 type ApprovedLeaveRequest = {
   id?: number
@@ -94,8 +93,8 @@ const normalizeLeaveType = (raw: unknown): string => {
   return value
 }
 
-async function fetchApprovedLeaveRequests(month: string): Promise<ApprovedLeaveRequest[]> {
-  const res = await fetch(`/api/drivers/leave-request?month=${encodeURIComponent(month)}&status=approved`)
+async function fetchApprovedLeaveRequests(startIso: string, endIso: string): Promise<ApprovedLeaveRequest[]> {
+  const res = await fetch('/api/drivers/leave-request?status=approved')
   if (!res.ok) throw new Error('Failed to fetch approved leave requests')
   const data = (await res.json()) as { requests?: ApprovedLeaveRequest[]; leaveRequests?: ApprovedLeaveRequest[] }
   const rows = Array.isArray(data?.requests)
@@ -103,7 +102,13 @@ async function fetchApprovedLeaveRequests(month: string): Promise<ApprovedLeaveR
     : Array.isArray(data?.leaveRequests)
       ? data.leaveRequests
       : []
-  return rows.filter((r) => String(r?.status || '').toLowerCase() === 'approved')
+  return rows.filter((r) => {
+    if (String(r?.status || '').toLowerCase() !== 'approved') return false
+    const start = String(r?.start_date || '').slice(0, 10)
+    const end = String(r?.end_date || '').slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) return false
+    return !(end < startIso || start > endIso)
+  })
 }
 
 const emptyAddDriverDraft = (): AddDriverDraft => ({ full_name: '', unit_number: '', team: '', manager: '', phone: '', email: '', cdl_number: '', cdl_expiry: '', medical_expiry: '', status: 'Active', notes: '' })
@@ -117,9 +122,6 @@ function normalizeProfilesToRows(drivers: DriverProfile[]): SchedulerDriverRow[]
 }
 
 export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
-  const now = new Date()
-  const [curYear, setCurYear] = useState(now.getFullYear())
-  const [curMonth, setCurMonth] = useState(now.getMonth())
   const [drivers, setDrivers] = useState<SchedulerDriverRow[]>([])
   const [scheduleMap, setScheduleMap] = useState<Record<string, ScheduleEntry>>({})
   const [hosRows, setHosRows] = useState<Array<Record<string, unknown>>>([])
@@ -133,8 +135,43 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   const [error, setError] = useState<string | null>(null)
   const popupRef = useRef<HTMLDivElement | null>(null)
 
-  const daysInMonth = useMemo(() => new Date(curYear, curMonth + 1, 0).getDate(), [curYear, curMonth])
-  const days = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth])
+  const todayIso = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d.toISOString().slice(0, 10)
+  }, [])
+
+  const [windowStartIso, setWindowStartIso] = useState(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - 3)
+    return d.toISOString().slice(0, 10)
+  })
+
+  const days = useMemo(() => {
+    const out: Array<{ iso: string; day: number; isToday: boolean; isPast: boolean; isFuture: boolean }> = []
+    const start = new Date(`${windowStartIso}T00:00:00`)
+    for (let i = 0; i < 34; i += 1) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      const iso = d.toISOString().slice(0, 10)
+      out.push({
+        iso,
+        day: d.getDate(),
+        isToday: iso === todayIso,
+        isPast: iso < todayIso,
+        isFuture: iso > todayIso,
+      })
+    }
+    return out
+  }, [windowStartIso, todayIso])
+
+  const windowLabel = useMemo(() => {
+    if (!days.length) return ''
+    const start = days[0].iso
+    const end = days[days.length - 1].iso
+    return `${fmtRangePart(start)} — ${fmtRangePart(end)}, ${fmtRangeYear(end)}`
+  }, [days])
 
   const teams = useMemo(() => Array.from(new Set(drivers.map((d) => String(d.team || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)), [drivers])
   const managers = useMemo(() => Array.from(new Set(drivers.map((d) => String(d.manager || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)), [drivers])
@@ -169,17 +206,26 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   const loadSchedule = async () => {
     try {
-      const month = toIsoMonth(curYear, curMonth)
-      const [schedData, approvedLeaveRows] = await Promise.all([
-        fetchDriverSchedule(month),
-        fetchApprovedLeaveRequests(month).catch(() => []),
+      const startIso = days[0]?.iso
+      const endIso = days[days.length - 1]?.iso
+      if (!startIso || !endIso) {
+        setScheduleMap({})
+        return
+      }
+
+      const months = Array.from(new Set(days.map((d) => d.iso.slice(0, 7))))
+      const [monthlySchedules, approvedLeaveRows] = await Promise.all([
+        Promise.all(months.map((month) => fetchDriverSchedule(month).catch(() => ({ ok: true, rows: [] as DriverScheduleRow[] })))),
+        fetchApprovedLeaveRequests(startIso, endIso).catch(() => []),
       ])
 
-      const scheduleRows = Array.isArray(schedData.rows) ? schedData.rows : []
+      const scheduleRows = monthlySchedules.flatMap((m) => (Array.isArray(m.rows) ? m.rows : []))
       const next: Record<string, ScheduleEntry> = {}
 
       scheduleRows.forEach((r: DriverScheduleRow) => {
-        const key = `${String(r.unit_number)}_${String(r.date).slice(0, 10)}`
+        const iso = String(r.date).slice(0, 10)
+        if (iso < startIso || iso > endIso) return
+        const key = `${String(r.unit_number)}_${iso}`
         next[key] = { id: r.id, leave_type: normalizeLeaveType(r.leave_type || '') }
       })
 
@@ -193,8 +239,10 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         const until = new Date(`${end}T00:00:00Z`)
         while (d <= until) {
           const iso = d.toISOString().slice(0, 10)
-          const key = `${unit}_${iso}`
-          if (!next[key]) next[key] = { id: reqRow?.id, leave_type: leaveType }
+          if (iso >= startIso && iso <= endIso) {
+            const key = `${unit}_${iso}`
+            if (!next[key]) next[key] = { id: reqRow?.id, leave_type: leaveType }
+          }
           d.setUTCDate(d.getUTCDate() + 1)
         }
       })
@@ -218,7 +266,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
     setLoading(true)
     setError(null)
     Promise.all([loadDrivers(), loadSchedule(), loadHos()]).catch((e) => setError(String((e as Error).message || e))).finally(() => setLoading(false))
-  }, [curYear, curMonth])
+  }, [windowStartIso])
 
   useEffect(() => {
     const t = window.setInterval(() => void loadHos(), 60000)
@@ -239,8 +287,8 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   const totals = useMemo(() => filteredDrivers.map((d) => {
     let vac = 0, sick = 0, personal = 0, sinAviso = 0, holiday = 0, wfh = 0
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      const leave = scheduleMap[`${d.unit_number}_${toIsoDay(curYear, curMonth, day)}`]?.leave_type || ''
+    for (const col of days) {
+      const leave = scheduleMap[`${d.unit_number}_${col.iso}`]?.leave_type || ''
       if (leave === 'Vacacion') vac += 1
       if (leave === 'Sick') sick += 1
       if (leave === 'Personal') personal += 1
@@ -249,12 +297,19 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
       if (leave === 'WFH') wfh += 1
     }
     return { unit: d.unit_number, driver: d.full_name || 'Vacante', vac, sick, personal, sinAviso, holiday, wfh, totalAbsence: vac + sick + personal + sinAviso + holiday }
-  }), [filteredDrivers, scheduleMap, curYear, curMonth, daysInMonth])
+  }), [filteredDrivers, scheduleMap, days])
 
-  const moveMonth = (delta: number) => {
-    const next = new Date(curYear, curMonth + delta, 1)
-    setCurYear(next.getFullYear())
-    setCurMonth(next.getMonth())
+  const shiftWindowDays = (deltaDays: number) => {
+    const base = new Date(`${windowStartIso}T00:00:00`)
+    base.setDate(base.getDate() + deltaDays)
+    setWindowStartIso(base.toISOString().slice(0, 10))
+  }
+
+  const resetWindowToToday = () => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - 3)
+    setWindowStartIso(d.toISOString().slice(0, 10))
   }
 
   const openLeavePicker = (e: React.MouseEvent<HTMLTableCellElement>, unit_number: string, driver_id: number | null | undefined, date: string) => {
@@ -320,9 +375,10 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
       <div className="ds-no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={() => moveMonth(-1)} style={{ border: '1px solid rgba(255,255,255,0.12)', background: '#111827', color: '#c8d0dc', borderRadius: 4, padding: '5px 10px' }}>‹ previous month</button>
-          <span style={{ minWidth: 130, textAlign: 'center', fontWeight: 600 }}>{monthLabel(curYear, curMonth)}</span>
-          <button type="button" onClick={() => moveMonth(1)} style={{ border: '1px solid rgba(255,255,255,0.12)', background: '#111827', color: '#c8d0dc', borderRadius: 4, padding: '5px 10px' }}>› next month</button>
+          <button type="button" onClick={() => shiftWindowDays(-7)} style={{ border: '1px solid rgba(255,255,255,0.12)', background: '#111827', color: '#c8d0dc', borderRadius: 4, padding: '5px 10px' }}>‹ Back 7 days</button>
+          <button type="button" onClick={resetWindowToToday} style={{ border: '1px solid #2563eb', background: '#3b82f6', color: '#fff', borderRadius: 4, padding: '5px 10px', fontWeight: 600 }}>Today</button>
+          <button type="button" onClick={() => shiftWindowDays(7)} style={{ border: '1px solid rgba(255,255,255,0.12)', background: '#111827', color: '#c8d0dc', borderRadius: 4, padding: '5px 10px' }}>Next 7 days ›</button>
+          <span style={{ minWidth: 180, textAlign: 'center', fontWeight: 600 }}>{windowLabel}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>{Object.entries(LEAVE_COLORS).map(([label, color]) => <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#aeb7c5' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: color.dot }} />{label}</span>)}</div>
       </div>
@@ -330,7 +386,11 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         <table className="ds-table" style={{ borderCollapse: 'collapse', minWidth: `${190 + days.length * 38}px`, width: 'max-content' }}>
           <thead><tr>
             <th className="ds-left-col" style={{ position: 'sticky', left: 0, top: 0, zIndex: 3, minWidth: 150, padding: '8px 12px', background: '#1e2433', color: '#8892a4', fontSize: 11, textAlign: 'left' }}>Unit / Driver</th>
-            {days.map((day) => { const dow = new Date(curYear, curMonth, day).getDay(); const weekend = dow === 0 || dow === 6; return <th key={day} style={{ position: 'sticky', top: 0, zIndex: 2, minWidth: 36, padding: '4px 2px', textAlign: 'center', fontSize: 10, color: weekend ? '#5a6070' : '#8892a4', background: '#1e2433', whiteSpace: 'pre-line' }}><div>{dayAbbrev(curYear, curMonth, day)}</div><div>{day}</div></th> })}
+            {days.map((col) => {
+              const headerColor = col.isToday ? '#ffffff' : (col.isPast ? '#9ca3af' : '#8892a4')
+              const headerBg = col.isToday ? '#3b82f6' : '#1e2433'
+              return <th key={col.iso} style={{ position: 'sticky', top: 0, zIndex: 2, minWidth: 36, padding: '4px 2px', textAlign: 'center', fontSize: 10, color: headerColor, background: headerBg, whiteSpace: 'pre-line', fontWeight: col.isToday ? 700 : 500 }}><div>{dayAbbrevIso(col.iso)}</div><div>{col.day}</div></th>
+            })}
           </tr></thead>
           <tbody>
             {filteredDrivers.map((driver, rowIdx) => {
@@ -345,16 +405,15 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
                     {hosColor ? <span style={{ width: 7, height: 7, borderRadius: '50%', marginLeft: 4, background: hosColor }} /> : null}
                   </div>
                 </td>
-                {days.map((day) => {
-                  const date = toIsoDay(curYear, curMonth, day)
+                {days.map((col) => {
+                  const date = col.iso
                   const key = `${driver.unit_number}_${date}`
                   const entry = scheduleMap[key]
-                  const leaveType = String(entry?.leave_type || '')
+                  const leaveType = normalizeLeaveType(String(entry?.leave_type || ''))
                   const leaveStyle = LEAVE_COLORS[leaveType]
-                  const dow = new Date(curYear, curMonth, day).getDay()
-                  const isWeekend = dow === 0 || dow === 6
                   const isHover = hoverKey === key
-                  return <td key={key} onMouseEnter={() => setHoverKey(key)} onMouseLeave={() => setHoverKey('')} onClick={(e) => openLeavePicker(e, driver.unit_number, driver.id > 0 ? driver.id : null, date)} style={{ height: 30, textAlign: 'center', verticalAlign: 'middle', border: '0.5px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: 2, background: isHover ? 'rgba(59,130,246,0.15)' : (isWeekend ? 'rgba(0,0,0,0.12)' : 'transparent') }}>
+                  const colBg = col.isToday ? 'rgba(59,130,246,0.08)' : (col.isPast ? 'rgba(0,0,0,0.03)' : 'transparent')
+                  return <td key={key} onMouseEnter={() => setHoverKey(key)} onMouseLeave={() => setHoverKey('')} onClick={(e) => openLeavePicker(e, driver.unit_number, driver.id > 0 ? driver.id : null, date)} style={{ height: 30, textAlign: 'center', verticalAlign: 'middle', border: '0.5px solid rgba(255,255,255,0.06)', cursor: 'pointer', padding: 2, background: isHover ? 'rgba(59,130,246,0.15)' : colBg }}>
                     {leaveStyle ? <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 600, padding: '2px 5px', borderRadius: 3, background: leaveStyle.bg, color: leaveStyle.text }}>{leaveStyle.label}</span> : null}
                   </td>
                 })}
