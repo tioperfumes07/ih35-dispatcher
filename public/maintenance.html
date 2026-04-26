@@ -1325,6 +1325,7 @@
             <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px">
               <button type="button" class="btn btn--small ghost" onclick="driversAcknowledgeDamageFromModal()">Acknowledge</button>
               <button type="button" class="btn btn--small" onclick="driversCreateWoFromDamage()">Create work order</button>
+              <button type="button" class="btn btn--small" onclick="driversResolveCreateWorkOrderFromModal()" style="background:#16a34a;border-color:#16a34a;color:#fff">✅ Resolve & Create Work Order</button>
             </div>
           </div>
         </div>
@@ -16366,6 +16367,138 @@
       erpCreateWoFromDamageReport(id);
     }
 
+    function driversResolveCreateWorkOrderFromModal() {
+      const id = window.__driversDamageModalId;
+      if (!id) return;
+      void driversResolveAndCreateWorkOrder(id);
+    }
+
+    function driversResolvedDamageIds() {
+      if (!window.__damageResolvedOverrides || !(window.__damageResolvedOverrides instanceof Set)) {
+        window.__damageResolvedOverrides = new Set();
+      }
+      return window.__damageResolvedOverrides;
+    }
+
+    function driversVendorQboIdByName(nameRaw) {
+      const name = String(nameRaw || '').trim().toLowerCase();
+      if (!name) return '';
+      const vendors = cacheVendors();
+      const exact = vendors.find((v) => String(v?.name || v?.displayName || v?.companyName || '').trim().toLowerCase() === name);
+      if (exact?.qboId) return String(exact.qboId);
+      const fuzzy = vendors.find((v) => String(v?.name || v?.displayName || v?.companyName || '').trim().toLowerCase().includes(name) || name.includes(String(v?.name || v?.displayName || v?.companyName || '').trim().toLowerCase()));
+      return String(fuzzy?.qboId || '');
+    }
+
+    async function driversResolveAndCreateWorkOrder(id) {
+      const row = (window.__driversDamageReports || []).find((r) => String(r.id) === String(id));
+      if (!row) return;
+      const unit = String(row.unit_number || '').trim();
+      const damageType = String(row.damage_type || '').trim() || 'Road Service';
+      const serviceType = 'Road Service - ' + damageType;
+      const description = String(row.description || '').trim() || serviceType;
+      const vendorName = String(row.vendor_name || row.shop_name || '').trim();
+      const estimatedCostNum = Number(row.estimated_cost || 0);
+      const estimatedCost = Number.isFinite(estimatedCostNum) && estimatedCostNum > 0 ? estimatedCostNum : 0;
+      const vendorQboId = driversVendorQboIdByName(vendorName);
+      const ll = damageReportLatLng(row);
+      const locationText = Number.isFinite(ll.lat) && Number.isFinite(ll.lng)
+        ? `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`
+        : String(row.location_text || row?.location?.text || row.location || '').trim();
+      const nowIso = new Date().toISOString();
+      const today = nowIso.slice(0, 10);
+
+      if (!unit) {
+        erpShowToast('Unit missing on report', 'error');
+        return;
+      }
+
+      let recordId = '';
+      try {
+        const woOut = await j('/api/maintenance/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            unit,
+            recordType: 'maintenance_order',
+            serviceType,
+            serviceDate: today,
+            vendor: vendorName,
+            cost: estimatedCost ? String(estimatedCost) : '',
+            notes: [description, locationText ? `Location: ${locationText}` : ''].filter(Boolean).join('\n'),
+            repairStatus: 'in_progress',
+            priority: 'Urgent'
+          })
+        });
+        recordId = String(woOut?.record?.id || '');
+      } catch (e) {
+        erpShowToast('Could not create work order: ' + (e?.message || 'Unknown error'), 'error');
+        return;
+      }
+
+      try {
+        await j('/api/work-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({
+            unit,
+            assetCategory: activeAssetCategory || '',
+            repairLocationType: 'roadside',
+            repairLocationLabel: 'Road Service',
+            serviceDate: today,
+            txnType: 'expense',
+            dueDate: today,
+            qboTermId: '',
+            qboVendorId: vendorQboId,
+            serviceType,
+            paymentMethodId: '',
+            qboBankAccountId: '',
+            loadNumber: '',
+            internalWorkOrderNumber: recordId ? `RS-${recordId}` : '',
+            vendorInvoiceNumber: '',
+            notes: description,
+            linkedWorkOrderId: recordId,
+            category: 'Maintenance expense',
+            lines: [
+              {
+                description: serviceType,
+                amount: estimatedCost,
+                detailMode: 'category',
+                qboAccountId: '',
+                qboAccountName: '',
+                qboItemId: '',
+                qboItemName: '',
+                qboClassId: '',
+                qboClassName: '',
+                serviceType,
+                vendorName
+              }
+            ]
+          })
+        });
+      } catch (_) {
+        // Keep flow moving even if expense endpoint rejects optional fields.
+      }
+
+      try {
+        await j('/api/damage/reports/' + encodeURIComponent(String(id)) + '/acknowledge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'resolved' })
+        });
+      } catch (_) {}
+
+      driversResolvedDamageIds().add(String(id));
+      driversCloseDamageDetail();
+      erpShowToast('Work order created + expense logged', 'success');
+      await Promise.all([
+        refreshDashboardDamageReports(),
+        refreshDriversDashboardPanels(),
+        loadAll().catch(() => null)
+      ]);
+    }
+
+
     async function refreshDashboardDamageReports() {
       let reports = [];
       try {
@@ -16375,7 +16508,8 @@
         reports = [];
       }
       window.__dashboardDamageReports = reports;
-      const openCount = reports.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved').length;
+      const resolvedIds = driversResolvedDamageIds();
+      const openCount = reports.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved' && !resolvedIds.has(String(r.id || ''))).length;
       const kpiEl = document.getElementById('dashOpenDamageReports');
       if (kpiEl) kpiEl.textContent = String(openCount);
       const kpiCard = document.getElementById('dashDamageReportsCard');
@@ -16390,7 +16524,8 @@
         body.innerHTML = '<tr><td colspan="6" class="muted">No damage reports found.</td></tr>';
         return;
       }
-      body.innerHTML = reports.map((r) => {
+      const visible = reports.filter((r) => !resolvedIds.has(String(r.id || '')));
+      body.innerHTML = visible.map((r) => {
         const id = String(r.id || '');
         const unit = escapeHtml(String(r.unit_number || '—'));
         const driver = escapeHtml(String(r.driver_name || '—'));
@@ -16471,8 +16606,9 @@
 
       window.__driversDamageReports = damageRows.slice();
       const pendingLeave = leaveRows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
-      const openDamage = damageRows.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved');
-      const unackDamage = damageRows.filter((r) => isDamageReportUnacknowledged(r.status));
+      const resolvedIds = driversResolvedDamageIds();
+      const openDamage = damageRows.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved' && !resolvedIds.has(String(r.id || '')));
+      const unackDamage = damageRows.filter((r) => isDamageReportUnacknowledged(r.status) && !resolvedIds.has(String(r.id || '')));
       const fuelToday = fuelRows.filter((r) => isTodayIso(r.submitted_at));
 
       const k1 = document.getElementById('driversKpiPendingLeave');
