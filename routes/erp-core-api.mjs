@@ -1693,7 +1693,7 @@ export function mountErpCoreApi(app, opts = {}) {
     const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
     if (!token) return res.json({ ok: true, rows: [] });
     try {
-      const payload = await samsaraGet('/fleet/drivers/hos/clocks', token, {});
+      const payload = await samsaraGet('/fleet/hos/clocks', token, {});
       const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.clocks) ? payload.clocks : [];
       return res.json({ ok: true, rows });
     } catch (e) {
