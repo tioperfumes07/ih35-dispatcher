@@ -38,6 +38,57 @@
   width: 104px !important;
 }
 </style>
+  <style id="erpHomeCleanStyles">
+    .erp-home-clean-hide { display: none !important; }
+    .erp-home-quick-actions { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0; }
+    .erp-home-quick-actions .btn { min-width: 180px; }
+    #section-maintenance.home-clean #maintMainSubtabs,
+    #section-maintenance.home-clean #maintMainTabRecord,
+    #section-maintenance.home-clean #maintMainTabRm,
+    #section-maintenance.home-clean #maintMainTabShopLoc,
+    #section-maintenance.home-clean .maint-action-strip__fleet,
+    #section-maintenance.home-clean #fleetByTypeContainer,
+    #section-maintenance.home-clean .maint-unit-col__search,
+    #section-maintenance.home-clean .unit-list-panel,
+    #section-maintenance.home-clean .maint-wo-col-form,
+    #section-maintenance.home-clean #maintDashSummaryLine,
+    #section-maintenance.home-clean #maintDashSyncLine,
+    #section-maintenance.home-clean .maint-kpi-strip__dash { display:none !important; }
+    #section-accounting.home-clean #acctNavTabStubs,
+    #section-accounting.home-clean .accounting-tab,
+    #section-accounting.home-clean .acct-board-section,
+    #section-accounting.home-clean #maintIntegrationStrip { display:none !important; }
+    #section-safety.home-clean .subtabs,
+    #section-safety.home-clean .tracking-sub,
+    #section-safety.home-clean .panel[style*="margin-top:12px"] { display:none !important; }
+    #section-drivers.home-clean .panel { display:none !important; }
+    #section-fuel.home-clean .panel .panel-body iframe,
+    #section-fuel.home-clean .panel[style*="margin-top:12px"] { display:none !important; }
+    #section-tracking.home-clean .subtabs,
+    #section-tracking.home-clean .tracking-sub { display:none !important; }
+
+    .maint-modal input,
+    .maint-modal select,
+    .maint-modal textarea,
+    .erp-qb-dialog input,
+    .erp-qb-dialog select,
+    .erp-qb-dialog textarea { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; }
+    #maintWoBox1Head { position: sticky; top: 0; z-index: 6; max-height: 56px; overflow: hidden; background: var(--color-bg-card); }
+    #costInput, #apDocTotalDisplay { width:100% !important; box-sizing:border-box; }
+    #maintCostCatHost, #maintCostItemHost, #apWoCatHost, #apWoItemHost { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+
+    .ap-exp-grid,
+    .fuel-manual-grid,
+    .erp-mb-panel .search-row { display:grid !important; grid-template-columns:1fr 1fr 1fr !important; gap:16px !important; }
+    .ap-exp-field--full,
+    .ap-exp-field--memo,
+    #apMemo,
+    #fuelManualMemo,
+    .erp-qbo-attach-zone,
+    .ap-exp-actions,
+    .qb-save-actions,
+    .maint-save-toolbar--qb { grid-column:1 / -1 !important; }
+  </style>
 </head>
 <body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
@@ -433,6 +484,11 @@
   </div>
   <datalist id="unitOptions"></datalist>
   <datalist id="fleetQboClassOptions"></datalist>
+  <datalist id="filteredUnitList"></datalist>
+  <datalist id="partsCatalogList"></datalist>
+  <datalist id="paymentMethodList"></datalist>
+  <datalist id="qboBankList"></datalist>
+  <datalist id="driverList"></datalist>
   <datalist id="serviceOptions"></datalist>
   <datalist id="serviceTypeList">
     <option value="Oil Change"></option>
@@ -853,6 +909,16 @@
       </section>
 
       <section id="section-fuel" class="section">
+        <div id="fuelHomeKpis" class="grid grid-3 erp-kpi-grid" style="margin-bottom:12px">
+          <div class="metric"><div class="metric-label">Fuel submissions today</div><div class="metric-value" id="fuelHomeSubmissions">0</div></div>
+          <div class="metric"><div class="metric-label">Pending QBO fuel posts</div><div class="metric-value" id="fuelHomePendingQbo">0</div></div>
+          <div class="metric"><div class="metric-label">Units tracked</div><div class="metric-value" id="fuelHomeUnits">0</div></div>
+        </div>
+        <div id="fuelHomeQuickActions" class="erp-home-quick-actions">
+          <button type="button" class="btn" onclick="openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'))">Open fuel ledger</button>
+          <button type="button" class="btn" onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })">New fuel expense</button>
+          <button type="button" class="btn" onclick="erpOpenDedicatedAccountingForm('fuel-bill')">New fuel bill</button>
+        </div>
         <div class="panel">
           <div class="panel-head">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -900,6 +966,16 @@
           <div class="panel-body" style="padding:10px">
             <div id="safetyLiveMap" style="height:420px; width:100%; display:block; border:1px solid var(--color-border); border-radius:8px"></div>
           </div>
+        </div>
+        <div id="safetyHomeKpis" class="grid grid-3 erp-kpi-grid" style="margin-bottom:12px">
+          <div class="metric"><div class="metric-label">Active drivers</div><div class="metric-value" id="safetyHomeActiveDrivers">0</div></div>
+          <div class="metric"><div class="metric-label">Active assignments</div><div class="metric-value" id="safetyHomeAssignments">0</div></div>
+          <div class="metric"><div class="metric-label">HOS rows</div><div class="metric-value" id="safetyHomeHos">0</div></div>
+        </div>
+        <div id="safetyHomeQuickActions" class="erp-home-quick-actions">
+          <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'))">Create work order</button>
+          <button type="button" class="btn" onclick="openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'))">Driver files</button>
+          <button type="button" class="btn" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]'))">Open tracking</button>
         </div>
         <div class="subtabs erp-ops-subtabs-bar" style="margin-bottom:12px">
           <button type="button" class="subtab" onclick="openSafetyTab('safe-active', this)">Active / in service</button>
@@ -1187,6 +1263,12 @@
           <div class="metric"><div class="metric-label">Fuel submitted today</div><div class="metric-value" id="driversKpiFuelToday">0</div><div class="metric-sub muted">Driver mobile submissions</div></div>
         </div>
 
+        <div id="driversHomeQuickActions" class="erp-home-quick-actions">
+          <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'))">Create work order</button>
+          <button type="button" class="btn" onclick="window.open('/driver/','_blank','noopener')">Open driver app</button>
+          <button type="button" class="btn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'))">Open accounting</button>
+        </div>
+
         <div class="panel" style="margin-bottom:12px">
           <div class="panel-head"><div class="panel-title" style="margin:0">Leave requests</div></div>
           <div class="panel-body table-wrap">
@@ -1228,10 +1310,11 @@
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Vehicles in service</div><div class="maint-kpi-card__val" id="maintDashVehiclesInService">0</div></div>
+              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Open damage reports</div><div class="maint-kpi-card__val" id="maintDashOpenDamage">0</div></div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
-            <button type="button" class="btn btn--small maint-kpi-strip__dash" onclick="openSectionByName('dashboard')">Full overview</button>
+            <button type="button" class="btn btn--small maint-kpi-strip__dash erp-home-clean-hide" onclick="openSectionByName('dashboard')">Full overview</button>
           </div>
         </div>
         <div class="maint-page-shell">
@@ -2211,6 +2294,9 @@
           <div class="metric"><div class="metric-label">Flatbeds</div><div class="metric-value" id="trackFlatbedCount">0</div></div>
           <div class="metric"><div class="metric-label">Other / Company Vehicles</div><div class="metric-value" id="trackOtherCount">0</div></div>
         </div>
+        <div id="loadsHomeQuickActions" class="erp-home-quick-actions" style="margin-top:12px">
+          <button type="button" class="btn" onclick="openSection('reports', document.querySelector('.nav-btn[data-section=reports]')); openReportsTabFromSidebar('rep-tms');">Dispatch / TMS loads</button>
+        </div>
 
         <div class="subtabs erp-ops-subtabs-bar" style="margin-top:12px">
           <button type="button" class="subtab" onclick="openTrackingTab('tr-assets', this)">Assets</button>
@@ -2789,6 +2875,13 @@
             </div>
           </div>
           <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
+
+          <div id="accountingHomeQuickActions" class="erp-home-quick-actions">
+            <button type="button" class="btn" onclick="erpNewExpense()">New expense</button>
+            <button type="button" class="btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">New bill</button>
+            <button type="button" class="btn" onclick="erpNewPayBills()">Bill payment</button>
+            <button type="button" class="btn" onclick="refreshQboMaster()">Refresh QBO lists</button>
+          </div>
 
           <div class="acct-board-section">
             <h3 class="acct-board-section__h">Expenses</h3>
@@ -6024,6 +6117,7 @@
   <script>
     let vehicles = [];
     let fleetAssetQboClassMappings = {};
+    window._cachedUnits = window._cachedUnits || [];
     let dashboard = [];
     let erp = {};
     let board = {};
@@ -8149,6 +8243,9 @@
         dl.innerHTML = vendorValues.map((v) => `<option value="${escapeHtml(v)}"></option>`).join('');
       }
       wireVendorListInputs();
+
+      erpPopulateLiveCatalogDatalists();
+      erpInitTwoStepUnitPickers();
     }
 
     function normalizeQboVendorRows(rows) {
@@ -8202,6 +8299,10 @@
 
     function fleetDisplayPlate(asset) {
       return fleetDisplayValue(asset?.licensePlate, asset?.license_plate_override);
+    }
+
+    function fleetDisplayVin(asset) {
+      return fleetDisplayValue(asset?.vin, asset?.vin_override);
     }
 
     function fleetQboClassMappingForUnit(unit) {
@@ -8318,6 +8419,250 @@
     function cacheItems() { return erp.qboCache?.items || []; }
     function cacheAccounts() { return erp.qboCache?.accounts || []; }
     function cacheBankAccounts() { return erp.qboCache?.accountsBank || []; }
+
+    function erpApplyHomeCleanMode(sectionName) {
+      const cleanSections = ['maintenance', 'accounting', 'safety', 'drivers', 'fuel', 'tracking'];
+      cleanSections.forEach((name) => {
+        const el = document.getElementById('section-' + name);
+        if (!el) return;
+        if (sectionName === name) el.classList.add('home-clean');
+        else el.classList.remove('home-clean');
+      });
+    }
+
+    function erpUpdateHomeKpis() {
+      const dmg = Array.isArray(erp?.damageReports) ? erp.damageReports : [];
+      const openDamage = dmg.filter((r) => String(r?.status || '').toLowerCase() !== 'resolved').length;
+      const openDamageEl = document.getElementById('maintDashOpenDamage');
+      if (openDamageEl) openDamageEl.textContent = String(openDamage);
+      const activeDrivers = Array.isArray(board?.hos) ? board.hos.filter((r) => String(r?.dutyStatus || '').toLowerCase() !== 'off_duty').length : 0;
+      const assignCnt = Array.isArray(board?.assignments) ? board.assignments.length : 0;
+      const hosCnt = Array.isArray(board?.hos) ? board.hos.length : 0;
+      const s1 = document.getElementById('safetyHomeActiveDrivers'); if (s1) s1.textContent = String(activeDrivers);
+      const s2 = document.getElementById('safetyHomeAssignments'); if (s2) s2.textContent = String(assignCnt);
+      const s3 = document.getElementById('safetyHomeHos'); if (s3) s3.textContent = String(hosCnt);
+      const fuelRows = Array.isArray(erp?.fuelPurchases) ? erp.fuelPurchases : [];
+      const fuelToday = fuelRows.filter((r) => String(r?.txnDate || r?.createdAt || '').slice(0,10) === new Date().toISOString().slice(0,10)).length;
+      const f1 = document.getElementById('fuelHomeSubmissions'); if (f1) f1.textContent = String(fuelToday);
+      const f2 = document.getElementById('fuelHomePendingQbo');
+      if (f2) f2.textContent = String(Array.isArray(erp?.qboSyncAlerts) ? erp.qboSyncAlerts.length : 0);
+      const f3 = document.getElementById('fuelHomeUnits'); if (f3) f3.textContent = String(vehicles.length);
+    }
+
+    function erpClassifyUnitType(asset) {
+      const unit = String(asset?.unit_number || asset?.name || '').trim().toLowerCase();
+      const type = String(asset?.asset_type || '').trim().toLowerCase();
+      if (unit.startsWith('t') || type.includes('truck')) return 'truck';
+      if (type.includes('reefer')) return 'reefer';
+      if (type.includes('flatbed') || unit.startsWith('fb')) return 'flatbed';
+      if (type.includes('dry') || type.includes('van')) return 'dry_van';
+      if (type.includes('company')) return 'company';
+      return 'other';
+    }
+
+    function erpFilteredUnitsByType(type) {
+      const t = String(type || '').trim();
+      const rows = Array.isArray(window._cachedUnits) ? window._cachedUnits : [];
+      const activeRows = rows.filter((r) => String(r?.status || 'Active').trim().toLowerCase() === 'active');
+      if (!t) return [];
+      return activeRows.filter((r) => erpClassifyUnitType(r) === t);
+    }
+
+    function filterUnitsByType(type, pickerId) {
+      const key = String(pickerId || 'default');
+      const rows = erpFilteredUnitsByType(type);
+      const dl = document.getElementById('filteredUnitList_' + key) || document.getElementById('filteredUnitList');
+      if (dl) dl.innerHTML = rows.map((r) => `<option value="${escapeHtml(String(r?.unit_number || r?.name || ''))}"></option>`).join('');
+      return rows;
+    }
+
+    function erpInitTwoStepUnitPicker(targetId) {
+      const target = document.getElementById(targetId);
+      if (!target || target.dataset.twoStepReady === '1') return;
+      target.dataset.twoStepReady = '1';
+      const wrap = document.createElement('div');
+      wrap.className = 'erp-two-step-unit';
+      wrap.style.display = 'grid';
+      wrap.style.gap = '8px';
+
+      const typeSel = document.createElement('select');
+      typeSel.className = 'qb-in';
+      typeSel.innerHTML = [
+        '<option value="">-- Select vehicle type --</option>',
+        '<option value="truck">Trucks (T120-T177)</option>',
+        '<option value="reefer">Reefer Trailers</option>',
+        '<option value="flatbed">Flatbeds</option>',
+        '<option value="dry_van">Dry Vans</option>',
+        '<option value="company">Company Vehicles</option>',
+        '<option value="other">Other</option>'
+      ].join('');
+
+      const key = String(targetId).replace(/[^a-z0-9_-]/gi, '_');
+      const dl = document.createElement('datalist');
+      dl.id = 'filteredUnitList_' + key;
+
+      const clone = target.cloneNode(true);
+      clone.setAttribute('list', dl.id);
+      clone.setAttribute('placeholder', clone.getAttribute('placeholder') || 'Type unit number...');
+
+      const holder = document.createElement('div');
+      holder.style.display = 'none';
+      holder.appendChild(clone);
+
+      target.parentNode.insertBefore(wrap, target);
+      wrap.appendChild(typeSel);
+      wrap.appendChild(holder);
+      wrap.appendChild(dl);
+      target.remove();
+
+      const syncVal = () => {
+        const rows = filterUnitsByType(typeSel.value, key);
+        holder.style.display = typeSel.value ? '' : 'none';
+        if (clone.tagName && clone.tagName.toLowerCase() === 'select') {
+          const options = rows.map((r) => String(r?.unit_number || r?.name || '').trim()).filter(Boolean);
+          clone.innerHTML = options.map((v) => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+          if (!options.includes(String(clone.value || ''))) clone.value = options[0] || '';
+          return;
+        }
+        if (!typeSel.value) clone.value = '';
+        else if (clone.value) {
+          const ok = rows.some((r) => String(r?.unit_number || r?.name || '') === String(clone.value || ''));
+          if (!ok) clone.value = '';
+        }
+      };
+
+      typeSel.addEventListener('change', syncVal);
+      syncVal();
+    }
+
+    function erpInitTwoStepUnitPickers() {
+      ['sqUnit', 'apAssetUnit', 'fuelManualUnit', 'mbAssetUnit'].forEach((id) => erpInitTwoStepUnitPicker(id));
+    }
+
+    function erpPopulateLiveCatalogDatalists() {
+      const payDl = document.getElementById('paymentMethodList');
+      if (payDl) {
+        const methods = ['Check', 'Credit Card', 'ACH', 'Wire Transfer', 'Cash', 'Zelle', 'Company Card', 'Fuel Card'];
+        payDl.innerHTML = methods.map((m) => `<option value="${escapeHtml(m)}"></option>`).join('');
+      }
+
+      const bankDl = document.getElementById('qboBankList');
+      if (bankDl) {
+        const acc = Array.isArray(erp?.qboCache?.accounts) ? erp.qboCache.accounts : [];
+        const banks = acc.filter((a) => {
+          const t = String(a?.accountType || a?.AccountType || '').toLowerCase();
+          return t === 'bank' || t === 'credit card';
+        });
+        bankDl.innerHTML = banks.map((b) => `<option value="${escapeHtml(String(b?.name || b?.Name || ''))}"></option>`).join('');
+      }
+
+      const drvDl = document.getElementById('driverList');
+      if (drvDl) {
+        const names = (Array.isArray(driverProfiles) ? driverProfiles : []).map((d) => String(d?.full_name || d?.name || '').trim()).filter(Boolean);
+        drvDl.innerHTML = Array.from(new Set(names)).sort((a,b)=>a.localeCompare(b)).map((n)=>`<option value="${escapeHtml(n)}"></option>`).join('');
+      }
+
+      const partsDl = document.getElementById('partsCatalogList');
+      if (partsDl) {
+        const base = Array.isArray(catalogPartNames) ? catalogPartNames : [];
+        partsDl.innerHTML = base.map((n)=>`<option value="${escapeHtml(String(n||''))}"></option>`).join('');
+      }
+
+      document.querySelectorAll('input[id*="vendor" i], input[name*="vendor" i]').forEach((el) => {
+        if (el && !el.getAttribute('list')) el.setAttribute('list', 'vendorList');
+      });
+      document.querySelectorAll('input[id*="payment" i]').forEach((el) => {
+        if (el && !el.getAttribute('list')) el.setAttribute('list', 'paymentMethodList');
+      });
+      ['linkedBankAccountSearch','fuelManualBankSearch','fuelExpBankSearch'].forEach((id)=>{
+        const el = document.getElementById(id); if (el) el.setAttribute('list','qboBankList');
+      });
+      ['driverInput','apDriverSearch','maintDriverInput'].forEach((id)=>{
+        const el = document.getElementById(id); if (el) el.setAttribute('list','driverList');
+      });
+      document.querySelectorAll('input[id*="parts" i], input[name*="parts" i]').forEach((el)=>{
+        if (el && !el.getAttribute('list')) el.setAttribute('list','partsCatalogList');
+      });
+    }
+
+    function erpEnsureUnitClassBadges() {
+      const pairs = [
+        ['sqUnit', 'sqUnitClassBadge'],
+        ['apAssetUnit', 'apAssetUnitClassBadge'],
+        ['fuelManualUnit', 'fuelManualUnitClassBadge'],
+        ['mbAssetUnit', 'mbAssetUnitClassBadge']
+      ];
+      pairs.forEach(([id, bid]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let badge = document.getElementById(bid);
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.id = bid;
+          badge.className = 'chip';
+          badge.style.marginTop = '6px';
+          badge.style.display = 'inline-flex';
+          badge.style.background = 'rgba(34,197,94,0.16)';
+          badge.style.color = '#16a34a';
+          badge.textContent = 'QuickBooks Class: —';
+          el.parentNode.appendChild(badge);
+        }
+        const refresh = () => {
+          const unit = String(el.value || '').trim();
+          const cls = unit ? fleetQboClassNameForUnit(unit) : '';
+          badge.textContent = 'QuickBooks Class: ' + (cls || '—');
+        };
+        if (!el.dataset.classBadgeBound) {
+          el.dataset.classBadgeBound = '1';
+          el.addEventListener('input', refresh);
+          el.addEventListener('change', refresh);
+        }
+        refresh();
+      });
+    }
+
+    function erpBindLivePartsLookup() {
+      if (window.__erpPartsLiveBound) return;
+      window.__erpPartsLiveBound = true;
+      document.addEventListener('input', (ev) => {
+        const t = ev.target;
+        if (!t || t.tagName !== 'INPUT') return;
+        const id = String(t.id || '').toLowerCase();
+        if (!id.includes('part')) return;
+        const q = String(t.value || '').trim();
+        if (!q) return;
+        j('/api/parts?q=' + encodeURIComponent(q)).then((d) => {
+          const rows = Array.isArray(d?.parts) ? d.parts : [];
+          const names = rows.map((r) => String(r?.label || r?.part_name || r?.name || '').trim()).filter(Boolean);
+          const dl = document.getElementById('partsCatalogList');
+          if (dl && names.length) dl.innerHTML = Array.from(new Set(names)).map((n)=>`<option value="${escapeHtml(n)}"></option>`).join('');
+        }).catch(() => {});
+      });
+    }
+
+    function erpEnsureModalCancelButtons() {
+      const footerSelectors = ['.erp-qb-dialog__foot', '.maint-save-toolbar--qb', '.qb-save-actions', '.maint-save-toolbar'];
+      footerSelectors.forEach((sel) => {
+        document.querySelectorAll(sel).forEach((ft) => {
+          if (ft.querySelector('[data-erp-auto-cancel="1"]')) return;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'Cancel';
+          btn.className = 'btn secondary';
+          btn.setAttribute('data-erp-auto-cancel', '1');
+          btn.onclick = () => {
+            const modal = ft.closest('.maint-modal-bg, .erp-qb-dialog, .maint-modal, .erp-mb-modal, .erp-dedicated-form-modal');
+            if (!modal) return;
+            const closeBtn = modal.querySelector('[data-erp-ded-close="1"], [data-erp-mb-close="1"], .erp-qb-sheet-close, .maint-modal-close, .erp-modal-close, .erp-dedicated-form-modal__x');
+            if (closeBtn && typeof closeBtn.click === 'function') { closeBtn.click(); return; }
+            modal.classList.remove('on');
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+          };
+          ft.insertBefore(btn, ft.firstChild);
+        });
+      });
+    }
     function cacheIncomeAccounts() { return erp.qboCache?.accountsIncome || []; }
     function cacheExpenseAccounts() { return erp.qboCache?.accountsExpense || []; }
     function paymentMethods() {
@@ -10004,6 +10349,7 @@
         return;
       }
       activeSection = name;
+      erpApplyHomeCleanMode(name);
       document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
       secEl.classList.add('active');
       document.querySelectorAll('#erpIconNav .nav-btn[data-section], #erpSectionGhostNav .nav-btn[data-section]').forEach(el => {
@@ -10101,6 +10447,11 @@
         });
       }
       renderErpModuleSidebar(name);
+      erpEnsureModalCancelButtons();
+      erpPopulateLiveCatalogDatalists();
+      erpInitTwoStepUnitPickers();
+      erpUpdateHomeKpis();
+      erpEnsureUnitClassBadges();
       if (name === 'accounting') {
         requestAnimationFrame(() => {
           syncAcctDashFromQboPayload();
@@ -10159,7 +10510,7 @@
             <td>${escapeHtml(fleetDisplayMake(r))}</td>
             <td>${escapeHtml(fleetDisplayModel(r))}</td>
             <td>${escapeHtml(fleetDisplayYearValue(r))}</td>
-            <td>${escapeHtml(r.vin || '—')}</td>
+            <td>${escapeHtml(fleetDisplayVin(r))}</td>
             <td>${escapeHtml(fleetDisplayPlate(r))}</td>
             <td>${escapeHtml(r.asset_type || 'Truck')}</td>
             <td>${escapeHtml(r.status || 'Active')}</td>
@@ -12198,7 +12549,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes] =
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes, fleetAssetsRes] =
           await Promise.all([
             j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
@@ -12222,7 +12573,8 @@
             j('/api/qbo/master').catch(() => null),
             j('/api/maintenance/parts-reference').catch(() => ({ ok: false, parts: [], names: [] })),
             j('/api/fleet/assets/units').catch(() => ({ ok: false, units: [] })),
-            j('/api/fleet/assets/qbo-classes').catch(() => ({ ok: false, mappings: [] }))
+            j('/api/fleet/assets/qbo-classes').catch(() => ({ ok: false, mappings: [] })),
+            j('/api/fleet/assets').catch(() => ({ ok: false, assets: [] }))
           ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -12276,6 +12628,11 @@
             qbo_class_name: String(m?.qbo_class_name || '').trim()
           };
         });
+        const fullAssets = fleetAssetsRes && fleetAssetsRes.ok && Array.isArray(fleetAssetsRes.assets)
+          ? fleetAssetsRes.assets
+          : [];
+        window._cachedUnits = fullAssets;
+
         const preferredUnits = assetUnits.map((u) => ({
           id: String(u.samsara_id || u.unit_number || '').trim(),
           name: String(u.unit_number || '').trim(),
@@ -12396,6 +12753,12 @@
           loadTeamSecurityPanel();
         }
         await refreshFleetMileageBanner();
+        erpBindLivePartsLookup();
+        erpPopulateLiveCatalogDatalists();
+        erpInitTwoStepUnitPickers();
+        erpEnsureModalCancelButtons();
+        erpUpdateHomeKpis();
+        erpEnsureUnitClassBadges();
       } catch (e) {
         console.error(e);
         renderQboSyncAlerts({ ok: false, alerts: [], counts: {} });
@@ -20591,7 +20954,7 @@
             : null;
 
       const ymm = [v.year, v.make, v.model].filter(Boolean).join(' ') || '—';
-      const vin = v.vin || '—';
+      const vin = fleetDisplayVin(v);
       const plate = fleetDisplayPlate(v);
       const odoStr = displayMi != null && Number.isFinite(displayMi) ? Math.round(displayMi).toLocaleString() : '—';
       const cardEl = document.getElementById('maintAssetHeaderCard');

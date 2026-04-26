@@ -139,7 +139,7 @@ function rowToDraft(r: AssetRow, meta: LocalMeta | undefined): Draft {
     year: r.year != null ? String(r.year) : '',
     make: r.make ?? '',
     model: r.model ?? '',
-    vin: r.vin ?? '',
+    vin: (r.vin ?? (r as any).vin_override ?? '') as string,
     license_plate: r.license_plate ?? '',
     license_state: r.license_state ?? '',
     odometer_miles: r.odometer_miles != null ? String(r.odometer_miles) : '',
@@ -439,7 +439,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
       { id: 'make', label: 'Make', width: 80, render: (r) => String((r as any).make || (r as any).make_override || '').trim() || '—' },
       { id: 'model', label: 'Model', width: 80, render: (r) => String((r as any).model || (r as any).model_override || '').trim() || '—' },
       { id: 'year', label: 'Year', width: 56, render: (r) => (r.year ?? (r as any).year_override ?? '—') },
-      { id: 'vin', label: 'VIN', width: 120, render: (r) => r.vin ?? '—' },
+      { id: 'vin', label: 'VIN', width: 120, render: (r) => String((r as any).vin || (r as any).vin_override || '').trim() || '—' },
       { id: 'plate', label: 'License Plate', width: 92, render: (r) => String((r as any).license_plate || (r as any).licensePlate || (r as any).license_plate_override || '').trim() || '—' },
       { id: 'type', label: 'Type', width: 88, render: (r) => r.asset_type || 'truck' },
       {

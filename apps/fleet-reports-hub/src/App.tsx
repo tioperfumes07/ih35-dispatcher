@@ -1092,37 +1092,6 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <div className="acct-hub__grid" aria-label="Section cards">
-                      {ORDERED_APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
-                        <div key={`home-card-${s.id}`} className="acct-hub-sec">
-                          <button
-                            type="button"
-                            className="acct-hub-sec__head"
-                            onClick={() => openSection(s.id)}
-                            aria-label={`Open ${s.label}`}
-                          >
-                            <span>{s.label}</span>
-                            <span className="acct-hub-sec__chev" aria-hidden>
-                              →
-                            </span>
-                          </button>
-                          <ul className="acct-hub-sec__body">
-                            <li>
-                              <button
-                                type="button"
-                                className="acct-hub-sec__row"
-                                onClick={() => openSection(s.id)}
-                              >
-                                <span>{SECTION_DESCRIPTIONS[s.id]}</span>
-                                <span className="acct-hub-sec__arrow" aria-hidden>
-                                  Open
-                                </span>
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </ErrorBoundary>
               ) : activeSection === 'maintenance' ? (
