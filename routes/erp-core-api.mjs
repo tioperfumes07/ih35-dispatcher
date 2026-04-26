@@ -1167,7 +1167,7 @@ export function mountErpCoreApi(app, opts = {}) {
           unit,
           String(t.asset_type || 'Trailer').trim(),
           String(t.status || 'Active').trim(),
-          parseInt(t.year) || 0,
+          parseInt(String(t.year_override || t.year || 0).trim()) || null,
           String(t.make || '').trim(),
           String(t.model || '').trim(),
           String(t.vin || '').trim(),
