@@ -1169,7 +1169,7 @@ export function mountErpCoreApi(app, opts = {}) {
           String(t.status || 'Active').trim(),
           String(t.make_override || t.make || '').trim() || null,
           String(t.model_override || t.model || '').trim() || null,
-          parseInt(String(t.year_override || t.year || 0).trim()) || null,
+          parseInt(String(t.year_override || t.year || '0').trim()) || null,
           String(t.vin_override || t.vin || '').trim() || null,
           String(t.license_plate_override || t.licensePlate || '').trim() || null,
           String(t.notes || '').trim() || null,
