@@ -1150,17 +1150,17 @@ export function mountErpCoreApi(app, opts = {}) {
         const unit = String(t.unit_number || '').trim();
         if (!unit) continue;
         await dbQuery(
-          `INSERT INTO fleet_assets 
-          (unit_number, asset_type, status, year, make, model, vin, license_plate, notes, updated_at)
+          `INSERT INTO fleet_assets
+          (unit_number, asset_type, status, make_override, model_override, year_override, vin_override, license_plate_override, notes, updated_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
          ON CONFLICT (unit_number) DO UPDATE SET
           asset_type=EXCLUDED.asset_type,
           status=EXCLUDED.status,
-          year=EXCLUDED.year,
-          make=EXCLUDED.make,
-          model=EXCLUDED.model,
-          vin=EXCLUDED.vin,
-          license_plate=EXCLUDED.license_plate,
+          make_override=EXCLUDED.make_override,
+          model_override=EXCLUDED.model_override,
+          year_override=EXCLUDED.year_override,
+          vin_override=EXCLUDED.vin_override,
+          license_plate_override=EXCLUDED.license_plate_override,
           notes=EXCLUDED.notes,
           updated_at=now()`,
         [
