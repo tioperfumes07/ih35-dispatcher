@@ -1263,6 +1263,31 @@
           <div class="metric"><div class="metric-label">Fuel submitted today</div><div class="metric-value" id="driversKpiFuelToday">0</div><div class="metric-sub muted">Driver mobile submissions</div></div>
         </div>
 
+        <div id="driversDamageReportsHome" style="background:#111827;border:1px solid rgba(148,163,184,0.25);border-radius:12px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="font-size:15px;font-weight:600;color:#e2e8f0">Open damage reports</div>
+            <div class="mini-note" style="margin:0">Unit incidents and road service alerts</div>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Unit</th>
+                  <th>Driver</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="driversDamageReportsBody">
+                <tr><td colspan="7" class="muted">Loading damage reports…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div id="driversHomeQuickActions" class="erp-home-quick-actions">
           <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'))">Create work order</button>
           <button type="button" class="btn" onclick="window.open('/driver/','_blank','noopener')">Open driver app</button>
@@ -1286,6 +1311,21 @@
               <thead><tr><th>Unit</th><th>Driver</th><th>Type</th><th>Gallons</th><th>Total</th><th>Station</th><th>QBO</th><th>Action</th></tr></thead>
               <tbody id="driversFuelTodayBody"><tr><td colspan="8" class="muted">Loading fuel submissions…</td></tr></tbody>
             </table>
+          </div>
+        </div>
+      
+
+        <div id="driversDamageDetailModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.78);z-index:10010;padding:18px;overflow:auto" onclick="if(event.target===this)driversCloseDamageDetail()">
+          <div style="max-width:760px;margin:24px auto;background:#0b1220;border:1px solid rgba(148,163,184,0.35);border-radius:14px;padding:16px" onclick="event.stopPropagation()">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+              <div style="font-size:18px;font-weight:700;color:#e2e8f0">Damage report detail</div>
+              <button type="button" class="btn btn--small ghost" onclick="driversCloseDamageDetail()">Close</button>
+            </div>
+            <div id="driversDamageDetailBody" style="display:grid;gap:10px"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px">
+              <button type="button" class="btn btn--small ghost" onclick="driversAcknowledgeDamageFromModal()">Acknowledge</button>
+              <button type="button" class="btn btn--small" onclick="driversCreateWoFromDamage()">Create work order</button>
+            </div>
           </div>
         </div>
       </section>
@@ -10369,6 +10409,9 @@
       if (name === 'maintenance') {
         openMaintHomeView();
       }
+      if (name === 'drivers') {
+        requestAnimationFrame(() => refreshDriversDashboardPanels());
+      }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
       }
@@ -16185,6 +16228,19 @@
       return '<span class="status status-error">New</span>';
     }
 
+    function isDamageReportUnacknowledged(statusRaw) {
+      const s = String(statusRaw || '').toLowerCase().trim();
+      return !s || s === 'new' || s === 'unacknowledged' || s === 'pending';
+    }
+
+    function damageStatusBadgeLite(statusRaw) {
+      const s = String(statusRaw || 'new').toLowerCase().trim();
+      if (s === 'acknowledged') {
+        return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#7c2d12;color:#fde68a">Acknowledged</span>';
+      }
+      return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#7f1d1d;color:#fecaca">New</span>';
+    }
+
     function damageTimeAgo(isoRaw) {
       const ts = Date.parse(String(isoRaw || ''));
       if (!Number.isFinite(ts)) return '—';
@@ -16198,8 +16254,44 @@
       return day + 'd ago';
     }
 
+    function formatDamageSubmittedAt(value) {
+      const d = new Date(String(value || ''));
+      if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function truncateDamageDescription(value, maxLen) {
+      const max = Number(maxLen || 60);
+      const txt = String(value || '').trim();
+      if (!txt) return '—';
+      if (txt.length <= max) return txt;
+      return txt.slice(0, max - 1) + '…';
+    }
+
+    function damageReportPhotoFromRow(row) {
+      if (!row || typeof row !== 'object') return '';
+      const one = String(row.photo_base64 || '').trim();
+      if (one.startsWith('data:image/')) return one;
+      if (Array.isArray(row.photos)) {
+        const hit = row.photos.find((p) => String(p || '').trim().startsWith('data:image/'));
+        if (hit) return String(hit).trim();
+      }
+      return '';
+    }
+
+    function damageReportLatLng(row) {
+      if (!row || typeof row !== 'object') return { lat: null, lng: null };
+      const lat = Number(row.location_lat ?? row.lat ?? row?.location?.lat ?? row?.location?.latitude ?? null);
+      const lng = Number(row.location_lng ?? row.lng ?? row?.location?.lng ?? row?.location?.longitude ?? null);
+      return {
+        lat: Number.isFinite(lat) ? lat : null,
+        lng: Number.isFinite(lng) ? lng : null,
+      };
+    }
+
     function erpCreateWoFromDamageReport(id) {
-      const row = (window.__dashboardDamageReports || []).find((r) => String(r.id) === String(id));
+      const row = (window.__dashboardDamageReports || []).find((r) => String(r.id) === String(id)) ||
+        (window.__driversDamageReports || []).find((r) => String(r.id) === String(id));
       if (!row) return;
       const unit = String(row.unit_number || '').trim();
       if (unit) {
@@ -16212,8 +16304,66 @@
     async function erpAcknowledgeDamageReport(id) {
       try {
         await j('/api/damage/reports/' + encodeURIComponent(String(id)) + '/acknowledge', { method: 'POST' });
-      } catch (_) {}
-      await refreshDashboardDamageReports();
+        erpShowToast('Report acknowledged');
+      } catch (_) {
+        erpShowToast('Could not acknowledge report', 'error');
+      }
+      await Promise.all([refreshDashboardDamageReports(), refreshDriversDashboardPanels()]);
+    }
+
+    function driversOpenDamageDetail(id) {
+      const row = (window.__driversDamageReports || []).find((r) => String(r.id) === String(id));
+      const modal = document.getElementById('driversDamageDetailModal');
+      const body = document.getElementById('driversDamageDetailBody');
+      if (!row || !modal || !body) return;
+      window.__driversDamageModalId = String(id);
+      const unit = escapeHtml(String(row.unit_number || '—'));
+      const driver = escapeHtml(String(row.driver_name || '—'));
+      const type = escapeHtml(String(row.damage_type || '—'));
+      const desc = escapeHtml(String(row.description || '—'));
+      const vendor = escapeHtml(String(row.vendor_name || row.shop_name || '—'));
+      const est = row.estimated_cost == null || row.estimated_cost === '' ? '—' : '$' + escapeHtml(Number(row.estimated_cost).toFixed(2));
+      const submitted = escapeHtml(formatDamageSubmittedAt(row.submitted_at || row.reported_at || row.created_at));
+      const ll = damageReportLatLng(row);
+      const locText = Number.isFinite(ll.lat) && Number.isFinite(ll.lng)
+        ? `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`
+        : escapeHtml(String(row.location_text || row?.location?.text || row.location || '—'));
+      const mapsHref = Number.isFinite(ll.lat) && Number.isFinite(ll.lng)
+        ? `https://www.google.com/maps?q=${ll.lat},${ll.lng}`
+        : '';
+      const photo = damageReportPhotoFromRow(row);
+      body.innerHTML = [
+        `<div><strong>Unit:</strong> ${unit}</div>`,
+        `<div><strong>Driver:</strong> ${driver}</div>`,
+        `<div><strong>Type:</strong> ${type}</div>`,
+        `<div><strong>Description:</strong><div style="margin-top:4px;color:#cbd5e1">${desc}</div></div>`,
+        `<div><strong>Submitted:</strong> ${submitted}</div>`,
+        `<div><strong>GPS location:</strong> ${escapeHtml(locText)} ${mapsHref ? `<a href="${mapsHref}" target="_blank" rel="noopener" style="margin-left:8px">Open in Google Maps</a>` : ''}</div>`,
+        `<div><strong>Estimated cost:</strong> ${est}</div>`,
+        `<div><strong>Vendor name:</strong> ${vendor}</div>`,
+        photo ? `<div><strong>Photo:</strong><div style="margin-top:6px"><img src="${photo}" alt="Damage report photo" style="max-width:100%;border-radius:10px;border:1px solid rgba(148,163,184,0.4)" /></div></div>` : '<div><strong>Photo:</strong> —</div>'
+      ].join('');
+      modal.style.display = 'block';
+    }
+
+    function driversCloseDamageDetail() {
+      const modal = document.getElementById('driversDamageDetailModal');
+      if (modal) modal.style.display = 'none';
+      window.__driversDamageModalId = null;
+    }
+
+    async function driversAcknowledgeDamageFromModal() {
+      const id = window.__driversDamageModalId;
+      if (!id) return;
+      await erpAcknowledgeDamageReport(id);
+      driversCloseDamageDetail();
+    }
+
+    function driversCreateWoFromDamage() {
+      const id = window.__driversDamageModalId;
+      if (!id) return;
+      driversCloseDamageDetail();
+      erpCreateWoFromDamageReport(id);
     }
 
     async function refreshDashboardDamageReports() {
@@ -16319,16 +16469,43 @@
         damageRows = Array.isArray(dmgRes?.reports) ? dmgRes.reports : [];
       } catch (_) {}
 
+      window.__driversDamageReports = damageRows.slice();
       const pendingLeave = leaveRows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
       const openDamage = damageRows.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved');
+      const unackDamage = damageRows.filter((r) => isDamageReportUnacknowledged(r.status));
       const fuelToday = fuelRows.filter((r) => isTodayIso(r.submitted_at));
 
       const k1 = document.getElementById('driversKpiPendingLeave');
       const k2 = document.getElementById('driversKpiOpenDamage');
       const k3 = document.getElementById('driversKpiFuelToday');
       if (k1) k1.textContent = String(pendingLeave.length);
-      if (k2) k2.textContent = String(openDamage.length);
+      if (k2) k2.textContent = String(unackDamage.length);
       if (k3) k3.textContent = String(fuelToday.length);
+
+      const dmgBody = document.getElementById('driversDamageReportsBody');
+      if (dmgBody) {
+        if (!openDamage.length) {
+          dmgBody.innerHTML = '<tr><td colspan="7" class="muted">No open damage reports.</td></tr>';
+        } else {
+          const sorted = openDamage.slice().sort((a, b) => {
+            const ta = Date.parse(String(a.submitted_at || a.reported_at || a.created_at || 0));
+            const tb = Date.parse(String(b.submitted_at || b.reported_at || b.created_at || 0));
+            return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+          });
+          dmgBody.innerHTML = sorted.map((r) => {
+            const id = String(r.id || '').replace(/'/g, "\'");
+            return `<tr>
+              <td>${escapeHtml(String(r.unit_number || '—'))}</td>
+              <td>${escapeHtml(String(r.driver_name || '—'))}</td>
+              <td>${escapeHtml(String(r.damage_type || '—'))}</td>
+              <td title="${escapeHtml(String(r.description || ''))}">${escapeHtml(truncateDamageDescription(r.description, 60))}</td>
+              <td>${escapeHtml(formatDamageSubmittedAt(r.submitted_at || r.reported_at || r.created_at))}</td>
+              <td>${damageStatusBadgeLite(r.status)}</td>
+              <td><button type="button" class="btn btn--small" onclick="driversOpenDamageDetail('${id}')">View / Acknowledge</button></td>
+            </tr>`;
+          }).join('');
+        }
+      }
 
       const leaveBody = document.getElementById('driversLeaveRequestsBody');
       if (leaveBody) {
