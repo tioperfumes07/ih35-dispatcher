@@ -1305,7 +1305,7 @@
           <div class="panel-body table-wrap">
             <table class="table">
               <thead><tr><th>Driver</th><th>Unit</th><th>Dates</th><th>Type</th><th>Note</th><th>Submitted</th><th>Action</th></tr></thead>
-              <tbody id="driversLeaveRequestsBody"><tr><td colspan="7" class="muted">Loading leave requests…</td></tr></tbody>
+              <tbody id="pendingLeaveRequests"><tr><td colspan="7" class="muted">Loading leave requests…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -1315,7 +1315,7 @@
           <div class="panel-body table-wrap">
             <table class="table">
               <thead><tr><th>Unit</th><th>Driver</th><th>Type</th><th>Gallons</th><th>Total</th><th>Station</th><th>Load #</th><th>QBO</th><th>Action</th></tr></thead>
-              <tbody id="driversFuelTodayBody"><tr><td colspan="9" class="muted">Loading fuel submissions…</td></tr></tbody>
+              <tbody id="fuelSubmissionsToday"><tr><td colspan="9" class="muted">Loading fuel submissions…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -9002,8 +9002,8 @@
       }
       if (name === 'drivers') {
         const driversBody =
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="document.getElementById(&quot;driversLeaveRequestsBody&quot;)?.scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">Leave requests</button>' +
-          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="document.getElementById(&quot;driversFuelTodayBody&quot;)?.scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">Fuel submissions</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="document.getElementById(&quot;pendingLeaveRequests&quot;)?.scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">Leave requests</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="document.getElementById(&quot;fuelSubmissionsToday&quot;)?.scrollIntoView({behavior:&quot;smooth&quot;,block:&quot;start&quot;})">Fuel submissions</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSafetyTab(&quot;safe-files&quot;, document.querySelector(&quot;#section-safety .subtab[onclick*=\'safe-files\']&quot;)); openSection(&quot;safety&quot;, document.querySelector(&quot;.nav-btn[data-section=safety]&quot;));">Driver profiles</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;drivers&quot;, document.querySelector(&quot;.nav-btn[data-section=drivers]&quot;));">Scheduler</button>';
         inner.innerHTML = erpSbGroup('drivers', 'views', 'Drivers', true, driversBody);
@@ -10397,7 +10397,11 @@
         openMaintHomeView();
       }
       if (name === 'drivers') {
-        requestAnimationFrame(() => refreshDriversDashboardPanels());
+        requestAnimationFrame(() => {
+          refreshDriversDashboardPanels();
+          loadFuelSubmissionsToday();
+          loadPendingLeaveRequests();
+        });
       }
       if (name === 'tracking') {
         requestAnimationFrame(() => initErpTrackingMap());
@@ -10644,30 +10648,77 @@
       return true;
     }
 
-    function renderSafetyLiveMap() {
+    async function renderSafetyLiveMap() {
       const meta = document.getElementById('safetyMapMeta');
       if (!initSafetyLiveMap()) {
         if (meta) meta.textContent = 'Map unavailable';
         return;
       }
-      const veh = Array.isArray(board?.vehicles) ? board.vehicles : [];
-      const withGps = veh.filter(v => Number.isFinite(Number(v.lastGpsLat)) && Number.isFinite(Number(v.lastGpsLng)) && Number(v.lastGpsLat) !== 0 && Number(v.lastGpsLng) !== 0);
+
       safetyLiveMapLayer.clearLayers();
+
+      let boardVehicles = [];
+      let assetVehicles = [];
+      try {
+        const boardRes = await j('/api/board');
+        boardVehicles = Array.isArray(boardRes?.vehicles) ? boardRes.vehicles : [];
+      } catch (_) {
+        boardVehicles = Array.isArray(board?.vehicles) ? board.vehicles : [];
+      }
+      try {
+        const assetsRes = await j('/api/fleet/assets');
+        assetVehicles = Array.isArray(assetsRes?.assets) ? assetsRes.assets : [];
+      } catch (_) {
+        assetVehicles = [];
+      }
+
+      const merged = [];
+      const seen = new Set();
+      const addRow = (v) => {
+        const key = String(v?.id || v?.asset_id || v?.samsara_vehicle_id || v?.unit_number || v?.name || Math.random());
+        if (seen.has(key)) return;
+        seen.add(key);
+        merged.push(v);
+      };
+      boardVehicles.forEach(addRow);
+      assetVehicles.forEach(addRow);
+
       const markers = [];
-      withGps.forEach(v => {
-        const lat = Number(v.lastGpsLat);
-        const lng = Number(v.lastGpsLng);
-        const unit = String(v.unit_number || v.name || v.vehicleName || 'Unit');
-        const location = String(v.lastLocation || `${lat.toFixed(4)}, ${lng.toFixed(4)}` || '');
-        const marker = L.marker([lat, lng]).bindPopup('<b>' + escapeHtml(unit) + '</b><br>' + escapeHtml(location)).addTo(safetyLiveMapLayer);
+      let gpsCount = 0;
+      merged.forEach((v) => {
+        const rawLat = v?.lastGpsLat ?? v?.gps_lat ?? v?.lat ?? v?.lastLocation?.lat;
+        const rawLng = v?.lastGpsLng ?? v?.gps_lng ?? v?.lng ?? v?.lastLocation?.lng;
+        const lat = Number(rawLat);
+        const lng = Number(rawLng);
+        const hasLat = rawLat !== null && rawLat !== undefined && Number.isFinite(lat) && lat !== 0;
+        const hasLng = rawLng !== null && rawLng !== undefined && Number.isFinite(lng) && lng !== 0;
+        const nestedOk = !(v?.lastLocation) || (
+          Number(v?.lastLocation?.lat || 0) !== 0 && Number(v?.lastLocation?.lng || 0) !== 0
+        );
+        if (!hasLat || !hasLng || !nestedOk) return;
+
+        const unit = String(v?.unit_number || v?.name || v?.vehicleName || 'Unit');
+        const locObj = v?.lastLocation;
+        const locText = typeof locObj === 'string'
+          ? locObj
+          : String(locObj?.address || v?.location_text || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        const marker = L.marker([lat, lng])
+          .bindPopup('<b>' + escapeHtml(unit) + '</b><br>' + escapeHtml(locText || ''))
+          .addTo(safetyLiveMapLayer);
         markers.push(marker);
+        gpsCount += 1;
       });
+
       if (markers.length > 0) {
-        try { safetyLiveMap.fitBounds(markers.map(m => m.getLatLng())); } catch (_) {}
+        const group = L.featureGroup(markers);
+        try {
+          safetyLiveMap.fitBounds(group.getBounds().pad(0.1));
+        } catch (_) {}
       } else {
         safetyLiveMap.setView([27.5036, -99.5075], 10);
       }
-      if (meta) meta.textContent = `${withGps.length} / ${veh.length} vehicles with GPS · refresh 60s`;
+
+      if (meta) meta.textContent = `${gpsCount} / ${merged.length} vehicles with GPS · refresh 60s`;
       setTimeout(() => { try { safetyLiveMap.invalidateSize(true); } catch (_) {} }, 200);
     }
 
@@ -16569,94 +16620,191 @@
       return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
     }
 
-    async function driversFetchLeaveRequests() {
+    function __isTodayDate(value) {
+      const d = new Date(String(value || ''));
+      if (Number.isNaN(d.getTime())) return false;
+      return d.toDateString() === new Date().toDateString();
+    }
+
+    async function __fetchLeaveRows() {
       try {
         const d = await j('/api/drivers/leave-request');
         if (Array.isArray(d?.requests)) return d.requests;
+        if (Array.isArray(d?.leaveRequests)) return d.leaveRequests;
       } catch (_) {}
       try {
         const d2 = await j('/api/drivers/leave-requests');
         if (Array.isArray(d2?.requests)) return d2.requests;
+        if (Array.isArray(d2?.leaveRequests)) return d2.leaveRequests;
       } catch (_) {}
       return [];
     }
 
-    async function driversApproveLeaveRequest(id) {
-      const rid = encodeURIComponent(String(id));
+    async function loadFuelSubmissionsToday() {
+      let rows = [];
+      try {
+        const d = await j('/api/fuel/expenses');
+        rows = (Array.isArray(d?.expenses) ? d.expenses : []).filter((e) => __isTodayDate(e?.submitted_at || e?.created_at));
+      } catch (_) {
+        rows = [];
+      }
+
+      const tbody = document.getElementById('fuelSubmissionsToday');
+      if (!tbody) return;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="padding:12px;color:#9ca3af">No fuel submissions today</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map((e) => {
+        const posted = !!e?.qbo_posted;
+        const qboBadge = posted
+          ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-size:11px">Posted</span>'
+          : '<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:4px;font-size:11px">Pending</span>';
+        const id = String(e?.id || '').replace(/'/g, "\'");
+        const action = posted
+          ? ''
+          : '<button onclick="postFuelToQbo('\'' + id + '\'')" style="padding:4px 10px;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">Post to QBO</button>';
+        return '<tr style="border-bottom:1px solid #e5e7eb">' +
+          '<td style="padding:8px">' + escapeHtml(String(e?.unit_number || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(e?.driver_name || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(e?.fuel_type || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(e?.gallons ?? '—')) + '</td>' +
+          '<td style="padding:8px">$' + escapeHtml(String(e?.total_amount || '0')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(e?.station_name || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(e?.load_number || '—')) + '</td>' +
+          '<td style="padding:8px">' + qboBadge + '</td>' +
+          '<td style="padding:8px">' + action + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function postFuelToQbo(id) {
       let ok = false;
       try {
-        await j('/api/drivers/leave-request/approve/' + rid, { method: 'POST' });
-        ok = true;
-      } catch (_) {
+        const d = await j('/api/fuel/expenses/' + encodeURIComponent(String(id)) + '/post-qbo', { method: 'POST' });
+        ok = !!(d?.ok || d?.success || d?.posted);
+      } catch (_) {}
+      if (!ok) {
         try {
-          await j('/api/drivers/leave-request/' + rid + '/approve', { method: 'POST' });
+          await j('/api/fuel/post-to-qbo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expense_id: id })
+          });
           ok = true;
         } catch (_) {}
       }
-      erpShowToast(ok ? 'Leave approved' : 'Could not approve leave', ok ? 'success' : 'error');
-      await refreshDriversDashboardPanels();
+      if (ok) {
+        erpShowToast('Posted to QuickBooks');
+      } else {
+        erpShowToast('Error posting to QBO', 'error');
+      }
+      await Promise.all([loadFuelSubmissionsToday(), refreshDriversDashboardPanels()]);
     }
 
-    async function driversDenyLeaveRequest(id) {
-      const rid = encodeURIComponent(String(id));
+    async function approveLeave(id) {
       let ok = false;
       try {
-        await j('/api/drivers/leave-request/deny/' + rid, { method: 'POST' });
-        ok = true;
-      } catch (_) {
+        const d = await j('/api/drivers/leave-request/approve/' + encodeURIComponent(String(id)), { method: 'POST' });
+        ok = !!(d?.ok || d?.success || d?.approved);
+      } catch (_) {}
+      if (!ok) {
         try {
-          await j('/api/drivers/leave-request/' + rid + '/deny', { method: 'POST' });
+          await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/approve', { method: 'POST' });
           ok = true;
         } catch (_) {}
       }
-      erpShowToast(ok ? 'Leave denied' : 'Could not deny leave', ok ? 'success' : 'error');
-      await refreshDriversDashboardPanels();
+      if (ok) erpShowToast('Leave approved');
+      else erpShowToast('Error', 'error');
+      await Promise.all([loadPendingLeaveRequests(), refreshDriversDashboardPanels()]);
     }
 
-    async function driversApproveAllLeaveRequests() {
-      const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows : [];
-      const pending = rows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
-      for (const r of pending) {
-        try {
-          await j('/api/drivers/leave-request/approve/' + encodeURIComponent(String(r.id)), { method: 'POST' });
-        } catch (_) {
-          try {
-            await j('/api/drivers/leave-request/' + encodeURIComponent(String(r.id)) + '/approve', { method: 'POST' });
-          } catch (_) {}
-        }
-      }
-      erpShowToast('Leave approved', 'success');
-      await refreshDriversDashboardPanels();
-    }
-
-    async function driversDenyAllLeaveRequests() {
-      const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows : [];
-      const pending = rows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
-      for (const r of pending) {
-        try {
-          await j('/api/drivers/leave-request/deny/' + encodeURIComponent(String(r.id)), { method: 'POST' });
-        } catch (_) {
-          try {
-            await j('/api/drivers/leave-request/' + encodeURIComponent(String(r.id)) + '/deny', { method: 'POST' });
-          } catch (_) {}
-        }
-      }
-      erpShowToast('Leave denied', 'success');
-      await refreshDriversDashboardPanels();
-    }
-
-    async function driversPostFuelToQbo(expenseId) {
+    async function denyLeave(id) {
+      let ok = false;
       try {
-        await j('/api/fuel/post-to-qbo', {
+        const d = await j('/api/drivers/leave-request/deny/' + encodeURIComponent(String(id)), { method: 'POST' });
+        ok = !!(d?.ok || d?.success || d?.denied);
+      } catch (_) {}
+      if (!ok) {
+        try {
+          await j('/api/drivers/leave-request/' + encodeURIComponent(String(id)) + '/deny', { method: 'POST' });
+          ok = true;
+        } catch (_) {}
+      }
+      if (ok) erpShowToast('Leave denied');
+      else erpShowToast('Error', 'error');
+      await Promise.all([loadPendingLeaveRequests(), refreshDriversDashboardPanels()]);
+    }
+
+    async function bulkApproveLeave() {
+      let ok = false;
+      try {
+        const d = await j('/api/drivers/leave-requests/bulk-approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ expense_id: expenseId })
+          body: JSON.stringify({})
         });
-        erpShowToast('Posted to QuickBooks', 'success');
-      } catch (_) {
-        erpShowToast('Could not post to QuickBooks', 'error');
+        ok = !!(d?.ok || d?.success || d?.approved);
+      } catch (_) {}
+      if (!ok) {
+        const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows : [];
+        const pending = rows.filter((r) => String(r?.status || '').toLowerCase() === 'pending');
+        for (const r of pending) {
+          try { await j('/api/drivers/leave-request/approve/' + encodeURIComponent(String(r.id)), { method: 'POST' }); } catch (_) {}
+        }
+        ok = true;
       }
-      await refreshDriversDashboardPanels();
+      if (ok) erpShowToast('All approved');
+      await Promise.all([loadPendingLeaveRequests(), refreshDriversDashboardPanels()]);
+    }
+
+    async function bulkDenyLeave() {
+      let ok = false;
+      try {
+        const d = await j('/api/drivers/leave-requests/bulk-deny', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        ok = !!(d?.ok || d?.success || d?.denied);
+      } catch (_) {}
+      if (!ok) {
+        const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows : [];
+        const pending = rows.filter((r) => String(r?.status || '').toLowerCase() === 'pending');
+        for (const r of pending) {
+          try { await j('/api/drivers/leave-request/deny/' + encodeURIComponent(String(r.id)), { method: 'POST' }); } catch (_) {}
+        }
+        ok = true;
+      }
+      if (ok) erpShowToast('All denied');
+      await Promise.all([loadPendingLeaveRequests(), refreshDriversDashboardPanels()]);
+    }
+
+    async function loadPendingLeaveRequests() {
+      const rowsAll = await __fetchLeaveRows();
+      const rows = rowsAll.filter((r) => String(r?.status || '').toLowerCase() === 'pending');
+      const tbody = document.getElementById('pendingLeaveRequests');
+      if (!tbody) return;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:12px;color:#9ca3af">No pending requests</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map((r) => {
+        const rid = String(r?.id || '').replace(/'/g, "\'");
+        return '<tr style="border-bottom:1px solid #e5e7eb">' +
+          '<td style="padding:8px">' + escapeHtml(String(r?.driver_name || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(r?.unit_number || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(r?.start_date || '')) + ' → ' + escapeHtml(String(r?.end_date || '')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(r?.leave_type || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(String(r?.note || r?.notes || '—')) + '</td>' +
+          '<td style="padding:8px">' + escapeHtml(r?.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '—') + '</td>' +
+          '<td style="padding:8px;display:flex;gap:6px">' +
+            '<button onclick="approveLeave('\'' + rid + '\'')" style="padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">✅ Approve</button>' +
+            '<button onclick="denyLeave('\'' + rid + '\'')" style="padding:4px 10px;background:#dc2626;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">❌ Deny</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
     }
 
     async function refreshDriversDashboardPanels() {
@@ -16665,23 +16813,24 @@
       let fuelRows = [];
       let damageRows = [];
       try {
-        const [leaveRes, fuelRes, dmgRes] = await Promise.all([
-          driversFetchLeaveRequests().then((rows) => ({ requests: rows })).catch(() => ({ requests: [] })),
+        const [leave, fuelRes, dmgRes] = await Promise.all([
+          __fetchLeaveRows(),
           j('/api/fuel/expenses').catch(() => ({ expenses: [] })),
           j('/api/damage/reports').catch(() => ({ reports: [] }))
         ]);
-        leaveRows = Array.isArray(leaveRes?.requests) ? leaveRes.requests : [];
+        leaveRows = Array.isArray(leave) ? leave : [];
         fuelRows = Array.isArray(fuelRes?.expenses) ? fuelRes.expenses : [];
         damageRows = Array.isArray(dmgRes?.reports) ? dmgRes.reports : [];
       } catch (_) {}
 
       window.__driversLeaveRows = leaveRows.slice();
       window.__driversDamageReports = damageRows.slice();
-      const pendingLeave = leaveRows.filter((r) => String(r.status || 'pending').toLowerCase() === 'pending');
+
+      const pendingLeave = leaveRows.filter((r) => String(r?.status || '').toLowerCase() === 'pending');
       const resolvedIds = driversResolvedDamageIds();
       const openDamage = damageRows.filter((r) => String(r.status || 'new').toLowerCase() !== 'resolved' && !resolvedIds.has(String(r.id || '')));
       const unackDamage = damageRows.filter((r) => isDamageReportUnacknowledged(r.status) && !resolvedIds.has(String(r.id || '')));
-      const fuelToday = fuelRows.filter((r) => isTodayIso(r.submitted_at));
+      const fuelToday = fuelRows.filter((r) => __isTodayDate(r?.submitted_at || r?.created_at));
 
       const k1 = document.getElementById('driversKpiPendingLeave');
       const k2 = document.getElementById('driversKpiOpenDamage');
@@ -16715,59 +16864,15 @@
         }
       }
 
-      const leaveBody = document.getElementById('driversLeaveRequestsBody');
-      if (leaveBody) {
-        if (!pendingLeave.length) {
-          leaveBody.innerHTML = '<tr><td colspan="7" class="muted">No pending leave requests found.</td></tr>';
-        } else {
-          leaveBody.innerHTML = pendingLeave.map((r) => {
-            const id = String(r.id || '').replace(/'/g, "\'");
-            return `
-            <tr>
-              <td>${escapeHtml(String(r.driver_name || '—'))}</td>
-              <td>${escapeHtml(String(r.unit_number || '—'))}</td>
-              <td>${escapeHtml(shortDate(r.start_date))} → ${escapeHtml(shortDate(r.end_date))}</td>
-              <td>${escapeHtml(String(r.leave_type || '—'))}</td>
-              <td title="${escapeHtml(String(r.notes || r.note || ''))}">${escapeHtml(truncateDamageDescription(String(r.notes || r.note || ''), 60))}</td>
-              <td>${escapeHtml(formatDamageSubmittedAt(r.created_at || r.submitted_at))}</td>
-              <td>
-                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <button type="button" class="btn btn--small" onclick="driversApproveLeaveRequest('${id}')">✅ Approve</button>
-                  <button type="button" class="btn btn--small ghost" onclick="driversDenyLeaveRequest('${id}')">❌ Deny</button>
-                </div>
-              </td>
-            </tr>`;
-          }).join('');
-        }
-      }
-
-      const fuelBody = document.getElementById('driversFuelTodayBody');
-      if (fuelBody) {
-        if (!fuelToday.length) {
-          fuelBody.innerHTML = '<tr><td colspan="9" class="muted">No fuel submissions today.</td></tr>';
-        } else {
-          fuelBody.innerHTML = fuelToday.map((r) => {
-            const posted = !!r.qbo_posted;
-            const badge = posted
-              ? '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#14532d;color:#bbf7d0">Posted</span>'
-              : '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#78350f;color:#fde68a">Pending</span>';
-            const id = String(r.id || '').replace(/'/g, "\'");
-            return `
-              <tr>
-                <td>${escapeHtml(String(r.unit_number || '—'))}</td>
-                <td>${escapeHtml(String(r.driver_name || '—'))}</td>
-                <td>${escapeHtml(String(r.fuel_type || '—'))}</td>
-                <td>${escapeHtml(String(r.gallons ?? '—'))}</td>
-                <td>${escapeHtml(Number(r.total_amount || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' }))}</td>
-                <td>${escapeHtml(String(r.station_name || '—'))}</td>
-                <td>${escapeHtml(String(r.load_number || '—'))}</td>
-                <td>${badge}</td>
-                <td>${posted ? '—' : `<button type="button" class="btn btn--small" onclick="driversPostFuelToQbo('${id}')">Post to QBO</button>`}</td>
-              </tr>`;
-          }).join('');
-        }
-      }
+      await Promise.all([loadFuelSubmissionsToday(), loadPendingLeaveRequests()]);
     }
+
+    // Backward-compatible aliases
+    async function driversPostFuelToQbo(expenseId) { return postFuelToQbo(expenseId); }
+    async function driversApproveLeaveRequest(id) { return approveLeave(id); }
+    async function driversDenyLeaveRequest(id) { return denyLeave(id); }
+    async function driversApproveAllLeaveRequests() { return bulkApproveLeave(); }
+    async function driversDenyAllLeaveRequests() { return bulkDenyLeave(); }
 
 
     // Dispatch board removed (maintenance/safety/diesel focus).
