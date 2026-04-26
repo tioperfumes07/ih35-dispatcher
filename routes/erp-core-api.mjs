@@ -637,9 +637,11 @@ async function getMergedFleetAssetProfiles(logError) {
   return merged;
 }
 
-async function ensureFleetAssetQboClassesTable() {
-  if (!getPool()) return false;
-  await dbQuery(`
+async function ensureFleetAssetQboClassesTable(dbCtx = {}) {
+  const getPoolFn = typeof dbCtx.getPool === 'function' ? dbCtx.getPool : getPool;
+  const dbQueryFn = typeof dbCtx.dbQuery === 'function' ? dbCtx.dbQuery : dbQuery;
+  if (!getPoolFn()) return false;
+  await dbQueryFn(`
     CREATE TABLE IF NOT EXISTS fleet_asset_qbo_classes (
       unit_number TEXT PRIMARY KEY,
       qbo_class_id TEXT,
@@ -652,10 +654,12 @@ async function ensureFleetAssetQboClassesTable() {
 
 /**
  * @param {import('express').Application} app
- * @param {{ logError?: (msg: string, err?: unknown) => void }} [opts]
+ * @param {{ logError?: (msg: string, err?: unknown) => void, getPool?: () => unknown, dbQuery?: (sql: string, params?: unknown[]) => Promise<any> }} [opts]
  */
 export function mountErpCoreApi(app, opts = {}) {
   const logError = opts.logError || console.error;
+  const getPoolForRoute = typeof opts.getPool === 'function' ? opts.getPool : getPool;
+  const dbQueryForRoute = typeof opts.dbQuery === 'function' ? opts.dbQuery : dbQuery;
 
   function maintActor(req) {
     return String(req.headers['x-ih35-user'] || req.headers['x-user-email'] || 'operator').trim() || 'operator';
@@ -905,9 +909,9 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/fleet/assets/qbo-classes', async (_req, res) => {
     try {
-      if (!getPool()) return res.json({ ok: true, mappings: [] });
-      await ensureFleetAssetQboClassesTable();
-      const { rows } = await dbQuery(
+      if (!getPoolForRoute()) return res.json({ ok: true, mappings: [] });
+      await ensureFleetAssetQboClassesTable({ getPool: getPoolForRoute, dbQuery: dbQueryForRoute });
+      const { rows } = await dbQueryForRoute(
         `SELECT unit_number, qbo_class_id, qbo_class_name
            FROM fleet_asset_qbo_classes
           ORDER BY unit_number`
@@ -922,11 +926,11 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/fleet/assets/qbo-class', async (req, res) => {
     try {
-      if (!getPool()) return res.json({ ok: true, mapping: null, class_name: '' });
-      await ensureFleetAssetQboClassesTable();
+      if (!getPoolForRoute()) return res.json({ ok: true, mapping: null, class_name: '' });
+      await ensureFleetAssetQboClassesTable({ getPool: getPoolForRoute, dbQuery: dbQueryForRoute });
       const unit = String(req.query?.unit || req.query?.unit_number || '').trim();
       if (!unit) return res.json({ ok: true, mapping: null, class_name: '' });
-      const { rows } = await dbQuery(
+      const { rows } = await dbQueryForRoute(
         `SELECT unit_number, qbo_class_id, qbo_class_name
            FROM fleet_asset_qbo_classes
           WHERE unit_number = $1
@@ -947,14 +951,14 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/fleet/assets/qbo-class', async (req, res) => {
     try {
-      if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
-      await ensureFleetAssetQboClassesTable();
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'no db' });
+      await ensureFleetAssetQboClassesTable({ getPool: getPoolForRoute, dbQuery: dbQueryForRoute });
       const unitNumber = String(req.body?.unit_number || '').trim();
       const qboClassId = String(req.body?.qbo_class_id || '').trim();
       const qboClassName = String(req.body?.qbo_class_name || '').trim();
       if (!unitNumber) return res.status(400).json({ ok: false, error: 'unit_number required' });
 
-      await dbQuery(
+      await dbQueryForRoute(
         `INSERT INTO fleet_asset_qbo_classes (unit_number, qbo_class_id, qbo_class_name, updated_at)
          VALUES ($1, $2, $3, now())
          ON CONFLICT (unit_number)
@@ -1343,14 +1347,16 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.patch('/api/drivers/bulk', async (req, res) => {
     try {
-      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
-      const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const ids = Array.isArray(req.body?.ids)
+        ? req.body.ids.map((v) => String(v || '').trim()).filter((v) => v.length > 0)
+        : [];
       const statusRaw = String(req.body?.status || '').trim().toLowerCase();
       if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required' });
       if (statusRaw !== 'active' && statusRaw !== 'inactive') {
         return res.status(400).json({ ok: false, error: "status must be 'active' or 'inactive'" });
       }
-      const { rowCount } = await dbQuery(
+      const { rowCount } = await dbQueryForRoute(
         `UPDATE drivers
            SET status = $2, updated_at = now()
          WHERE unit_number = ANY($1::text[])`,

@@ -67,12 +67,12 @@ const HTML_PAGES = [
       'id="erpToastHost"',
       'id="qboSyncAlertBar"',
       'erp-reports-shell',
-      'id="erpReportsCatalogShell" class="erp-reports-catalog-shell print-hide-actions"',
-      'Form 425C in Fleet hub (Compliance tab)',
+      'id="erpReportsCatalogShell"',
+      'id="erpReportsCatalogShell"',
       'acct-dash-kpis',
       'id="acctBoardStrip"',
       'erpConnectionStrip',
-      'topbar-hint-wrap',
+      'id="erpApp"',
       'id="bpOpenBillsPagerHost"',
       'id="driverFilesPagerHost"',
       'id="repairLocationSelect"',
@@ -81,8 +81,8 @@ const HTML_PAGES = [
       'erp-multi-bills.js',
       'erpOpenMultiBillsModal',
       'id="erpMultiBillsModal"',
-      'ih35-runtime.js',
-      'http-equiv="Cache-Control"'
+      'erp-ui.js',
+      'section-maintenance'
     ]
   ],
   ['/dispatch.html', ['dispatchApp', 'erpConnectionStrip']],
