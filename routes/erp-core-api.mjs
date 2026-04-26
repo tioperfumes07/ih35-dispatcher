@@ -1167,12 +1167,12 @@ export function mountErpCoreApi(app, opts = {}) {
           unit,
           String(t.asset_type || 'Trailer').trim(),
           String(t.status || 'Active').trim(),
+          String(t.make_override || t.make || '').trim() || null,
+          String(t.model_override || t.model || '').trim() || null,
           parseInt(String(t.year_override || t.year || 0).trim()) || null,
-          String(t.make || '').trim(),
-          String(t.model || '').trim(),
-          String(t.vin || '').trim(),
-          String(t.licensePlate || t.license_plate || '').trim(),
-          String(t.notes || '').trim(),
+          String(t.vin_override || t.vin || '').trim() || null,
+          String(t.license_plate_override || t.licensePlate || '').trim() || null,
+          String(t.notes || '').trim() || null,
         ]
       );
       imported++;
