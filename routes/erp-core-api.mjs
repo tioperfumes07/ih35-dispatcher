@@ -861,6 +861,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       let vehicles = [];
       let assignmentList = [];
+      let hosRows = [];
       if (token) {
         try {
           const payload = await getVehicles(token);
@@ -878,6 +879,8 @@ export function mountErpCoreApi(app, opts = {}) {
               ? assignments
               : []
         )).catch(() => []);
+        const hosData = await samsaraGet('/fleet/hos/clocks', token, {}).catch(() => ({ data: [] }));
+        hosRows = Array.isArray(hosData?.data) ? hosData.data : [];
       }
       if (!vehicles.length && token) {
         await new Promise((r) => setTimeout(r, 2000));
@@ -896,9 +899,29 @@ export function mountErpCoreApi(app, opts = {}) {
         vehicles = Array.isArray(erp.vehicles) ? erp.vehicles : [];
       }
 
+      const hosByUnit = new Map();
+      hosRows.forEach((row) => {
+        const unitName = String(row?.currentVehicle?.name || '').trim();
+        const driverName = String(row?.driver?.name || '').trim();
+        if (!unitName || !driverName) return;
+        hosByUnit.set(unitName, {
+          driverName,
+          driverStatus: String(row?.currentDutyStatus?.hosStatusType || '').trim().toLowerCase() || 'unknown',
+        });
+      });
+
       const vehiclesWithAssignments = vehicles.map((vehicle) => {
-        const vehicleSamsaraId = String(vehicle?.samsara_id || vehicle?.samsaraId || vehicle?.id || '').trim();
         const unitNeedle = String(vehicle?.unit_number || vehicle?.unitNumber || vehicle?.name || '').trim();
+        const hosMatch = hosByUnit.get(unitNeedle);
+        if (hosMatch?.driverName) {
+          return {
+            ...vehicle,
+            currentDriver: hosMatch.driverName,
+            currentDriverStatus: hosMatch.driverStatus || 'unknown',
+          };
+        }
+
+        const vehicleSamsaraId = String(vehicle?.samsara_id || vehicle?.samsaraId || vehicle?.id || '').trim();
         const match = assignmentList.find((a) => {
           const assignmentVehicleId = String(a?.vehicle?.id || '').trim();
           const assignmentVehicleName = String(a?.vehicle?.name || '').trim();
@@ -935,6 +958,7 @@ export function mountErpCoreApi(app, opts = {}) {
 
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       let assignList = [];
+      let hosRows = [];
       if (token) {
         const assignments = await getDriverVehicleAssignments(token, {}).catch(() => ({ data: [] }));
         assignList = Array.isArray(assignments?.data)
@@ -942,9 +966,36 @@ export function mountErpCoreApi(app, opts = {}) {
           : Array.isArray(assignments)
             ? assignments
             : [];
+
+        const hosData = await samsaraGet('/fleet/hos/clocks', token, {}).catch(() => ({ data: [] }));
+        hosRows = Array.isArray(hosData?.data) ? hosData.data : [];
       }
 
+      const hosByUnit = new Map();
+      hosRows.forEach((row) => {
+        const unitName = String(row?.currentVehicle?.name || '').trim();
+        const driverName = String(row?.driver?.name || '').trim();
+        if (!unitName || !driverName) return;
+        hosByUnit.set(unitName, {
+          driverName,
+          driverStatus: String(row?.currentDutyStatus?.hosStatusType || '').trim().toLowerCase() || 'unknown',
+        });
+      });
+
       const assetsWithAssignments = assets.map((asset) => {
+        const unitName = String(asset?.unit_number || '').trim();
+        const hosMatch = hosByUnit.get(unitName);
+        if (hosMatch?.driverName) {
+          return {
+            ...asset,
+            current_driver_name: hosMatch.driverName,
+            currentDriverName: hosMatch.driverName,
+            currentDriver: hosMatch.driverName,
+            currentDriverStatus: hosMatch.driverStatus || 'unknown',
+            driver_name: hosMatch.driverName,
+          };
+        }
+
         const match = assignList.find((a) =>
           String(a?.vehicle?.id || '') === String(asset?.samsara_id || '')
         );

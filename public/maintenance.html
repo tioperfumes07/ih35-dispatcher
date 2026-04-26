@@ -10818,7 +10818,11 @@
         body.innerHTML = trucks.map(r => {
           const unit = String(r.unit_number || '');
           const svc = byUnit.get(unit) || { d: '', due: '' };
-          const currentDriver = String(r.currentDriver || r.currentDriverName || r.current_driver_name || r.driver_name || '').trim() || '—';
+          const currentDriverName = String(r.currentDriver || r.currentDriverName || r.current_driver_name || r.driver_name || '').trim();
+          const currentDriverStatus = String(r.currentDriverStatus || '').trim();
+          const currentDriver = currentDriverName
+            ? (currentDriverStatus ? `${currentDriverName} (${currentDriverStatus})` : currentDriverName)
+            : '—';
           return `<tr data-unit="${escapeHtml(unit)}" onclick="selectFleetUnitForClass(this.getAttribute('data-unit') || '')">
             <td><strong>${escapeHtml(unit)}</strong></td>
             <td>${escapeHtml(currentDriver)}</td>
@@ -10977,8 +10981,10 @@
           const locText = typeof locObj === 'string'
             ? locObj
             : String(locObj?.address || v?.location_text || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          const currentDriver = String(v?.currentDriver || v?.currentDriverName || v?.current_driver_name || v?.driver_name || '').trim() || 'Unassigned';
+          const status = String(v?.currentDriverStatus || v?.currentDutyStatus?.hosStatusType || v?.currentDutyStatus || 'unknown').trim() || 'unknown';
           const marker = L.marker([lat, lng])
-            .bindPopup('<b>' + escapeHtml(unit) + '</b><br>' + escapeHtml(locText || ''))
+            .bindPopup('<b>' + escapeHtml(unit) + '</b><br>Driver: ' + escapeHtml(currentDriver) + '<br>Status: ' + escapeHtml(status) + '<br>' + escapeHtml(locText || ''))
             .addTo(safetyLiveMapLayer);
           markers.push(marker);
           gpsCount += 1;
@@ -10988,8 +10994,10 @@
       if (!markers.length) {
         merged.forEach((v) => {
           const unit = String(v?.unit_number || v?.name || v?.vehicleName || 'Unit');
+          const currentDriver = String(v?.currentDriver || v?.currentDriverName || v?.current_driver_name || v?.driver_name || '').trim() || 'Unassigned';
+          const status = String(v?.currentDriverStatus || v?.currentDutyStatus?.hosStatusType || v?.currentDutyStatus || 'unknown').trim() || 'unknown';
           const marker = L.marker([27.5036, -99.5075])
-            .bindPopup('<b>' + escapeHtml(unit) + '</b><br>GPS data not available — home base')
+            .bindPopup('<b>' + escapeHtml(unit) + '</b><br>Driver: ' + escapeHtml(currentDriver) + '<br>Status: ' + escapeHtml(status) + '<br>GPS data not available — home base')
             .addTo(safetyLiveMapLayer);
           markers.push(marker);
         });

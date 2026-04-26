@@ -75,6 +75,14 @@ function statusLabel(value: string): string {
   return STATUS_OPTIONS.find((o) => o.value === value)?.label || value
 }
 
+function normalizeDutyStatus(raw: unknown): 'driving' | 'onduty' | 'offduty' | 'unknown' {
+  const v = String(raw || '').replace(/[\s_\-]+/g, '').trim().toLowerCase()
+  if (v === 'driving') return 'driving'
+  if (v === 'onduty' || v === 'on') return 'onduty'
+  if (v === 'offduty' || v === 'off') return 'offduty'
+  return 'unknown'
+}
+
 function normalizeStatusForFilter(value: string | null | undefined): string {
   const raw = String(value || '').trim().toLowerCase()
   if (raw === 'active') return 'Active'
@@ -439,10 +447,44 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
       {
         id: 'currentDriver',
         label: 'Current Driver',
-        width: 130,
+        width: 170,
         render: (r) => {
-          const driver = String((r as any).currentDriver || (r as any).currentDriverName || (r as any).current_driver_name || '').trim()
-          return driver || '—'
+          const row = r as any
+          const driver = String(row.currentDriver || row.currentDriverName || row.current_driver_name || '').trim()
+          if (!driver) return '—'
+
+          const duty = normalizeDutyStatus(row.currentDriverStatus)
+          const badgeMeta = duty === 'driving'
+            ? { text: '🟢 driving', bg: 'rgba(34,197,94,0.18)', color: '#bbf7d0', border: 'rgba(34,197,94,0.35)' }
+            : duty === 'onduty'
+              ? { text: '🟡 onDuty', bg: 'rgba(234,179,8,0.18)', color: '#fef08a', border: 'rgba(234,179,8,0.35)' }
+              : duty === 'offduty'
+                ? { text: '⚪ offDuty', bg: 'rgba(148,163,184,0.16)', color: '#e2e8f0', border: 'rgba(148,163,184,0.35)' }
+                : null
+
+          return (
+            <div style={{ display: 'grid', gap: 4 }}>
+              <span>{driver}</span>
+              {badgeMeta ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    width: 'fit-content',
+                    padding: '1px 7px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    lineHeight: 1.4,
+                    background: badgeMeta.bg,
+                    color: badgeMeta.color,
+                    border: `1px solid ${badgeMeta.border}`,
+                  }}
+                >
+                  {badgeMeta.text}
+                </span>
+              ) : null}
+            </div>
+          )
         },
       },
       { id: 'make', label: 'Make', width: 80, render: (r) => String((r as any).make || (r as any).make_override || '').trim() || '—' },

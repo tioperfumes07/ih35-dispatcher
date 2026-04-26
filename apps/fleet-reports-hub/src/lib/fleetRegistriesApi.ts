@@ -70,6 +70,7 @@ export type AssetRow = {
   currentDriverName?: string | null
   current_driver_name?: string | null
   currentDriverId?: string | null
+  currentDriverStatus?: string | null
   samsara_synced_at: string | null
   created_at: string
   updated_at: string
@@ -96,6 +97,7 @@ export type FleetAssetProfile = {
   currentDriverName?: string | null
   current_driver_name?: string | null
   currentDriverId?: string | null
+  currentDriverStatus?: string | null
   updated_at: string | null
 }
 
