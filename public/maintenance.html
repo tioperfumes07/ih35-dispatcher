@@ -1314,7 +1314,7 @@
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
-            <button type="button" class="btn btn--small maint-kpi-strip__dash erp-home-clean-hide" onclick="openSectionByName('dashboard')">Full overview</button>
+            
           </div>
         </div>
         <div class="maint-page-shell">
@@ -1331,13 +1331,7 @@
                 
               </div>
             </div>
-            <div class="maint-action-strip__fleet">
-              <span class="maint-fleet-inline__label">Fleet</span>
-              <span id="maintActionFleetPills" class="maint-action-strip__pills" style="display:inline-flex;flex-wrap:nowrap;gap:6px;align-items:center"></span>
-            </div>
-            <div id="fleetByTypeContainer" class="maint-section-card" style="margin-top:8px;overflow:auto">
-              <p style="padding:16px;color:#888;margin:0">Loading fleet...</p>
-            </div>
+
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
             <button type="button" class="maint-nav-tab" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
@@ -12758,6 +12752,7 @@
         erpInitTwoStepUnitPickers();
         erpEnsureModalCancelButtons();
         erpUpdateHomeKpis();
+        refreshMaintenanceHomeLite();
         erpEnsureUnitClassBadges();
       } catch (e) {
         console.error(e);
@@ -16087,12 +16082,18 @@
       refreshDriversDashboardPanels();
     }
 
+    function refreshMaintenanceHomeLite() {
+      renderDashboardHome();
+    }
+
     function renderDashboardHome() {
       const assigned = assignedVehicleNames();
       const past = dashboard.filter(x => x.status === 'past due').length;
       const nVendors = cacheVendors().length;
       const byCat = vehiclesByCategory();
-      document.getElementById('dashTrackedAssets').textContent = vehicles.length;
+      const boardVehCount = Array.isArray(board?.vehicles) ? board.vehicles.length : 0;
+      const trackedAssetsCount = Math.max(vehicles.length, boardVehCount);
+      document.getElementById('dashTrackedAssets').textContent = trackedAssetsCount;
       const dashSub = document.getElementById('dashTrackedAssetsSub');
       if (dashSub) {
         dashSub.textContent = [
@@ -16116,7 +16117,7 @@
       const mAs = document.getElementById('maintDashAssignedAssets');
       const mPd = document.getElementById('maintDashPastDue');
       const mQv = document.getElementById('maintDashQboVendors');
-      if (mTa) mTa.textContent = String(vehicles.length);
+      if (mTa) mTa.textContent = String(trackedAssetsCount);
       if (mAs) mAs.textContent = String(assigned.size);
       if (mPd) mPd.textContent = String(past);
       if (mQv) mQv.textContent = String(nVendors);
@@ -26187,10 +26188,12 @@
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         loadWorkspaceKpis();
+        refreshMaintenanceHomeLite();
         hydrateVendorListDatalist();
       }, { once: true });
     } else {
       loadWorkspaceKpis();
+      refreshMaintenanceHomeLite();
       hydrateVendorListDatalist();
     }
     loadAll();
