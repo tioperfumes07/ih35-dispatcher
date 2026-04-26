@@ -1145,49 +1145,46 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });
       const trailers = Array.isArray(req.body?.trailers) ? req.body.trailers : [];
       if (!trailers.length) return res.json({ ok: true, imported: 0, updated: 0 });
-      await dbQuery(`
-        ALTER TABLE fleet_assets 
-        ADD CONSTRAINT IF NOT EXISTS fleet_assets_unit_number_key 
-        UNIQUE (unit_number)
-      `).catch(() => {});
       let imported = 0;
+      let updated = 0;
       for (const t of trailers) {
         const unit = String(t.unit_number || '').trim();
         if (!unit) continue;
-        await dbQuery(
-          `INSERT INTO fleet_assets
-          (unit_number, asset_type, status, make_override, model_override, year_override, vin_override, license_plate_override, notes, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
-         ON CONFLICT (unit_number) DO UPDATE SET
-          asset_type=EXCLUDED.asset_type,
-          status=EXCLUDED.status,
-          make_override=EXCLUDED.make_override,
-          model_override=EXCLUDED.model_override,
-          year_override=EXCLUDED.year_override,
-          vin_override=EXCLUDED.vin_override,
-          license_plate_override=EXCLUDED.license_plate_override,
-          notes=EXCLUDED.notes,
-          updated_at=now()`,
-        [
-          unit,
-          String(t.asset_type || 'Trailer').trim(),
-          String(t.status || 'Active').trim(),
-          String(t.make_override || t.make || '').trim() || null,
-          String(t.model_override || t.model || '').trim() || null,
-          parseInt(String(t.year_override || t.year || '0').trim()) || null,
-          String(t.vin_override || t.vin || '').trim() || null,
-          String(t.license_plate_override || t.licensePlate || '').trim() || null,
-          String(t.notes || '').trim() || null,
-        ]
-      );
-      imported++;
+
+        const assetType = String(t.asset_type || 'Trailer').trim();
+        const status = String(t.status || 'Active').trim();
+        const make = String(t.make_override || t.make || '').trim() || null;
+        const model = String(t.model_override || t.model || '').trim() || null;
+        const year = parseInt(String(t.year_override || t.year || '0').trim()) || null;
+        const vin = String(t.vin_override || t.vin || '').trim() || null;
+        const plate = String(t.license_plate_override || t.licensePlate || t.license_plate || '').trim() || null;
+        const notes = String(t.notes || '').trim() || null;
+
+        const existing = await dbQuery(
+          'SELECT id FROM fleet_assets WHERE unit_number=$1 LIMIT 1',
+          [unit]
+        );
+
+        if (existing.rows.length > 0) {
+          await dbQuery(
+            'UPDATE fleet_assets SET asset_type=$2, status=$3, make_override=$4, model_override=$5, year_override=$6, vin_override=$7, license_plate_override=$8, notes=$9, updated_at=now() WHERE unit_number=$1',
+            [unit, assetType, status, make, model, year, vin, plate, notes]
+          );
+          updated++;
+        } else {
+          await dbQuery(
+            'INSERT INTO fleet_assets (unit_number, asset_type, status, make_override, model_override, year_override, vin_override, license_plate_override, notes, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())',
+            [unit, assetType, status, make, model, year, vin, plate, notes]
+          );
+          imported++;
+        }
+      }
+      return res.json({ ok: true, imported, updated });
+    } catch (e) {
+      logError('POST /api/fleet/assets/import', e);
+      return res.status(500).json({ ok: false, error: e.message });
     }
-    return res.json({ ok: true, imported, updated: imported });
-  } catch (e) {
-    logError('POST /api/fleet/assets/import', e);
-    return res.status(500).json({ ok: false, error: e.message });
-  }
-});
+  });
 
   app.patch('/api/fleet/assets/bulk', async (req, res) => {
     try {
