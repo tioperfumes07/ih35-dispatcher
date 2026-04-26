@@ -919,6 +919,32 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+
+  app.get('/api/fleet/assets/qbo-class', async (req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, mapping: null, class_name: '' });
+      await ensureFleetAssetQboClassesTable();
+      const unit = String(req.query?.unit || req.query?.unit_number || '').trim();
+      if (!unit) return res.json({ ok: true, mapping: null, class_name: '' });
+      const { rows } = await dbQuery(
+        `SELECT unit_number, qbo_class_id, qbo_class_name
+           FROM fleet_asset_qbo_classes
+          WHERE unit_number = $1
+          LIMIT 1`,
+        [unit]
+      );
+      const mapping = rows?.[0] || null;
+      return res.json({
+        ok: true,
+        mapping,
+        class_name: String(mapping?.qbo_class_name || '').trim(),
+      });
+    } catch (e) {
+      logError('GET /api/fleet/assets/qbo-class', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), mapping: null, class_name: '' });
+    }
+  });
+
   app.post('/api/fleet/assets/qbo-class', async (req, res) => {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'no db' });

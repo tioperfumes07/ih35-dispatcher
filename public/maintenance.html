@@ -471,7 +471,7 @@
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin:0 0 10px">
           <div>
             <label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:4px">QuickBooks Class</label>
-            <input type="text" id="unitQboClass" list="qboClassList" placeholder="Type to search QBO classes..." class="qb-in" />
+            <input type="text" id="unitQboClassInput" list="qboClassDatalist" placeholder="Type to search QBO classes..." class="qb-in" />
             <input type="hidden" id="unitQboClassUnit" />
           </div>
           <button type="button" class="btn btn--small" onclick="saveUnitQboClass()">Save Class</button>
@@ -538,6 +538,7 @@
   <datalist id="qboCustomerOptions"></datalist>
   <datalist id="qboClassOptions"></datalist>
   <datalist id="qboClassList"></datalist>
+  <datalist id="qboClassDatalist"></datalist>
   <datalist id="loadNumberOptions"></datalist>
   <datalist id="maintDriverOptions"></datalist>
   <datalist id="repairLocationOptions"></datalist>
@@ -1445,7 +1446,7 @@
             <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px">
               <button type="button" class="btn btn--small ghost" onclick="driversAcknowledgeDamageFromModal()">Acknowledge</button>
               <button type="button" class="btn btn--small" onclick="driversCreateWoFromDamage()">Create work order</button>
-              <button type="button" class="btn btn--small" onclick="driversResolveCreateWorkOrderFromModal()" style="background:#16a34a;color:white;padding:8px 16px;border-radius:6px;font-size:13px;border:1px solid #16a34a">✅ Resolve & Create Work Order</button>
+              <button type="button" class="btn btn--small" onclick="resolveRoadService(window.currentReportId, window.currentReportUnit, window.currentReportType, window.currentReportDesc, window.currentReportVendor, window.currentReportCost)" style="background:#16a34a;color:white;padding:8px 16px;border-radius:6px;font-size:13px;border:1px solid #16a34a">✅ Resolve & Create Work Order</button>
             </div>
           </div>
         </div>
@@ -3478,7 +3479,7 @@
                       <input id="apTxnDate" class="qb-in" type="date">
                     </div>
                     <div class="ap-exp-field">
-                      <span class="qb-l">Load / invoice #</span>
+                      <span class="qb-l">Load # <span style="color:#ef4444">*required for fuel/repairs</span></span>
                       <input id="apLoadInvoiceNumber" class="qb-in" placeholder="P&amp;L key (often load #)">
                     </div>
                     <div class="ap-exp-field">
@@ -4044,7 +4045,7 @@
                           <input id="fuelManualDate" class="qb-in" type="date" />
                         </div>
                         <div class="ap-exp-field">
-                          <span class="qb-l">Load / invoice #</span>
+                          <span class="qb-l">Load # <span style="color:#ef4444">*required for fuel/repairs</span></span>
                           <input id="fuelManualLoadInvoice" class="qb-in" placeholder="P&amp;L key (often load #)" autocomplete="off" />
                         </div>
                         <div class="ap-exp-field">
@@ -8569,8 +8570,17 @@
       window.__maintFleetSelectedUnit = normalized;
       const unitEl = document.getElementById('unitQboClassUnit');
       if (unitEl) unitEl.value = normalized;
-      const inp = document.getElementById('unitQboClass');
+      const inp = document.getElementById('unitQboClassInput') || document.getElementById('unitQboClass');
       if (inp) inp.value = fleetQboClassNameForUnit(normalized);
+      if (!normalized) return;
+      fetch('/api/fleet/assets/qbo-class?unit=' + encodeURIComponent(normalized))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (!inp) return;
+          const nm = String(d?.class_name || d?.mapping?.qbo_class_name || '').trim();
+          if (nm) inp.value = nm;
+        })
+        .catch(function(){});
     }
 
     async function saveFleetQboClassFromModal(unit) {
@@ -8578,9 +8588,34 @@
       if (!key) return;
       const safe = key.replace(/[^a-z0-9_-]/gi, '_');
       const inp = document.getElementById('fleetQboClass_' + safe);
-      if (!inp) return;
+      const globalInp = document.getElementById('unitQboClassInput') || document.getElementById('unitQboClass');
+      const isSelected = String(document.getElementById('unitQboClassUnit')?.value || '').trim() === key;
+      const typed = String((inp?.value || (isSelected ? globalInp?.value : '') || '')).trim();
+      if (!typed) {
+        erpShowToast('Select a class name first', 'error');
+        return;
+      }
+      const classes = Array.isArray(window._qboMaster?.classes) ? window._qboMaster.classes : cacheQboClasses();
+      const cls = classes.find((c) => String(c?.name || '').trim().toLowerCase() === typed.toLowerCase());
       try {
-        await saveFleetAssetQboClass(key, inp.value);
+        const out = await j('/api/fleet/assets/qbo-class', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify({
+            unit_number: key,
+            qbo_class_id: String(cls?.qboId || cls?.id || '').trim(),
+            qbo_class_name: typed
+          })
+        });
+        if (!out?.ok) throw new Error(String(out?.error || 'save failed'));
+        fleetAssetQboClassMappings[key] = {
+          unit_number: key,
+          qbo_class_id: String(cls?.qboId || cls?.id || '').trim(),
+          qbo_class_name: typed
+        };
+        if (inp) inp.value = typed;
+        if (isSelected && globalInp) globalInp.value = typed;
+        erpShowToast('QBO class saved');
       } catch (e) {
         showErpToast('Failed to save QuickBooks Class: ' + (e.message || String(e)), 'error');
       }
@@ -10805,6 +10840,8 @@
         if (classDl) classDl.innerHTML = fleetQboClassOptionsHtml();
         const classDlAlias = document.getElementById('qboClassList');
         if (classDlAlias) classDlAlias.innerHTML = fleetQboClassOptionsHtml();
+        const classDlAlias2 = document.getElementById('qboClassDatalist');
+        if (classDlAlias2) classDlAlias2.innerHTML = fleetQboClassOptionsHtml();
         if (meta) meta.textContent = `${trucks.length} active trucks`;
       } catch (e) {
         body.innerHTML = `<tr><td colspan="11" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
@@ -13001,6 +13038,9 @@
           ? fleetAssetsRes.assets
           : [];
         window._cachedUnits = fullAssets;
+        if (qboMasterRes && typeof qboMasterRes === 'object') {
+          window._qboMaster = qboMasterRes;
+        }
 
         const preferredUnits = assetUnits.map((u) => ({
           id: String(u.samsara_id || u.unit_number || '').trim(),
@@ -15208,6 +15248,16 @@
 
       const nLines = lines.length;
       const loadInvH = String(document.getElementById('fuelManualLoadInvoice')?.value || '').trim();
+      if (!loadInvH) {
+        const fuelLoadEl = document.getElementById('fuelManualLoadInvoice');
+        erpShowToast('Load number required for fuel/repair expenses','error');
+        if (fuelLoadEl) {
+          fuelLoadEl.style.border = '2px solid #ef4444';
+          fuelLoadEl.focus();
+          fuelLoadEl.oninput = () => { fuelLoadEl.style.border = ''; };
+        }
+        return;
+      }
       const fvInvH = String(document.getElementById('fuelManualVendorInvoice')?.value || '').trim();
       const intWoH = String(document.getElementById('fuelManualInternalWo')?.value || '').trim();
       try {
@@ -16649,6 +16699,12 @@
       const body = document.getElementById('driversDamageDetailBody');
       if (!row || !modal || !body) return;
       window.__driversDamageModalId = String(id);
+      window.currentReportId = String(row.id || id || '');
+      window.currentReportUnit = String(row.unit_number || '');
+      window.currentReportType = String(row.damage_type || '');
+      window.currentReportDesc = String(row.description || '');
+      window.currentReportVendor = String(row.vendor_name || row.shop_name || '');
+      window.currentReportCost = String(row.estimated_cost || '');
       const unit = escapeHtml(String(row.unit_number || '—'));
       const driver = escapeHtml(String(row.driver_name || '—'));
       const type = escapeHtml(String(row.damage_type || '—'));
@@ -16701,8 +16757,60 @@
     function driversResolveCreateWorkOrderFromModal() {
       const id = window.__driversDamageModalId;
       if (!id) return;
-      void driversResolveAndCreateWorkOrder(id);
+      void resolveRoadService(window.currentReportId, window.currentReportUnit, window.currentReportType, window.currentReportDesc, window.currentReportVendor, window.currentReportCost);
     }
+
+
+    async function resolveRoadService(reportId, unitNum, damageType, description, vendorName, estimatedCost) {
+      try {
+        const woResp = await fetch('/api/maintenance/work-orders', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            unit_number: unitNum,
+            service_type: 'Road Service - ' + (damageType || ''),
+            description: description || 'Road service call',
+            vendor: vendorName || '',
+            estimated_cost: estimatedCost || 0,
+            priority: 'Urgent',
+            status: 'In Progress',
+            source: 'road_service_alert'
+          })
+        }).then(r=>r.json());
+
+        if (estimatedCost && parseFloat(String(estimatedCost)) > 0) {
+          await fetch('/api/expenses', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              unit_number: unitNum,
+              amount: parseFloat(String(estimatedCost)),
+              vendor_name: vendorName || '',
+              description: 'Road Service - ' + (damageType || ''),
+              expense_type: 'road_repair'
+            })
+          }).then(r=>r.json()).catch(()=>null);
+        }
+
+        await fetch('/api/damage/reports/' + encodeURIComponent(String(reportId || '')) + '/acknowledge', { method:'POST' }).catch(()=>null);
+
+        erpShowToast('✅ Work order created + expense logged','success');
+
+        driversResolvedDamageIds().add(String(reportId || ''));
+        driversCloseDamageDetail();
+        var modal = document.querySelector('.modal-overlay, .erp-modal');
+        if (modal) modal.style.display = 'none';
+        document.body.classList.remove('erp-modal-lock');
+
+        if (typeof loadOpenDamageReports === 'function') loadOpenDamageReports();
+        if (typeof refreshDriversDashboardPanels === 'function') await refreshDriversDashboardPanels();
+        if (typeof refreshDashboardDamageReports === 'function') await refreshDashboardDamageReports();
+        if (typeof loadAll === 'function') await loadAll();
+      } catch (e) {
+        erpShowToast('Error: ' + (e?.message || String(e)), 'error');
+      }
+    }
+
 
     function driversResolvedDamageIds() {
       if (!window.__damageResolvedOverrides || !(window.__damageResolvedOverrides instanceof Set)) {
@@ -26766,6 +26874,22 @@
       const vendorId = document.getElementById('apVendorQboId').value;
       const unit = document.getElementById('apAssetUnit').value.trim();
       const loadInv = document.getElementById('apLoadInvoiceNumber').value.trim();
+      const expTypeRaw = [
+        String(window.__erpDedicatedApPreset || ''),
+        String(document.getElementById('apMaintRecordType')?.value || ''),
+        String(document.getElementById('apServiceTypeInput')?.value || document.getElementById('apServiceSearchInput')?.value || '')
+      ].join(' ').toLowerCase();
+      const loadEl = document.getElementById('apLoadInvoiceNumber');
+      const needsLoad = expTypeRaw.includes('fuel') || expTypeRaw.includes('road') || expTypeRaw.includes('repair') || expTypeRaw.includes('tire');
+      if (needsLoad && !loadInv) {
+        erpShowToast('Load number required for fuel/repair expenses','error');
+        if (loadEl) {
+          loadEl.style.border = '2px solid #ef4444';
+          loadEl.focus();
+          loadEl.oninput = () => { loadEl.style.border = ''; };
+        }
+        return false;
+      }
       const vendorInv = document.getElementById('apVendorInvoiceNumber')?.value.trim() || '';
       const internalWo = document.getElementById('apInternalWorkOrderNumber')?.value.trim() || '';
       const lines = expSt.lines;
