@@ -1161,7 +1161,7 @@ export function mountErpCoreApi(app, opts = {}) {
         const notes = String(t.notes || '').trim() || null;
 
         const existing = await dbQuery(
-          'SELECT id FROM fleet_assets WHERE unit_number=$1 LIMIT 1',
+          'SELECT unit_number FROM fleet_assets WHERE unit_number=$1 LIMIT 1',
           [unit]
         );
 
