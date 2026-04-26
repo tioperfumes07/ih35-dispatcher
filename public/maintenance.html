@@ -16664,7 +16664,7 @@
         const id = String(e?.id || '').replace(/'/g, "\'");
         const action = posted
           ? ''
-          : '<button onclick="postFuelToQbo('\'' + id + '\'')" style="padding:4px 10px;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">Post to QBO</button>';
+          : '<button onclick="postFuelToQbo(&quot;' + id + '&quot;)" style="padding:4px 10px;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">Post to QBO</button>';
         return '<tr style="border-bottom:1px solid #e5e7eb">' +
           '<td style="padding:8px">' + escapeHtml(String(e?.unit_number || '—')) + '</td>' +
           '<td style="padding:8px">' + escapeHtml(String(e?.driver_name || '—')) + '</td>' +
@@ -16800,8 +16800,8 @@
           '<td style="padding:8px">' + escapeHtml(String(r?.note || r?.notes || '—')) + '</td>' +
           '<td style="padding:8px">' + escapeHtml(r?.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '—') + '</td>' +
           '<td style="padding:8px;display:flex;gap:6px">' +
-            '<button onclick="approveLeave('\'' + rid + '\'')" style="padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">✅ Approve</button>' +
-            '<button onclick="denyLeave('\'' + rid + '\'')" style="padding:4px 10px;background:#dc2626;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">❌ Deny</button>' +
+            '<button onclick="approveLeave(&quot;' + rid + '&quot;)" style="padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">✅ Approve</button>' +
+            '<button onclick="denyLeave(&quot;' + rid + '&quot;)" style="padding:4px 10px;background:#dc2626;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer">❌ Deny</button>' +
           '</td>' +
           '</tr>';
       }).join('');
