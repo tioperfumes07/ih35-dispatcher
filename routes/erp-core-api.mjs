@@ -1173,8 +1173,19 @@ export function mountErpCoreApi(app, opts = {}) {
           updated++;
         } else {
           await dbQuery(
-            'INSERT INTO fleet_assets (unit_number, asset_type, status, make_override, model_override, year_override, vin_override, license_plate_override, notes, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())',
-            [unit, assetType, status, make, model, year, vin, plate, notes]
+            'INSERT INTO fleet_assets (samsara_id, unit_number, asset_type, status, make_override, model_override, year_override, vin_override, license_plate_override, notes, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())',
+            [
+              'manual_' + unit,
+              unit,
+              assetType,
+              status,
+              make,
+              model,
+              year,
+              vin,
+              plate,
+              notes,
+            ]
           );
           imported++;
         }
