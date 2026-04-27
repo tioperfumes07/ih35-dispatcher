@@ -123,7 +123,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   const [leavePicker, setLeavePicker] = useState<LeavePickerState | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [addDriverDraft, setAddDriverDraft] = useState<AddDriverDraft>(emptyAddDriverDraft())
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const popupRef = useRef<HTMLDivElement | null>(null)
 
@@ -188,9 +188,12 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
 
   const loadDrivers = async () => {
     try {
-      const assetsPayload = await fetch('/api/fleet/assets', { headers: { Accept: 'application/json' } })
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 8000)
+      const assetsPayload = await fetch('/api/fleet/assets', { headers: { Accept: 'application/json' }, signal: controller.signal })
         .then((r) => r.json())
         .catch(() => ({ assets: [] }))
+      window.clearTimeout(timeoutId)
       const assets = Array.isArray(assetsPayload?.assets) ? assetsPayload.assets : []
 
       const trucks = assets.filter((a: any) => {
