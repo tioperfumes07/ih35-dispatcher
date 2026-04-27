@@ -40,17 +40,10 @@ jobs:
           cd apps/fleet-reports-hub && npm ci && cd ../..
       - name: Build embedded fleet reports SPA
         run: npm run build:fleet
-      - name: Rebuild better-sqlite3
+      - name: Rebuild native modules
         run: |
           cd apps/fleet-reports-hub
-          npm install --ignore-scripts
-          npm rebuild better-sqlite3
-          cd ../..
-      - name: Force reinstall better-sqlite3
-        run: |
-          cd apps/fleet-reports-hub
-          npm uninstall better-sqlite3
-          npm install better-sqlite3 --save
+          npm rebuild
           cd ../..
       - name: Full gate (smoke-gate sync, rule0:check, smoke on ephemeral server)
         run: npm run qa:isolated
