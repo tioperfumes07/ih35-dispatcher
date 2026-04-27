@@ -145,9 +145,42 @@
       return 'form425c_' + c + '_' + m;
     }
 
-    function toNumber(v) {
-      return parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0;
+    function fmtAccounting(val) {
+      var n = parseFloat(String(val).replace(/[$,()]/g, '').trim());
+      if (isNaN(n)) return '';
+      if (n < 0) return '($' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ')';
+      return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
+
+    function unFmt(val) {
+      var raw = String(val == null ? '' : val).trim();
+      if (!raw) return 0;
+      var negParen = /^\(.*\)$/.test(raw);
+      var cleaned = raw.replace(/[$,()]/g, '');
+      var n = parseFloat(cleaned);
+      if (isNaN(n)) return 0;
+      return negParen ? -Math.abs(n) : n;
+    }
+
+    function toNumber(v) {
+      return unFmt(v);
+    }
+
+    function normalizeMoneyInput(v) {
+      var s = String(v == null ? '' : v).trim();
+      if (!s) return '';
+      var n = unFmt(s);
+      return String(n);
+    }
+
+    function moneyDisplayValue(value, focused) {
+      var s = String(value == null ? '' : value).trim();
+      if (!s) return '';
+      if (focused) return String(unFmt(s));
+      return fmtAccounting(s);
+    }
+
+    var PROFILE_LOCAL_KEY = 'form425c_profiles';
 
     function safeJsonParse(raw) {
       try {
@@ -256,6 +289,38 @@
     var mergeFiles = mergeFilesState[0];
     var setMergeFiles = mergeFilesState[1];
 
+    var moneyFocusState = React.useState({});
+    var moneyFocus = moneyFocusState[0];
+    var setMoneyFocus = moneyFocusState[1];
+
+    function setMoneyFieldFocus(fieldKey, on) {
+      setMoneyFocus(function (m) {
+        return { ...m, [fieldKey]: !!on };
+      });
+    }
+
+    function makeMoneyInputProps(fieldKey, rawValue, onRawChange, readOnly) {
+      return {
+        className: 'f425-money' + (readOnly ? ' f425-calculated' : ''),
+        inputMode: 'decimal',
+        readOnly: !!readOnly,
+        value: moneyDisplayValue(rawValue, !!moneyFocus[fieldKey]),
+        onFocus: function () {
+          if (readOnly) return;
+          setMoneyFieldFocus(fieldKey, true);
+        },
+        onBlur: function (e) {
+          if (readOnly) return;
+          setMoneyFieldFocus(fieldKey, false);
+          onRawChange(normalizeMoneyInput(e.target.value));
+        },
+        onChange: function (e) {
+          if (readOnly) return;
+          onRawChange(e.target.value);
+        }
+      };
+    }
+
     React.useEffect(function () {
       var d = new Date();
       d.setMonth(d.getMonth() - 1);
@@ -272,6 +337,29 @@
           var r = await fetch('/api/form-425c/profiles');
           var data = await r.json();
           if (cancelled) return;
+          var localSaved = safeJsonParse(localStorage.getItem(PROFILE_LOCAL_KEY));
+          if (localSaved && Array.isArray(localSaved.companies)) {
+            var byId = {};
+            localSaved.companies.forEach(function (c) {
+              if (c && c.id) byId[c.id] = c;
+            });
+            data = {
+              ...data,
+              companies: (data.companies || []).map(function (c) {
+                var lc = byId[c.id] || {};
+                return {
+                  ...c,
+                  caseNumber: lc.caseNumber != null ? lc.caseNumber : c.caseNumber,
+                  courtDistrict: lc.courtDistrict != null ? lc.courtDistrict : c.courtDistrict,
+                  courtDivision: lc.courtDivision != null ? lc.courtDivision : c.courtDivision,
+                  responsiblePartyName:
+                    lc.responsiblePartyName != null ? lc.responsiblePartyName : c.responsiblePartyName,
+                  naicsCode: lc.naicsCode != null ? lc.naicsCode : c.naicsCode,
+                  lineOfBusiness: lc.lineOfBusiness != null ? lc.lineOfBusiness : c.lineOfBusiness
+                };
+              })
+            };
+          }
           setProfiles(data);
           var first = (data.companies || [])[0];
           if (first) {
@@ -285,6 +373,31 @@
           }
         } catch (e) {
           console.error(e);
+          var localSavedOnly = safeJsonParse(localStorage.getItem(PROFILE_LOCAL_KEY));
+          if (localSavedOnly && Array.isArray(localSavedOnly.companies)) {
+            setProfiles(function (prev) {
+              return {
+                ...prev,
+                companies: (prev.companies || []).length
+                  ? prev.companies.map(function (c) {
+                      var lc = (localSavedOnly.companies || []).find(function (x) {
+                        return x.id === c.id;
+                      }) || {};
+                      return {
+                        ...c,
+                        caseNumber: lc.caseNumber != null ? lc.caseNumber : c.caseNumber,
+                        courtDistrict: lc.courtDistrict != null ? lc.courtDistrict : c.courtDistrict,
+                        courtDivision: lc.courtDivision != null ? lc.courtDivision : c.courtDivision,
+                        responsiblePartyName:
+                          lc.responsiblePartyName != null ? lc.responsiblePartyName : c.responsiblePartyName,
+                        naicsCode: lc.naicsCode != null ? lc.naicsCode : c.naicsCode,
+                        lineOfBusiness: lc.lineOfBusiness != null ? lc.lineOfBusiness : c.lineOfBusiness
+                      };
+                    })
+                  : localSavedOnly.companies
+              };
+            });
+          }
         }
       })();
       return function () {
@@ -457,17 +570,34 @@
     }
 
     async function saveProfiles() {
-      var r = await fetch('/api/form-425c/profiles', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profiles)
-      });
-      if (!r.ok) {
-        alert(await r.text());
-        return;
+      var payload = {
+        version: 1,
+        companies: (profiles.companies || []).map(function (c) {
+          return {
+            id: c.id,
+            caseNumber: c.caseNumber || '',
+            courtDistrict: c.courtDistrict || '',
+            courtDivision: c.courtDivision || '',
+            responsiblePartyName: c.responsiblePartyName || '',
+            naicsCode: c.naicsCode || '',
+            lineOfBusiness: c.lineOfBusiness || ''
+          };
+        })
+      };
+      localStorage.setItem(PROFILE_LOCAL_KEY, JSON.stringify(payload));
+      if (typeof window.erpShowToast === 'function') window.erpShowToast('✅ Profiles saved');
+      setBankLoadMsg('✅ Profiles saved locally.');
+      try {
+        await fetch('/api/form-425c/profiles', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profiles)
+        }).catch(function () {
+          return null;
+        });
+      } catch (_) {
+        // local profile save is source of truth
       }
-      setProfiles(await r.json());
-      alert('Profiles saved.');
     }
 
     function applyQDefaults() {
@@ -764,6 +894,9 @@
 
     function printWithPackageNotes() {
       setReceiptMsg('After printing the form, attach your P&L and bank statements as separate pages.');
+      if (typeof window.erpShowToast === 'function') {
+        window.erpShowToast('Print tip: disable browser headers/footers in print settings.');
+      }
       setTimeout(function () {
         window.print();
       }, 80);
@@ -1503,18 +1636,11 @@
                 'label',
                 { key: key },
                 labels[i],
-                h('input', {
-                  className: 'f425-money',
-                  inputMode: 'decimal',
-                  value: report[key],
-                  onChange: function (e) {
-                    var k = key;
-                    var v = e.target.value;
-                    setReport(function (r) {
-                      return { ...r, [k]: v };
-                    });
-                  }
-                })
+                h('input', makeMoneyInputProps(key, report[key], function (v) {
+                  setReport(function (r) {
+                    return { ...r, [key]: v };
+                  });
+                }, false))
               );
             }),
             h(
@@ -1522,9 +1648,9 @@
               null,
               '22. Net cash flow',
               h('input', {
-                className: 'f425-money',
+                className: 'f425-money f425-calculated',
                 readOnly: true,
-                value: report.line22
+                value: fmtAccounting(report.line22)
               })
             ),
             h(
@@ -1532,12 +1658,15 @@
               null,
               '23. Ending cash',
               h('input', {
-                className: 'f425-money',
+                className: 'f425-money f425-calculated',
                 readOnly: true,
-                value: report.line23
+                value: fmtAccounting(report.line23)
               })
             )
           ),
+          h(
+            'div',
+            { className: 'no-print' },
           h('h3', { className: 'f425-h3' }, 'Exhibit D \u2014 Disbursements'),
           h(
             'p',
@@ -1626,20 +1755,13 @@
                   h(
                     'td',
                     null,
-                    h('input', {
-                      className: 'f425-money',
-                      inputMode: 'decimal',
-                      style: { width: '100%', boxSizing: 'border-box' },
-                      value: row.amount,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setExhibitD(
-                          exhibitD.map(function (r, j) {
-                            return j === ix ? { ...r, amount: v } : r;
-                          })
-                        );
-                      }
-                    })
+                    h('input', Object.assign({}, makeMoneyInputProps('exd-' + ix, row.amount, function (v) {
+                      setExhibitD(
+                        exhibitD.map(function (r, j) {
+                          return j === ix ? { ...r, amount: v } : r;
+                        })
+                      );
+                    }, false), { style: { width: '100%', boxSizing: 'border-box' } }))
                   ),
                   h(
                     'td',
@@ -1681,6 +1803,7 @@
               })
             )
           ),
+          ),
           h('h3', { className: 'f425-h3' }, 'Parts 3\u20136'),
           h(
             'div',
@@ -1697,23 +1820,26 @@
             ].map(function (pair) {
               var k = pair[0];
               var lab = pair[1];
-              var money =
-                k !== 'line26' && k !== 'line27';
+              var money = k !== 'line26' && k !== 'line27';
               return h(
                 'label',
                 { key: k },
                 lab,
-                h('input', {
-                  className: money ? 'f425-money' : '',
-                  value: report[k],
-                  onChange: function (e) {
-                    var key = k;
-                    var v = e.target.value;
-                    setReport(function (r) {
-                      return { ...r, [key]: v };
-                    });
-                  }
-                })
+                money
+                  ? h('input', makeMoneyInputProps(k, report[k], function (v) {
+                      setReport(function (r) {
+                        return { ...r, [k]: v };
+                      });
+                    }, false))
+                  : h('input', {
+                      value: report[k],
+                      onChange: function (e) {
+                        var v = e.target.value;
+                        setReport(function (r) {
+                          return { ...r, [k]: v };
+                        });
+                      }
+                    })
               );
             })
           ),
@@ -1723,24 +1849,28 @@
             var p32 = report.projections['32'] || { prior: '', current: '', next: '' };
             var p33 = report.projections['33'] || { prior: '', current: '', next: '' };
             var a32 = toNumber(p32.prior);
-            var b32 = toNumber(p32.current);
+            var b32 = toNumber(report.line20);
             var c32 = Math.round((a32 - b32) * 100) / 100;
             var a33 = toNumber(p33.prior);
-            var b33 = toNumber(p33.current);
+            var b33 = toNumber(report.line21);
             var c33 = Math.round((a33 - b33) * 100) / 100;
             var a34 = Math.round((a32 - a33) * 100) / 100;
-            var b34 = Math.round((b32 - b33) * 100) / 100;
-            var c34 = Math.round((c32 - c33) * 100) / 100;
-            var onP = function (line, field) {
-              return function (e) {
-                var v = e.target.value;
+            var b34 = toNumber(report.line22);
+            var c34 = Math.round((a32 - b32) * 100) / 100;
+            var nextReceipts = toNumber(report.nextMonthProjectedReceipts);
+            var nextDisb = toNumber(report.nextMonthProjectedDisbursements);
+            var nextNet = Math.round((nextReceipts - nextDisb) * 100) / 100;
+
+            var onProjected = function (line) {
+              return function (v) {
                 setReport(function (r) {
                   var proj = { ...r.projections };
-                  proj[line] = { ...proj[line], [field]: v };
+                  proj[line] = { ...proj[line], prior: v };
                   return { ...r, projections: proj };
                 });
               };
             };
+
             return h(
               React.Fragment,
               null,
@@ -1756,43 +1886,45 @@
                 h('tbody', null,
                   h('tr', null,
                     h('td', null, h('strong', null, '32'), ' · Projected/Actual gross receipts / cash inflows'),
-                    h('td', null, h('input', { value: p32.prior, onChange: onP('32', 'prior') })),
-                    h('td', null, h('input', { value: p32.current, onChange: onP('32', 'current') })),
-                    h('td', null, h('input', { readOnly: true, value: c32 ? String(c32) : '' }))
+                    h('td', null, h('input', makeMoneyInputProps('p32a', p32.prior, onProjected('32'), false))),
+                    h('td', null,
+                      h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b32) }),
+                      h('div', { className: 'f425-note tiny' }, 'From line 20')
+                    ),
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(c32) }))
                   ),
                   h('tr', null,
                     h('td', null, h('strong', null, '33'), ' · Projected/Actual total cash disbursements'),
-                    h('td', null, h('input', { value: p33.prior, onChange: onP('33', 'prior') })),
-                    h('td', null, h('input', { value: p33.current, onChange: onP('33', 'current') })),
-                    h('td', null, h('input', { readOnly: true, value: c33 ? String(c33) : '' }))
+                    h('td', null, h('input', makeMoneyInputProps('p33a', p33.prior, onProjected('33'), false))),
+                    h('td', null,
+                      h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b33) }),
+                      h('div', { className: 'f425-note tiny' }, 'From line 21')
+                    ),
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(c33) }))
                   ),
                   h('tr', null,
                     h('td', null, h('strong', null, '34'), ' · Net cash flow (Row 32 minus Row 33)'),
-                    h('td', null, h('input', { readOnly: true, value: a34 ? String(a34) : '' })),
-                    h('td', null, h('input', { readOnly: true, value: b34 ? String(b34) : '' })),
-                    h('td', null, h('input', { readOnly: true, value: c34 ? String(c34) : '' }))
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(a34) })),
+                    h('td', null,
+                      h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b34) }),
+                      h('div', { className: 'f425-note tiny' }, 'From line 22')
+                    ),
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(c34) }))
                   )
                 )
               ),
               h('h4', { className: 'f425-h3', style: { marginTop: 12 } }, 'Next month projections (for next report)'),
               h('div', { className: 'f425-grid' },
-                h('label', null, 'Projected gross receipts next month', h('input', {
-                  className: 'f425-money',
-                  inputMode: 'decimal',
-                  value: report.nextMonthProjectedReceipts,
-                  onChange: function (e) {
-                    var v = e.target.value;
-                    setReport(function (r) { return { ...r, nextMonthProjectedReceipts: v }; });
-                  }
-                })),
-                h('label', null, 'Projected total disbursements next month', h('input', {
-                  className: 'f425-money',
-                  inputMode: 'decimal',
-                  value: report.nextMonthProjectedDisbursements,
-                  onChange: function (e) {
-                    var v = e.target.value;
-                    setReport(function (r) { return { ...r, nextMonthProjectedDisbursements: v }; });
-                  }
+                h('label', null, 'Projected gross receipts next month', h('input', makeMoneyInputProps('nextReceipts', report.nextMonthProjectedReceipts, function (v) {
+                  setReport(function (r) { return { ...r, nextMonthProjectedReceipts: v }; });
+                }, false))),
+                h('label', null, 'Projected total disbursements next month', h('input', makeMoneyInputProps('nextDisb', report.nextMonthProjectedDisbursements, function (v) {
+                  setReport(function (r) { return { ...r, nextMonthProjectedDisbursements: v }; });
+                }, false))),
+                h('label', null, '37 · Projected net cash flow (next month)', h('input', {
+                  className: 'f425-money f425-calculated',
+                  readOnly: true,
+                  value: fmtAccounting(nextNet)
                 }))
               )
             );

@@ -186,6 +186,12 @@ body.form-425c-page a:hover {
   box-sizing: border-box;
 }
 
+
+#root .f425-calculated {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 #root .f425-actions {
   display: flex;
   flex-wrap: wrap;
@@ -236,7 +242,15 @@ body.form-425c-page a:hover {
   }
 }
 
+@page {
+  margin: 0.5in;
+}
+
 @media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   #root .no-print {
     display: none !important;
   }
@@ -249,6 +263,7 @@ body.form-425c-page a:hover {
     background: var(--color-bg-card, #fff);
   }
 }
+
 
 /* Highlight Form 425C in board nav when on this page */
 body.form-425c-page .board-nav-wrap a[href='/form-425c.html'] {
