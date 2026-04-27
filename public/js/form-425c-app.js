@@ -24,12 +24,8 @@
     [18, 'Allowed pre-petition checks to clear?']
   ];
   var PROJ_ROWS = [
-    ['32', 'Projected gross receipts / cash inflows'],
-    ['33', 'Projected total cash disbursements'],
-    ['34', 'Projected payroll & benefits'],
-    ['35', 'Projected fleet / fuel / maintenance'],
-    ['36', 'Projected insurance & professional fees'],
-    ['37', 'Other material items (describe in notes)']
+    ['32', 'Projected/Actual gross receipts / cash inflows'],
+    ['33', 'Projected/Actual total cash disbursements']
   ];
   var ATTACH_KEYS = [
     ['pl', 'Profit & loss (month)'],
@@ -38,7 +34,6 @@
     ['bankRec', 'Bank reconciliation worksheets'],
     ['ar', 'Accounts receivable aging'],
     ['ap', 'Accounts payable / unpaid bills detail'],
-    ['exC', 'Exhibit C — cash receipts'],
     ['exD', 'Exhibit D — disbursements'],
     ['other', 'Other exhibits (attach description in notes)']
   ];
@@ -93,6 +88,8 @@
       paperNotes: '',
       questionnaire: {},
       projections: defaultProjections(),
+      nextMonthProjectedReceipts: '',
+      nextMonthProjectedDisbursements: '',
       attachments: defaultAttachments()
     };
   }
@@ -124,7 +121,7 @@
     var banks = banksState[0];
     var setBanks = banksState[1];
 
-    var repCoState = React.useState('');
+    var repCoState = React.useState('ih35-transportation');
     var repCompany = repCoState[0];
     var setRepCompany = repCoState[1];
 
@@ -132,9 +129,80 @@
     var repMonth = repMoState[0];
     var setRepMonth = repMoState[1];
 
-    var qbCoState = React.useState('');
+    var qbCoState = React.useState('ih35-transportation');
     var qbCompany = qbCoState[0];
     var setQbCompany = qbCoState[1];
+    var lastLoadedLocalKeyRef = React.useRef('');
+
+    function normalizeCompanyId(raw) {
+      return String(raw || '').trim().toLowerCase();
+    }
+
+    function localReportKey(companyId, month) {
+      var c = normalizeCompanyId(companyId);
+      var m = String(month || '').trim();
+      if (!c || !m) return '';
+      return 'form425c_' + c + '_' + m;
+    }
+
+    function toNumber(v) {
+      return parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0;
+    }
+
+    function safeJsonParse(raw) {
+      try {
+        return JSON.parse(String(raw || ''));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function saveReportToLocal(companyId, month, payload) {
+      var k = localReportKey(companyId, month);
+      if (!k) return;
+      var body = {
+        companyId: companyId,
+        month: month,
+        savedAt: new Date().toISOString(),
+        report: payload
+      };
+      localStorage.setItem(k, JSON.stringify(body));
+      lastLoadedLocalKeyRef.current = k;
+    }
+
+    function loadReportFromLocal(companyId, month) {
+      var k = localReportKey(companyId, month);
+      if (!k) return null;
+      var raw = localStorage.getItem(k);
+      var parsed = safeJsonParse(raw);
+      if (!parsed || !parsed.report) return null;
+      return parsed;
+    }
+
+    function priorMonthIso(ym) {
+      if (!/^\d{4}-\d{2}$/.test(String(ym || ''))) return '';
+      var d = new Date(String(ym) + '-01T00:00:00');
+      d.setMonth(d.getMonth() - 1);
+      return d.toISOString().slice(0, 7);
+    }
+
+    function primePart7FromPriorMonth(companyId, month) {
+      var prev = priorMonthIso(month);
+      if (!prev) return false;
+      var payload = loadReportFromLocal(companyId, prev);
+      if (!payload || !payload.report) return false;
+      var p = payload.report;
+      var nextGross = String(p.nextMonthProjectedReceipts || '').trim();
+      var nextDisb = String(p.nextMonthProjectedDisbursements || '').trim();
+      if (!nextGross && !nextDisb) return false;
+      setReport(function (r) {
+        var proj = { ...r.projections };
+        proj['32'] = { ...proj['32'], prior: nextGross || (proj['32'] && proj['32'].prior) || '' };
+        proj['33'] = { ...proj['33'], prior: nextDisb || (proj['33'] && proj['33'].prior) || '' };
+        return { ...r, projections: proj };
+      });
+      return true;
+    }
 
     var pasteState = React.useState('');
     var pasteText = pasteState[0];
@@ -180,7 +248,13 @@
     var monthPlaceholder = monthPhState[0];
     var setMonthPlaceholder = monthPhState[1];
 
-    var mergeRef = React.useRef(null);
+    var plFileRef = React.useRef(null);
+    var bankStmtRef = React.useRef(null);
+    var bankRecRef = React.useRef(null);
+
+    var mergeFilesState = React.useState({ pl: [], bankStmt: [], bankRec: [] });
+    var mergeFiles = mergeFilesState[0];
+    var setMergeFiles = mergeFilesState[1];
 
     React.useEffect(function () {
       var d = new Date();
@@ -222,6 +296,48 @@
       refreshHistory();
     }, []);
 
+    React.useEffect(function () {
+      if (!repCompany) return;
+      if (qbCompany !== repCompany) setQbCompany(repCompany);
+    }, [repCompany]);
+
+    React.useEffect(function () {
+      if (!repCompany || !repMonth) return;
+      var k = localReportKey(repCompany, repMonth);
+      if (!k || lastLoadedLocalKeyRef.current === k) return;
+      var localSaved = loadReportFromLocal(repCompany, repMonth);
+      if (localSaved && localSaved.report) {
+        applyReportPayload(localSaved.report);
+        setReceiptMsg('📂 Restored from ' + repMonth);
+        if (typeof window.erpShowToast === 'function') window.erpShowToast('📂 Restored from ' + repMonth);
+        lastLoadedLocalKeyRef.current = k;
+        return;
+      }
+
+      var selectedCompany = (profiles.companies || []).find(function (c) {
+        return c.id === repCompany;
+      });
+      setReport(function () {
+        var fresh = defaultReportState();
+        if (selectedCompany) {
+          fresh.paperDebtor = selectedCompany.debtorName || '';
+          fresh.paperCase = selectedCompany.caseNumber || '';
+          fresh.paperCourt = [selectedCompany.courtDistrict, selectedCompany.courtDivision].filter(Boolean).join(' · ');
+          fresh.paperNaics = selectedCompany.naicsCode || '';
+          fresh.paperLob = selectedCompany.lineOfBusiness || '';
+          fresh.paperRp = selectedCompany.responsiblePartyName || '';
+          fresh.questionnaire = { ...(selectedCompany.defaultQuestionnaire || {}) };
+        }
+        return fresh;
+      });
+      setExhibitD([{ date: '', payee: '', amount: '', memo: '' }]);
+      setLastQbo(null);
+      setLastPaste(null);
+      primePart7FromPriorMonth(repCompany, repMonth);
+      setReceiptMsg('');
+      lastLoadedLocalKeyRef.current = k;
+    }, [repCompany, repMonth, profiles]);
+
     function applyProfileFromCompany(c) {
       if (!c) return;
       setReport(function (r) {
@@ -242,6 +358,14 @@
         return x.id === companyId;
       });
       applyProfileFromCompany(c);
+    }
+
+    function switchDebtor(companyId) {
+      var id = String(companyId || '').trim();
+      if (!id) return;
+      setRepCompany(id);
+      setQbCompany(id);
+      applySelectedProfileToPaper(id);
     }
 
     React.useEffect(function () {
@@ -405,6 +529,8 @@
           var pr = report.projections[code] || { prior: '', current: '', next: '' };
           return { line: code, prior: pr.prior, current: pr.current, next: pr.next };
         }),
+        nextMonthProjectedReceipts: report.nextMonthProjectedReceipts,
+        nextMonthProjectedDisbursements: report.nextMonthProjectedDisbursements,
         attachments: report.attachments,
         exhibitC: {
           source: lastQbo ? 'qbo' : lastPaste ? 'paste' : null,
@@ -449,6 +575,14 @@
           paperNotes: data.notes != null ? String(data.notes) : r.paperNotes,
           questionnaire: data.questionnaire ? { ...data.questionnaire } : r.questionnaire,
           projections: data.projections ? projectionsFromSaved(data.projections) : r.projections,
+          nextMonthProjectedReceipts:
+            data.nextMonthProjectedReceipts != null
+              ? String(data.nextMonthProjectedReceipts)
+              : r.nextMonthProjectedReceipts,
+          nextMonthProjectedDisbursements:
+            data.nextMonthProjectedDisbursements != null
+              ? String(data.nextMonthProjectedDisbursements)
+              : r.nextMonthProjectedDisbursements,
           attachments: data.attachments ? { ...defaultAttachments(), ...data.attachments } : r.attachments
         };
       });
@@ -488,23 +622,34 @@
         alert('Select company and month.');
         return;
       }
-      var body = { companyId: repCompany, month: repMonth, ...gatherReportPayload() };
+      var payload = gatherReportPayload();
+      saveReportToLocal(repCompany, repMonth, payload);
+      setReceiptMsg('✅ Saved');
+      if (typeof window.erpShowToast === 'function') window.erpShowToast('✅ Saved');
       try {
-        var r = await fetch('/api/form-425c/saved-report', {
+        var body = { companyId: repCompany, month: repMonth, ...payload };
+        await fetch('/api/form-425c/saved-report', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
-        });
-        var d = await r.json();
-        if (!r.ok) throw new Error(d.error || (await r.text()));
-        setReceiptMsg('Report saved for ' + repMonth + '.');
+        }).catch(function () { return null; });
         refreshHistory();
-      } catch (e) {
-        alert(String(e.message || e));
+      } catch (_) {
+        // local save is source of truth
       }
     }
 
     async function loadSavedReport(companyId, month) {
+      var localSaved = loadReportFromLocal(companyId, month);
+      if (localSaved && localSaved.report) {
+        var localRep = localSaved.report;
+        setRepCompany(localSaved.companyId || companyId);
+        setRepMonth(localSaved.month || month);
+        applyReportPayload(localRep);
+        setReceiptMsg('📂 Restored from ' + (localSaved.month || month));
+        if (typeof window.erpShowToast === 'function') window.erpShowToast('📂 Restored from ' + (localSaved.month || month));
+        return;
+      }
       var r = await fetch(
         '/api/form-425c/saved-report?' + new URLSearchParams({ companyId: companyId, month: month })
       );
@@ -514,6 +659,9 @@
       setRepCompany(rep.companyId || companyId);
       setRepMonth(rep.month || month);
       applyReportPayload(rep);
+      saveReportToLocal(rep.companyId || companyId, rep.month || month, rep);
+      setReceiptMsg('📂 Restored from ' + (rep.month || month));
+      if (typeof window.erpShowToast === 'function') window.erpShowToast('📂 Restored from ' + (rep.month || month));
     }
 
     async function parseQBPaste() {
@@ -583,26 +731,92 @@
       });
     }
 
+    function updateMergeFiles(kind, fileList) {
+      var arr = Array.prototype.slice.call(fileList || []);
+      setMergeFiles(function (m) {
+        return { ...m, [kind]: arr };
+      });
+      setReport(function (r) {
+        var att = { ...r.attachments };
+        if (kind === 'pl') att.pl = arr.length > 0;
+        if (kind === 'bankStmt') att.bankStmt = arr.length > 0;
+        if (kind === 'bankRec') att.bankRec = arr.length > 0;
+        return { ...r, attachments: att };
+      });
+    }
+
+    function collectMergeFiles() {
+      var all = [];
+      var plFiles = mergeFiles.pl || [];
+      var bankStmtFiles = mergeFiles.bankStmt || [];
+      var bankRecFiles = mergeFiles.bankRec || [];
+      plFiles.forEach(function (f) {
+        all.push({ type: 'pl', file: f });
+      });
+      bankStmtFiles.forEach(function (f) {
+        all.push({ type: 'bankStmt', file: f });
+      });
+      bankRecFiles.forEach(function (f) {
+        all.push({ type: 'bankRec', file: f });
+      });
+      return all;
+    }
+
+    function printWithPackageNotes() {
+      setReceiptMsg('After printing the form, attach your P&L and bank statements as separate pages.');
+      setTimeout(function () {
+        window.print();
+      }, 80);
+    }
+
+    function downloadPackageChecklist() {
+      var bankNames = (mergeFiles.bankStmt || []).map(function (f) {
+        return '  - ' + f.name;
+      });
+      var lines = [
+        '✅ Form 425C — completed',
+        (mergeFiles.pl || []).length ? '✅ Profit & Loss statement' : '☐ Profit & Loss statement',
+        (mergeFiles.bankStmt || []).length
+          ? '✅ Bank statements (attached):\n' + bankNames.join('\n')
+          : '☐ Bank statements (list each account)',
+        (mergeFiles.bankRec || []).length ? '✅ Bank reconciliation' : '☐ Bank reconciliation',
+        report.attachments.ar ? '✅ Accounts receivable aging' : '☐ Accounts receivable aging',
+        report.attachments.ap ? '✅ Accounts payable detail' : '☐ Accounts payable detail'
+      ];
+      setMergeMsg(lines.join('\n'));
+    }
+
     async function downloadPackageZip() {
-      var inp = mergeRef.current;
-      if (!inp || !inp.files || !inp.files.length) {
-        setMergeMsg('Choose at least one PDF (or other file) to include.');
+      var files = collectMergeFiles();
+      if (!files.length) {
+        setMergeMsg('Upload at least one attachment (P&L, bank statements, or bank reconciliation).');
         return;
       }
       var fd = new FormData();
-      for (var i = 0; i < inp.files.length; i++) {
-        fd.append('files', inp.files[i], inp.files[i].name);
-      }
+      files.forEach(function (row) {
+        fd.append('files', row.file, row.file.name);
+      });
       fd.append(
         'manifestJson',
         JSON.stringify({
           companyId: repCompany,
           month: repMonth,
           attachmentsChecklist: report.attachments,
-          generatedWith: 'IH35 Form 425C workspace'
+          generatedWith: 'IH35 Form 425C workspace',
+          attachmentSummary: {
+            pl: (mergeFiles.pl || []).map(function (f) {
+              return f.name;
+            }),
+            bankStatements: (mergeFiles.bankStmt || []).map(function (f) {
+              return f.name;
+            }),
+            bankReconciliation: (mergeFiles.bankRec || []).map(function (f) {
+              return f.name;
+            })
+          }
         })
       );
-      setMergeMsg('Building ZIP\u2026');
+      setMergeMsg('Building ZIP…');
       try {
         var r = await fetch('/api/form-425c/package', { method: 'POST', body: fd });
         if (!r.ok) {
@@ -665,7 +879,7 @@
           )
         ),
         h('p', { className: 'f425-note' }, bankLoadMsg),
-        (profiles.companies || []).map(function (c) {
+        (profiles.companies || []).filter(function (c) { return c.id === repCompany; }).map(function (c) {
           var hints = (c.bankPasteHints || []).join(', ');
           return h(
             'div',
@@ -947,16 +1161,13 @@
             'label',
             null,
             'Debtor profile',
-            h(
-              'select',
-              {
-                value: qbCompany,
-                onChange: function (e) {
-                  setQbCompany(e.target.value);
-                }
-              },
-              companyOptions()
-            )
+            h('input', {
+              readOnly: true,
+              value:
+                ((profiles.companies || []).find(function (c) {
+                  return c.id === repCompany;
+                }) || {}).displayName || repCompany || ''
+            })
           )
         ),
         h(
@@ -1049,18 +1260,13 @@
             'label',
             null,
             'Debtor profile',
-            h(
-              'select',
-              {
-                value: repCompany,
-                onChange: function (e) {
-                  var id = e.target.value;
-                  setRepCompany(id);
-                  applySelectedProfileToPaper(id);
-                }
-              },
-              companyOptions()
-            )
+            h('input', {
+              readOnly: true,
+              value:
+                ((profiles.companies || []).find(function (c) {
+                  return c.id === repCompany;
+                }) || {}).displayName || repCompany || ''
+            })
           ),
           h(
             'label',
@@ -1098,7 +1304,7 @@
             { type: 'button', className: 'btn primary', onClick: saveReportToServer },
             'Save report'
           ),
-          h('button', { type: 'button', className: 'btn secondary', onClick: function () { window.print(); } }, 'Print / Save as PDF')
+          h('button', { type: 'button', className: 'btn secondary', onClick: printWithPackageNotes }, 'Print / Save as PDF')
         ),
         h('p', { className: 'f425-note' }, receiptMsg),
         h(
@@ -1332,60 +1538,6 @@
               })
             )
           ),
-          h('h3', { className: 'f425-h3' }, 'Exhibit C \u2014 Cash receipts'),
-          h(
-            'table',
-            { className: 'f425-table' },
-            h(
-              'thead',
-              null,
-              h(
-                'tr',
-                null,
-                h('th', null, 'Deposit date'),
-                h('th', null, 'Bank / split'),
-                h('th', null, 'Amount'),
-                h('th', null, 'Type / linked'),
-                h('th', null, 'Reference')
-              )
-            ),
-            h(
-              'tbody',
-              null,
-              !exhibitCLines.length
-                ? h(
-                    'tr',
-                    null,
-                    h(
-                      'td',
-                      { colSpan: 5, className: 'f425-note' },
-                      'Load from QuickBooks or use QB import tab.'
-                    )
-                  )
-                : exhibitCLines.map(function (row, ix) {
-                    if (isPasteC) {
-                      return h(
-                        'tr',
-                        { key: ix },
-                        h('td', null, row.date),
-                        h('td', null, row.split || ''),
-                        h('td', { className: 'f425-money' }, String(row.amount)),
-                        h('td', null, row.type || ''),
-                        h('td', null, [row.name, row.memo].filter(Boolean).join(' \u00b7 '))
-                      );
-                    }
-                    return h(
-                      'tr',
-                      { key: ix },
-                      h('td', null, row.depositTxnDate),
-                      h('td', null, row.bankAccountName || row.bankAccountId),
-                      h('td', { className: 'f425-money' }, String(row.lineAmount)),
-                      h('td', null, (row.linkedTxnTypes || []).join(', ')),
-                      h('td', null, String(row.depositId))
-                    );
-                  })
-            )
-          ),
           h('h3', { className: 'f425-h3' }, 'Exhibit D \u2014 Disbursements'),
           h(
             'p',
@@ -1565,97 +1717,87 @@
               );
             })
           ),
-          h('h3', { className: 'f425-h3' }, 'Part 7 \u2014 Projections'),
-          h(
-            'table',
-            { className: 'f425-table f425-proj-table', style: { tableLayout: 'fixed', width: '100%' } },
-            h(
-              'colgroup',
-              null,
-              h('col', { style: { width: '28%' } }),
-              h('col', { style: { width: '24%' } }),
-              h('col', { style: { width: '24%' } }),
-              h('col', { style: { width: '24%' } })
-            ),
-            h(
-              'thead',
+
+          h('h3', { className: 'f425-h3' }, 'Part 7 — Section 7 (Projected vs Actual)'),
+          (function () {
+            var p32 = report.projections['32'] || { prior: '', current: '', next: '' };
+            var p33 = report.projections['33'] || { prior: '', current: '', next: '' };
+            var a32 = toNumber(p32.prior);
+            var b32 = toNumber(p32.current);
+            var c32 = Math.round((a32 - b32) * 100) / 100;
+            var a33 = toNumber(p33.prior);
+            var b33 = toNumber(p33.current);
+            var c33 = Math.round((a33 - b33) * 100) / 100;
+            var a34 = Math.round((a32 - a33) * 100) / 100;
+            var b34 = Math.round((b32 - b33) * 100) / 100;
+            var c34 = Math.round((c32 - c33) * 100) / 100;
+            var onP = function (line, field) {
+              return function (e) {
+                var v = e.target.value;
+                setReport(function (r) {
+                  var proj = { ...r.projections };
+                  proj[line] = { ...proj[line], [field]: v };
+                  return { ...r, projections: proj };
+                });
+              };
+            };
+            return h(
+              React.Fragment,
               null,
               h(
-                'tr',
-                null,
-                h('th', null, 'Line / description'),
-                h('th', { style: { textAlign: 'center' } }, 'Prior month'),
-                h('th', { style: { textAlign: 'center' } }, 'This month'),
-                h('th', { style: { textAlign: 'center' } }, 'Next month (proj.)')
-              )
-            ),
-            h(
-              'tbody',
-              null,
-              PROJ_ROWS.map(function (pr) {
-                var code = pr[0];
-                var label = pr[1];
-                var pj = report.projections[code] || { prior: '', current: '', next: '' };
-                return h(
-                  'tr',
-                  { key: code },
-                  h(
-                    'td',
-                    null,
-                    h('strong', null, code),
-                    ' \u00b7 ',
-                    label
+                'table',
+                { className: 'f425-table f425-proj-table', style: { tableLayout: 'fixed', width: '100%' } },
+                h('thead', null, h('tr', null,
+                  h('th', null, 'Line / description'),
+                  h('th', { style: { textAlign: 'center' } }, 'Column A — Projected'),
+                  h('th', { style: { textAlign: 'center' } }, 'Column B — Actual'),
+                  h('th', { style: { textAlign: 'center' } }, 'Column C — Difference')
+                )),
+                h('tbody', null,
+                  h('tr', null,
+                    h('td', null, h('strong', null, '32'), ' · Projected/Actual gross receipts / cash inflows'),
+                    h('td', null, h('input', { value: p32.prior, onChange: onP('32', 'prior') })),
+                    h('td', null, h('input', { value: p32.current, onChange: onP('32', 'current') })),
+                    h('td', null, h('input', { readOnly: true, value: c32 ? String(c32) : '' }))
                   ),
-                  h(
-                    'td',
-                    null,
-                    h('input', {
-                      value: pj.prior,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setReport(function (r) {
-                          var proj = { ...r.projections };
-                          proj[code] = { ...proj[code], prior: v };
-                          return { ...r, projections: proj };
-                        });
-                      }
-                    })
+                  h('tr', null,
+                    h('td', null, h('strong', null, '33'), ' · Projected/Actual total cash disbursements'),
+                    h('td', null, h('input', { value: p33.prior, onChange: onP('33', 'prior') })),
+                    h('td', null, h('input', { value: p33.current, onChange: onP('33', 'current') })),
+                    h('td', null, h('input', { readOnly: true, value: c33 ? String(c33) : '' }))
                   ),
-                  h(
-                    'td',
-                    null,
-                    h('input', {
-                      value: pj.current,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setReport(function (r) {
-                          var proj = { ...r.projections };
-                          proj[code] = { ...proj[code], current: v };
-                          return { ...r, projections: proj };
-                        });
-                      }
-                    })
-                  ),
-                  h(
-                    'td',
-                    null,
-                    h('input', {
-                      value: pj.next,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setReport(function (r) {
-                          var proj = { ...r.projections };
-                          proj[code] = { ...proj[code], next: v };
-                          return { ...r, projections: proj };
-                        });
-                      }
-                    })
+                  h('tr', null,
+                    h('td', null, h('strong', null, '34'), ' · Net cash flow (Row 32 minus Row 33)'),
+                    h('td', null, h('input', { readOnly: true, value: a34 ? String(a34) : '' })),
+                    h('td', null, h('input', { readOnly: true, value: b34 ? String(b34) : '' })),
+                    h('td', null, h('input', { readOnly: true, value: c34 ? String(c34) : '' }))
                   )
-                );
-              })
-            )
-          ),
-          h('h3', { className: 'f425-h3' }, 'Part 8 \u2014 Attachment checklist'),
+                )
+              ),
+              h('h4', { className: 'f425-h3', style: { marginTop: 12 } }, 'Next month projections (for next report)'),
+              h('div', { className: 'f425-grid' },
+                h('label', null, 'Projected gross receipts next month', h('input', {
+                  className: 'f425-money',
+                  inputMode: 'decimal',
+                  value: report.nextMonthProjectedReceipts,
+                  onChange: function (e) {
+                    var v = e.target.value;
+                    setReport(function (r) { return { ...r, nextMonthProjectedReceipts: v }; });
+                  }
+                })),
+                h('label', null, 'Projected total disbursements next month', h('input', {
+                  className: 'f425-money',
+                  inputMode: 'decimal',
+                  value: report.nextMonthProjectedDisbursements,
+                  onChange: function (e) {
+                    var v = e.target.value;
+                    setReport(function (r) { return { ...r, nextMonthProjectedDisbursements: v }; });
+                  }
+                }))
+              )
+            );
+          })(),
+          h('h3', { className: 'f425-h3' }, 'Part 8 — Attachment checklist'),
           ATTACH_KEYS.map(function (ak) {
             var key = ak[0];
             var lab = ak[1];
@@ -1698,6 +1840,16 @@
           )
         ),
         h(
+          'p',
+          { style: { marginTop: 10, fontSize: 12, color: 'var(--color-text-label)' } },
+          'Attachments included: ',
+          report.attachments.pl ? 'P&L, ' : '',
+          report.attachments.bankStmt ? 'Bank statements, ' : '',
+          report.attachments.bankRec ? 'Bank reconciliation, ' : '',
+          report.attachments.ar ? 'AR aging, ' : '',
+          report.attachments.ap ? 'AP detail' : ''
+        ),
+        h(
           'h3',
           { className: 'f425-h2 no-print', style: { marginTop: 20 } },
           'Transfers in period (informational)'
@@ -1731,38 +1883,93 @@
     }
 
     function renderMergePanel() {
+      var plNames = (mergeFiles.pl || []).map(function (f) {
+        return f.name;
+      });
+      var bankStmtNames = (mergeFiles.bankStmt || []).map(function (f) {
+        return f.name;
+      });
+      var bankRecNames = (mergeFiles.bankRec || []).map(function (f) {
+        return f.name;
+      });
+      var anyFiles = plNames.length || bankStmtNames.length || bankRecNames.length;
+
       return h(
         'section',
         { id: 'panel-merge', className: 'f425-panel' + (tab === 'merge' ? ' active' : '') },
-        h('h2', { className: 'f425-h2' }, 'Merge & export \u2014 filing package (.zip)'),
+        h('h2', { className: 'f425-h2' }, 'Merge & export — filing package (.zip)'),
         h(
           'p',
           { className: 'f425-note' },
-          'Upload PDFs; package-manifest.json includes company, month, and checklist.'
-        ),
-        h(
-          'label',
-          { style: { display: 'block', fontSize: 13 } },
-          'Files to include',
-          h('input', {
-            ref: mergeRef,
-            type: 'file',
-            multiple: true,
-            accept: 'application/pdf,.pdf',
-            className: 'no-print',
-            style: { marginTop: 6 }
-          })
+          'Print Form 425C first, then attach your P&L and bank statement pages as separate exhibits.'
         ),
         h(
           'div',
-          { className: 'f425-actions' },
+          { className: 'f425-grid', style: { marginBottom: 12 } },
           h(
-            'button',
-            { type: 'button', className: 'btn primary', onClick: downloadPackageZip },
-            'Download ZIP package'
+            'label',
+            { style: { display: 'block', fontSize: 13 } },
+            'P&L Statement (Cash or Accrual basis)',
+            h('div', { className: 'f425-note', style: { marginBottom: 4 } }, 'Export from QuickBooks → Reports → P&L'),
+            h('input', {
+              ref: plFileRef,
+              type: 'file',
+              accept: 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png',
+              className: 'no-print',
+              onChange: function (e) {
+                updateMergeFiles('pl', e.target.files);
+              }
+            })
+          ),
+          h(
+            'label',
+            { style: { display: 'block', fontSize: 13 } },
+            'Bank Statements (all DIP accounts)',
+            h('input', {
+              ref: bankStmtRef,
+              type: 'file',
+              multiple: true,
+              accept: 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png',
+              className: 'no-print',
+              onChange: function (e) {
+                updateMergeFiles('bankStmt', e.target.files);
+              }
+            })
+          ),
+          h(
+            'label',
+            { style: { display: 'block', fontSize: 13 } },
+            'Bank Reconciliation Reports',
+            h('input', {
+              ref: bankRecRef,
+              type: 'file',
+              multiple: true,
+              accept: 'application/pdf,.pdf',
+              className: 'no-print',
+              onChange: function (e) {
+                updateMergeFiles('bankRec', e.target.files);
+              }
+            })
           )
         ),
-        h('p', { className: 'f425-note' }, mergeMsg)
+        anyFiles
+          ? h(
+              'div',
+              { className: 'f425-note', style: { marginBottom: 8, whiteSpace: 'pre-wrap' } },
+              'Combined preview (selected files):\n' +
+                (plNames.length ? 'P&L: ' + plNames.join(', ') + '\n' : '') +
+                (bankStmtNames.length ? 'Bank statements: ' + bankStmtNames.join(', ') + '\n' : '') +
+                (bankRecNames.length ? 'Bank reconciliation: ' + bankRecNames.join(', ') : '')
+            )
+          : h('p', { className: 'f425-note' }, 'No attachments selected yet.'),
+        h(
+          'div',
+          { className: 'f425-actions' },
+          h('button', { type: 'button', className: 'btn secondary', onClick: printWithPackageNotes }, 'Print / Save as PDF'),
+          h('button', { type: 'button', className: 'btn secondary', onClick: downloadPackageChecklist }, 'Download package checklist'),
+          h('button', { type: 'button', className: 'btn primary', onClick: downloadPackageZip }, 'Download ZIP package')
+        ),
+        h('p', { className: 'f425-note', style: { whiteSpace: 'pre-wrap' } }, mergeMsg)
       );
     }
 
@@ -1854,6 +2061,25 @@
           'h1',
           { style: { margin: '8px 0 4px', fontSize: '1.35rem', color: 'var(--color-text-primary)' } },
           'Official Form 425C \u2014 Monthly operating report'
+        ),
+        h(
+          'div',
+          { className: 'no-print', style: { margin: '6px 0 10px' } },
+          h('label', { style: { display: 'block', fontSize: 12, color: 'var(--color-text-label)' } },
+            'Active debtor',
+            h(
+              'select',
+              {
+                id: 'activeDebtor',
+                value: repCompany,
+                onChange: function (e) {
+                  switchDebtor(e.target.value);
+                }
+              },
+              h('option', { value: 'ih35-transportation' }, 'IH 35 Transportation LLC'),
+              h('option', { value: 'ih35-trucking' }, 'IH 35 Trucking LLC')
+            )
+          )
         ),
         h(
           'p',
