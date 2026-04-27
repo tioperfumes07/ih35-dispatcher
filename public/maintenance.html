@@ -1473,6 +1473,7 @@
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Vehicles in service</div><div class="maint-kpi-card__val" id="maintDashVehiclesInService">0</div></div>
               <div class="maint-kpi-card"><div class="maint-kpi-card__label">Open damage reports</div><div class="maint-kpi-card__val" id="maintDashOpenDamage">0</div></div>
+              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Pending QBO sync</div><div class="maint-kpi-card__val" id="maintDashPendingQboSync">0</div></div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
@@ -3031,6 +3032,21 @@
             </div>
           </div>
           <p class="mini-note" id="acctBoardPendingSummary" style="margin:0 0 12px;color:var(--color-text-body);font-size:12px;line-height:1.45">—</p>
+
+          <div id="acctPendingQboSyncPanel" style="margin:0 0 14px;border:1px solid rgba(148,163,184,0.25);border-radius:10px;padding:10px;background:rgba(15,23,42,0.35)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+              <strong id="acctPendingQboSyncBanner">Pending QuickBooks sync loading...</strong>
+              <button type="button" class="btn btn--small" onclick="retryQboSyncQueueNow()">Sync now</button>
+            </div>
+            <div class="table-wrap erp-table-scroll" style="margin-top:8px;max-height:220px">
+              <table style="font-size:12px">
+                <thead>
+                  <tr><th>Type</th><th>Description</th><th>Amount</th><th>Unit</th><th>Created</th><th>Status</th><th>Error</th></tr>
+                </thead>
+                <tbody id="acctPendingQboSyncBody"><tr><td colspan="7" class="mini-note">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
 
           <div id="accountingHomeQuickActions" class="erp-home-quick-actions">
             <button type="button" class="btn" onclick="erpNewExpense()">New expense</button>
@@ -12097,6 +12113,7 @@
 
     let __maintQboSyncPayloadCache = null;
     let __erpLastQboStatusJson = null;
+    let __qboSyncQueueCache = { pending: 0, failed: 0, items: [] };
 
     function showErpToast(message, kind) {
       const text = String(message || '').trim();
@@ -12434,6 +12451,107 @@
         side.textContent = parts.join(' · ');
       }
       syncAcctDashFromQboPayload();
+    }
+
+    function renderQboSyncQueuePanel(payload) {
+      const panelBanner = document.getElementById('acctPendingQboSyncBanner');
+      const body = document.getElementById('acctPendingQboSyncBody');
+      const kpi = document.getElementById('maintDashPendingQboSync');
+      const pending = Number(payload?.pending || 0);
+      const failed = Number(payload?.failed || 0);
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      __qboSyncQueueCache = { pending, failed, items };
+
+      if (kpi) {
+        kpi.textContent = String(pending + failed);
+        kpi.style.color = pending + failed > 0 ? 'var(--color-semantic-error)' : 'var(--color-semantic-success)';
+      }
+      if (panelBanner) {
+        panelBanner.textContent = pending + failed > 0
+          ? `⚠️ ${pending + failed} transactions pending QuickBooks sync`
+          : '✅ No pending QuickBooks sync transactions';
+        panelBanner.style.color = pending + failed > 0 ? 'var(--color-semantic-warning)' : 'var(--color-semantic-success)';
+      }
+      if (!body) return;
+      if (!items.length) {
+        body.innerHTML = '<tr><td colspan="7" class="mini-note">No pending items</td></tr>';
+        return;
+      }
+      body.innerHTML = items.slice(0, 25).map((item) => {
+        const payloadObj = item?.payload && typeof item.payload === 'object' ? item.payload : {};
+        const payloadInfo = payloadObj?.payload && typeof payloadObj.payload === 'object' ? payloadObj.payload : {};
+        const unit = String(payloadInfo?.unit_number || item?.unit_number || '').trim() || '—';
+        const amount = Number(payloadInfo?.total_amount || item?.amount || 0);
+        const amountText = Number.isFinite(amount) && amount > 0 ? ('$' + amount.toFixed(2)) : '—';
+        const desc = String(payloadInfo?.driver_name || payloadObj?.mode || item?.transaction_id || '—');
+        const created = item?.created_at ? new Date(item.created_at).toLocaleString() : '—';
+        return '<tr>' +
+          '<td>' + escapeHtml(String(item?.transaction_type || '—')) + '</td>' +
+          '<td>' + escapeHtml(desc) + '</td>' +
+          '<td>' + escapeHtml(amountText) + '</td>' +
+          '<td>' + escapeHtml(unit) + '</td>' +
+          '<td>' + escapeHtml(created) + '</td>' +
+          '<td>' + escapeHtml(String(item?.status || 'pending')) + '</td>' +
+          '<td style="color:var(--color-semantic-error)">' + escapeHtml(String(item?.error_message || '—')) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function retryQboSyncQueueNow() {
+      try {
+        const out = await j('/api/qbo/sync-queue/retry', { method: 'POST' });
+        if (out && out.ok) {
+          showErpToast('✅ ' + Number(out.synced || 0) + ' transactions synced to QuickBooks', 'success');
+        } else {
+          showErpToast(String(out?.error || 'Sync retry failed'), 'error');
+        }
+      } catch (e) {
+        showErpToast(String(e?.message || e), 'error');
+      }
+      try {
+        const q = await j('/api/qbo/sync-queue');
+        renderQboSyncQueuePanel(q || {});
+      } catch (_) {}
+    }
+
+    function paintEnhancedConnectionStrip(health, qboSt, queuePayload, assignmentsPayload) {
+      const strip = document.getElementById('erpConnectionStrip');
+      if (!strip) return;
+      const qSource = String(qboSt?.source || 'cache').trim().toLowerCase();
+      const qAge = Number(qboSt?.cacheAgeMinutes);
+      const qCacheText = Number.isFinite(qAge) ? `${qAge}m ago` : '—';
+      const qboConnected = !!qboSt?.connected;
+      const qboTone = qboConnected ? 'var(--color-semantic-success)' : 'var(--color-semantic-warning)';
+      const samSource = String(assignmentsPayload?.source || (health?.hasSamsaraToken ? 'live' : 'cache')).trim().toLowerCase();
+      const samVehicles = Number.isFinite(Number(health?.samsaraVehicles)) ? Number(health.samsaraVehicles) : 0;
+      const samTone = samSource === 'live' ? 'var(--color-semantic-success)' : 'var(--color-semantic-warning)';
+      const pending = Number(queuePayload?.pending || 0) + Number(queuePayload?.failed || 0);
+      const pendingTone = pending > 0 ? 'var(--color-semantic-error)' : 'var(--color-semantic-success)';
+      strip.innerHTML =
+        '<span style="color:' + qboTone + '">● QBO ' + (qboConnected ? 'connected' : 'cache') + ' | cache: ' + escapeHtml(qCacheText) + '</span>' +
+        '<span style="margin-left:12px;color:' + samTone + '">● Samsara ' + (samSource === 'live' ? 'connected' : 'cache') + ' | ' + escapeHtml(String(samVehicles)) + ' vehicles</span>' +
+        '<span style="margin-left:12px;color:' + pendingTone + '">● ' + escapeHtml(String(pending)) + ' pending sync</span>';
+
+      const qboBanner = document.getElementById('erpQboDisconnectBanner');
+      if (qboBanner) {
+        if (qboConnected) {
+          qboBanner.classList.add('hidden');
+          qboBanner.textContent = '';
+        } else {
+          qboBanner.classList.remove('hidden');
+          qboBanner.textContent = 'QBO offline — transactions saving locally';
+        }
+      }
+      const samBanner = document.getElementById('erpSamsaraDisconnectBanner');
+      if (samBanner) {
+        if (samSource === 'live') {
+          samBanner.classList.add('hidden');
+          samBanner.textContent = '';
+        } else {
+          samBanner.classList.remove('hidden');
+          samBanner.textContent = 'Samsara offline — using cached driver data';
+        }
+      }
     }
 
     function connectQuickBooks() {
@@ -12965,7 +13083,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes, fleetAssetsRes] =
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes, fleetAssetsRes, qboQueueRes, driverAssignmentsRes] =
           await Promise.all([
             j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
@@ -12990,7 +13108,9 @@
             j('/api/maintenance/parts-reference').catch(() => ({ ok: false, parts: [], names: [] })),
             j('/api/fleet/assets/units').catch(() => ({ ok: false, units: [] })),
             j('/api/fleet/assets/qbo-classes').catch(() => ({ ok: false, mappings: [] })),
-            j('/api/fleet/assets').catch(() => ({ ok: false, assets: [] }))
+            j('/api/fleet/assets').catch(() => ({ ok: false, assets: [] })),
+            j('/api/qbo/sync-queue').catch(() => ({ ok: false, pending: 0, failed: 0, items: [] })),
+            j('/api/drivers/assignments').catch(() => ({ ok: false, source: 'cache', assignments: [] }))
           ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -13051,6 +13171,9 @@
         if (qboMasterRes && typeof qboMasterRes === 'object') {
           window._qboMaster = qboMasterRes;
         }
+
+        renderQboSyncQueuePanel(qboQueueRes || { pending: 0, failed: 0, items: [] });
+        paintEnhancedConnectionStrip(healthRes || {}, qboStatusRes || {}, qboQueueRes || {}, driverAssignmentsRes || {});
 
         const preferredUnits = assetUnits.map((u) => ({
           id: String(u.samsara_id || u.unit_number || '').trim(),

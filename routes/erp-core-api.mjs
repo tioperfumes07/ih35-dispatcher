@@ -62,6 +62,8 @@ const COMMON_PARTS_REFERENCE_SEEDS = [
 ];
 
 let fleetCatalogSeedState = { done: false, inFlight: null };
+let qboCatalogAutoSyncTimer = null;
+let qboSyncQueueRetryTimer = null;
 
 function summarizeSamsaraVehiclesPayload(payload) {
   const arr = Array.isArray(payload?.data)
@@ -658,6 +660,345 @@ async function ensureFleetAssetQboClassesTable(dbCtx = {}) {
   return true;
 }
 
+async function ensureIntegrationResilienceTables() {
+  if (!getPool()) return false;
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS qbo_catalog_cache (
+      entity_type TEXT NOT NULL,
+      qbo_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      full_data JSONB,
+      last_synced_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (entity_type, qbo_id)
+    )
+  `);
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS qbo_sync_queue (
+      id SERIAL PRIMARY KEY,
+      transaction_type TEXT NOT NULL,
+      transaction_id INTEGER,
+      payload JSONB NOT NULL,
+      status TEXT DEFAULT 'pending',
+      error_message TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      synced_at TIMESTAMPTZ,
+      retry_count INTEGER DEFAULT 0
+    )
+  `);
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS samsara_vehicle_assignments (
+      unit_number TEXT PRIMARY KEY,
+      driver_name TEXT,
+      driver_samsara_id TEXT,
+      duty_status TEXT,
+      last_updated TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS integration_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  return true;
+}
+
+async function getIntegrationSetting(settingKey) {
+  if (!getPool()) return null;
+  await ensureIntegrationResilienceTables();
+  const { rows } = await dbQuery(
+    'SELECT setting_value FROM integration_settings WHERE setting_key = $1 LIMIT 1',
+    [String(settingKey || '').trim()]
+  );
+  return String(rows?.[0]?.setting_value || '').trim() || null;
+}
+
+async function setIntegrationSetting(settingKey, settingValue) {
+  if (!getPool()) return;
+  await ensureIntegrationResilienceTables();
+  await dbQuery(
+    `INSERT INTO integration_settings (setting_key, setting_value, updated_at)
+     VALUES ($1, $2, now())
+     ON CONFLICT (setting_key)
+     DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = now()`,
+    [String(settingKey || '').trim(), settingValue == null ? null : String(settingValue)]
+  );
+}
+
+function normalizeQboCatalogRow(entityType, row) {
+  const qboId = String(
+    row?.Id || row?.id || row?.qboId || row?.value || row?.AcctNum || row?.DocNumber || ''
+  ).trim();
+  const name = String(
+    row?.DisplayName || row?.Name || row?.FullyQualifiedName || row?.PrintOnCheckName || row?.name || ''
+  ).trim();
+  if (!qboId || !name) return null;
+  return {
+    entity_type: String(entityType || '').trim().toLowerCase(),
+    qbo_id: qboId,
+    name,
+    full_data: row || {},
+  };
+}
+
+async function fetchLiveQboCatalogBundle() {
+  const qbo = createQboApiClient();
+  const [vendorResp, accountResp, itemResp, classResp, customerResp] = await Promise.all([
+    qbo.qboQuery('SELECT * FROM Vendor MAXRESULTS 1000'),
+    qbo.qboQuery('SELECT * FROM Account MAXRESULTS 1000'),
+    qbo.qboQuery('SELECT * FROM Item MAXRESULTS 1000'),
+    qbo.qboQuery('SELECT * FROM Class MAXRESULTS 1000'),
+    qbo.qboQuery('SELECT * FROM Customer MAXRESULTS 1000'),
+  ]);
+  const vendors = Array.isArray(vendorResp?.QueryResponse?.Vendor) ? vendorResp.QueryResponse.Vendor : [];
+  const accounts = Array.isArray(accountResp?.QueryResponse?.Account) ? accountResp.QueryResponse.Account : [];
+  const items = Array.isArray(itemResp?.QueryResponse?.Item) ? itemResp.QueryResponse.Item : [];
+  const classes = Array.isArray(classResp?.QueryResponse?.Class) ? classResp.QueryResponse.Class : [];
+  const customers = Array.isArray(customerResp?.QueryResponse?.Customer) ? customerResp.QueryResponse.Customer : [];
+  return { vendors, accounts, items, classes, customers };
+}
+
+function normalizeMasterBundle(bundle) {
+  const vendors = Array.isArray(bundle?.vendors) ? bundle.vendors : [];
+  const accounts = Array.isArray(bundle?.accounts) ? bundle.accounts : [];
+  const items = Array.isArray(bundle?.items) ? bundle.items : [];
+  const classes = Array.isArray(bundle?.classes) ? bundle.classes : [];
+  const customers = Array.isArray(bundle?.customers) ? bundle.customers : [];
+  const accountsExpense = accounts.filter((a) => {
+    const t = String(a?.AccountType || a?.accountType || '').trim();
+    return t === 'Expense' || t === 'Cost of Goods Sold';
+  });
+  const accountsIncome = accounts.filter((a) => String(a?.AccountType || a?.accountType || '').trim() === 'Income');
+  const accountsBank = accounts.filter((a) => {
+    const t = String(a?.AccountType || a?.accountType || '').trim();
+    return t === 'Bank' || t === 'Credit Card';
+  });
+  return {
+    vendors,
+    items,
+    accounts,
+    accountsExpense,
+    accountsIncome,
+    customers,
+    classes,
+    accountsBank,
+    paymentMethods: [],
+    employees: [],
+    terms: [],
+    transactionActivity: null,
+  };
+}
+
+async function upsertQboCatalogBundle(bundle) {
+  if (!getPool()) return { vendors: 0, accounts: 0, items: 0, classes: 0, customers: 0 };
+  await ensureIntegrationResilienceTables();
+  const entityMap = [
+    ['vendor', Array.isArray(bundle?.vendors) ? bundle.vendors : []],
+    ['account', Array.isArray(bundle?.accounts) ? bundle.accounts : []],
+    ['item', Array.isArray(bundle?.items) ? bundle.items : []],
+    ['class', Array.isArray(bundle?.classes) ? bundle.classes : []],
+    ['customer', Array.isArray(bundle?.customers) ? bundle.customers : []],
+  ];
+  const counts = { vendors: 0, accounts: 0, items: 0, classes: 0, customers: 0 };
+  for (const [entityType, rows] of entityMap) {
+    for (const row of rows) {
+      const normalized = normalizeQboCatalogRow(entityType, row);
+      if (!normalized) continue;
+      await dbQuery(
+        `INSERT INTO qbo_catalog_cache (entity_type, qbo_id, name, full_data, last_synced_at)
+         VALUES ($1,$2,$3,$4::jsonb,now())
+         ON CONFLICT (entity_type, qbo_id)
+         DO UPDATE SET name = EXCLUDED.name, full_data = EXCLUDED.full_data, last_synced_at = now()`,
+        [normalized.entity_type, normalized.qbo_id, normalized.name, JSON.stringify(normalized.full_data || {})]
+      );
+      if (entityType === 'vendor') counts.vendors += 1;
+      if (entityType === 'account') counts.accounts += 1;
+      if (entityType === 'item') counts.items += 1;
+      if (entityType === 'class') counts.classes += 1;
+      if (entityType === 'customer') counts.customers += 1;
+    }
+  }
+  return counts;
+}
+
+async function readQboCatalogBundleFromCache() {
+  if (!getPool()) return { bundle: normalizeMasterBundle({}), cacheAge: null, refreshedAt: null };
+  await ensureIntegrationResilienceTables();
+  const { rows } = await dbQuery(
+    `SELECT entity_type, full_data, last_synced_at
+       FROM qbo_catalog_cache
+      WHERE entity_type = ANY($1::text[])`,
+    [['vendor', 'account', 'item', 'class', 'customer']]
+  );
+  const grouped = { vendors: [], accounts: [], items: [], classes: [], customers: [] };
+  let newest = null;
+  for (const row of rows || []) {
+    const et = String(row?.entity_type || '').trim().toLowerCase();
+    const full = row?.full_data && typeof row.full_data === 'object' ? row.full_data : {};
+    const at = row?.last_synced_at ? Date.parse(String(row.last_synced_at)) : NaN;
+    if (Number.isFinite(at)) newest = newest == null ? at : Math.max(newest, at);
+    if (et === 'vendor') grouped.vendors.push(full);
+    if (et === 'account') grouped.accounts.push(full);
+    if (et === 'item') grouped.items.push(full);
+    if (et === 'class') grouped.classes.push(full);
+    if (et === 'customer') grouped.customers.push(full);
+  }
+  const bundle = normalizeMasterBundle(grouped);
+  const cacheAge = newest == null ? null : Math.max(0, Math.round((Date.now() - newest) / 60000));
+  return { bundle, cacheAge, refreshedAt: newest == null ? null : new Date(newest).toISOString() };
+}
+
+async function syncQboCatalogCacheNow(logError, opts = {}) {
+  if (!qboConnectionFlags().connected) return { ok: false, error: 'qbo_not_connected', synced: { vendors: 0, accounts: 0, items: 0, classes: 0 } };
+  try {
+    const live = await fetchLiveQboCatalogBundle();
+    const counts = await upsertQboCatalogBundle(live);
+    const nowIso = new Date().toISOString();
+    await setIntegrationSetting('qbo_catalog_last_sync_at', nowIso);
+    return {
+      ok: true,
+      source: 'live',
+      synced: {
+        vendors: Number(counts.vendors || 0),
+        accounts: Number(counts.accounts || 0),
+        items: Number(counts.items || 0),
+        classes: Number(counts.classes || 0),
+      },
+      bundle: normalizeMasterBundle(live),
+      refreshedAt: nowIso,
+      cacheAge: 0,
+    };
+  } catch (e) {
+    if (!opts?.silent) logError('syncQboCatalogCacheNow', e);
+    const cached = await readQboCatalogBundleFromCache();
+    return {
+      ok: false,
+      error: e?.message || String(e),
+      source: 'cache',
+      synced: { vendors: 0, accounts: 0, items: 0, classes: 0 },
+      bundle: cached.bundle,
+      refreshedAt: cached.refreshedAt,
+      cacheAge: cached.cacheAge,
+    };
+  }
+}
+
+async function upsertSamsaraAssignmentsFromHosRows(rows = []) {
+  if (!getPool()) return 0;
+  await ensureIntegrationResilienceTables();
+  let count = 0;
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const unit = String(row?.currentVehicle?.name || '').trim();
+    const driverName = String(row?.driver?.name || '').trim();
+    if (!unit || !driverName) continue;
+    const driverId = String(row?.driver?.id || '').trim() || null;
+    const duty = String(row?.currentDutyStatus?.hosStatusType || '').trim().toLowerCase() || 'unknown';
+    await dbQuery(
+      `INSERT INTO samsara_vehicle_assignments (unit_number, driver_name, driver_samsara_id, duty_status, last_updated)
+       VALUES ($1,$2,$3,$4,now())
+       ON CONFLICT (unit_number)
+       DO UPDATE SET driver_name = EXCLUDED.driver_name,
+                     driver_samsara_id = EXCLUDED.driver_samsara_id,
+                     duty_status = EXCLUDED.duty_status,
+                     last_updated = now()`,
+      [unit, driverName, driverId, duty]
+    );
+    count += 1;
+  }
+  return count;
+}
+
+async function readCachedSamsaraAssignments() {
+  if (!getPool()) return [];
+  await ensureIntegrationResilienceTables();
+  const { rows } = await dbQuery(
+    `SELECT unit_number, driver_name, driver_samsara_id, duty_status, last_updated
+       FROM samsara_vehicle_assignments
+      ORDER BY unit_number`
+  );
+  return rows || [];
+}
+
+async function enqueueQboSyncQueue(transactionType, transactionId, payload, errorMessage) {
+  if (!getPool()) return null;
+  await ensureIntegrationResilienceTables();
+  const { rows } = await dbQuery(
+    `INSERT INTO qbo_sync_queue (transaction_type, transaction_id, payload, status, error_message, created_at)
+     VALUES ($1,$2,$3::jsonb,'pending',$4,now())
+     RETURNING id`,
+    [
+      String(transactionType || '').trim() || 'unknown',
+      Number.isFinite(Number(transactionId)) ? Number(transactionId) : null,
+      JSON.stringify(payload || {}),
+      String(errorMessage || '').trim() || null,
+    ]
+  );
+  return rows?.[0]?.id || null;
+}
+
+async function retryQboSyncQueue(logError, opts = {}) {
+  if (!getPool()) return { ok: true, synced: 0, failed: 0, skipped: 0 };
+  await ensureIntegrationResilienceTables();
+  const limit = Number.isFinite(Number(opts?.limit)) ? Math.max(1, Number(opts.limit)) : 200;
+  const qboFlags = qboConnectionFlags();
+  if (!qboFlags.connected) return { ok: true, synced: 0, failed: 0, skipped: 0, reason: 'qbo_not_connected' };
+  const { rows } = await dbQuery(
+    `SELECT * FROM qbo_sync_queue
+      WHERE status IN ('pending','failed')
+      ORDER BY created_at ASC, id ASC
+      LIMIT $1`,
+    [limit]
+  );
+  const items = rows || [];
+  let synced = 0;
+  let failed = 0;
+  let skipped = 0;
+  for (const item of items) {
+    const payload = item?.payload && typeof item.payload === 'object' ? item.payload : {};
+    try {
+      if (String(item.transaction_type || '').toLowerCase() === 'fuel' || payload?.mode === 'fuel_expense_post') {
+        const expenseId = Number(payload?.expense_id || item?.transaction_id);
+        if (!Number.isFinite(expenseId)) throw new Error('fuel expense_id missing');
+        const { rows: expenseRows } = await dbQuery('SELECT * FROM fuel_expenses WHERE id = $1 LIMIT 1', [expenseId]);
+        const expense = expenseRows?.[0] || null;
+        if (!expense) throw new Error('fuel expense not found');
+        const posted = await postFuelExpenseToQbo(expense);
+        if (!posted?.ok) throw new Error(String(posted?.reason || 'QBO fuel sync failed'));
+      } else if (payload?.qboEntity && payload?.qboPayload && typeof payload.qboPayload === 'object') {
+        const qbo = createQboApiClient();
+        await qbo.qboPost(String(payload.qboEntity || '').trim().toLowerCase(), payload.qboPayload);
+      } else {
+        skipped += 1;
+        await dbQuery(
+          `UPDATE qbo_sync_queue
+              SET status = 'skipped', error_message = $2, retry_count = COALESCE(retry_count,0) + 1
+            WHERE id = $1`,
+          [item.id, 'Unsupported queue payload']
+        );
+        continue;
+      }
+      synced += 1;
+      await dbQuery(
+        `UPDATE qbo_sync_queue
+            SET status = 'synced', error_message = NULL, synced_at = now()
+          WHERE id = $1`,
+        [item.id]
+      );
+    } catch (e) {
+      failed += 1;
+      await dbQuery(
+        `UPDATE qbo_sync_queue
+            SET status = 'failed', error_message = $2, retry_count = COALESCE(retry_count,0) + 1
+          WHERE id = $1`,
+        [item.id, String(e?.message || e || 'QBO sync failed').slice(0, 800)]
+      );
+      logError('retryQboSyncQueue item failed', e);
+    }
+  }
+  return { ok: true, synced, failed, skipped };
+}
+
 /**
  * @param {import('express').Application} app
  * @param {{ logError?: (msg: string, err?: unknown) => void, getPool?: () => unknown, dbQuery?: (sql: string, params?: unknown[]) => Promise<any> }} [opts]
@@ -669,6 +1010,34 @@ export function mountErpCoreApi(app, opts = {}) {
 
   function maintActor(req) {
     return String(req.headers['x-ih35-user'] || req.headers['x-user-email'] || 'operator').trim() || 'operator';
+  }
+
+  if (!qboCatalogAutoSyncTimer) {
+    qboCatalogAutoSyncTimer = setInterval(async () => {
+      try {
+        if (!getPool()) return;
+        if (!qboConnectionFlags().connected) return;
+        const lastSyncRaw = await getIntegrationSetting('qbo_catalog_last_sync_at').catch(() => null);
+        const lastSyncMs = lastSyncRaw ? Date.parse(String(lastSyncRaw)) : NaN;
+        const ageMs = Number.isFinite(lastSyncMs) ? (Date.now() - lastSyncMs) : Number.POSITIVE_INFINITY;
+        if (ageMs < 24 * 60 * 60 * 1000) return;
+        await syncQboCatalogCacheNow(logError, { silent: true });
+      } catch (e) {
+        logError('qbo catalog auto-sync interval', e);
+      }
+    }, 60 * 60 * 1000);
+  }
+
+  if (!qboSyncQueueRetryTimer) {
+    qboSyncQueueRetryTimer = setInterval(async () => {
+      try {
+        if (!getPool()) return;
+        if (!qboConnectionFlags().connected) return;
+        await retryQboSyncQueue(logError, { limit: 500 });
+      } catch (e) {
+        logError('qbo queue retry interval', e);
+      }
+    }, 15 * 60 * 1000);
   }
 
   app.get('/api/health', async (_req, res) => {
@@ -744,8 +1113,16 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.get('/api/qbo/status', (_req, res) => {
+  app.get('/api/qbo/status', async (_req, res) => {
     const { configured, connected, companyName, lastRefreshError, lastRefreshErrorAt } = qboConnectionFlags();
+    let catalogLastSyncedAt = null;
+    let cacheAgeMinutes = null;
+    if (getPool()) {
+      const last = await getIntegrationSetting('qbo_catalog_last_sync_at').catch(() => null);
+      catalogLastSyncedAt = last || null;
+      const ms = last ? Date.parse(String(last)) : NaN;
+      cacheAgeMinutes = Number.isFinite(ms) ? Math.max(0, Math.round((Date.now() - ms) / 60000)) : null;
+    }
     res.json({
       ok: true,
       configured,
@@ -755,7 +1132,9 @@ export function mountErpCoreApi(app, opts = {}) {
       lastRefreshErrorAt: lastRefreshErrorAt || undefined,
       catalogUiPollMinutes: 1,
       catalogUiPollMs: QBO_LIVE_REFRESH_MS,
-      catalogLastSyncedAt: null,
+      catalogLastSyncedAt,
+      cacheAgeMinutes,
+      source: connected ? 'live' : 'cache',
       liveConnectionStatus: connected ? 'connected' : configured ? 'disconnected' : 'not-configured'
     });
   });
@@ -780,25 +1159,78 @@ export function mountErpCoreApi(app, opts = {}) {
    * Legacy ERP shell compatibility endpoint.
    * Newer code reads `/api/qbo/status`, but the maintenance shell still calls `/api/qbo/master`.
    */
-  app.get('/api/qbo/master', (_req, res) => {
-    const erp = readFullErpJson();
-    const cache = erp?.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
+  app.get('/api/qbo/master', async (_req, res) => {
     const arr = (v) => (Array.isArray(v) ? v : []);
-    return res.json({
-      vendors: arr(cache.vendors),
-      items: arr(cache.items),
-      accounts: arr(cache.accounts),
-      accountsExpense: arr(cache.accountsExpense),
-      accountsIncome: arr(cache.accountsIncome),
-      customers: arr(cache.customers),
-      classes: arr(cache.classes),
-      accountsBank: arr(cache.accountsBank),
-      paymentMethods: arr(cache.paymentMethods),
-      employees: arr(cache.employees),
-      terms: arr(cache.terms),
-      transactionActivity: cache.transactionActivity || null,
-      refreshedAt: erp?.refreshedAt || null
-    });
+    const erp = readFullErpJson();
+    const erpCache = erp?.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
+
+    if (!getPool()) {
+      const normalized = normalizeMasterBundle({
+        vendors: arr(erpCache.vendors),
+        items: arr(erpCache.items),
+        accounts: arr(erpCache.accounts),
+        classes: arr(erpCache.classes),
+        customers: arr(erpCache.customers),
+      });
+      return res.json({ ...normalized, source: 'cache', cacheAge: null, refreshedAt: erp?.refreshedAt || null });
+    }
+
+    try {
+      await ensureIntegrationResilienceTables();
+
+      let source = 'cache';
+      let cacheAge = null;
+      let refreshedAt = null;
+      let bundle = null;
+
+      if (qboConnectionFlags().connected) {
+        const synced = await syncQboCatalogCacheNow(logError, { silent: true });
+        if (synced?.ok && synced?.bundle) {
+          source = 'live';
+          cacheAge = 0;
+          refreshedAt = synced.refreshedAt || new Date().toISOString();
+          bundle = synced.bundle;
+        }
+      }
+
+      if (!bundle) {
+        const cached = await readQboCatalogBundleFromCache();
+        bundle = cached.bundle;
+        cacheAge = cached.cacheAge;
+        refreshedAt = cached.refreshedAt;
+      }
+
+      if (!bundle || (
+        !Array.isArray(bundle.vendors) &&
+        !Array.isArray(bundle.items) &&
+        !Array.isArray(bundle.accounts)
+      )) {
+        bundle = normalizeMasterBundle({
+          vendors: arr(erpCache.vendors),
+          items: arr(erpCache.items),
+          accounts: arr(erpCache.accounts),
+          classes: arr(erpCache.classes),
+          customers: arr(erpCache.customers),
+        });
+      }
+
+      return res.json({
+        ...bundle,
+        source,
+        cacheAge,
+        refreshedAt: refreshedAt || erp?.refreshedAt || null,
+      });
+    } catch (e) {
+      logError('GET /api/qbo/master', e);
+      const fallback = normalizeMasterBundle({
+        vendors: arr(erpCache.vendors),
+        items: arr(erpCache.items),
+        accounts: arr(erpCache.accounts),
+        classes: arr(erpCache.classes),
+        customers: arr(erpCache.customers),
+      });
+      return res.json({ ...fallback, source: 'cache', cacheAge: null, refreshedAt: erp?.refreshedAt || null });
+    }
   });
 
   /** Clears persisted QBO `connectionHealth` after a successful test/refresh (client calls). */
@@ -821,6 +1253,53 @@ export function mountErpCoreApi(app, opts = {}) {
       configured,
       connected
     });
+  });
+
+  app.post('/api/qbo/sync-catalog', async (_req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureIntegrationResilienceTables();
+      const synced = await syncQboCatalogCacheNow(logError);
+      if (!synced?.ok) {
+        return res.status(503).json({ ok: false, error: synced?.error || 'QuickBooks sync failed', synced: synced?.synced || { vendors: 0, accounts: 0, items: 0, classes: 0 } });
+      }
+      return res.json({ ok: true, synced: synced.synced, source: 'live', refreshedAt: synced.refreshedAt || new Date().toISOString() });
+    } catch (e) {
+      logError('POST /api/qbo/sync-catalog', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), synced: { vendors: 0, accounts: 0, items: 0, classes: 0 } });
+    }
+  });
+
+  app.get('/api/qbo/sync-queue', async (_req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, pending: 0, failed: 0, items: [] });
+      await ensureIntegrationResilienceTables();
+      const { rows } = await dbQuery(
+        `SELECT * FROM qbo_sync_queue
+          WHERE status IN ('pending','failed')
+          ORDER BY created_at DESC, id DESC
+          LIMIT 500`
+      );
+      const items = rows || [];
+      const pending = items.filter((r) => String(r.status || '').toLowerCase() === 'pending').length;
+      const failed = items.filter((r) => String(r.status || '').toLowerCase() === 'failed').length;
+      return res.json({ ok: true, pending, failed, items });
+    } catch (e) {
+      logError('GET /api/qbo/sync-queue', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), pending: 0, failed: 0, items: [] });
+    }
+  });
+
+  app.post('/api/qbo/sync-queue/retry', async (_req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set', synced: 0, failed: 0 });
+      await ensureIntegrationResilienceTables();
+      const out = await retryQboSyncQueue(logError, { limit: 500 });
+      return res.json({ ok: true, synced: Number(out?.synced || 0), failed: Number(out?.failed || 0), skipped: Number(out?.skipped || 0), reason: out?.reason || null });
+    } catch (e) {
+      logError('POST /api/qbo/sync-queue/retry', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), synced: 0, failed: 0, skipped: 0 });
+    }
   });
 
   app.get('/api/maintenance/dashboard', async (_req, res) => {
@@ -862,6 +1341,7 @@ export function mountErpCoreApi(app, opts = {}) {
       let vehicles = [];
       let assignmentList = [];
       let hosRows = [];
+      let cachedAssignments = [];
       if (token) {
         try {
           const payload = await getVehicles(token);
@@ -881,6 +1361,12 @@ export function mountErpCoreApi(app, opts = {}) {
         )).catch(() => []);
         const hosData = await samsaraGet('/fleet/hos/clocks', token, {}).catch(() => ({ data: [] }));
         hosRows = Array.isArray(hosData?.data) ? hosData.data : [];
+        if (hosRows.length) {
+          await upsertSamsaraAssignmentsFromHosRows(hosRows).catch(() => 0);
+        }
+      }
+      if (!hosRows.length) {
+        cachedAssignments = await readCachedSamsaraAssignments().catch(() => []);
       }
       if (!vehicles.length && token) {
         await new Promise((r) => setTimeout(r, 2000));
@@ -909,6 +1395,28 @@ export function mountErpCoreApi(app, opts = {}) {
           driverStatus: String(row?.currentDutyStatus?.hosStatusType || '').trim().toLowerCase() || 'unknown',
         });
       });
+      if (!hosByUnit.size && Array.isArray(cachedAssignments)) {
+        cachedAssignments.forEach((row) => {
+          const unitName = String(row?.unit_number || '').trim();
+          const driverName = String(row?.driver_name || '').trim();
+          if (!unitName || !driverName) return;
+          hosByUnit.set(unitName, {
+            driverName,
+            driverStatus: String(row?.duty_status || '').trim().toLowerCase() || 'unknown',
+          });
+        });
+      }
+      if (!hosByUnit.size && Array.isArray(cachedAssignments)) {
+        cachedAssignments.forEach((row) => {
+          const unitName = String(row?.unit_number || '').trim();
+          const driverName = String(row?.driver_name || '').trim();
+          if (!unitName || !driverName) return;
+          hosByUnit.set(unitName, {
+            driverName,
+            driverStatus: String(row?.duty_status || '').trim().toLowerCase() || 'unknown',
+          });
+        });
+      }
 
       const vehiclesWithAssignments = vehicles.map((vehicle) => {
         const unitNeedle = String(vehicle?.unit_number || vehicle?.unitNumber || vehicle?.name || '').trim();
@@ -942,7 +1450,7 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({
         vehicles: vehiclesWithAssignments, live: [], hos: [], assignments: [],
         refreshedAt: new Date().toISOString(),
-        source: vehiclesWithAssignments.length > 0 ? 'samsara-live' : 'empty'
+        source: hosRows.length > 0 ? 'samsara-live' : (cachedAssignments.length > 0 ? 'cache' : (vehiclesWithAssignments.length > 0 ? 'samsara-live' : 'empty'))
       });
     } catch (e) {
       logError('GET /api/board', e);
@@ -959,6 +1467,7 @@ export function mountErpCoreApi(app, opts = {}) {
       const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
       let assignList = [];
       let hosRows = [];
+      let cachedAssignments = [];
       if (token) {
         const assignments = await getDriverVehicleAssignments(token, {}).catch(() => ({ data: [] }));
         assignList = Array.isArray(assignments?.data)
@@ -969,6 +1478,12 @@ export function mountErpCoreApi(app, opts = {}) {
 
         const hosData = await samsaraGet('/fleet/hos/clocks', token, {}).catch(() => ({ data: [] }));
         hosRows = Array.isArray(hosData?.data) ? hosData.data : [];
+        if (hosRows.length) {
+          await upsertSamsaraAssignmentsFromHosRows(hosRows).catch(() => 0);
+        }
+      }
+      if (!hosRows.length) {
+        cachedAssignments = await readCachedSamsaraAssignments().catch(() => []);
       }
 
       const hosByUnit = new Map();
@@ -1742,14 +2257,32 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/drivers/hos-status', async (_req, res) => {
     const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
-    if (!token) return res.json({ ok: true, rows: [] });
     try {
+      await ensureIntegrationResilienceTables();
+      if (!token) {
+        const cached = await readCachedSamsaraAssignments().catch(() => []);
+        const rows = cached.map((r) => ({
+          driver: { id: r.driver_samsara_id || null, name: r.driver_name || null },
+          currentVehicle: { name: r.unit_number || null },
+          currentDutyStatus: { hosStatusType: r.duty_status || 'unknown' },
+          lastUpdated: r.last_updated || null,
+        }));
+        return res.json({ ok: true, source: 'cache', rows });
+      }
       const payload = await samsaraGet('/fleet/hos/clocks', token, {});
       const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.clocks) ? payload.clocks : [];
-      return res.json({ ok: true, rows });
+      await upsertSamsaraAssignmentsFromHosRows(rows).catch(() => 0);
+      return res.json({ ok: true, source: 'live', rows });
     } catch (e) {
       logError('GET /api/drivers/hos-status', e);
-      return res.json({ ok: true, rows: [] });
+      const cached = await readCachedSamsaraAssignments().catch(() => []);
+      const rows = cached.map((r) => ({
+        driver: { id: r.driver_samsara_id || null, name: r.driver_name || null },
+        currentVehicle: { name: r.unit_number || null },
+        currentDutyStatus: { hosStatusType: r.duty_status || 'unknown' },
+        lastUpdated: r.last_updated || null,
+      }));
+      return res.json({ ok: true, source: 'cache', rows });
     }
   });
 
@@ -1786,10 +2319,68 @@ export function mountErpCoreApi(app, opts = {}) {
         }
       });
 
+      if (getPool()) {
+        await ensureDriverSchedulerTables();
+        for (const d of drivers) {
+          const name = String(d?.name || '').trim();
+          const samsaraId = String(d?.samsara_id || '').trim();
+          if (!name || !samsaraId) continue;
+          await dbQuery(
+            `INSERT INTO driver_profiles (full_name, samsara_driver_id, license_number, cdl_state, status, unit_number, updated_at, created_at)
+             VALUES ($1,$2,$3,$4,'active','Unassigned',now(),now())
+             ON CONFLICT (samsara_driver_id)
+             DO UPDATE SET
+               full_name = EXCLUDED.full_name,
+               license_number = EXCLUDED.license_number,
+               cdl_state = EXCLUDED.cdl_state,
+               updated_at = now()`,
+            [
+              name,
+              samsaraId,
+              d?.licenseNumber || null,
+              d?.licenseState || null,
+            ]
+          ).catch(() => null);
+        }
+      }
+
       return res.json({ ok: true, drivers, assignments: assignmentList });
     } catch (e) {
       logError('GET /api/drivers/samsara-list', e);
       return res.json({ ok: true, drivers: [], error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/drivers/assignments', async (_req, res) => {
+    try {
+      await ensureIntegrationResilienceTables();
+      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
+      if (token) {
+        const payload = await samsaraGet('/fleet/hos/clocks', token, {}).catch(() => ({ data: [] }));
+        const rows = Array.isArray(payload?.data) ? payload.data : [];
+        if (rows.length) {
+          await upsertSamsaraAssignmentsFromHosRows(rows).catch(() => 0);
+          const assignments = rows
+            .map((row) => {
+              const unit = String(row?.currentVehicle?.name || '').trim();
+              const driver = String(row?.driver?.name || '').trim();
+              if (!unit || !driver) return null;
+              return {
+                unit_number: unit,
+                driver_name: driver,
+                driver_samsara_id: String(row?.driver?.id || '').trim() || null,
+                duty_status: String(row?.currentDutyStatus?.hosStatusType || '').trim().toLowerCase() || 'unknown',
+              };
+            })
+            .filter(Boolean);
+          return res.json({ ok: true, source: 'live', assignments });
+        }
+      }
+      const cached = await readCachedSamsaraAssignments().catch(() => []);
+      return res.json({ ok: true, source: 'cache', assignments: cached || [] });
+    } catch (e) {
+      logError('GET /api/drivers/assignments', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), source: 'cache', assignments: [] });
     }
   });
 
@@ -2312,6 +2903,23 @@ export function mountErpCoreApi(app, opts = {}) {
         const posted = await postFuelExpenseToQbo(expense, mapping);
         qboPosted = posted.ok === true;
         qboTxnId = posted.txnId || null;
+        if (!qboPosted) {
+          await enqueueQboSyncQueue(
+            'fuel',
+            expense.id,
+            {
+              mode: 'fuel_expense_post',
+              expense_id: expense.id,
+              payload: {
+                unit_number: expense.unit_number || null,
+                driver_name: expense.driver_name || null,
+                total_amount: expense.total_amount == null ? null : Number(expense.total_amount),
+                load_number: expense.load_number || null,
+              },
+            },
+            posted.reason || 'Auto-post to QBO failed'
+          ).catch(() => null);
+        }
       }
       return res.json({
         ok: true,
@@ -2450,7 +3058,22 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!expense) return res.status(404).json({ ok: false, error: 'Fuel expense not found' });
       const posted = await postFuelExpenseToQbo(expense);
       if (posted.ok) return res.json({ ok: true, qbo_txn_id: posted.txnId || null });
-      return res.json({ ok: false, error: posted.reason || 'QBO post failed' });
+      await enqueueQboSyncQueue(
+        'fuel',
+        expense.id,
+        {
+          mode: 'fuel_expense_post',
+          expense_id: expense.id,
+          payload: {
+            unit_number: expense.unit_number || null,
+            driver_name: expense.driver_name || null,
+            total_amount: expense.total_amount == null ? null : Number(expense.total_amount),
+            load_number: expense.load_number || null,
+          },
+        },
+        posted.reason || 'Manual QBO post failed'
+      ).catch(() => null);
+      return res.json({ ok: false, error: posted.reason || 'QBO post failed (queued for retry)' });
     } catch (e) {
       logError('POST /api/fuel/post-to-qbo', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FuelTransactionType } from '../../types/fuelTransaction'
 import type { AccountingMaintNavTarget } from './accountingNav'
 import type { ListsCatalogsTab } from './ListsCatalogsWorkspace'
@@ -50,6 +50,16 @@ type CategoryDef = {
   rows: RowDef[]
 }
 
+type QboQueueItem = {
+  id: number
+  transaction_type?: string | null
+  transaction_id?: number | null
+  payload?: Record<string, unknown> | null
+  status?: string | null
+  error_message?: string | null
+  created_at?: string | null
+}
+
 export function AccountingHomeHub({
   onOpenFuel,
   onOpenSpecialized,
@@ -60,6 +70,53 @@ export function AccountingHomeHub({
   kpis,
 }: Props) {
   const [activeCategory, setActiveCategory] = useState<CategoryId | null>(null)
+  const [queueItems, setQueueItems] = useState<QboQueueItem[]>([])
+  const [queuePending, setQueuePending] = useState(0)
+  const [queueFailed, setQueueFailed] = useState(0)
+  const [queueBusy, setQueueBusy] = useState(false)
+  const [queueMsg, setQueueMsg] = useState<string | null>(null)
+
+  const loadQueue = async () => {
+    setQueueBusy(true)
+    try {
+      const data = await fetch('/api/qbo/sync-queue', { headers: { Accept: 'application/json' } })
+        .then((r) => r.json())
+        .catch(() => ({ ok: false, items: [], pending: 0, failed: 0 }))
+      const items = Array.isArray(data?.items) ? (data.items as QboQueueItem[]) : []
+      setQueueItems(items)
+      setQueuePending(Number(data?.pending || 0))
+      setQueueFailed(Number(data?.failed || 0))
+    } finally {
+      setQueueBusy(false)
+    }
+  }
+
+  const retryQueue = async () => {
+    setQueueBusy(true)
+    setQueueMsg(null)
+    try {
+      const data = await fetch('/api/qbo/sync-queue/retry', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      }).then((r) => r.json())
+      if (data?.ok) {
+        setQueueMsg(`✅ ${Number(data?.synced || 0)} transactions synced to QuickBooks`)
+      } else {
+        setQueueMsg(String(data?.error || 'Sync retry failed'))
+      }
+    } catch (e) {
+      setQueueMsg(String((e as Error).message || e))
+    } finally {
+      await loadQueue()
+      setQueueBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadQueue()
+    const id = window.setInterval(() => void loadQueue(), 60000)
+    return () => window.clearInterval(id)
+  }, [])
 
   const categories = useMemo<CategoryDef[]>(() => {
     return [
@@ -152,6 +209,57 @@ export function AccountingHomeHub({
           <span className="acct-hub__kpi-lbl">Unreconciled</span>
           <span className="acct-hub__kpi-val">{kpis?.pendingQboPosts ?? '0'}</span>
           <span className="acct-hub__kpi-sub muted">Awaiting bank reconciliation</span>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12, border: '1px solid rgba(148,163,184,0.22)', borderRadius: 10, padding: 10, background: queuePending > 0 ? 'rgba(250,204,21,0.08)' : 'rgba(34,197,94,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <strong>
+            {queuePending > 0
+              ? `⚠️ ${queuePending} transactions pending QuickBooks sync`
+              : '✅ No pending QuickBooks sync transactions'}
+          </strong>
+          <button type="button" className="btn sm ghost" onClick={() => void retryQueue()} disabled={queueBusy}>
+            {queueBusy ? 'Syncing…' : 'Sync now'}
+          </button>
+        </div>
+        {queueMsg ? <div className="muted tiny" style={{ marginTop: 6 }}>{queueMsg}</div> : null}
+        <div style={{ overflowX: 'auto', marginTop: 8 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '6px 8px' }}>Type</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px' }}>Description</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px' }}>Created</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px' }}>Status</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px' }}>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              {queueItems.length ? queueItems.slice(0, 12).map((item) => {
+                const payload = item.payload && typeof item.payload === 'object' ? item.payload : {}
+                const descUnit = String((payload as any)?.payload?.unit_number || '').trim()
+                const descAmt = Number((payload as any)?.payload?.total_amount || 0)
+                const desc = descUnit ? `${descUnit}${descAmt > 0 ? ` · $${descAmt.toFixed(2)}` : ''}` : `Transaction #${item.transaction_id || item.id}`
+                return (
+                  <tr key={item.id} style={{ borderTop: '1px solid rgba(148,163,184,0.18)' }}>
+                    <td style={{ padding: '6px 8px' }}>{item.transaction_type || '—'}</td>
+                    <td style={{ padding: '6px 8px' }}>{desc}</td>
+                    <td style={{ padding: '6px 8px' }}>{item.created_at ? new Date(item.created_at).toLocaleString() : '—'}</td>
+                    <td style={{ padding: '6px 8px' }}>{item.status || 'pending'}</td>
+                    <td style={{ padding: '6px 8px', color: '#fca5a5' }}>{item.error_message || '—'}</td>
+                  </tr>
+                )
+              }) : (
+                <tr>
+                  <td style={{ padding: '8px' }} colSpan={5}>No pending queue items</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="muted tiny" style={{ marginTop: 6 }}>
+          Pending: {queuePending} · Failed: {queueFailed}
         </div>
       </div>
 

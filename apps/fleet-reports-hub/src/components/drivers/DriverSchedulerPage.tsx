@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   deleteDriverScheduleEntry,
   fetchDriverHosStatus,
+  fetchDriverProfiles,
   fetchDriverSchedule,
   saveDriverScheduleEntry,
   upsertDriverProfile,
@@ -187,45 +188,81 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   }, [leavePicker])
 
   const loadDrivers = async () => {
+    const timeoutMs = 5000
+    const withTimeout = async <T,>(promise: Promise<T>, fallback: T): Promise<T> => {
+      let timeoutId: number | undefined
+      try {
+        return await Promise.race([
+          promise,
+          new Promise<T>((resolve) => {
+            timeoutId = window.setTimeout(() => resolve(fallback), timeoutMs)
+          }),
+        ])
+      } finally {
+        if (timeoutId) window.clearTimeout(timeoutId)
+      }
+    }
+
     try {
-      const controller = new AbortController()
-      const timeoutId = window.setTimeout(() => controller.abort(), 8000)
-      const assetsPayload = await fetch('/api/fleet/assets', { headers: { Accept: 'application/json' }, signal: controller.signal })
-        .then((r) => r.json())
-        .catch(() => ({ assets: [] }))
-      window.clearTimeout(timeoutId)
-      const assets = Array.isArray(assetsPayload?.assets) ? assetsPayload.assets : []
+      const assetsPayload = await withTimeout(
+        fetch('/api/fleet/assets', { headers: { Accept: 'application/json' } })
+          .then((r) => r.json())
+          .catch(() => ({ assets: [] })),
+        { assets: [] as any[] },
+      )
+      const profilesPayload = await withTimeout(
+        fetchDriverProfiles().catch(() => ({ drivers: [] as DriverProfile[] })),
+        { drivers: [] as DriverProfile[] },
+      )
+
+      const assets = Array.isArray((assetsPayload as any)?.assets) ? (assetsPayload as any).assets : []
+      const profiles = Array.isArray((profilesPayload as any)?.drivers) ? (profilesPayload as any).drivers : []
 
       const trucks = assets.filter((a: any) => {
-        const un = String(a?.unit_number || '')
-        const type = String(a?.asset_type || '').toLowerCase()
-        return /^T\d+/i.test(un) || type.includes('truck')
+        const unit = String(a?.unit_number || '').trim().toUpperCase()
+        const m = unit.match(/^T(\d{3})$/)
+        if (!m) return false
+        const n = Number(m[1])
+        return Number.isFinite(n) && n >= 120 && n <= 177
       })
 
-      const activeAssets = assets.filter((a: any) => String(a?.status || '').trim().toLowerCase() === 'active')
-      const source = trucks.length ? trucks : (activeAssets.length ? activeAssets : assets)
+      const profileByUnit = new Map<string, DriverProfile>()
+      profiles.forEach((p: DriverProfile) => {
+        const unit = String(p?.unit_number || '').trim().toUpperCase()
+        if (!unit) return
+        profileByUnit.set(unit, p)
+      })
 
-      const driverRows: SchedulerDriverRow[] = source
+      const rows: SchedulerDriverRow[] = trucks
         .map((asset: any, idx: number) => {
           const unit = String(asset?.unit_number || '').trim().toUpperCase()
           if (!unit) return null
           const currentDriver = String(
             asset?.currentDriver || asset?.currentDriverName || asset?.current_driver_name || asset?.driver_name || ''
           ).trim()
+          const profile = profileByUnit.get(unit)
+          const profileName = String(profile?.full_name || '').trim()
+          const name = currentDriver || profileName || 'Unassigned'
           return {
-            id: -(idx + 1),
+            id: Number.isFinite(Number(profile?.id)) ? Number(profile?.id) : -(idx + 1),
             unit_number: unit,
-            full_name: currentDriver || 'Unassigned',
-            team: '',
-            manager: '',
-            status: currentDriver ? 'Assigned' : 'Unassigned',
+            full_name: name,
+            team: profile?.team || '',
+            manager: profile?.manager || '',
+            status: currentDriver ? 'Assigned' : (profileName ? String(profile?.status || 'Assigned') : 'Unassigned'),
+            phone: profile?.phone || null,
+            email: profile?.email || null,
+            cdl_number: profile?.cdl_number || null,
+            cdl_expiry: profile?.cdl_expiry || null,
+            medical_expiry: profile?.medical_expiry || null,
+            notes: profile?.notes || null,
           }
         })
         .filter(Boolean)
         .sort(sortByUnit) as SchedulerDriverRow[]
 
-      if (driverRows.length) {
-        setDrivers(driverRows)
+      if (rows.length) {
+        setDrivers(rows)
         return
       }
 
@@ -303,7 +340,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
     if (!loading) return
     const timeoutId = window.setTimeout(() => {
       setLoading(false)
-    }, 10000)
+    }, 5000)
     return () => window.clearTimeout(timeoutId)
   }, [loading])
 
