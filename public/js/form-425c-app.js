@@ -325,6 +325,11 @@
       return fmtAccounting(s);
     }
 
+    function showToast(msg) {
+      setReceiptMsg(String(msg || ''));
+      if (typeof window.erpShowToast === 'function') window.erpShowToast(String(msg || ''));
+    }
+
     var PROFILE_LOCAL_KEY = 'form425c_profiles';
 
     function safeJsonParse(raw) {
@@ -905,19 +910,18 @@
         debtor: debtor,
         fields: fields,
       };
+
+      // Keep local history synchronous so History tab always populates.
       localStorage.setItem(key, JSON.stringify(data));
       saveReportToLocal(debtor, month, payload);
-
       var historyKey = historyStorageKey(debtor);
-      var history = safeJsonParse(localStorage.getItem(historyKey));
-      var list = Array.isArray(history) ? history.filter(function (k) { return k !== key; }) : [];
-      list.unshift(key);
-      if (list.length > 24) list = list.slice(0, 24);
-      localStorage.setItem(historyKey, JSON.stringify(list));
-
-      setReceiptMsg('✅ Report saved for ' + month);
-      if (typeof window.erpShowToast === 'function') window.erpShowToast('✅ Report saved for ' + month);
+      var history = safeJsonParse(localStorage.getItem(historyKey)) || [];
+      if (!Array.isArray(history)) history = [];
+      if (!history.includes(key)) history.unshift(key);
+      if (history.length > 24) history = history.slice(0, 24);
+      localStorage.setItem(historyKey, JSON.stringify(history));
       loadHistory();
+      showToast('✅ Report saved for ' + month);
 
       try {
         var body = { companyId: debtor, month: month, ...payload };
@@ -925,7 +929,9 @@
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
-        }).catch(function () { return null; });
+        }).catch(function () {
+          return null;
+        });
       } catch (_) {
         // local save is source of truth
       }
@@ -1142,7 +1148,11 @@
           'aria-selected': tab === id ? 'true' : 'false',
           onClick: function () {
             setTab(id);
-            if (id === 'history') loadHistory();
+            if (id === 'history') {
+              loadHistory();
+              window.setTimeout(loadHistory, 100);
+              window.setTimeout(loadHistory, 200);
+            }
           }
         },
         label
