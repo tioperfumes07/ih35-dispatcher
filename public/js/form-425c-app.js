@@ -415,6 +415,9 @@
     var histState = React.useState([]);
     var historyList = histState[0];
     var setHistoryList = histState[1];
+    var histTickState = React.useState(0);
+    var histTick = histTickState[0];
+    var setHistTick = histTickState[1];
 
     var bankMsgState = React.useState('');
     var bankLoadMsg = bankMsgState[0];
@@ -1163,6 +1166,7 @@
             if (id === 'history') {
               setTab('history');
               loadHistory();
+              setHistTick(function(t){ return t + 1; });
               window.setTimeout(loadHistory, 100);
               window.setTimeout(loadHistory, 200);
             }
@@ -2014,7 +2018,7 @@
     }
 
     function renderHistoryPanel() {
-      // Read directly from localStorage on every render
+      void histTick; // depend on tick so React re-renders
       var debtor = getActiveDebtorId() || 'ih35-transportation';
       var allRows = [];
       try {
