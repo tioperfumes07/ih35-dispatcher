@@ -27,22 +27,30 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
             package-lock.json
             apps/fleet-reports-hub/package-lock.json
       - name: Verify Node runtime
         run: node -v
-      - name: Install dependencies
-        run: npm ci
-      - name: Install fleet-reports-hub dependencies
-        run: npm ci --prefix apps/fleet-reports-hub
-      - name: Rebuild better-sqlite3 for Node 20 ABI
-        run: npm rebuild better-sqlite3 --prefix apps/fleet-reports-hub
-      - name: Rebuild native modules after install
-        run: npm rebuild --prefix apps/fleet-reports-hub
+      - name: Clean install
+        run: |
+          npm ci
+          cd apps/fleet-reports-hub && npm ci && cd ../..
       - name: Build embedded fleet reports SPA
         run: npm run build:fleet
+      - name: Rebuild better-sqlite3
+        run: |
+          cd apps/fleet-reports-hub
+          npm install --ignore-scripts
+          npm rebuild better-sqlite3
+          cd ../..
+      - name: Force reinstall better-sqlite3
+        run: |
+          cd apps/fleet-reports-hub
+          npm uninstall better-sqlite3
+          npm install better-sqlite3 --save
+          cd ../..
       - name: Full gate (smoke-gate sync, rule0:check, smoke on ephemeral server)
         run: npm run qa:isolated
