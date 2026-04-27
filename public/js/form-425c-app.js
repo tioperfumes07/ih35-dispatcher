@@ -913,6 +913,13 @@
 
       // Keep local history synchronous so History tab always populates.
       localStorage.setItem(key, JSON.stringify(data));
+      // Write history index synchronously right here
+      var _hKey = historyStorageKey(debtor);
+      var _hList = JSON.parse(localStorage.getItem(_hKey) || '[]');
+      var _hIdx = _hList.indexOf(key);
+      if (_hIdx === -1) _hList.unshift(key);
+      if (_hList.length > 24) _hList = _hList.slice(0, 24);
+      localStorage.setItem(_hKey, JSON.stringify(_hList));
       saveReportToLocal(debtor, month, payload);
       var historyKey = historyStorageKey(debtor);
       var history = safeJsonParse(localStorage.getItem(historyKey)) || [];
