@@ -1,7 +1,7 @@
 import { formatLastSyncTime, useIntegrationConnections } from '../context/IntegrationConnectionsContext'
 
 export function IntegrationConnectionStrip() {
-  const { qbo, samsara, networkOnline } = useIntegrationConnections()
+  const { qbo, samsara, networkOnline, syncUpdatedAt } = useIntegrationConnections()
 
   const qLabel =
     qbo.status === 'connected'
@@ -25,7 +25,7 @@ export function IntegrationConnectionStrip() {
           <>Browser offline · integration checks paused</>
         ) : (
           <>
-            {qLabel} · {sLabel} · auto recheck every 5 min
+            {qLabel} · {sLabel} · last module sync {formatLastSyncTime(syncUpdatedAt)} · auto recheck every 5 min
           </>
         )}
       </span>

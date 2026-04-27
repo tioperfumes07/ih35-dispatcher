@@ -37,6 +37,15 @@
 .erp-icon-nav__btn, .erp-icon-nav__link {
   width: 104px !important;
 }
+.maint-kpi-card--clickable {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+.maint-kpi-card--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.18);
+  border-color: rgba(59, 130, 246, 0.5);
+}
 </style>
   <style id="erpHomeCleanStyles">
     .erp-home-clean-hide { display: none !important; }
@@ -1280,7 +1289,7 @@
             <div style="font-size:15px;font-weight:600;color:#e2e8f0">Open damage reports</div>
             <div class="mini-note" style="margin:0">Unit incidents and road service alerts</div>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap" style="max-height:400px;overflow-y:auto;scroll-behavior:smooth">
             <table class="table">
               <thead>
                 <tr>
@@ -1307,6 +1316,7 @@
     font-weight:600;font-size:14px">
     Fuel submissions today
   </div>
+  <div style="max-height:400px;overflow-y:auto;scroll-behavior:smooth">
   <table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead style="background:#f8fafc">
       <tr>
@@ -1327,6 +1337,10 @@
       </td></tr>
     </tbody>
   </table>
+  </div>
+  <div style="padding:10px 16px;border-top:1px solid #e5e7eb;background:#f8fafc;text-align:right">
+    <a href="javascript:void(0)" onclick="openDriversFuelHomePage()" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:none">View all →</a>
+  </div>
 </div>
 
 <div id="driversLeavePanel" style="margin-top:24px;
@@ -1348,6 +1362,7 @@
                cursor:pointer">Deny all</button>
     </div>
   </div>
+  <div style="max-height:400px;overflow-y:auto;scroll-behavior:smooth">
   <table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead style="background:#f8fafc">
       <tr>
@@ -1366,6 +1381,10 @@
       </td></tr>
     </tbody>
   </table>
+  </div>
+  <div style="padding:10px 16px;border-top:1px solid #e5e7eb;background:#f8fafc;text-align:right">
+    <a href="javascript:void(0)" onclick="openDriversLeaveHomePage()" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:none">View all →</a>
+  </div>
 </div>
 
         <div id="driversProfilesPanel" style="margin-top:24px;background:white;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
@@ -1373,7 +1392,7 @@
             <strong style="font-size:14px;color:#0f172a">Driver profiles</strong>
             <button type="button" class="btn btn--small" onclick="openDriverProfileLiteModal()">+ Add Driver</button>
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap" style="max-height:400px;overflow-y:auto;scroll-behavior:smooth">
             <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">
               <thead style="background:#f8fafc">
                 <tr>
@@ -1390,6 +1409,9 @@
                 <tr><td colspan="7" style="padding:12px;color:#9ca3af;text-align:center">Loading...</td></tr>
               </tbody>
             </table>
+          </div>
+          <div style="padding:10px 16px;border-top:1px solid #e5e7eb;background:#f8fafc;text-align:right">
+            <a href="javascript:void(0)" onclick="openDriversProfilesHomePage()" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:none">View all →</a>
           </div>
         </div>
 
@@ -1467,13 +1489,13 @@
               
             </div>
             <div class="maint-kpi-cards">
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets">0</div></div>
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Vehicles in service</div><div class="maint-kpi-card__val" id="maintDashVehiclesInService">0</div></div>
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Open damage reports</div><div class="maint-kpi-card__val" id="maintDashOpenDamage">0</div></div>
-              <div class="maint-kpi-card"><div class="maint-kpi-card__label">Pending QBO sync</div><div class="maint-kpi-card__val" id="maintDashPendingQboSync">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('tracked-assets')"><div class="maint-kpi-card__label">Tracked assets</div><div class="maint-kpi-card__val" id="maintDashTrackedAssets">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('assigned-working')"><div class="maint-kpi-card__label">Assigned / working</div><div class="maint-kpi-card__val" id="maintDashAssignedAssets">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('maintenance-past-due')"><div class="maint-kpi-card__label">Maintenance past due</div><div class="maint-kpi-card__val" id="maintDashPastDue">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('qbo-vendors')"><div class="maint-kpi-card__label">QBO vendors</div><div class="maint-kpi-card__val" id="maintDashQboVendors">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('vehicles-in-service')"><div class="maint-kpi-card__label">Vehicles in service</div><div class="maint-kpi-card__val" id="maintDashVehiclesInService">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('open-damage-reports')"><div class="maint-kpi-card__label">Open damage reports</div><div class="maint-kpi-card__val" id="maintDashOpenDamage">0</div></div>
+              <div class="maint-kpi-card maint-kpi-card--clickable" onclick="openWorkspaceSnapshotCard('pending-qbo-sync')"><div class="maint-kpi-card__label">Pending QBO sync</div><div class="maint-kpi-card__val" id="maintDashPendingQboSync">0</div></div>
             </div>
             <div id="maintDashSummaryLine" class="maint-kpi-strip__meta mini-note"></div>
             <div id="maintDashSyncLine" class="maint-kpi-strip__meta mini-note" style="color:var(--color-text-label)"></div>
@@ -12653,7 +12675,7 @@
       } catch (_) {}
     }
 
-    function paintEnhancedConnectionStrip(health, qboSt, queuePayload, assignmentsPayload) {
+    function paintEnhancedConnectionStrip(health, qboSt, queuePayload, assignmentsPayload, syncHealth) {
       const strip = document.getElementById('erpConnectionStrip');
       if (!strip) return;
       const qSource = String(qboSt?.source || 'cache').trim().toLowerCase();
@@ -12666,10 +12688,13 @@
       const samTone = samSource === 'live' ? 'var(--color-semantic-success)' : 'var(--color-semantic-warning)';
       const pending = Number(queuePayload?.pending || 0) + Number(queuePayload?.failed || 0);
       const pendingTone = pending > 0 ? 'var(--color-semantic-error)' : 'var(--color-semantic-success)';
+      const syncUpdatedAt = String(syncHealth?.updated_at || syncHealth?.sync?.updated_at || '').trim();
+      const syncText = syncUpdatedAt ? new Date(syncUpdatedAt).toLocaleString() : '—';
       strip.innerHTML =
         '<span style="color:' + qboTone + '">● QBO ' + (qboConnected ? 'connected' : 'cache') + ' | cache: ' + escapeHtml(qCacheText) + '</span>' +
         '<span style="margin-left:12px;color:' + samTone + '">● Samsara ' + (samSource === 'live' ? 'connected' : 'cache') + ' | ' + escapeHtml(String(samVehicles)) + ' vehicles</span>' +
-        '<span style="margin-left:12px;color:' + pendingTone + '">● ' + escapeHtml(String(pending)) + ' pending sync</span>';
+        '<span style="margin-left:12px;color:' + pendingTone + '">● ' + escapeHtml(String(pending)) + ' pending sync</span>' +
+        '<span style="margin-left:12px;color:var(--color-text-label)">● last module sync: ' + escapeHtml(syncText) + '</span>';
 
       const qboBanner = document.getElementById('erpQboDisconnectBanner');
       if (qboBanner) {
@@ -13222,7 +13247,7 @@
     async function loadAll() {
       const bar = document.getElementById('authBanner');
       try {
-        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes, fleetAssetsRes, qboQueueRes, driverAssignmentsRes] =
+        const [dashRes, erpRes, boardRes, svcRes, dbRes, drvRes, sqRes, ex7, ex30, qboSyncRes, healthRes, qboStatusRes, qboMasterRes, partsRes, assetUnitsRes, fleetQboClassMapRes, fleetAssetsRes, qboQueueRes, driverAssignmentsRes, healthSyncRes] =
           await Promise.all([
             j('/api/maintenance/dashboard').catch(err => ({ ok: false, error: err?.message || String(err), vehicles: [], dashboard: [], tireAlerts: [] })),
             j('/api/maintenance/records'),
@@ -13249,7 +13274,8 @@
             j('/api/fleet/assets/qbo-classes').catch(() => ({ ok: false, mappings: [] })),
             j('/api/fleet/assets').catch(() => ({ ok: false, assets: [] })),
             j('/api/qbo/sync-queue').catch(() => ({ ok: false, pending: 0, failed: 0, items: [] })),
-            j('/api/drivers/assignments').catch(() => ({ ok: false, source: 'cache', assignments: [] }))
+            j('/api/drivers/assignments').catch(() => ({ ok: false, source: 'cache', assignments: [] })),
+            j('/api/health/sync').catch(() => ({ ok: true, sync: {}, updated_at: null }))
           ]);
         if (bar) {
           bar.classList.add('hidden');
@@ -13312,7 +13338,7 @@
         }
 
         renderQboSyncQueuePanel(qboQueueRes || { pending: 0, failed: 0, items: [] });
-        paintEnhancedConnectionStrip(healthRes || {}, qboStatusRes || {}, qboQueueRes || {}, driverAssignmentsRes || {});
+        paintEnhancedConnectionStrip(healthRes || {}, qboStatusRes || {}, qboQueueRes || {}, driverAssignmentsRes || {}, healthSyncRes || {});
 
         const preferredUnits = assetUnits.map((u) => ({
           id: String(u.samsara_id || u.unit_number || '').trim(),
@@ -17435,6 +17461,59 @@
       if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    function openDriversFuelHomePage() {
+      openSection('fuel', document.querySelector('.nav-btn[data-section=fuel]'));
+    }
+
+    function openDriversLeaveHomePage() {
+      openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
+      const panel = document.getElementById('driversLeavePanel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openDriversProfilesHomePage() {
+      openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
+      loadDriversProfilesLite();
+      const panel = document.getElementById('driversProfilesPanel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openWorkspaceSnapshotCard(target) {
+      const t = String(target || '').trim();
+      if (!t) return;
+      if (t === 'tracked-assets' || t === 'vehicles-in-service') {
+        openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+        if (typeof openMaintFleetTableModal === 'function') openMaintFleetTableModal();
+        return;
+      }
+      if (t === 'assigned-working') {
+        openSection('safety', document.querySelector('.nav-btn[data-section=safety]'));
+        if (typeof openSafetyTab === 'function') openSafetyTab('safe-assign', document.querySelector('#section-safety .subtab[onclick*="safe-assign"]'));
+        return;
+      }
+      if (t === 'maintenance-past-due') {
+        openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+        if (typeof openMaintMainTab === 'function') openMaintMainTab('rm', document.querySelector('.maint-nav-tab[data-maint-main="rm"]'), { skipModal: true });
+        return;
+      }
+      if (t === 'qbo-vendors') {
+        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+        if (typeof openAccountingTab === 'function') openAccountingTab('acct-lists', document.getElementById('acctListTabTrigger'));
+        return;
+      }
+      if (t === 'open-damage-reports') {
+        openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
+        const panel = document.getElementById('driversDamageReportsHome');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (t === 'pending-qbo-sync') {
+        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+        const panel = document.getElementById('acctPendingQboSyncPanel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
     function profileExpiryTag(value) {
       const d = new Date(String(value || ''));
       if (Number.isNaN(d.getTime())) return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#4b5563;color:#e5e7eb">—</span>';
@@ -17640,6 +17719,10 @@
       if (k2) k2.textContent = String(unackDamage.length);
       if (k3) k3.textContent = String(fuelToday.length);
 
+      const dmgHome = document.getElementById('driversDamageReportsHome');
+      if (dmgHome) {
+        dmgHome.style.display = openDamage.length ? '' : 'none';
+      }
       const dmgBody = document.getElementById('driversDamageReportsBody');
       if (dmgBody) {
         if (!openDamage.length) {
@@ -17659,7 +17742,12 @@
               <td title="${escapeHtml(String(r.description || ''))}">${escapeHtml(truncateDamageDescription(r.description, 60))}</td>
               <td>${escapeHtml(formatDamageSubmittedAt(r.submitted_at || r.reported_at || r.created_at))}</td>
               <td>${damageStatusBadgeLite(r.status)}</td>
-              <td><button type="button" class="btn btn--small" onclick="driversOpenDamageDetail('${id}')">View / Acknowledge</button></td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button type="button" class="btn btn--small ghost" onclick="erpAcknowledgeDamageReport('${id}')">Acknowledge</button>
+                  <button type="button" class="btn btn--small" onclick="driversResolveAndCreateWorkOrder('${id}')">Resolve &amp; Create WO</button>
+                </div>
+              </td>
             </tr>`;
           }).join('');
         }

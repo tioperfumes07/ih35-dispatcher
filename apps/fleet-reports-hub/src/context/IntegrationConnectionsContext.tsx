@@ -20,6 +20,7 @@ export type IntegrationServiceState = {
 type IntegrationConnectionsContextValue = {
   qbo: IntegrationServiceState
   samsara: IntegrationServiceState
+  syncUpdatedAt: number | null
   /** Browser online/offline from `navigator.onLine` + events. */
   networkOnline: boolean
   /** True while a probe cycle is in flight (sidebar dots in checking state). */
@@ -62,6 +63,7 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
   })
   const [isProbing, setIsProbing] = useState(false)
   const [userInitiatedProbe, setUserInitiatedProbe] = useState(false)
+  const [syncUpdatedAt, setSyncUpdatedAt] = useState<number | null>(null)
   const probeGeneration = useRef(0)
 
   const applyOffline = useCallback(() => {
@@ -101,12 +103,14 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
 
       const now = Date.now()
       try {
-        const [qRes, hRes] = await Promise.all([
+        const [qRes, hRes, syncRes] = await Promise.all([
           fetch('/api/qbo/status', { headers: { Accept: 'application/json' } }),
           fetch('/api/health', { headers: { Accept: 'application/json' } }),
+          fetch('/api/health/sync', { headers: { Accept: 'application/json' } }),
         ])
         const qJson = qRes.ok ? await qRes.json().catch(() => null) : null
         const hJson = hRes.ok ? await hRes.json().catch(() => null) : null
+        const syncJson = syncRes.ok ? await syncRes.json().catch(() => null) : null
 
         if (gen !== probeGeneration.current) {
           setUserInitiatedProbe(false)
@@ -129,6 +133,10 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
           samStatus = 'connected'
         }
 
+        const rawSyncAt = String(syncJson?.updated_at || '').trim()
+        const parsedSyncAt = rawSyncAt ? Date.parse(rawSyncAt) : NaN
+        setSyncUpdatedAt(Number.isFinite(parsedSyncAt) ? parsedSyncAt : null)
+
         setQbo((prev) => ({
           status: qboStatus,
           lastSyncAt: qboStatus === 'connected' || qboStatus === 'degraded' ? now : prev.lastSyncAt,
@@ -142,6 +150,7 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
           setUserInitiatedProbe(false)
           return
         }
+        setSyncUpdatedAt(null)
         applyOffline()
         return
       }
@@ -188,12 +197,13 @@ export function IntegrationConnectionsProvider({ children }: { children: ReactNo
     () => ({
       qbo,
       samsara,
+      syncUpdatedAt,
       networkOnline,
       isProbing,
       userInitiatedProbe,
       recheckAll,
     }),
-    [qbo, samsara, networkOnline, isProbing, userInitiatedProbe, recheckAll],
+    [qbo, samsara, syncUpdatedAt, networkOnline, isProbing, userInitiatedProbe, recheckAll],
   )
 
   return (

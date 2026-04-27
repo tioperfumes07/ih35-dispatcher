@@ -1012,6 +1012,24 @@ export function mountErpCoreApi(app, opts = {}) {
     return String(req.headers['x-ih35-user'] || req.headers['x-user-email'] || 'operator').trim() || 'operator';
   }
 
+  async function ensureWorkOrdersTable() {
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS work_orders (
+        id SERIAL PRIMARY KEY,
+        unit_number TEXT,
+        service_type TEXT,
+        description TEXT,
+        vendor TEXT,
+        estimated_cost NUMERIC,
+        priority TEXT,
+        status TEXT,
+        source TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`
+    );
+  }
+
   if (!qboCatalogAutoSyncTimer) {
     qboCatalogAutoSyncTimer = setInterval(async () => {
       try {
@@ -1066,6 +1084,53 @@ export function mountErpCoreApi(app, opts = {}) {
       qboLiveConnection: qbo.connected ? 'connected' : qbo.configured ? 'disconnected' : 'not-configured',
       samsaraLiveConnection: token ? (samsaraError ? 'degraded' : 'connected') : 'not-configured'
     });
+  });
+
+  app.get('/api/health/sync', async (_req, res) => {
+    const empty = {
+      damage_reports: null,
+      fuel_expenses: null,
+      work_orders: null,
+      leave_requests: null,
+      qbo_sync_queue: null,
+      driver_schedules: null,
+    };
+    try {
+      if (!getPoolForRoute()) {
+        return res.json({ ok: true, sync: empty, updated_at: null });
+      }
+      const out = { ...empty };
+      const tableNames = Object.keys(out);
+      for (const table of tableNames) {
+        try {
+          const reg = await dbQueryForRoute(`SELECT to_regclass($1) AS name`, [`public.${table}`]);
+          if (!reg?.rows?.[0]?.name) continue;
+          const { rows } = await dbQueryForRoute(
+            `SELECT
+              COALESCE(
+                MAX(COALESCE(updated_at, submitted_at, reported_at, reviewed_at, synced_at, created_at)),
+                MAX(created_at)
+              ) AS latest
+             FROM ${table}`
+          );
+          out[table] = rows?.[0]?.latest || null;
+        } catch (_) {
+          out[table] = null;
+        }
+      }
+      const updatedAt = Object.values(out)
+        .map((v) => (v ? Date.parse(String(v)) : NaN))
+        .filter((v) => Number.isFinite(v))
+        .sort((a, b) => b - a)[0];
+      return res.json({
+        ok: true,
+        sync: out,
+        updated_at: Number.isFinite(updatedAt) ? new Date(updatedAt).toISOString() : null,
+      });
+    } catch (e) {
+      logError('GET /api/health/sync', e);
+      return res.json({ ok: true, sync: empty, updated_at: null });
+    }
   });
 
   app.get('/api/health/db', async (_req, res) => {
@@ -1530,10 +1595,10 @@ export function mountErpCoreApi(app, opts = {}) {
       const filtered = statusQ
         ? assetsWithAssignments.filter((a) => String(a?.status || '').trim().toLowerCase() === statusQ)
         : assetsWithAssignments;
-      return res.json({ ok: true, assets: filtered, count: filtered.length });
+      return res.json({ ok: true, assets: filtered, data: filtered, count: filtered.length });
     } catch (e) {
       logError('GET /api/fleet/assets', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e), assets: [] });
+      return res.json({ ok: true, error: e?.message || String(e), assets: [], data: [] });
     }
   });
 
@@ -2534,9 +2599,9 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/damage/reports', async (_req, res) => {
     try {
-      const pool = getPool();
-      if (!pool) return res.json({ ok: true, reports: [] });
-      await dbQuery(
+      const pool = getPoolForRoute();
+      if (!pool) return res.json({ ok: true, reports: [], data: [] });
+      await dbQueryForRoute(
         `CREATE TABLE IF NOT EXISTS damage_reports (
           id SERIAL PRIMARY KEY,
           unit_number TEXT,
@@ -2549,42 +2614,127 @@ export function mountErpCoreApi(app, opts = {}) {
           status TEXT DEFAULT 'new'
         )`
       );
-      const { rows } = await dbQuery('SELECT * FROM damage_reports ORDER BY reported_at DESC LIMIT 50');
-      res.json({ ok: true, reports: rows || [] });
+      const { rows } = await dbQueryForRoute('SELECT * FROM damage_reports ORDER BY reported_at DESC LIMIT 50');
+      const reports = rows || [];
+      res.json({ ok: true, reports, data: reports });
     } catch (e) {
       logError('GET /api/damage/reports', e);
-      res.json({ ok: true, reports: [] });
+      res.json({ ok: true, reports: [], data: [] });
     }
   });
 
   app.post('/api/damage/reports/:id/acknowledge', async (req, res) => {
     try {
-      const pool = getPool();
+      const pool = getPoolForRoute();
       if (pool) {
-        await dbQuery("UPDATE damage_reports SET status='acknowledged' WHERE id=$1", [req.params.id]);
+        await dbQueryForRoute("UPDATE damage_reports SET status='acknowledged' WHERE id=$1", [req.params.id]);
       }
-      res.json({ ok: true });
+      res.json({ ok: true, acknowledged: true });
     } catch (e) {
       logError('POST /api/damage/reports/:id/acknowledge', e);
-      res.json({ ok: false });
+      res.json({ ok: false, acknowledged: false });
     }
   });
 
 
   app.post('/api/damage/reports/bulk-acknowledge', async (req, res) => {
     try {
-      const pool = getPool();
+      const pool = getPoolForRoute();
       if (!pool) return res.json({ ok: true, updated: 0 });
       const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
       if (!ids.length) return res.status(400).json({ ok: false, error: 'ids array is required', updated: 0 });
-      const { rowCount } = await dbQuery(
-        "UPDATE damage_reports SET status='acknowledged' WHERE unit_number = ANY($1::text[])",
+      const { rowCount } = await dbQueryForRoute(
+        "UPDATE damage_reports SET status='acknowledged' WHERE id = ANY($1::int[])",
         [ids]
       );
       return res.json({ ok: true, updated: Number(rowCount || 0) });
     } catch (e) {
       logError('POST /api/damage/reports/bulk-acknowledge', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), updated: 0 });
+    }
+  });
+
+  app.get('/api/work-orders', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const cached = Array.isArray(erp?.workOrders) ? erp.workOrders : [];
+        return res.json({ ok: true, workOrders: cached, data: cached });
+      }
+      await ensureWorkOrdersTable();
+      const { rows } = await dbQueryForRoute('SELECT * FROM work_orders ORDER BY created_at DESC, id DESC LIMIT 1000');
+      const workOrders = rows || [];
+      return res.json({ ok: true, workOrders, data: workOrders });
+    } catch (e) {
+      logError('GET /api/work-orders', e);
+      return res.json({ ok: true, workOrders: [], data: [] });
+    }
+  });
+
+  app.get('/api/maintenance/work-orders', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const cached = Array.isArray(erp?.workOrders) ? erp.workOrders : [];
+        return res.json({ ok: true, workOrders: cached, data: cached });
+      }
+      await ensureWorkOrdersTable();
+      const { rows } = await dbQueryForRoute('SELECT * FROM work_orders ORDER BY created_at DESC, id DESC LIMIT 1000');
+      const workOrders = rows || [];
+      return res.json({ ok: true, workOrders, data: workOrders });
+    } catch (e) {
+      logError('GET /api/maintenance/work-orders', e);
+      return res.json({ ok: true, workOrders: [], data: [] });
+    }
+  });
+
+  app.post('/api/work-orders', async (req, res) => {
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const payload = {
+      unit_number: String(b.unit_number || b.unit || '').trim() || null,
+      service_type: String(b.service_type || b.serviceType || '').trim() || null,
+      description: String(b.description || '').trim() || null,
+      vendor: String(b.vendor || b.vendor_name || '').trim() || null,
+      estimated_cost: b.estimated_cost == null || b.estimated_cost === '' ? null : Number(b.estimated_cost),
+      priority: String(b.priority || '').trim() || 'Normal',
+      status: String(b.status || '').trim() || 'Open',
+      source: String(b.source || 'maintenance_ui').trim(),
+    };
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const list = Array.isArray(erp.workOrders) ? erp.workOrders : [];
+        const row = {
+          id: String(Date.now()),
+          ...payload,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        erp.workOrders = [row, ...list].slice(0, 1000);
+        writeFullErpJson(erp);
+        return res.json({ ok: true, workOrder: row });
+      }
+      await ensureWorkOrdersTable();
+      const { rows } = await dbQueryForRoute(
+        `INSERT INTO work_orders
+          (unit_number, service_type, description, vendor, estimated_cost, priority, status, source, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())
+         RETURNING *`,
+        [
+          payload.unit_number,
+          payload.service_type,
+          payload.description,
+          payload.vendor,
+          Number.isFinite(payload.estimated_cost) ? payload.estimated_cost : null,
+          payload.priority,
+          payload.status,
+          payload.source,
+        ]
+      );
+      return res.json({ ok: true, workOrder: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/work-orders', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -2936,13 +3086,13 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/fuel/expenses', async (req, res) => {
     try {
-      if (!getPool()) return res.json({ ok: true, expenses: [] });
+      if (!getPoolForRoute()) return res.json({ ok: true, expenses: [], data: [] });
       await ensureFuelExpenseTables();
       const unit = String(req.query?.unit || '').trim();
       const sql = unit
         ? 'SELECT * FROM fuel_expenses WHERE unit_number = $1 ORDER BY submitted_at DESC'
         : 'SELECT * FROM fuel_expenses ORDER BY submitted_at DESC';
-      const { rows } = await dbQuery(sql, unit ? [unit] : []);
+      const { rows } = await dbQueryForRoute(sql, unit ? [unit] : []);
       const expenses = (rows || []).map((r) => ({
         ...r,
         load_number: r?.load_number || null,
@@ -2951,10 +3101,10 @@ export function mountErpCoreApi(app, opts = {}) {
         qbo_posted: r?.qbo_posted === true,
         qbo_txn_id: r?.qbo_txn_id || null,
       }));
-      return res.json({ ok: true, expenses });
+      return res.json({ ok: true, expenses, data: expenses });
     } catch (e) {
       logError('GET /api/fuel/expenses', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e), expenses: [] });
+      return res.json({ ok: true, error: e?.message || String(e), expenses: [], data: [] });
     }
   });
 
@@ -3160,8 +3310,8 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/drivers/leave-requests', async (req, res) => {
     try {
-      if (!getPool()) return res.json({ ok: true, requests: [], rows: [] });
-      await dbQuery(
+      if (!getPoolForRoute()) return res.json({ ok: true, requests: [], rows: [], data: [] });
+      await dbQueryForRoute(
         `CREATE TABLE IF NOT EXISTS leave_requests (
           id SERIAL PRIMARY KEY,
           unit_number TEXT,
@@ -3179,11 +3329,12 @@ export function mountErpCoreApi(app, opts = {}) {
       const sql = unit
         ? 'SELECT * FROM leave_requests WHERE unit_number = $1 ORDER BY created_at DESC, id DESC'
         : 'SELECT * FROM leave_requests ORDER BY created_at DESC, id DESC';
-      const { rows } = await dbQuery(sql, unit ? [unit] : []);
-      return res.json({ ok: true, requests: rows || [], rows: rows || [] });
+      const { rows } = await dbQueryForRoute(sql, unit ? [unit] : []);
+      const requests = rows || [];
+      return res.json({ ok: true, requests, rows: requests, data: requests });
     } catch (e) {
       logError('GET /api/drivers/leave-requests', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e), requests: [], rows: [] });
+      return res.json({ ok: true, error: e?.message || String(e), requests: [], rows: [], data: [] });
     }
   });
 
