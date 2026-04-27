@@ -535,6 +535,7 @@ export const TABS: { id: ReportCategory; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'maintenance', label: 'Maintenance' },
   { id: 'accounting', label: 'Accounting' },
+  { id: 'compliance', label: 'Compliance' },
   { id: 'safety', label: 'Safety & HOS' },
   { id: 'fuel', label: 'Fuel & Energy' },
   { id: 'operations', label: 'Operations' },

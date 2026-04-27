@@ -18,6 +18,7 @@ import integrationsRoutes from "./routes/integrations.mjs";
 import { mountReportsRestApi } from "./routes/reports-rest-api.mjs";
 import { mountScheduledReports, startReportScheduleRunner } from "./routes/scheduled-reports.mjs";
 import pdfRouter from "./routes/pdf.mjs";
+import { createForm425cRouter } from "./routes/form-425c-api.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -158,6 +159,7 @@ async function start() {
   mountErpCoreApi(app, { logError: console.error });
   registerAccountingRoutes(app);
   registerCatalogRoutes(app);
+  app.use("/api/form-425c", createForm425cRouter({ logError: console.error }));
 
   app.get("/api/live", (_req, res) => {
     res.type("text/plain; charset=utf-8").send("IH35 TMS FULL SYSTEM LIVE 🚛");
@@ -250,12 +252,6 @@ async function start() {
     );
     const services = readJsonFileSafe(serviceTypesPath, []);
     res.json({ ok: true, services: Array.isArray(services) ? services : [] });
-  });
-
-  app.get("/api/form-425c/profiles", (_req, res) => {
-    const profilesPath = path.join(__dirname, "data", "form-425c-profiles.example.json");
-    const doc = readJsonFileSafe(profilesPath, { companies: [] });
-    res.json({ ok: true, companies: Array.isArray(doc?.companies) ? doc.companies : [] });
   });
 
   app.get("/api/maintenance/dashboard", (_req, res) => {

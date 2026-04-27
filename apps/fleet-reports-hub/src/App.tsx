@@ -109,6 +109,7 @@ const REPORTS_PAGE_TAB_IDS: ReportCategory[] = [
   'overview',
   'maintenance',
   'accounting',
+  'compliance',
   'safety',
   'fuel',
   'operations',
@@ -151,7 +152,7 @@ const ORDERED_APP_SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'home', label: 'Home' },
   ...APP_SECTIONS.filter((s) => s.id !== 'home').sort((a, b) => a.label.localeCompare(b.label)),
 ]
-const REPORT_SECTION_IDS = new Set<AppSection>(['reports', 'fuel', 'loads'])
+const REPORT_SECTION_IDS = new Set<AppSection>(['reports', 'accounting', 'fuel', 'loads'])
 const SECTION_REPORT_TAB_OVERRIDES: Partial<Record<AppSection, ReportCategory>> = {
   safety: 'safety',
   fuel: 'fuel',
