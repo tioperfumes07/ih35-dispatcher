@@ -193,7 +193,7 @@
     }
 
     function loadHistory() {
-      var debtor = getActiveDebtorId();
+      var debtor = getActiveDebtorId() || 'ih35-transportation';
       var prefix = 'form425c_' + debtor + '_';
       var historyKey = historyStorageKey(debtor);
       var history = safeJsonParse(localStorage.getItem(historyKey));
@@ -202,7 +202,7 @@
       try {
         for (var i = 0; i < localStorage.length; i++) {
           var k = localStorage.key(i);
-          if (k && k.indexOf(prefix) === 0) discovered.push(k);
+          if (k && (k.indexOf(prefix) === 0 || k.indexOf('form425c_ih35-transportation_') === 0 || k.indexOf('form425c_ih35-trucking_') === 0)) discovered.push(k);
         }
       } catch (_) {
         // no-op
