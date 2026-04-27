@@ -193,10 +193,19 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         .catch(() => ({ assets: [] }))
       const assets = Array.isArray(assetsPayload?.assets) ? assetsPayload.assets : []
 
-      const truckRows: SchedulerDriverRow[] = assets
+      const trucks = assets.filter((a: any) => {
+        const un = String(a?.unit_number || '')
+        const type = String(a?.asset_type || '').toLowerCase()
+        return /^T\d+/i.test(un) || type.includes('truck')
+      })
+
+      const activeAssets = assets.filter((a: any) => String(a?.status || '').trim().toLowerCase() === 'active')
+      const source = trucks.length ? trucks : (activeAssets.length ? activeAssets : assets)
+
+      const driverRows: SchedulerDriverRow[] = source
         .map((asset: any, idx: number) => {
           const unit = String(asset?.unit_number || '').trim().toUpperCase()
-          if (!/^T(12\d|13\d|14\d|15\d|16\d|17[0-7])$/.test(unit)) return null
+          if (!unit) return null
           const currentDriver = String(
             asset?.currentDriver || asset?.currentDriverName || asset?.current_driver_name || asset?.driver_name || ''
           ).trim()
@@ -212,8 +221,8 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         .filter(Boolean)
         .sort(sortByUnit) as SchedulerDriverRow[]
 
-      if (truckRows.length) {
-        setDrivers(truckRows)
+      if (driverRows.length) {
+        setDrivers(driverRows)
         return
       }
 
@@ -286,6 +295,14 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
     setError(null)
     Promise.all([loadDrivers(), loadSchedule(), loadHos()]).catch((e) => setError(String((e as Error).message || e))).finally(() => setLoading(false))
   }, [windowStartIso])
+
+  useEffect(() => {
+    if (!loading) return
+    const timeoutId = window.setTimeout(() => {
+      setLoading(false)
+    }, 10000)
+    return () => window.clearTimeout(timeoutId)
+  }, [loading])
 
   useEffect(() => {
     const t = window.setInterval(() => void loadHos(), 60000)
