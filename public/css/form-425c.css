@@ -243,6 +243,7 @@ body.form-425c-page a:hover {
 }
 
 @page {
+  size: letter;
   margin: 0.5in;
 }
 
@@ -255,9 +256,12 @@ body.form-425c-page a:hover {
     display: none !important;
   }
   #root .f425-panel {
-    display: block !important;
+    display: none !important;
     border: none;
     padding: 0;
+  }
+  #root #panel-report {
+    display: block !important;
   }
   body.form-425c-page {
     background: var(--color-bg-card, #fff);

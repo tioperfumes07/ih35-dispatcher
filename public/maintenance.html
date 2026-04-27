@@ -3048,6 +3048,11 @@
             </div>
           </div>
 
+          <button onclick="open425C()"
+            style="display:flex;align-items:center;gap:10px;padding:12px 20px;background:#1B4F8A;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:16px">
+            📋 Form 425C — Monthly Operating Report
+          </button>
+
           <div id="accountingHomeQuickActions" class="erp-home-quick-actions">
             <button type="button" class="btn" onclick="erpNewExpense()">New expense</button>
             <button type="button" class="btn" onclick="erpOpenDedicatedAccountingForm('maintenance-bill')">New bill</button>
@@ -3065,12 +3070,12 @@
                 </div>
                 <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); erpNewExpense()">Open →</button>
               </div>
-              <div class="acct-type-row" onclick="window.open('/form-425c.html', '_blank')">
+              <div class="acct-type-row" onclick="open425C()">
                 <div class="acct-type-row__info">
                   <div class="acct-type-row__name">Form 425C — monthly report</div>
                   <div class="acct-type-row__desc">US Bankruptcy Court monthly report — import QB data, fill 8 parts, export PDF</div>
                 </div>
-                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); window.open('/form-425c.html', '_blank')">Open →</button>
+                <button type="button" class="acct-type-row__btn" onclick="event.stopPropagation(); open425C()">Open →</button>
               </div>
               <div class="acct-type-row" onclick="erpOpenDedicatedAccountingForm('fuel-expense', { fuelVariant: 'fuel-expense', fuelTxnType: 'fuel-expense' })">
                 <div class="acct-type-row__info">
@@ -8016,7 +8021,7 @@
 
     // --- Global search (top bar) ---
     const FEATURE_INDEX = [
-      { type: 'feature', title: 'Form 425C — Monthly Operating Report', subtitle: 'Bankruptcy court monthly report', section: 'reports', reportId: 'form-425c' },
+      { type: 'feature', title: 'Form 425C — Monthly Operating Report', subtitle: 'Bankruptcy court monthly report', section: 'accounting', action: 'open425C', reportId: 'form-425c' },
       { type: 'feature', title: 'Create Work Order', subtitle: 'Open new work order form', action: 'createWorkOrder' },
       { type: 'feature', title: 'Fuel Settings', subtitle: 'Map fuel types to QuickBooks accounts', section: 'fuel-settings' },
       { type: 'feature', title: 'Expense Mapping', subtitle: 'Map expense types to QuickBooks accounts', section: 'expense-mapping' },
@@ -8071,6 +8076,11 @@
       }
       if (a === 'refreshQBO') {
         refreshQboMaster();
+        return;
+      }
+      if (a === 'open425C') {
+        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+        open425C();
       }
     }
 
@@ -8081,7 +8091,8 @@
         return;
       }
       if (feature.reportId === 'form-425c') {
-        window.open('/form-425c.html', '_blank');
+        openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+        open425C();
         return;
       }
       const section = String(feature.section || '').trim();
@@ -9411,6 +9422,7 @@
         const accountingBody =
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-expense&quot;)">Expenses</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="erpOpenDedicatedAccountingForm(&quot;maintenance-bill&quot;)">Bills</button>' +
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="open425C()">Form 425C</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openAccountingTab(&quot;acct-qbo&quot;, document.getElementById(&quot;acctQbDdTrigger&quot;));">QuickBooks sync</button>' +
           '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(&quot;catalog&quot;, document.querySelector(&quot;.nav-btn[data-section=catalog]&quot;)); openCatalogSubpanel(&quot;vendors&quot;);">Vendors</button>';
         inner.innerHTML = erpSbGroup('accounting', 'core', 'Accounting', true, accountingBody);
@@ -10883,6 +10895,24 @@
         `#erpIconNav .nav-btn[data-section="${name}"], #erpSectionGhostNav .nav-btn[data-section="${name}"]`
       );
       openSection(name, btn);
+    }
+
+    function open425C() {
+      var overlay = document.getElementById('form425cOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'form425cOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;background:#0f1219;display:flex;flex-direction:column';
+        overlay.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#161b27;border-bottom:1px solid rgba(255,255,255,0.1)">' +
+          '<span style="color:#e2e8f0;font-weight:600;font-size:15px">📋 Form 425C — Monthly Operating Report</span>' +
+          '<button onclick="document.getElementById(\'form425cOverlay\').style.display=\'none\';document.body.style.overflow=\"\"" style="background:transparent;color:#8892a4;border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer">← Back to Accounting</button>' +
+          '</div>' +
+          '<iframe src="/form-425c.html" style="flex:1;border:none;background:#0f1219"></iframe>';
+        document.body.appendChild(overlay);
+      } else {
+        overlay.style.display = 'flex';
+      }
+      document.body.style.overflow = 'hidden';
     }
 
     function openFleetHub() {

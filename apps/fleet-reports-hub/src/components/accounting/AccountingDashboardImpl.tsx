@@ -384,6 +384,16 @@ export function AccountingDashboard({
             </ul>
           )}
           </div>
+          {onOpenForm425c ? (
+            <button
+              type="button"
+              className="btn primary acct-dash__head-btn"
+              onClick={() => onOpenForm425c()}
+              title="Open Form 425C monthly operating report"
+            >
+              📋 Form 425C
+            </button>
+          ) : null}
           <button
             type="button"
             className="btn sm ghost acct-dash__head-btn"

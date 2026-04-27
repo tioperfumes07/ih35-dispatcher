@@ -1856,7 +1856,7 @@
             var c33 = Math.round((a33 - b33) * 100) / 100;
             var a34 = Math.round((a32 - a33) * 100) / 100;
             var b34 = toNumber(report.line22);
-            var c34 = Math.round((a32 - b32) * 100) / 100;
+            var c34 = Math.round((a34 - b34) * 100) / 100;
             var nextReceipts = toNumber(report.nextMonthProjectedReceipts);
             var nextDisb = toNumber(report.nextMonthProjectedDisbursements);
             var nextNet = Math.round((nextReceipts - nextDisb) * 100) / 100;

@@ -67,7 +67,7 @@ type FeatureIndexEntry = {
 }
 
 const FEATURE_INDEX: FeatureIndexEntry[] = [
-  { type: 'feature', title: 'Form 425C — Monthly Operating Report', subtitle: 'Bankruptcy court monthly report', section: 'reports', reportId: 'form-425c' },
+  { type: 'feature', title: 'Form 425C — Monthly Operating Report', subtitle: 'Bankruptcy court monthly report', section: 'accounting', reportId: 'form-425c', action: 'open425C' },
   { type: 'feature', title: 'Create Work Order', subtitle: 'Open new work order form', action: 'createWorkOrder' },
   { type: 'feature', title: 'Fuel Settings', subtitle: 'Map fuel types to QuickBooks accounts', section: 'fuel-settings' },
   { type: 'feature', title: 'Expense Mapping', subtitle: 'Map expense types to QuickBooks accounts', section: 'expense-mapping' },
@@ -974,6 +974,11 @@ export default function App() {
       if (f.reportId) {
         const rep = REPORTS.find((r) => String(r.id).toLowerCase() === String(f.reportId).toLowerCase())
         if (rep) {
+          if (String(f.reportId).toLowerCase() === 'form-425c') {
+            openSection('accounting')
+            openReport(rep)
+            return
+          }
           if (activeSection !== 'reports' && f.section === 'reports') openSection('reports')
           openReport(rep)
           return
@@ -989,6 +994,11 @@ export default function App() {
       if (action === 'openFuelExpenseForm') {
         openSection('accounting')
         setFuelPlannerTxn('fuel-expense')
+        return
+      }
+      if (action === 'open425C') {
+        openSection('accounting')
+        openForm425cEmbedded()
         return
       }
       if (action === 'openFleetHub') {
