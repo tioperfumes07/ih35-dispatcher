@@ -145,6 +145,129 @@
       return 'form425c_' + c + '_' + m;
     }
 
+    function getActiveDebtorId() {
+      return normalizeCompanyId(repCompany || qbCompany || 'ih35-transportation');
+    }
+
+    function getReportMonth() {
+      return String(repMonth || '').trim();
+    }
+
+    function historyStorageKey(debtorId) {
+      return 'form425c_history_' + normalizeCompanyId(debtorId);
+    }
+
+    function collectAllFormFields() {
+      var fields = {};
+      try {
+        document.querySelectorAll('input, textarea, select').forEach(function (el) {
+          if (!el) return;
+          var id = String(el.id || '').trim();
+          var name = String(el.name || '').trim();
+          if (el.type === 'radio') {
+            if (name && el.checked) fields[name] = el.value;
+            return;
+          }
+          if (el.type === 'checkbox') {
+            if (id) fields[id] = !!el.checked;
+            else if (name) fields[name] = !!el.checked;
+            return;
+          }
+          if (id) fields[id] = String(el.value || '');
+          else if (name) fields[name] = String(el.value || '');
+        });
+      } catch (_) {
+        // no-op; state payload still captures report values
+      }
+      fields.__payload = gatherReportPayload();
+      fields.__exhibitD = (exhibitD || []).map(function (row) {
+        return { ...row };
+      });
+      return fields;
+    }
+
+    function loadHistory() {
+      var debtor = getActiveDebtorId();
+      var historyKey = historyStorageKey(debtor);
+      var history = safeJsonParse(localStorage.getItem(historyKey));
+      var keys = Array.isArray(history) ? history : [];
+      var rows = keys
+        .map(function (key) {
+          var data = safeJsonParse(localStorage.getItem(key));
+          if (!data) return null;
+          var month = String(data.month || '').trim();
+          return {
+            key: key,
+            companyId: String(data.debtor || debtor || ''),
+            month: month || key.split('_').slice(-1)[0] || '',
+            updatedAt: String(data.savedAt || ''),
+            savedAt: String(data.savedAt || ''),
+          };
+        })
+        .filter(Boolean);
+      setHistoryList(rows);
+    }
+
+    function loadSavedReportByKey(key) {
+      var data = safeJsonParse(localStorage.getItem(key));
+      if (!data || !data.fields) return;
+      var debtor = String(data.debtor || getActiveDebtorId() || '').trim();
+      var month = String(data.month || getReportMonth() || '').trim();
+      if (debtor) {
+        setRepCompany(debtor);
+        setQbCompany(debtor);
+      }
+      if (month) setRepMonth(month);
+      var fields = data.fields || {};
+
+      if (fields.__payload) {
+        applyReportPayload(fields.__payload);
+      } else {
+        Object.keys(fields).forEach(function (id) {
+          if (id === '__payload' || id === '__exhibitD') return;
+          var el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+          if (!el) return;
+          if (el.type === 'radio') {
+            document.querySelectorAll('[name="' + id + '"]').forEach(function (r) {
+              r.checked = r.value === fields[id];
+            });
+          } else if (el.type === 'checkbox') {
+            el.checked = !!fields[id];
+          } else {
+            el.value = fields[id];
+          }
+        });
+      }
+
+      if (Array.isArray(fields.__exhibitD)) {
+        setExhibitD(
+          fields.__exhibitD.map(function (x) {
+            return { ...x };
+          })
+        );
+      }
+      setTab('report');
+      setReceiptMsg('📂 Restored report for ' + (month || 'selected month'));
+      if (typeof window.erpShowToast === 'function') {
+        window.erpShowToast('📂 Restored report for ' + (month || 'selected month'));
+      }
+    }
+
+    function deleteSavedReportByKey(key) {
+      if (!window.confirm('Delete this saved report?')) return;
+      localStorage.removeItem(key);
+      var debtor = getActiveDebtorId();
+      var historyKey = historyStorageKey(debtor);
+      var history = safeJsonParse(localStorage.getItem(historyKey));
+      var keys = Array.isArray(history) ? history : [];
+      var next = keys.filter(function (k) {
+        return k !== key;
+      });
+      localStorage.setItem(historyKey, JSON.stringify(next));
+      loadHistory();
+      if (typeof window.erpShowToast === 'function') window.erpShowToast('Deleted');
+    }
+
     function fmtAccounting(val) {
       var n = parseFloat(String(val).replace(/[$,()]/g, '').trim());
       if (isNaN(n)) return '';
@@ -499,13 +622,7 @@
     }, [report.line19, report.line20, report.line21]);
 
     async function refreshHistory() {
-      try {
-        var r = await fetch('/api/form-425c/saved-reports');
-        var d = await r.json();
-        setHistoryList(d.reports || []);
-      } catch (e) {
-        console.error(e);
-      }
+      loadHistory();
     }
 
     function patchCompany(cid, patch) {
@@ -748,22 +865,45 @@
     }
 
     async function saveReportToServer() {
-      if (!repCompany || !repMonth) {
+      var debtor = getActiveDebtorId();
+      var month = getReportMonth();
+      if (!debtor || !month) {
         alert('Select company and month.');
         return;
       }
+
+      var key = localReportKey(debtor, month);
       var payload = gatherReportPayload();
-      saveReportToLocal(repCompany, repMonth, payload);
-      setReceiptMsg('✅ Saved');
-      if (typeof window.erpShowToast === 'function') window.erpShowToast('✅ Saved');
+      var fields = collectAllFormFields();
+      var data = {
+        savedAt: new Date().toISOString(),
+        month: month,
+        debtor: debtor,
+        fields: fields,
+      };
+      localStorage.setItem(key, JSON.stringify(data));
+      saveReportToLocal(debtor, month, payload);
+
+      var historyKey = historyStorageKey(debtor);
+      var history = safeJsonParse(localStorage.getItem(historyKey));
+      var list = Array.isArray(history) ? history : [];
+      if (!list.includes(key)) {
+        list.unshift(key);
+      }
+      if (list.length > 24) list = list.slice(0, 24);
+      localStorage.setItem(historyKey, JSON.stringify(list));
+
+      setReceiptMsg('✅ Report saved for ' + month);
+      if (typeof window.erpShowToast === 'function') window.erpShowToast('✅ Report saved for ' + month);
+      loadHistory();
+
       try {
-        var body = { companyId: repCompany, month: repMonth, ...payload };
+        var body = { companyId: debtor, month: month, ...payload };
         await fetch('/api/form-425c/saved-report', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         }).catch(function () { return null; });
-        refreshHistory();
       } catch (_) {
         // local save is source of truth
       }
@@ -980,6 +1120,7 @@
           'aria-selected': tab === id ? 'true' : 'false',
           onClick: function () {
             setTab(id);
+            if (id === 'history') loadHistory();
           }
         },
         label
@@ -2142,29 +2283,39 @@
                 historyList.map(function (row) {
                   return h(
                     'tr',
-                    { key: row.companyId + '-' + row.month },
+                    { key: row.key || (row.companyId + '-' + row.month) },
                     h('td', null, row.companyId),
                     h('td', null, row.month),
-                    h('td', null, row.updatedAt || ''),
+                    h('td', null, row.updatedAt || row.savedAt || ''),
                     h(
                       'td',
-                      { className: 'no-print' },
+                      { className: 'no-print', style: { display: 'flex', gap: 8, alignItems: 'center' } },
                       h(
                         'button',
                         {
                           type: 'button',
                           className: 'btn primary',
-                          onClick: async function () {
-                            try {
-                              await loadSavedReport(row.companyId, row.month);
-                              setTab('report');
-                              setReceiptMsg('Loaded saved report.');
-                            } catch (e) {
-                              alert(String(e.message || e));
+                          onClick: function () {
+                            if (row.key) {
+                              loadSavedReportByKey(row.key);
+                              return;
                             }
+                            void loadSavedReport(row.companyId, row.month);
                           }
                         },
                         'Load'
+                      ),
+                      h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'btn secondary',
+                          onClick: function () {
+                            if (!row.key) return;
+                            deleteSavedReportByKey(row.key);
+                          }
+                        },
+                        'Delete'
                       )
                     )
                   );
@@ -2237,6 +2388,14 @@
   }
 
   window.Form425CApp = Form425CApp;
+  try {
+    ['boardNavMount', 'erpConnectionStrip'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add('no-print');
+    });
+  } catch (_) {
+    // no-op
+  }
   var rootEl = document.getElementById('root');
   if (rootEl) {
     if (window.ReactDOM && typeof window.ReactDOM.createRoot === 'function') {

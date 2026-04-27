@@ -248,21 +248,42 @@ body.form-425c-page a:hover {
 }
 
 @media print {
+  #boardNavMount,
+  .board-nav,
+  .board-nav-bar,
+  nav,
+  header,
+  .erp-connection-strip,
+  .no-print,
+  [class*="board-nav"],
+  [class*="nav-bar"] {
+    display: none !important;
+  }
+
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  body > *:not(.form-425c-page),
+  .form-425c-tabs-nav .tab-btn:not(.active) {
+    display: none !important;
+  }
+
   #root .no-print {
     display: none !important;
   }
+
   #root .f425-panel {
     display: none !important;
     border: none;
     padding: 0;
   }
+
   #root #panel-report {
     display: block !important;
   }
+
   body.form-425c-page {
     background: var(--color-bg-card, #fff);
   }
