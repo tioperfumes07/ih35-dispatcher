@@ -2014,133 +2014,54 @@
     }
 
     function renderHistoryPanel() {
-      // Read directly from localStorage — don't rely on React state
+      // Read directly from localStorage on every render
       var debtor = getActiveDebtorId() || 'ih35-transportation';
-      var historyKey = 'form425c_history_' + debtor;
-      var prefix = 'form425c_' + debtor + '_';
-
-      // Read history index
-      var histIndex = [];
-      try {
-        histIndex = JSON.parse(localStorage.getItem(historyKey) || '[]');
-      } catch (_) {
-        histIndex = [];
-      }
-      if (!Array.isArray(histIndex)) histIndex = [];
-
-      // Also scan localStorage for any matching keys
-      var allKeys = [];
+      var allRows = [];
       try {
         for (var i = 0; i < localStorage.length; i++) {
           var k = localStorage.key(i);
-          if (
-            k &&
-            k.indexOf('form425c_') === 0 &&
-            k.indexOf('form425c_history_') !== 0 &&
-            k.indexOf('form425c_profiles') !== 0
-          ) {
-            allKeys.push(k);
-          }
-        }
-      } catch (_) {}
-
-      // Combine both sources
-      var seen = new Set();
-      var keys = [];
-      histIndex.concat(allKeys).forEach(function (k) {
-        if (!k || seen.has(k)) return;
-        seen.add(k);
-        keys.push(k);
-      });
-
-      // Prefer active-debtor items first but allow fallback records to surface.
-      keys = keys.sort(function (a, b) {
-        var aPri = a.indexOf(prefix) === 0 ? 0 : 1;
-        var bPri = b.indexOf(prefix) === 0 ? 0 : 1;
-        if (aPri !== bPri) return aPri - bPri;
-        return String(a).localeCompare(String(b));
-      });
-
-      var rows = keys
-        .map(function (key) {
+          if (!k) continue;
+          if (k.indexOf('form425c_') !== 0) continue;
+          if (k.indexOf('form425c_history_') === 0) continue;
+          if (k.indexOf('form425c_profiles') === 0) continue;
           try {
-            var data = JSON.parse(localStorage.getItem(key) || 'null');
-            if (!data) return null;
-            return {
-              key: key,
-              month: String(data.month || key.split('_').slice(-1)[0] || ''),
-              savedAt: String(data.savedAt || ''),
-              debtor: String(data.debtor || data.companyId || debtor)
-            };
-          } catch (_) {
-            return null;
-          }
-        })
-        .filter(Boolean)
-        .sort(function (a, b) {
-          return String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
-        });
-
-      return h(
-        'div',
+            var d = JSON.parse(localStorage.getItem(k) || 'null');
+            if (!d) continue;
+            allRows.push({
+              key: k,
+              month: String(d.month || d.companyId || k.split('_').slice(-1)[0] || ''),
+              savedAt: String(d.savedAt || ''),
+              debtor: String(d.debtor || d.companyId || debtor)
+            });
+          } catch(e2) {}
+        }
+      } catch(e) {}
+      allRows.sort(function(a,b){ return b.savedAt.localeCompare(a.savedAt); });
+      return React.createElement('div',
         { id: 'panel-history', className: 'f425-panel' + (tab === 'history' ? ' active' : '') },
-        h('h3', null, 'Saved reports'),
-        h(
-          'button',
-          {
-            className: 'btn secondary',
-            onClick: function () {
-              // force re-render
-              setTab('history');
-              loadHistory();
-              window.setTimeout(loadHistory, 100);
-            }
-          },
-          'Refresh list'
-        ),
-        rows.length === 0
-          ? h('p', null, 'No saved reports yet.')
-          : h(
-              'div',
-              null,
-              rows.map(function (row) {
-                var savedDate = row.savedAt ? new Date(row.savedAt).toLocaleDateString() : '';
-                return h(
-                  'div',
-                  {
-                    key: row.key,
-                    style: {
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '10px 0',
-                      borderBottom: '1px solid #e5e7eb'
-                    }
-                  },
-                  h('span', { style: { fontWeight: 600, minWidth: 80 } }, row.month),
-                  h('span', { style: { color: '#666', fontSize: 13 } }, 'Saved: ' + savedDate),
-                  h(
-                    'button',
-                    {
-                      className: 'btn secondary',
-                      style: { fontSize: 12, padding: '4px 10px' },
-                      onClick: function () {
-                        loadSavedReportByKey(row.key);
-                      }
-                    },
-                    'Load'
-                  ),
-                  h(
-                    'button',
-                    {
-                      className: 'btn danger',
-                      style: { fontSize: 12, padding: '4px 10px' },
-                      onClick: function () {
-                        deleteSavedReportByKey(row.key);
-                      }
-                    },
-                    'Delete'
-                  )
+        React.createElement('h3', null, 'Saved reports'),
+        React.createElement('button', { className: 'btn secondary', onClick: loadHistory }, 'Refresh list'),
+        allRows.length === 0
+          ? React.createElement('p', null, 'No saved reports yet.')
+          : React.createElement('div', null,
+              allRows.map(function(row) {
+                var sd = row.savedAt ? new Date(row.savedAt).toLocaleDateString() : '';
+                return React.createElement('div', {
+                  key: row.key,
+                  style: { display:'flex', alignItems:'center', gap:'12px', padding:'10px 0', borderBottom:'1px solid #e5e7eb' }
+                },
+                  React.createElement('span', { style: { fontWeight:600, minWidth:100 } }, row.month),
+                  React.createElement('span', { style: { color:'#666', fontSize:13, flex:1 } }, 'Saved: ' + sd),
+                  React.createElement('button', {
+                    className: 'btn secondary',
+                    style: { fontSize:12, padding:'4px 10px' },
+                    onClick: function(k){ return function(){ loadSavedReportByKey(k); }; }(row.key)
+                  }, 'Load'),
+                  React.createElement('button', {
+                    className: 'btn danger',
+                    style: { fontSize:12, padding:'4px 10px', background:'#ef4444', color:'white', border:'none', borderRadius:'4px', cursor:'pointer' },
+                    onClick: function(k){ return function(){ deleteSavedReportByKey(k); }; }(row.key)
+                  }, 'Delete')
                 );
               })
             )
