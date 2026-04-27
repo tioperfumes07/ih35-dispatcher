@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   deleteDriverScheduleEntry,
   fetchDriverHosStatus,
-  fetchDriverProfiles,
   fetchDriverSchedule,
   saveDriverScheduleEntry,
   upsertDriverProfile,
@@ -114,13 +113,6 @@ async function fetchApprovedLeaveRequests(startIso: string, endIso: string): Pro
 const emptyAddDriverDraft = (): AddDriverDraft => ({ full_name: '', unit_number: '', team: '', manager: '', phone: '', email: '', cdl_number: '', cdl_expiry: '', medical_expiry: '', status: 'Active', notes: '' })
 const sortByUnit = (a: SchedulerDriverRow, b: SchedulerDriverRow) => String(a.unit_number || '').localeCompare(String(b.unit_number || ''))
 
-function normalizeProfilesToRows(drivers: DriverProfile[]): SchedulerDriverRow[] {
-  return drivers.map((d) => ({
-    id: d.id, full_name: d.full_name, unit_number: d.unit_number, team: d.team, manager: d.manager, status: d.status,
-    phone: d.phone, email: d.email, cdl_number: d.cdl_number, cdl_expiry: d.cdl_expiry, medical_expiry: d.medical_expiry, notes: d.notes,
-  })).sort(sortByUnit)
-}
-
 export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   const [drivers, setDrivers] = useState<SchedulerDriverRow[]>([])
   const [scheduleMap, setScheduleMap] = useState<Record<string, ScheduleEntry>>({})
@@ -195,45 +187,39 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
   }, [leavePicker])
 
   const loadDrivers = async () => {
-    const assignmentByUnit = new Map<string, string>()
     try {
       const assetsPayload = await fetch('/api/fleet/assets', { headers: { Accept: 'application/json' } })
         .then((r) => r.json())
         .catch(() => ({ assets: [] }))
       const assets = Array.isArray(assetsPayload?.assets) ? assetsPayload.assets : []
-      assets.forEach((asset: any) => {
-        const unit = String(asset?.unit_number || '').trim().toUpperCase()
-        const driverName = String(
-          asset?.currentDriver || asset?.currentDriverName || asset?.current_driver_name || asset?.driver_name || ''
-        ).trim()
-        if (unit && driverName) assignmentByUnit.set(unit, driverName)
-      })
-    } catch {
-      // leave assignment map empty
-    }
 
-    try {
-      const data = await fetchDriverProfiles()
-      const list = Array.isArray(data.drivers) ? data.drivers : []
-      const baseRows = list.length ? normalizeProfilesToRows(list) : fallbackDrivers()
-      const mergedRows = baseRows.map((row) => {
-        const unitKey = String(row.unit_number || '').trim().toUpperCase()
-        const assigned = assignmentByUnit.get(unitKey)
-        const rowName = String(row.full_name || '').trim().toLowerCase()
-        const shouldUseAssigned = Boolean(assigned) && (!rowName || rowName === 'unassigned' || rowName === 'vacante')
-        if (!shouldUseAssigned) return row
-        return { ...row, full_name: assigned || row.full_name }
-      })
-      setDrivers(mergedRows)
+      const truckRows: SchedulerDriverRow[] = assets
+        .map((asset: any, idx: number) => {
+          const unit = String(asset?.unit_number || '').trim().toUpperCase()
+          if (!/^T(12\d|13\d|14\d|15\d|16\d|17[0-7])$/.test(unit)) return null
+          const currentDriver = String(
+            asset?.currentDriver || asset?.currentDriverName || asset?.current_driver_name || asset?.driver_name || ''
+          ).trim()
+          return {
+            id: -(idx + 1),
+            unit_number: unit,
+            full_name: currentDriver || 'Unassigned',
+            team: '',
+            manager: '',
+            status: currentDriver ? 'Assigned' : 'Unassigned',
+          }
+        })
+        .filter(Boolean)
+        .sort(sortByUnit) as SchedulerDriverRow[]
+
+      if (truckRows.length) {
+        setDrivers(truckRows)
+        return
+      }
+
+      setDrivers(fallbackDrivers().map((row) => ({ ...row, full_name: 'Unassigned', status: 'Unassigned' })))
     } catch {
-      const baseRows = fallbackDrivers()
-      const mergedRows = baseRows.map((row) => {
-        const unitKey = String(row.unit_number || '').trim().toUpperCase()
-        const assigned = assignmentByUnit.get(unitKey)
-        if (!assigned) return row
-        return { ...row, full_name: assigned }
-      })
-      setDrivers(mergedRows)
+      setDrivers(fallbackDrivers().map((row) => ({ ...row, full_name: 'Unassigned', status: 'Unassigned' })))
     }
   }
 
@@ -429,12 +415,13 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
             {filteredDrivers.map((driver, rowIdx) => {
               const rowBg = rowIdx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.045)'
               const hosColor = hosColorForDriver(driver)
-              const isVacant = String(driver.full_name || '').trim().toLowerCase() === 'vacante'
+              const normalizedDriverName = String(driver.full_name || '').trim().toLowerCase()
+              const isVacant = normalizedDriverName === 'vacante' || normalizedDriverName === 'unassigned'
               return <tr id={`sched-row-${driver.unit_number}`} key={`${driver.unit_number}-${driver.id}`} style={{ height: 30, background: rowBg }}>
                 <td className="ds-left-col" style={{ position: 'sticky', left: 0, zIndex: 2, background: rowBg, padding: '4px 12px', border: '0.5px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 10, fontWeight: 600, background: '#2a3148', color: '#8892a4', padding: '1px 5px', borderRadius: 3, marginRight: 4 }}>{driver.unit_number}</span>
-                    <button type="button" onClick={() => onOpenDriverProfile(driver.unit_number)} style={{ border: 'none', background: 'transparent', padding: 0, margin: 0, fontSize: 11, color: isVacant ? '#4a5568' : '#c8d0dc', fontStyle: isVacant ? 'italic' : 'normal', cursor: 'pointer' }}>{driver.full_name || 'Vacante'}</button>
+                    <button type="button" onClick={() => onOpenDriverProfile(driver.unit_number)} style={{ border: 'none', background: 'transparent', padding: 0, margin: 0, fontSize: 11, color: isVacant ? '#4a5568' : '#c8d0dc', fontStyle: isVacant ? 'italic' : 'normal', cursor: 'pointer' }}>{driver.full_name || 'Unassigned'}</button>
                     {hosColor ? <span style={{ width: 7, height: 7, borderRadius: '50%', marginLeft: 4, background: hosColor }} /> : null}
                   </div>
                 </td>
@@ -460,7 +447,7 @@ export function DriverSchedulerPage({ focusUnit, onOpenDriverProfile }: Props) {
         <div style={{ fontSize: 12, color: '#8892a4', padding: '4px 12px' }}>Monthly totals</div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}><thead><tr style={{ color: '#6b7280', fontSize: 10 }}><th style={{ textAlign: 'left', padding: '4px 10px' }}>Driver</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>Unit</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>Total Absence</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>Vacacion</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>Sick</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>Personal</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>Sin Aviso</th><th style={{ textAlign: 'left', padding: '4px 10px' }}>WFH</th></tr></thead>
           <tbody>
-            {totals.map((r) => <tr key={`total-${r.unit}`} style={{ color: '#c8d0dc' }}><td style={{ padding: '4px 10px' }}>{r.driver || 'Vacante'}</td><td style={{ padding: '4px 10px' }}>{r.unit}</td><td style={{ padding: '4px 10px' }}>{r.totalAbsence > 0 ? <span style={{ background: '#450a0a', color: '#fca5a5', padding: '1px 6px', borderRadius: 8 }}>{r.totalAbsence}</span> : '—'}</td><td style={{ padding: '4px 10px' }}>{r.vac || '—'}</td><td style={{ padding: '4px 10px' }}>{r.sick || '—'}</td><td style={{ padding: '4px 10px' }}>{r.personal || '—'}</td><td style={{ padding: '4px 10px' }}>{r.sinAviso || '—'}</td><td style={{ padding: '4px 10px' }}>{r.wfh || '—'}</td></tr>)}
+            {totals.map((r) => <tr key={`total-${r.unit}`} style={{ color: '#c8d0dc' }}><td style={{ padding: '4px 10px' }}>{r.driver || 'Unassigned'}</td><td style={{ padding: '4px 10px' }}>{r.unit}</td><td style={{ padding: '4px 10px' }}>{r.totalAbsence > 0 ? <span style={{ background: '#450a0a', color: '#fca5a5', padding: '1px 6px', borderRadius: 8 }}>{r.totalAbsence}</span> : '—'}</td><td style={{ padding: '4px 10px' }}>{r.vac || '—'}</td><td style={{ padding: '4px 10px' }}>{r.sick || '—'}</td><td style={{ padding: '4px 10px' }}>{r.personal || '—'}</td><td style={{ padding: '4px 10px' }}>{r.sinAviso || '—'}</td><td style={{ padding: '4px 10px' }}>{r.wfh || '—'}</td></tr>)}
             {!totals.length ? <tr><td colSpan={8} style={{ padding: '8px 10px', color: '#6b7280' }}>No rows to summarize.</td></tr> : null}
           </tbody>
         </table>
