@@ -136,7 +136,12 @@
     var lastLoadedLocalKeyRef = React.useRef('');
 
     function normalizeCompanyId(raw) {
-      return String(raw || '').trim().toLowerCase();
+      var s = String(raw || '').trim().toLowerCase();
+      // Map known company names to their IDs
+      if (s === 'ih 35 transportation llc' || s === 'ih35 transportation llc') return 'ih35-transportation';
+      if (s === 'ih 35 trucking llc' || s === 'ih35 trucking llc') return 'ih35-trucking';
+      // Already an ID (contains dash or no spaces)
+      return s;
     }
 
     function localReportKey(companyId, month) {
