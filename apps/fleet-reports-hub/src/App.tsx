@@ -230,11 +230,19 @@ function resolveReportTabFromSearchParams(p: URLSearchParams): ReportCategory {
   return normalizeReportTab(String(p.get('tab') || '').trim().toLowerCase())
 }
 
+function resolveReportIdFromSearchParams(p: URLSearchParams): string | null {
+  const q = String(p.get('report') || '').trim().toLowerCase()
+  if (!q) return null
+  const picked = REPORTS.find((r) => String(r.id || '').trim().toLowerCase() === q)
+  return picked ? picked.id : null
+}
+
 function readLocationStateFromSearchParams(p: URLSearchParams): {
   section: AppSection
   tab: ReportCategory
   listsTab: ListsCatalogsTab
   listsList: ListsCatalogListId | null
+  reportId: string | null
 } {
   const section = resolveSectionFromSearchParams(p)
   const tab = normalizeReportTabForSection(section, resolveReportTabFromSearchParams(p))
@@ -244,6 +252,7 @@ function readLocationStateFromSearchParams(p: URLSearchParams): {
     tab,
     listsTab: listsState.tab,
     listsList: listsState.list,
+    reportId: resolveReportIdFromSearchParams(p),
   }
 }
 
@@ -252,9 +261,10 @@ function readInitialLocationState(): {
   tab: ReportCategory
   listsTab: ListsCatalogsTab
   listsList: ListsCatalogListId | null
+  reportId: string | null
 } {
   if (typeof window === 'undefined') {
-    return { section: 'home', tab: 'overview', listsTab: 'fleet-samsara', listsList: null }
+    return { section: 'home', tab: 'overview', listsTab: 'fleet-samsara', listsList: null, reportId: null }
   }
   const p = new URLSearchParams(window.location.search)
   return readLocationStateFromSearchParams(p)
@@ -360,7 +370,11 @@ export default function App() {
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
     defaultFilters,
   )
-  const [active, setActive] = useState<ReportDef | null>(null)
+  const [active, setActive] = useState<ReportDef | null>(() => {
+    const reportId = initialLocation.reportId
+    if (!reportId) return null
+    return REPORTS.find((r) => r.id === reportId) || null
+  })
   const [maintExtNav, setMaintExtNav] = useState<{
     view: MaintView
     token: number
@@ -511,6 +525,11 @@ export default function App() {
       } else {
         url.searchParams.delete('tab')
       }
+      if (active && REPORT_SECTION_IDS.has(activeSection)) {
+        url.searchParams.set('report', active.id)
+      } else {
+        url.searchParams.delete('report')
+      }
       if (activeSection !== 'lists') {
         url.searchParams.delete('listsTab')
         url.searchParams.delete('listsList')
@@ -530,6 +549,7 @@ export default function App() {
     erpWoModalHost,
     listsTab,
     listsDeepLink,
+    active,
   ])
 
   useEffect(() => {
@@ -542,6 +562,8 @@ export default function App() {
       const nextTab = locationState.tab
       if (nextSection !== activeSection) openSection(nextSection)
       setTab((prev) => (prev === nextTab ? prev : nextTab))
+      const nextReport = locationState.reportId ? REPORTS.find((r) => r.id === locationState.reportId) || null : null
+      setActive(nextReport)
       if (nextSection === 'lists') {
         const nextListsTabResolved = locationState.listsTab
         setListsTab((prev) => (prev === nextListsTabResolved ? prev : nextListsTabResolved))
@@ -569,6 +591,14 @@ export default function App() {
     if (!erpEmbed) return
     if (activeSection !== 'reports') openSection('reports')
   }, [erpEmbed, activeSection, openSection])
+
+  useEffect(() => {
+    if (!initialLocation.reportId) return
+    const picked = REPORTS.find((r) => r.id === initialLocation.reportId) || null
+    if (!picked) return
+    setActive(picked)
+    if (!REPORT_SECTION_IDS.has(activeSection)) openSection('reports')
+  }, [initialLocation.reportId, activeSection, openSection])
 
   useEffect(() => {
     if (!appWoPickOpen && woPickFullScreen) toggleWoPickFullScreen()

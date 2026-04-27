@@ -8015,15 +8015,121 @@
     }
 
     // --- Global search (top bar) ---
+    const FEATURE_INDEX = [
+      { type: 'feature', title: 'Form 425C — Monthly Operating Report', subtitle: 'Bankruptcy court monthly report', section: 'reports', reportId: 'form-425c' },
+      { type: 'feature', title: 'Create Work Order', subtitle: 'Open new work order form', action: 'createWorkOrder' },
+      { type: 'feature', title: 'Fuel Settings', subtitle: 'Map fuel types to QuickBooks accounts', section: 'fuel-settings' },
+      { type: 'feature', title: 'Expense Mapping', subtitle: 'Map expense types to QuickBooks accounts', section: 'expense-mapping' },
+      { type: 'feature', title: 'Driver Profiles', subtitle: 'View and edit driver CDL and medical info', section: 'drivers' },
+      { type: 'feature', title: 'Scheduler', subtitle: 'Driver vacation and leave calendar', section: 'scheduler' },
+      { type: 'feature', title: 'Safety Map', subtitle: 'Live map of all trucks and drivers', section: 'safety' },
+      { type: 'feature', title: 'Fleet Hub', subtitle: 'Open fleet reports overlay', action: 'openFleetHub' },
+      { type: 'feature', title: 'Import Trailers', subtitle: 'Bulk import trailers from CSV', section: 'lists' },
+      { type: 'feature', title: 'Vehicle Database', subtitle: 'View all trucks and trailers', section: 'lists' },
+      { type: 'feature', title: 'Fuel Submissions', subtitle: 'View driver fuel expense submissions', section: 'drivers' },
+      { type: 'feature', title: 'Damage Reports', subtitle: 'Open damage and road service alerts', section: 'drivers' },
+      { type: 'feature', title: 'Leave Requests', subtitle: 'Approve or deny driver time off requests', section: 'drivers' },
+      { type: 'feature', title: 'QBO Sync', subtitle: 'Sync QuickBooks catalog and retry pending transactions', section: 'accounting' },
+      { type: 'feature', title: 'Cost by Unit Report', subtitle: 'Maintenance spend per truck or trailer', section: 'reports' },
+      { type: 'feature', title: 'PM Schedule', subtitle: 'Upcoming preventive maintenance schedule', section: 'reports' },
+      { type: 'feature', title: 'Work Order History', subtitle: 'Closed and open work orders with detail', section: 'reports' },
+      { type: 'feature', title: 'Fleet Snapshot', subtitle: 'Full fleet status overview', section: 'safety' },
+      { type: 'feature', title: 'HOS Clocks', subtitle: 'Driver hours of service status', section: 'safety' },
+      { type: 'feature', title: 'Integrity Alerts', subtitle: 'System integrity warnings and alerts', section: 'maintenance' },
+      { type: 'feature', title: 'Driver App', subtitle: 'Open driver mobile portal', action: 'openDriverApp' },
+      { type: 'feature', title: 'Post to QuickBooks', subtitle: 'Post pending expenses to QBO', action: 'postToQBO' },
+      { type: 'feature', title: 'Refresh QuickBooks', subtitle: 'Refresh QBO vendor and account lists', action: 'refreshQBO' },
+    ];
+
     let __globalSearchActiveIx = -1;
+
+    function globalSearchRunAction(action) {
+      const a = String(action || '').trim();
+      if (!a) return;
+      if (a === 'createWorkOrder') {
+        openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+        openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main=record]'));
+        return;
+      }
+      if (a === 'openFleetHub') {
+        openFleetHub();
+        return;
+      }
+      if (a === 'openDriverApp') {
+        window.open('/driver/', '_blank');
+        return;
+      }
+      if (a === 'postToQBO') {
+        if (typeof retryQboSyncQueueNow === 'function') {
+          retryQboSyncQueueNow();
+          return;
+        }
+        j('/api/qbo/sync-queue/retry', { method: 'POST' })
+          .then((d) => showErpToast('✅ ' + Number(d?.synced || 0) + ' transactions synced to QuickBooks', 'success'))
+          .catch((e) => showErpToast(String(e?.message || e), 'error'));
+        return;
+      }
+      if (a === 'refreshQBO') {
+        refreshQboMaster();
+      }
+    }
+
+    function globalSearchRunFeature(feature) {
+      if (!feature || typeof feature !== 'object') return;
+      if (feature.action) {
+        globalSearchRunAction(feature.action);
+        return;
+      }
+      if (feature.reportId === 'form-425c') {
+        window.open('/form-425c.html', '_blank');
+        return;
+      }
+      const section = String(feature.section || '').trim();
+      if (!section) return;
+      if (section === 'fuel-settings' || section === 'expense-mapping') {
+        openSection('fuel', document.querySelector('.nav-btn[data-section=fuel]'));
+        openAccountingTab('acct-fuel-expense', document.getElementById('acctFuelDdTrigger'));
+        return;
+      }
+      if (section === 'scheduler') {
+        window.location.href = '/fleet-reports/?section=scheduler';
+        return;
+      }
+      if (section === 'lists') {
+        window.location.href = '/fleet-reports/?section=lists';
+        return;
+      }
+      if (section === 'reports') {
+        openSection('reports', document.querySelector('.nav-btn[data-section=reports]'));
+        const title = String(feature.title || '').toLowerCase();
+        if (title.includes('cost by unit')) openReportsTabFromSidebar('rep-maint');
+        else if (title.includes('pm schedule')) openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+        else if (title.includes('work order history')) {
+          openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
+          openAccountingTab('acct-transactions', document.getElementById('acctStubTrans'));
+        }
+        return;
+      }
+      openSection(section, document.querySelector('.nav-btn[data-section="' + section + '"]'));
+      if (section === 'safety') requestAnimationFrame(() => renderSafetyLiveMap());
+      if (section === 'drivers') requestAnimationFrame(() => refreshDriversDashboardPanels());
+    }
+
     function globalSearchCollect(qRaw) {
       const q = String(qRaw || '').trim().toLowerCase();
       if (!q) return [];
-      const out = [];
-      const push = (kind, label, meta, run) => {
-        out.push({ kind, label: String(label || ''), meta: String(meta || ''), run });
+      const features = [];
+      const dataRows = [];
+      const push = (target, kind, label, meta, run) => {
+        target.push({ kind, label: String(label || ''), meta: String(meta || ''), run });
       };
       const inc = s => String(s || '').toLowerCase().includes(q);
+
+      FEATURE_INDEX.forEach((f) => {
+        const hay = [f.title, f.subtitle, f.section, f.reportId, f.action].map((x) => String(x || '').toLowerCase()).join(' ');
+        if (!hay.includes(q)) return;
+        push(features, 'Feature', f.title, f.subtitle || f.section || 'Command', () => globalSearchRunFeature(f));
+      });
 
       // Maintenance units (Samsara vehicles list when loaded)
       try {
@@ -8031,7 +8137,7 @@
         (veh || []).forEach(v => {
           const name = v?.name || '';
           if (name && inc(name)) {
-            push('Unit', name, 'Maintenance', () => {
+            push(dataRows, 'Unit', name, 'Maintenance', () => {
               openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
               document.getElementById('maintenanceUnitSearch').value = name;
               renderMaintenanceUnitList();
@@ -8045,7 +8151,7 @@
       (cacheVendors() || []).forEach(v => {
         const nm = v?.name || v?.companyName || '';
         if (nm && inc(nm)) {
-          push('Vendor', nm, 'Accounting', () => {
+          push(dataRows, 'Vendor', nm, 'Accounting', () => {
             openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
             const t = document.getElementById('acctStubTrans');
             if (t) openAccountingTab('acct-transactions', t);
@@ -8060,7 +8166,7 @@
         const label = `${w.unit || '—'} · WO ${w.workOrderNumber || w.id || ''}`.trim();
         const hay = `${w.unit || ''} ${w.workOrderNumber || ''} ${w.vendor || ''} ${w.notes || ''}`.toLowerCase();
         if (hay.includes(q)) {
-          push('Work order', label, 'Maintenance', () => {
+          push(dataRows, 'Work order', label, 'Maintenance', () => {
             openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
             if (w.unit) {
               document.getElementById('maintenanceUnitSearch').value = w.unit;
@@ -8076,7 +8182,7 @@
         const label = `${r.unit || '—'} · ${typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(r.serviceDate) : (r.serviceDate || '').slice(0, 10)} · ${r.serviceType || r.recordType || 'Record'}`;
         const hay = `${r.unit || ''} ${r.serviceType || ''} ${r.recordType || ''} ${r.vendor || ''} ${r.notes || ''} ${r.loadNumber || ''}`.toLowerCase();
         if (hay.includes(q)) {
-          push('Record', label, 'Maintenance', () => {
+          push(dataRows, 'Record', label, 'Maintenance', () => {
             openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
             if (r.unit) {
               document.getElementById('maintenanceUnitSearch').value = r.unit;
@@ -8094,7 +8200,7 @@
         const label = `${typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(e.txnDate) : (e.txnDate || '').slice(0, 10)} · ${e.vendorName || e.vendorQboId || 'Vendor'} · $${Number(e.totalAmt || 0).toFixed(2)}`;
         const hay = `${e.vendorName || ''} ${e.vendorQboId || ''} ${e.billPaymentId || ''} ${e.privateNote || ''} ${e.payType || ''}`.toLowerCase();
         if (hay.includes(q)) {
-          push('Bill payment', label, 'Accounting', () => {
+          push(dataRows, 'Bill payment', label, 'Accounting', () => {
             openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
             openAccountingTab('acct-bill-pay', document.getElementById('acctBillPayStub'));
             document.getElementById('bpLogBody')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
@@ -8107,7 +8213,7 @@
         const label = `${sq.unit || '—'} · ${sq.title || 'Job'} · ${statusLabelShort(sq.status)}`;
         const hay = `${sq.unit || ''} ${sq.title || ''} ${sq.vendorHint || ''} ${sq.delayReasonNote || ''} ${sq.delayReasonCode || ''}`.toLowerCase();
         if (hay.includes(q)) {
-          push('Shop queue', label, 'Maintenance', () => {
+          push(dataRows, 'Shop queue', label, 'Maintenance', () => {
             openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
             const tab = String(sq.shopType || 'internal');
             const btn = document.querySelector(`#shopBoardSubtabs .subtab[data-shop-tab="${tab}"]`);
@@ -8124,7 +8230,7 @@
         }
       });
 
-      return out.slice(0, 30);
+      return [...features, ...dataRows].slice(0, 40);
     }
 
     function statusLabelShort(s) {
@@ -8177,8 +8283,11 @@
         .map((r, i) => {
           const active = i === __globalSearchActiveIx ? ' qb-picker-item-active' : '';
           const sel = i === __globalSearchActiveIx ? 'true' : 'false';
+          const kindBadge = String(r.kind || '').toLowerCase() === 'feature'
+            ? '<span style="display:inline-block;padding:1px 6px;border-radius:999px;background:#6b7280;color:#fff;font-size:10px;margin-right:6px;vertical-align:middle">FEATURE</span>'
+            : '';
           return `<div role="option" class="qb-picker-item${active}" aria-selected="${sel}" data-gs-ix="${i}" onclick="globalSearchPick(${i})">
-            <div class="qb-picker-label">${escapeHtml(r.label)}</div>
+            <div class="qb-picker-label">${kindBadge}${escapeHtml(r.label)}</div>
             <div class="qb-picker-meta">${escapeHtml(r.kind)} · ${escapeHtml(r.meta)}</div>
           </div>`;
         })
