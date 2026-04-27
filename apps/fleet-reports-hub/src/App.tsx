@@ -57,6 +57,42 @@ function matchesSearch(r: ReportDef, q: string, titleOverride?: string) {
   )
 }
 
+type FeatureIndexEntry = {
+  type: 'feature'
+  title: string
+  subtitle: string
+  section?: string
+  reportId?: string
+  action?: string
+}
+
+const FEATURE_INDEX: FeatureIndexEntry[] = [
+  { type: 'feature', title: 'Form 425C — Monthly Operating Report', subtitle: 'Bankruptcy court monthly report', section: 'reports', reportId: 'form-425c' },
+  { type: 'feature', title: 'Create Work Order', subtitle: 'Open new work order form', action: 'createWorkOrder' },
+  { type: 'feature', title: 'Fuel Settings', subtitle: 'Map fuel types to QuickBooks accounts', section: 'fuel-settings' },
+  { type: 'feature', title: 'Expense Mapping', subtitle: 'Map expense types to QuickBooks accounts', section: 'expense-mapping' },
+  { type: 'feature', title: 'Fuel Expense Form', subtitle: 'Open fuel expense entry form', action: 'openFuelExpenseForm' },
+  { type: 'feature', title: 'Driver Profiles', subtitle: 'View and edit driver CDL and medical info', section: 'drivers' },
+  { type: 'feature', title: 'Scheduler', subtitle: 'Driver vacation and leave calendar', section: 'scheduler' },
+  { type: 'feature', title: 'Safety Map', subtitle: 'Live map of all trucks and drivers', section: 'safety' },
+  { type: 'feature', title: 'Fleet Hub', subtitle: 'Open fleet reports overlay', action: 'openFleetHub' },
+  { type: 'feature', title: 'Import Trailers', subtitle: 'Bulk import trailers from CSV', section: 'lists' },
+  { type: 'feature', title: 'Vehicle Database', subtitle: 'View all trucks and trailers', section: 'lists' },
+  { type: 'feature', title: 'Fuel Submissions', subtitle: 'View driver fuel expense submissions', section: 'drivers' },
+  { type: 'feature', title: 'Damage Reports', subtitle: 'Open damage and road service alerts', section: 'drivers' },
+  { type: 'feature', title: 'Leave Requests', subtitle: 'Approve or deny driver time off requests', section: 'drivers' },
+  { type: 'feature', title: 'QBO Sync', subtitle: 'Sync QuickBooks catalog and retry pending transactions', section: 'accounting' },
+  { type: 'feature', title: 'Cost by Unit Report', subtitle: 'Maintenance spend per truck or trailer', section: 'reports', reportId: 'A2' },
+  { type: 'feature', title: 'PM Schedule', subtitle: 'Upcoming preventive maintenance schedule', section: 'reports', reportId: 'A4' },
+  { type: 'feature', title: 'Work Order History', subtitle: 'Closed and open work orders with detail', section: 'reports', reportId: 'A1' },
+  { type: 'feature', title: 'Fleet Snapshot', subtitle: 'Full fleet status overview', section: 'reports', reportId: 'O1' },
+  { type: 'feature', title: 'HOS Clocks', subtitle: 'Driver hours of service status', section: 'reports', reportId: 'C1' },
+  { type: 'feature', title: 'Integrity Alerts', subtitle: 'System integrity warnings and alerts', section: 'maintenance' },
+  { type: 'feature', title: 'Driver App', subtitle: 'Open driver mobile portal', action: 'openDriverApp' },
+  { type: 'feature', title: 'Post to QuickBooks', subtitle: 'Post pending expenses to QBO', action: 'postToQBO' },
+  { type: 'feature', title: 'Refresh QuickBooks', subtitle: 'Refresh QBO vendor and account lists', action: 'refreshQBO' },
+]
+
 const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
   'overview',
   'maintenance',
@@ -366,6 +402,7 @@ export default function App() {
   const erpHostedSurface =
     erpEmbed || erpRecordEmbed || erpWoModalHost || erpFuelEmbed || erpFuelModalHost
   const [search, setSearch] = useState('')
+  const [commandMsg, setCommandMsg] = useState<string | null>(null)
   const [draftFilters, setDraftFilters] = useState<ReportFilters>(defaultFilters)
   const [appliedFilters, setAppliedFilters] = useState<ReportFilters>(
     defaultFilters,
@@ -913,6 +950,15 @@ export default function App() {
     return list.filter((r) => matchesSearch(r, search))
   }, [reportTabForSection, search])
 
+  const featureCommandResults = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return [] as FeatureIndexEntry[]
+    return FEATURE_INDEX.filter((f) => {
+      const hay = `${f.title} ${f.subtitle} ${f.section || ''} ${f.reportId || ''} ${f.action || ''}`.toLowerCase()
+      return hay.includes(q)
+    })
+  }, [search])
+
   /** Maintenance workspace nav cards — always maintenance category. */
   const maintenanceListReports = useMemo(() => {
     return REPORTS.filter((r) => r.category === 'maintenance')
@@ -922,6 +968,68 @@ export default function App() {
     recent.recordOpen(r.id)
     setActive(r)
   }
+
+  const runFeatureCommand = useCallback(
+    async (f: FeatureIndexEntry) => {
+      if (f.reportId) {
+        const rep = REPORTS.find((r) => String(r.id).toLowerCase() === String(f.reportId).toLowerCase())
+        if (rep) {
+          if (activeSection !== 'reports' && f.section === 'reports') openSection('reports')
+          openReport(rep)
+          return
+        }
+      }
+
+      const action = String(f.action || '').trim()
+      if (action === 'createWorkOrder') {
+        openSection('maintenance')
+        setAppWoPickOpen(true)
+        return
+      }
+      if (action === 'openFuelExpenseForm') {
+        openSection('accounting')
+        setFuelPlannerTxn('fuel-expense')
+        return
+      }
+      if (action === 'openFleetHub') {
+        window.location.href = '/maintenance.html'
+        return
+      }
+      if (action === 'openDriverApp') {
+        window.open('/driver/', '_blank')
+        return
+      }
+      if (action === 'postToQBO') {
+        const out = await fetch('/api/qbo/sync-queue/retry', { method: 'POST', headers: { Accept: 'application/json' } })
+          .then((r) => r.json())
+          .catch(() => ({ ok: false, synced: 0 }))
+        setCommandMsg(out?.ok ? `Synced ${Number(out?.synced || 0)} transactions to QuickBooks` : 'QBO sync retry failed')
+        return
+      }
+      if (action === 'refreshQBO') {
+        const out = await fetch('/api/qbo/sync-catalog', { method: 'POST', headers: { Accept: 'application/json' } })
+          .then((r) => r.json())
+          .catch(() => ({ ok: false }))
+        setCommandMsg(out?.ok ? 'QuickBooks catalog refresh complete' : 'QuickBooks catalog refresh failed')
+        return
+      }
+
+      const sec = String(f.section || '').trim().toLowerCase()
+      if (!sec) return
+      if (sec === 'lists') {
+        openListsSection('fleet-samsara', null, 'lists')
+        return
+      }
+      if (
+        sec === 'home' || sec === 'maintenance' || sec === 'accounting' || sec === 'reports' ||
+        sec === 'safety' || sec === 'fuel' || sec === 'fuel-settings' || sec === 'expense-mapping' ||
+        sec === 'loads' || sec === 'scheduler' || sec === 'drivers' || sec === 'equipment'
+      ) {
+        openSection(sec as AppSection)
+      }
+    },
+    [activeSection, openListsSection, openReport, openSection],
+  )
 
   const openForm425cEmbedded = () => {
     const r = REPORTS.find((x) => x.id === 'form-425c')
@@ -1223,11 +1331,41 @@ export default function App() {
                       <span className="sr-only">Search reports</span>
                       <input
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                          setSearch(e.target.value)
+                          if (commandMsg) setCommandMsg(null)
+                        }}
                         placeholder="Search reports (title, tags, id)…"
                       />
                     </label>
                   </div>
+                  {search.trim() && featureCommandResults.length > 0 ? (
+                    <section className="fr-report-dropdown-shell" aria-live="polite">
+                      <label className="fr-report-dropdown-label">Feature commands</label>
+                      <ul className="fr-report-dropdown-list">
+                        {featureCommandResults.map((f) => (
+                          <li key={`${f.title}:${f.section || ''}:${f.action || ''}:${f.reportId || ''}`}>
+                            <button
+                              type="button"
+                              className="fr-report-dropdown-item"
+                              onClick={() => {
+                                void runFeatureCommand(f)
+                              }}
+                            >
+                              <span>
+                                <span style={{ display: 'inline-block', marginRight: 8, padding: '1px 6px', borderRadius: 999, background: '#6b7280', color: '#fff', fontSize: 10, lineHeight: 1.4 }}>
+                                  FEATURE
+                                </span>
+                                {f.title}
+                              </span>
+                              <span className="muted">{f.subtitle}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+                  {commandMsg ? <p className="muted" style={{ marginTop: 6 }}>{commandMsg}</p> : null}
                   {reportTabForSection === 'fuel' ? (
                     <div className="fr-fuel-entry-strip" role="region" aria-label="Fuel bills and expenses">
                       <p className="fr-fuel-entry-strip__lead muted">
