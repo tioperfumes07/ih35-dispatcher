@@ -68,7 +68,7 @@ body.form-425c-page {
 }
 
 #root .f425-h2 {
-  font-size: 15px;
+  font-size: 11pt;
   margin: 0 0 10px;
   color: #121212;
 }
@@ -84,8 +84,8 @@ body.form-425c-page {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12px;
-  color: #4f4f4f;
+  font-size: 10pt;
+  color: #111;
 }
 
 #root .f425-grid input,
@@ -110,7 +110,7 @@ body.form-425c-page {
 }
 
 #root .f425-note {
-  font-size: 12px;
+  font-size: 10pt;
   color: #4f4f4f;
   margin: 6px 0;
 }
@@ -373,7 +373,16 @@ body.form-425c-page {
   .no-print,
   [class*='board-nav'],
   [class*='nav-bar'],
-  [class*='breadcrumb'] {
+  [class*='breadcrumb'],
+  .form-425c-wrap > p,
+  .form-425c-wrap > h1,
+  .form-425c-tabs-nav .tab-btn:not(.active),
+  .f425-tabs,
+  .f425-tabs-btn:not(.active) {
+    display: none !important;
+  }
+
+  body > *:not(.form-425c-page):not(script):not(style) {
     display: none !important;
   }
 
@@ -387,6 +396,8 @@ body.form-425c-page {
     padding: 0 !important;
     background: #fff !important;
     color: #111 !important;
+    font-family: 'Times New Roman', Times, serif !important;
+    font-size: 10pt !important;
   }
 
   #root .f425-panel {

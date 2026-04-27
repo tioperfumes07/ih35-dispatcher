@@ -189,9 +189,27 @@
 
     function loadHistory() {
       var debtor = getActiveDebtorId();
+      var prefix = 'form425c_' + debtor + '_';
       var historyKey = historyStorageKey(debtor);
       var history = safeJsonParse(localStorage.getItem(historyKey));
-      var keys = Array.isArray(history) ? history : [];
+      var indexedKeys = Array.isArray(history) ? history.filter(function (k) { return String(k || '').indexOf(prefix) === 0; }) : [];
+      var discovered = [];
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf(prefix) === 0) discovered.push(k);
+        }
+      } catch (_) {
+        // no-op
+      }
+      var seen = new Set();
+      var keys = [];
+      indexedKeys.concat(discovered).forEach(function (k) {
+        if (!k || seen.has(k)) return;
+        seen.add(k);
+        keys.push(k);
+      });
+
       var rows = keys
         .map(function (key) {
           var data = safeJsonParse(localStorage.getItem(key));
@@ -205,7 +223,10 @@
             savedAt: String(data.savedAt || ''),
           };
         })
-        .filter(Boolean);
+        .filter(Boolean)
+        .sort(function (a, b) {
+          return String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
+        });
       setHistoryList(rows);
     }
 
@@ -889,10 +910,8 @@
 
       var historyKey = historyStorageKey(debtor);
       var history = safeJsonParse(localStorage.getItem(historyKey));
-      var list = Array.isArray(history) ? history : [];
-      if (!list.includes(key)) {
-        list.unshift(key);
-      }
+      var list = Array.isArray(history) ? history.filter(function (k) { return k !== key; }) : [];
+      list.unshift(key);
       if (list.length > 24) list = list.slice(0, 24);
       localStorage.setItem(historyKey, JSON.stringify(list));
 
@@ -1623,7 +1642,8 @@
                 }
               })),
               h('label', null, 'Date report filed', h('input', {
-                type: 'date',
+                type: 'text',
+                placeholder: 'MM / DD / YYYY',
                 value: report.paperFiled,
                 onChange: function (e) {
                   setReport(function (r) {
@@ -1808,7 +1828,7 @@
                 h('thead', null,
                   h('tr', null,
                     h('th', { rowSpan: 4 }, ''),
-                    h('th', { colSpan: 5, className: 'f425-center' }, 'Projected - Actual = Difference')
+                    h('th', { colSpan: 5, className: 'f425-center' }, 'Projected – Actual = Difference')
                   ),
                   h('tr', null,
                     h('th', { className: 'f425-center' }, 'Column A'),
