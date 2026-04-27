@@ -8,20 +8,20 @@
     [2, 'Do you plan to continue to operate the business next month?'],
     [3, 'Have you paid all of your bills on time?'],
     [4, 'Did you pay your employees on time?'],
-    [5, 'Have you deposited all receipts into DIP accounts?'],
-    [6, 'Have you timely filed tax returns and paid taxes?'],
+    [5, 'Have you deposited all the receipts for your business into debtor in possession (DIP) accounts?'],
+    [6, 'Have you timely filed your tax returns and paid all of your taxes?'],
     [7, 'Have you timely filed all other required government filings?'],
-    [8, 'Current on quarterly U.S. Trustee / Bankruptcy Administrator fees?'],
-    [9, 'Timely paid all insurance premiums?'],
-    [10, 'Any bank accounts open other than DIP accounts?'],
-    [11, 'Sold any assets other than inventory?'],
-    [12, 'Sold/transferred assets or services to anyone related to the DIP?'],
-    [13, 'Any insurance company cancel your policy?'],
-    [14, 'Unusual or significant unanticipated expenses?'],
-    [15, 'Borrowed money or payments made on your behalf?'],
-    [16, 'Anyone made an investment in your business?'],
-    [17, 'Paid pre-petition bills?'],
-    [18, 'Allowed pre-petition checks to clear?']
+    [8, 'Are you current on your quarterly fee payments to the U.S. Trustee or Bankruptcy Administrator?'],
+    [9, 'Have you timely paid all of your insurance premiums?'],
+    [10, 'Do you have any bank accounts open other than the DIP accounts?'],
+    [11, 'Have you sold any assets other than inventory?'],
+    [12, 'Have you sold or transferred any assets or provided services to anyone related to the DIP in any way?'],
+    [13, 'Did any insurance company cancel your policy?'],
+    [14, 'Did you have any unusual or significant unanticipated expenses?'],
+    [15, 'Have you borrowed money from anyone or has anyone made any payments on your behalf?'],
+    [16, 'Has anyone made an investment in your business?'],
+    [17, 'Have you paid any bills you owed before you filed bankruptcy?'],
+    [18, 'Have you allowed any checks to clear the bank that were issued before you filed bankruptcy?']
   ];
   var PROJ_ROWS = [
     ['32', 'Projected/Actual gross receipts / cash inflows'],
@@ -72,6 +72,7 @@
       paperDebtor: '',
       paperCase: '',
       paperCourt: '',
+      paperAmended: false,
       line19: '',
       line20: '',
       line21: '',
@@ -752,7 +753,8 @@
           responsibleParty: report.paperRp,
           debtorName: report.paperDebtor,
           caseNumber: report.paperCase,
-          court: report.paperCourt
+          court: report.paperCourt,
+          amendedFiling: !!report.paperAmended
         },
         cash: {
           line19: report.line19,
@@ -806,6 +808,7 @@
           paperDebtor: p.debtorName != null ? String(p.debtorName) : r.paperDebtor,
           paperCase: p.caseNumber != null ? String(p.caseNumber) : r.paperCase,
           paperCourt: p.court != null ? String(p.court) : r.paperCourt,
+          paperAmended: p.amendedFiling != null ? !!p.amendedFiling : r.paperAmended,
           line19: cash.line19 != null ? String(cash.line19) : r.line19,
           line20: cash.line20 != null ? String(cash.line20) : r.line20,
           line21: cash.line21 != null ? String(cash.line21) : r.line21,
@@ -1525,36 +1528,7 @@
     function renderReportPanel() {
       return h(
         'section',
-        { id: 'panel-report', className: 'f425-panel' + (tab === 'report' ? ' active' : '') },
-        h('h2', { className: 'f425-h2' }, 'Form 425C \u2014 working copy'),
-        h(
-          'div',
-          { className: 'f425-grid', style: { marginBottom: 12 } },
-          h(
-            'label',
-            null,
-            'Debtor profile',
-            h('input', {
-              readOnly: true,
-              value:
-                ((profiles.companies || []).find(function (c) {
-                  return c.id === repCompany;
-                }) || {}).displayName || repCompany || ''
-            })
-          ),
-          h(
-            'label',
-            null,
-            'Report month',
-            h('input', {
-              type: 'month',
-              value: repMonth,
-              onChange: function (e) {
-                setRepMonth(e.target.value);
-              }
-            })
-          )
-        ),
+        { id: 'panel-report', className: 'f425-panel f425-court-panel' + (tab === 'report' ? ' active' : '') },
         h(
           'div',
           { className: 'f425-actions no-print' },
@@ -1580,39 +1554,75 @@
           ),
           h('button', { type: 'button', className: 'btn secondary', onClick: printWithPackageNotes }, 'Print / Save as PDF')
         ),
-        h('p', { className: 'f425-note' }, receiptMsg),
+        h('p', { className: 'f425-note no-print' }, receiptMsg),
+
         h(
           'div',
-          { className: 'f425-paper' },
-          h(
-            'p',
-            { style: { fontSize: 11, color: 'var(--color-text-label)', margin: '0 0 8px' } },
-            h('strong', null, 'Official Form 425C'),
-            ' \u00b7 Monthly Operating Report for Small Business Under Chapter 11'
-          ),
+          { className: 'f425-court-form' },
           h(
             'div',
-            { className: 'f425-grid' },
+            { className: 'f425-official-header' },
             h(
-              'label',
-              null,
-              'Month',
-              h('input', {
+              'div',
+              { className: 'f425-case-box' },
+              h('div', { className: 'f425-case-box-title' }, 'Fill in this information to identify the case:'),
+              h('label', null, 'Debtor Name', h('input', {
+                value: report.paperDebtor,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperDebtor: e.target.value };
+                  });
+                }
+              })),
+              h('label', null, 'United States Bankruptcy Court for the:', h('input', {
+                placeholder: '_____ District of _____',
+                value: report.paperCourt,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperCourt: e.target.value };
+                  });
+                }
+              })),
+              h('label', null, 'Case number', h('input', {
+                value: report.paperCase,
+                onChange: function (e) {
+                  setReport(function (r) {
+                    return { ...r, paperCase: e.target.value };
+                  });
+                }
+              })),
+              h(
+                'label',
+                { className: 'f425-checkline' },
+                h('input', {
+                  type: 'checkbox',
+                  checked: !!report.paperAmended,
+                  onChange: function (e) {
+                    var on = e.target.checked;
+                    setReport(function (r) {
+                      return { ...r, paperAmended: on };
+                    });
+                  }
+                }),
+                ' Check if this is an amended filing'
+              )
+            ),
+            h('div', { className: 'f425-form-id' }, 'Official Form 425C'),
+            h('div', { className: 'f425-form-title' }, 'Monthly Operating Report for Small Business Under Chapter 11', h('span', { className: 'f425-form-rev' }, '12/17')),
+            h(
+              'div',
+              { className: 'f425-meta-row' },
+              h('label', null, 'Month', h('input', {
                 type: 'text',
-                placeholder: monthPlaceholder || 'e.g. March 2026',
+                placeholder: monthPlaceholder || '',
                 value: report.paperMonth,
                 onChange: function (e) {
                   setReport(function (r) {
                     return { ...r, paperMonth: e.target.value };
                   });
                 }
-              })
-            ),
-            h(
-              'label',
-              null,
-              'Date report filed',
-              h('input', {
+              })),
+              h('label', null, 'Date report filed', h('input', {
                 type: 'date',
                 value: report.paperFiled,
                 onChange: function (e) {
@@ -1620,383 +1630,161 @@
                     return { ...r, paperFiled: e.target.value };
                   });
                 }
-              })
-            ),
-            h(
-              'label',
-              null,
-              'Line of business',
-              h('input', {
+              })),
+              h('label', null, 'Line of business', h('input', {
                 value: report.paperLob,
                 onChange: function (e) {
                   setReport(function (r) {
                     return { ...r, paperLob: e.target.value };
                   });
                 }
-              })
-            ),
-            h(
-              'label',
-              null,
-              'NAICS code',
-              h('input', {
+              })),
+              h('label', null, 'NAICS code', h('input', {
                 value: report.paperNaics,
                 onChange: function (e) {
                   setReport(function (r) {
                     return { ...r, paperNaics: e.target.value };
                   });
                 }
-              })
-            )
-          ),
-          h(
-            'label',
-            { style: { display: 'block', marginTop: 10, fontSize: 12, color: 'var(--color-text-label)' } },
-            'Responsible party (printed name)',
-            h('input', {
-              style: { width: '100%', maxWidth: 640 },
+              }))
+            ),
+            h('p', { className: 'f425-declaration' },
+              'In accordance with title 28, section 1746, of the United States Code, I declare under penalty of perjury that I have examined the following small business monthly operating report and the accompanying attachments and, to the best of my knowledge, these documents are true, correct, and complete.'
+            ),
+            h('label', { className: 'f425-signature-line' }, 'Responsible party', h('input', {
               value: report.paperRp,
               onChange: function (e) {
                 setReport(function (r) {
                   return { ...r, paperRp: e.target.value };
                 });
               }
-            })
-          ),
-          h('h3', { className: 'f425-h3' }, 'Part 1 \u2014 Questionnaire (lines 1\u201318)'),
-          h(
-            'p',
-            { className: 'f425-note' },
-            'Yes / No / N/A per line. Attach Exhibit A/B as required.'
-          ),
-          Q_LINES.map(function (ql) {
-            var n = ql[0];
-            var txt = ql[1];
-            var cur = report.questionnaire[String(n)] || '';
-            return h(
-              'div',
-              { key: n, className: 'f425-yn-row' },
-              h('span', { style: { minWidth: 220 } }, n + '. ' + txt),
-              h(
-                'label',
-                null,
-                h('input', {
-                  type: 'radio',
-                  name: 'q' + n,
-                  checked: cur === 'Yes',
-                  onChange: function () {
-                    setQ(n, 'Yes');
-                  }
-                }),
-                ' Yes'
-              ),
-              h(
-                'label',
-                null,
-                h('input', {
-                  type: 'radio',
-                  name: 'q' + n,
-                  checked: cur === 'No',
-                  onChange: function () {
-                    setQ(n, 'No');
-                  }
-                }),
-                ' No'
-              ),
-              h(
-                'label',
-                null,
-                h('input', {
-                  type: 'radio',
-                  name: 'q' + n,
-                  checked: cur === 'N/A',
-                  onChange: function () {
-                    setQ(n, 'N/A');
-                  }
-                }),
-                ' N/A'
-              )
-            );
-          }),
-          h('h3', { className: 'f425-h3' }, 'Debtor / case'),
-          h(
-            'div',
-            { className: 'f425-grid' },
-            h(
-              'label',
-              null,
-              'Debtor name',
-              h('input', {
-                value: report.paperDebtor,
-                onChange: function (e) {
-                  setReport(function (r) {
-                    return { ...r, paperDebtor: e.target.value };
-                  });
-                }
-              })
-            ),
-            h(
-              'label',
-              null,
-              'Case number',
-              h('input', {
-                value: report.paperCase,
-                onChange: function (e) {
-                  setReport(function (r) {
-                    return { ...r, paperCase: e.target.value };
-                  });
-                }
-              })
-            ),
-            h(
-              'label',
-              null,
-              'Bankruptcy court',
-              h('input', {
-                placeholder: 'e.g. Southern \u00b7 Texas',
-                value: report.paperCourt,
-                onChange: function (e) {
-                  setReport(function (r) {
-                    return { ...r, paperCourt: e.target.value };
-                  });
-                }
-              })
-            )
-          ),
-          h('h3', { className: 'f425-h3' }, 'Part 2 \u2014 Cash summary (lines 19\u201323)'),
-          h(
-            'div',
-            { className: 'f425-grid' },
-            ['line19', 'line20', 'line21'].map(function (key, i) {
-              var labels = [
-                '19. Total opening balance (all accounts)',
-                '20. Total cash receipts (Exhibit C)',
-                '21. Total cash disbursements (Exhibit D)'
-              ];
-              return h(
-                'label',
-                { key: key },
-                labels[i],
-                h('input', makeMoneyInputProps(key, report[key], function (v) {
-                  setReport(function (r) {
-                    return { ...r, [key]: v };
-                  });
-                }, false))
-              );
-            }),
-            h(
-              'label',
-              null,
-              '22. Net cash flow',
-              h('input', {
-                className: 'f425-money f425-calculated',
-                readOnly: true,
-                value: fmtAccounting(report.line22)
-              })
-            ),
-            h(
-              'label',
-              null,
-              '23. Ending cash',
-              h('input', {
-                className: 'f425-money f425-calculated',
-                readOnly: true,
-                value: fmtAccounting(report.line23)
-              })
-            )
-          ),
-          h(
-            'div',
-            { className: 'no-print' },
-          h('h3', { className: 'f425-h3' }, 'Exhibit D \u2014 Disbursements'),
-          h(
-            'p',
-            { className: 'f425-note no-print' },
-            'Add rows; ',
-            h('strong', null, 'Recalc line 21'),
-            ' sums amounts.'
-          ),
-          h(
-            'div',
-            { className: 'f425-actions no-print' },
-            h(
-              'button',
-              {
-                type: 'button',
-                className: 'btn secondary',
-                onClick: function () {
-                  setExhibitD(
-                    exhibitD.concat([{ date: '', payee: '', amount: '', memo: '' }])
-                  );
-                }
-              },
-              'Add row'
-            ),
-            h(
-              'button',
-              { type: 'button', className: 'btn secondary', onClick: syncLine21FromExhibitD },
-              'Recalc line 21 from Exhibit D'
-            )
-          ),
-          h(
-            'table',
-            { className: 'f425-table' },
-            h(
-              'thead',
-              null,
-              h(
-                'tr',
-                null,
-                h('th', null, 'Date'),
-                h('th', null, 'Payee'),
-                h('th', null, 'Amount'),
-                h('th', null, 'Memo'),
-                h('th', { className: 'no-print' }, '')
-              )
-            ),
-            h(
-              'tbody',
-              null,
-              exhibitD.map(function (row, ix) {
-                return h(
-                  'tr',
-                  { key: ix },
-                  h(
-                    'td',
-                    null,
-                    h('input', {
-                      style: { width: '100%', boxSizing: 'border-box' },
-                      value: row.date,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setExhibitD(
-                          exhibitD.map(function (r, j) {
-                            return j === ix ? { ...r, date: v } : r;
-                          })
-                        );
-                      }
-                    })
-                  ),
-                  h(
-                    'td',
-                    null,
-                    h('input', {
-                      style: { width: '100%', boxSizing: 'border-box' },
-                      value: row.payee,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setExhibitD(
-                          exhibitD.map(function (r, j) {
-                            return j === ix ? { ...r, payee: v } : r;
-                          })
-                        );
-                      }
-                    })
-                  ),
-                  h(
-                    'td',
-                    null,
-                    h('input', Object.assign({}, makeMoneyInputProps('exd-' + ix, row.amount, function (v) {
-                      setExhibitD(
-                        exhibitD.map(function (r, j) {
-                          return j === ix ? { ...r, amount: v } : r;
-                        })
-                      );
-                    }, false), { style: { width: '100%', boxSizing: 'border-box' } }))
-                  ),
-                  h(
-                    'td',
-                    null,
-                    h('input', {
-                      style: { width: '100%', boxSizing: 'border-box' },
-                      value: row.memo,
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setExhibitD(
-                          exhibitD.map(function (r, j) {
-                            return j === ix ? { ...r, memo: v } : r;
-                          })
-                        );
-                      }
-                    })
-                  ),
-                  h(
-                    'td',
-                    { className: 'no-print' },
-                    h(
-                      'button',
-                      {
-                        type: 'button',
-                        className: 'btn secondary',
-                        onClick: function () {
-                          if (exhibitD.length <= 1) return;
-                          setExhibitD(
-                            exhibitD.filter(function (_, j) {
-                              return j !== ix;
-                            })
-                          );
-                        }
-                      },
-                      'Remove'
-                    )
-                  )
-                );
-              })
-            )
-          ),
-          ),
-          h('h3', { className: 'f425-h3' }, 'Parts 3\u20136'),
-          h(
-            'div',
-            { className: 'f425-grid' },
-            [
-              ['line24', '24. Total payables'],
-              ['line25', '25. Total receivables'],
-              ['line26', '26. Employees when case filed'],
-              ['line27', '27. Employees as of report date'],
-              ['line28', '28. Professional fees (bankruptcy) this month'],
-              ['line29', '29. Professional fees (bankruptcy) since filing'],
-              ['line30', '30. Other professional fees this month'],
-              ['line31', '31. Other professional fees since filing']
-            ].map(function (pair) {
-              var k = pair[0];
-              var lab = pair[1];
-              var money = k !== 'line26' && k !== 'line27';
-              return h(
-                'label',
-                { key: k },
-                lab,
-                money
-                  ? h('input', makeMoneyInputProps(k, report[k], function (v) {
-                      setReport(function (r) {
-                        return { ...r, [k]: v };
-                      });
-                    }, false))
-                  : h('input', {
-                      value: report[k],
-                      onChange: function (e) {
-                        var v = e.target.value;
-                        setReport(function (r) {
-                          return { ...r, [k]: v };
-                        });
-                      }
-                    })
-              );
-            })
+            })),
+            h('label', { className: 'f425-signature-line' }, 'Original signature of responsible party', h('input', { value: '' })),
+            h('label', { className: 'f425-signature-line' }, 'Printed name of responsible party', h('input', {
+              value: report.paperRp,
+              onChange: function (e) {
+                setReport(function (r) {
+                  return { ...r, paperRp: e.target.value };
+                });
+              }
+            }))
           ),
 
-          h('h3', { className: 'f425-h3' }, 'Part 7 — Section 7 (Projected vs Actual)'),
+          h('section', { className: 'f425-part' },
+            h('h3', { className: 'f425-part-title' }, '1. Questionnaire'),
+            h('p', { className: 'f425-instruction' }, 'Answer all questions on behalf of the debtor for the period covered by this report, unless otherwise indicated.'),
+            h('table', { className: 'f425-table f425-q-table' },
+              h('thead', null,
+                h('tr', null,
+                  h('th', null, ''),
+                  h('th', null, 'Yes'),
+                  h('th', null, 'No'),
+                  h('th', null, 'N/A')
+                )
+              ),
+              h('tbody', null,
+                h('tr', null, h('td', { colSpan: 4, className: 'f425-instruction' }, 'If you answer No to any of the questions in lines 1-9, attach an explanation and label it Exhibit A.')),
+                Q_LINES.slice(0, 9).map(function (ql) {
+                  var n = ql[0];
+                  var txt = ql[1];
+                  var cur = report.questionnaire[String(n)] || '';
+                  return h('tr', { key: 'q' + n },
+                    h('td', null, h('span', { className: 'f425-line-no' }, String(n) + '. '), txt),
+                    h('td', { className: 'f425-radio-cell' }, h('input', { type: 'radio', name: 'q' + n, checked: cur === 'Yes', onChange: function () { setQ(n, 'Yes'); } })),
+                    h('td', { className: 'f425-radio-cell' }, h('input', { type: 'radio', name: 'q' + n, checked: cur === 'No', onChange: function () { setQ(n, 'No'); } })),
+                    h('td', { className: 'f425-radio-cell' }, h('input', { type: 'radio', name: 'q' + n, checked: cur === 'N/A', onChange: function () { setQ(n, 'N/A'); } }))
+                  );
+                }),
+                h('tr', null, h('td', { colSpan: 4, className: 'f425-instruction' }, 'If you answer Yes to any of the questions in lines 10-18, attach an explanation and label it Exhibit B.')),
+                Q_LINES.slice(9).map(function (ql) {
+                  var n = ql[0];
+                  var txt = ql[1];
+                  var cur = report.questionnaire[String(n)] || '';
+                  return h('tr', { key: 'q' + n },
+                    h('td', null, h('span', { className: 'f425-line-no' }, String(n) + '. '), txt),
+                    h('td', { className: 'f425-radio-cell' }, h('input', { type: 'radio', name: 'q' + n, checked: cur === 'Yes', onChange: function () { setQ(n, 'Yes'); } })),
+                    h('td', { className: 'f425-radio-cell' }, h('input', { type: 'radio', name: 'q' + n, checked: cur === 'No', onChange: function () { setQ(n, 'No'); } })),
+                    h('td', { className: 'f425-radio-cell' }, h('input', { type: 'radio', name: 'q' + n, checked: cur === 'N/A', onChange: function () { setQ(n, 'N/A'); } }))
+                  );
+                })
+              )
+            )
+          ),
+
+          h('section', { className: 'f425-part f425-page-break' },
+            h('div', { className: 'f425-page-header print-only' }, 'Debtor Name ', report.paperDebtor || '_________________', '    Case number ', report.paperCase || '_________________'),
+            h('h3', { className: 'f425-part-title' }, '2. Summary of Cash Activity for All Accounts'),
+            h('div', { className: 'f425-cash-lines' },
+              h('div', { className: 'f425-cash-line' },
+                h('div', { className: 'f425-cash-copy' },
+                  h('div', null, h('span', { className: 'f425-line-no' }, '19. '), 'Total opening balance of all accounts'),
+                  h('p', { className: 'f425-instruction' }, 'This amount must equal what you reported as the cash on hand at the end of the month in the previous month. If this is your first report, report the total cash on hand as of the date of the filing of this case.')
+                ),
+                h('div', { className: 'f425-money-wrap' }, h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line19', report.line19, function (v) { setReport(function (r) { return { ...r, line19: v }; }); }, false)))
+              ),
+              h('div', { className: 'f425-cash-line' },
+                h('div', { className: 'f425-cash-copy' },
+                  h('div', null, h('span', { className: 'f425-line-no' }, '20. '), 'Total cash receipts'),
+                  h('p', { className: 'f425-instruction' }, 'Attach a listing of all cash received for the month and label it Exhibit C. Include all cash received even if you have not deposited it at the bank, collections on receivables, credit card deposits, cash received from other parties, or loans, gifts, or payments made by other parties on your behalf. Do not attach bank statements in lieu of Exhibit C. Report the total from Exhibit C here.')
+                ),
+                h('div', { className: 'f425-money-wrap' }, h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line20', report.line20, function (v) { setReport(function (r) { return { ...r, line20: v }; }); }, false)))
+              ),
+              h('div', { className: 'f425-cash-line' },
+                h('div', { className: 'f425-cash-copy' },
+                  h('div', null, h('span', { className: 'f425-line-no' }, '21. '), 'Total cash disbursements'),
+                  h('p', { className: 'f425-instruction' }, 'Attach a listing of all payments you made in the month and label it Exhibit D. List the date paid, payee, purpose, and amount. Include all cash payments, debit card transactions, checks issued even if they have not cleared the bank, outstanding checks issued before the bankruptcy was filed that were allowed to clear this month, and payments made by other parties on your behalf. Do not attach bank statements in lieu of Exhibit D. Report the total from Exhibit D here.')
+                ),
+                h('div', { className: 'f425-money-wrap' }, h('span', { className: 'f425-money-prefix' }, '- $'), h('input', makeMoneyInputProps('line21', report.line21, function (v) { setReport(function (r) { return { ...r, line21: v }; }); }, false)))
+              ),
+              h('div', { className: 'f425-cash-line' },
+                h('div', { className: 'f425-cash-copy' },
+                  h('div', null, h('span', { className: 'f425-line-no' }, '22. '), 'Net cash flow'),
+                  h('p', { className: 'f425-instruction' }, 'Subtract line 21 from line 20 and report the result here. This amount may be different from what you may have calculated as net profit.')
+                ),
+                h('div', { className: 'f425-money-wrap' }, h('span', { className: 'f425-money-prefix' }, '+ $'), h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(report.line22) }))
+              ),
+              h('div', { className: 'f425-cash-line' },
+                h('div', { className: 'f425-cash-copy' },
+                  h('div', null, h('span', { className: 'f425-line-no' }, '23. '), 'Cash on hand at the end of the month'),
+                  h('p', { className: 'f425-instruction' }, 'Add line 22 + line 19. Report the result here. Report this figure as the cash on hand at the beginning of the month on your next operating report. This amount may not match your bank account balance because you may have outstanding checks that have not cleared the bank or deposits in transit.')
+                ),
+                h('div', { className: 'f425-money-wrap' }, h('span', { className: 'f425-money-prefix' }, '= $'), h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(report.line23) }))
+              )
+            )
+          ),
+
+          h('section', { className: 'f425-part f425-page-break' },
+            h('div', { className: 'f425-page-header print-only' }, 'Debtor Name ', report.paperDebtor || '_________________', '    Case number ', report.paperCase || '_________________'),
+            h('h3', { className: 'f425-part-title' }, '3. Unpaid Bills'),
+            h('p', { className: 'f425-instruction' }, 'Attach a list of all debts (including taxes) which you have incurred since the date you filed bankruptcy but have not paid. Label it Exhibit E. Include the date the debt was incurred, who is owed the money, the purpose of the debt, and when the debt is due. Report the total from Exhibit E here.'),
+            h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '24. '), 'Total payables ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line24', report.line24, function (v) { setReport(function (r) { return { ...r, line24: v }; }); }, false)), ' (Exhibit E)'),
+
+            h('h3', { className: 'f425-part-title' }, '4. Money Owed to You'),
+            h('p', { className: 'f425-instruction' }, 'Attach a list of all amounts owed to you by your customers for work you have done or merchandise you have sold. Include amounts owed to you both before, and after you filed bankruptcy. Label it Exhibit F. Identify who owes you money, how much is owed, and when payment is due. Report the total from Exhibit F here.'),
+            h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '25. '), 'Total receivables ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line25', report.line25, function (v) { setReport(function (r) { return { ...r, line25: v }; }); }, false)), ' (Exhibit F)'),
+
+            h('h3', { className: 'f425-part-title' }, '5. Employees'),
+            h('div', { className: 'f425-employee-line' }, h('span', { className: 'f425-line-no' }, '26. '), 'What was the number of employees when the case was filed? ', h('input', { value: report.line26, onChange: function (e) { var v = e.target.value; setReport(function (r) { return { ...r, line26: v }; }); } })),
+            h('div', { className: 'f425-employee-line' }, h('span', { className: 'f425-line-no' }, '27. '), 'What is the number of employees as of the date of this monthly report? ', h('input', { value: report.line27, onChange: function (e) { var v = e.target.value; setReport(function (r) { return { ...r, line27: v }; }); } })),
+
+            h('h3', { className: 'f425-part-title' }, '6. Professional Fees'),
+            h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '28. '), 'How much have you paid this month in professional fees related to this bankruptcy case? ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line28', report.line28, function (v) { setReport(function (r) { return { ...r, line28: v }; }); }, false))),
+            h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '29. '), 'How much have you paid in professional fees related to this bankruptcy case since the case was filed? ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line29', report.line29, function (v) { setReport(function (r) { return { ...r, line29: v }; }); }, false))),
+            h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '30. '), 'How much have you paid this month in other professional fees? ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line30', report.line30, function (v) { setReport(function (r) { return { ...r, line30: v }; }); }, false))),
+            h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '31. '), 'How much have you paid in total other professional fees since filing the case? ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('line31', report.line31, function (v) { setReport(function (r) { return { ...r, line31: v }; }); }, false)))
+          ),
+
           (function () {
             var p32 = report.projections['32'] || { prior: '', current: '', next: '' };
             var p33 = report.projections['33'] || { prior: '', current: '', next: '' };
             var a32 = toNumber(p32.prior);
-            var b32 = toNumber(report.line20);
-            var c32 = Math.round((a32 - b32) * 100) / 100;
             var a33 = toNumber(p33.prior);
-            var b33 = toNumber(report.line21);
-            var c33 = Math.round((a33 - b33) * 100) / 100;
             var a34 = Math.round((a32 - a33) * 100) / 100;
+            var b32 = toNumber(report.line20);
+            var b33 = toNumber(report.line21);
             var b34 = toNumber(report.line22);
+            var c32 = Math.round((a32 - b32) * 100) / 100;
+            var c33 = Math.round((a33 - b33) * 100) / 100;
             var c34 = Math.round((a34 - b34) * 100) / 100;
             var nextReceipts = toNumber(report.nextMonthProjectedReceipts);
             var nextDisb = toNumber(report.nextMonthProjectedDisbursements);
@@ -2012,144 +1800,80 @@
               };
             };
 
-            return h(
-              React.Fragment,
-              null,
-              h(
-                'table',
-                { className: 'f425-table f425-proj-table', style: { tableLayout: 'fixed', width: '100%' } },
-                h('thead', null, h('tr', null,
-                  h('th', null, 'Line / description'),
-                  h('th', { style: { textAlign: 'center' } }, 'Column A — Projected'),
-                  h('th', { style: { textAlign: 'center' } }, 'Column B — Actual'),
-                  h('th', { style: { textAlign: 'center' } }, 'Column C — Difference')
-                )),
+            return h('section', { className: 'f425-part f425-page-break' },
+              h('div', { className: 'f425-page-header print-only' }, 'Debtor Name ', report.paperDebtor || '_________________', '    Case number ', report.paperCase || '_________________'),
+              h('h3', { className: 'f425-part-title' }, '7. Projections'),
+              h('p', { className: 'f425-instruction' }, 'Compare your actual cash receipts and disbursements to what you projected in the previous month. Projected figures in the first month should match those provided at the initial debtor interview, if any.'),
+              h('table', { className: 'f425-table f425-proj-table' },
+                h('thead', null,
+                  h('tr', null,
+                    h('th', { rowSpan: 4 }, ''),
+                    h('th', { colSpan: 5, className: 'f425-center' }, 'Projected - Actual = Difference')
+                  ),
+                  h('tr', null,
+                    h('th', { className: 'f425-center' }, 'Column A'),
+                    h('th', { className: 'f425-center f425-operator-col' }, ''),
+                    h('th', { className: 'f425-center' }, 'Column B'),
+                    h('th', { className: 'f425-center f425-operator-col' }, ''),
+                    h('th', { className: 'f425-center' }, 'Column C')
+                  ),
+                  h('tr', null,
+                    h('th', { className: 'f425-center' }, 'Projected'),
+                    h('th', { className: 'f425-center f425-operator-col' }, '-'),
+                    h('th', { className: 'f425-center' }, 'Actual'),
+                    h('th', { className: 'f425-center f425-operator-col' }, '='),
+                    h('th', { className: 'f425-center' }, 'Difference')
+                  ),
+                  h('tr', null,
+                    h('th', { className: 'f425-instruction' }, 'Copy lines 35-37 from the previous month\'s report.'),
+                    h('th', { className: 'f425-operator-col' }, ''),
+                    h('th', { className: 'f425-instruction' }, 'Copy lines 20-22 of this report.'),
+                    h('th', { className: 'f425-operator-col' }, ''),
+                    h('th', { className: 'f425-instruction' }, 'Subtract Column B from Column A.')
+                  )
+                ),
                 h('tbody', null,
                   h('tr', null,
-                    h('td', null, h('strong', null, '32'), ' · Projected/Actual gross receipts / cash inflows'),
+                    h('td', null, h('span', { className: 'f425-line-no' }, '32. '), 'Cash receipts'),
                     h('td', null, h('input', makeMoneyInputProps('p32a', p32.prior, onProjected('32'), false))),
-                    h('td', null,
-                      h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b32) }),
-                      h('div', { className: 'f425-note tiny' }, 'From line 20')
-                    ),
+                    h('td', { className: 'f425-center f425-operator-col' }, '-'),
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b32) })),
+                    h('td', { className: 'f425-center f425-operator-col' }, '='),
                     h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(c32) }))
                   ),
                   h('tr', null,
-                    h('td', null, h('strong', null, '33'), ' · Projected/Actual total cash disbursements'),
+                    h('td', null, h('span', { className: 'f425-line-no' }, '33. '), 'Cash disbursements'),
                     h('td', null, h('input', makeMoneyInputProps('p33a', p33.prior, onProjected('33'), false))),
-                    h('td', null,
-                      h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b33) }),
-                      h('div', { className: 'f425-note tiny' }, 'From line 21')
-                    ),
+                    h('td', { className: 'f425-center f425-operator-col' }, '-'),
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b33) })),
+                    h('td', { className: 'f425-center f425-operator-col' }, '='),
                     h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(c33) }))
                   ),
                   h('tr', null,
-                    h('td', null, h('strong', null, '34'), ' · Net cash flow (Row 32 minus Row 33)'),
+                    h('td', null, h('span', { className: 'f425-line-no' }, '34. '), 'Net cash flow'),
                     h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(a34) })),
-                    h('td', null,
-                      h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b34) }),
-                      h('div', { className: 'f425-note tiny' }, 'From line 22')
-                    ),
+                    h('td', { className: 'f425-center f425-operator-col' }, '-'),
+                    h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(b34) })),
+                    h('td', { className: 'f425-center f425-operator-col' }, '='),
                     h('td', null, h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(c34) }))
                   )
                 )
               ),
-              h('h4', { className: 'f425-h3', style: { marginTop: 12 } }, 'Next month projections (for next report)'),
-              h('div', { className: 'f425-grid' },
-                h('label', null, 'Projected gross receipts next month', h('input', makeMoneyInputProps('nextReceipts', report.nextMonthProjectedReceipts, function (v) {
-                  setReport(function (r) { return { ...r, nextMonthProjectedReceipts: v }; });
-                }, false))),
-                h('label', null, 'Projected total disbursements next month', h('input', makeMoneyInputProps('nextDisb', report.nextMonthProjectedDisbursements, function (v) {
-                  setReport(function (r) { return { ...r, nextMonthProjectedDisbursements: v }; });
-                }, false))),
-                h('label', null, '37 · Projected net cash flow (next month)', h('input', {
-                  className: 'f425-money f425-calculated',
-                  readOnly: true,
-                  value: fmtAccounting(nextNet)
-                }))
-              )
+              h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '35. '), 'Total projected cash receipts for the next month: ', h('span', { className: 'f425-money-prefix' }, '$'), h('input', makeMoneyInputProps('nextReceipts', report.nextMonthProjectedReceipts, function (v) { setReport(function (r) { return { ...r, nextMonthProjectedReceipts: v }; }); }, false))),
+              h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '36. '), 'Total projected cash disbursements for the next month: ', h('span', { className: 'f425-money-prefix' }, '- $'), h('input', makeMoneyInputProps('nextDisb', report.nextMonthProjectedDisbursements, function (v) { setReport(function (r) { return { ...r, nextMonthProjectedDisbursements: v }; }); }, false))),
+              h('div', { className: 'f425-inline-money' }, h('span', { className: 'f425-line-no' }, '37. '), 'Total projected net cash flow for the next month: ', h('span', { className: 'f425-money-prefix' }, '= $'), h('input', { className: 'f425-money f425-calculated', readOnly: true, value: fmtAccounting(nextNet) }))
             );
           })(),
-          h('h3', { className: 'f425-h3' }, 'Part 8 — Attachment checklist'),
-          ATTACH_KEYS.map(function (ak) {
-            var key = ak[0];
-            var lab = ak[1];
-            return h(
-              'label',
-              {
-                key: key,
-                style: { display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0', fontSize: 13 }
-              },
-              h('input', {
-                type: 'checkbox',
-                checked: !!report.attachments[key],
-                onChange: function (e) {
-                  var on = e.target.checked;
-                  setReport(function (r) {
-                    var att = { ...r.attachments };
-                    att[key] = on;
-                    return { ...r, attachments: att };
-                  });
-                }
-              }),
-              ' ',
-              lab
-            );
-          }),
-          h(
-            'label',
-            { style: { display: 'block', marginTop: 14, fontSize: 12, color: 'var(--color-text-label)' } },
-            'Notes / other attachments',
-            h('textarea', {
-              rows: 3,
-              style: { width: '100%', marginTop: 4 },
-              value: report.paperNotes,
-              onChange: function (e) {
-                setReport(function (r) {
-                  return { ...r, paperNotes: e.target.value };
-                });
-              }
-            })
-          )
-        ),
-        h(
-          'p',
-          { style: { marginTop: 10, fontSize: 12, color: 'var(--color-text-label)' } },
-          'Attachments included: ',
-          report.attachments.pl ? 'P&L, ' : '',
-          report.attachments.bankStmt ? 'Bank statements, ' : '',
-          report.attachments.bankRec ? 'Bank reconciliation, ' : '',
-          report.attachments.ar ? 'AR aging, ' : '',
-          report.attachments.ap ? 'AP detail' : ''
-        ),
-        h(
-          'h3',
-          { className: 'f425-h2 no-print', style: { marginTop: 20 } },
-          'Transfers in period (informational)'
-        ),
-        h(
-          'table',
-          { className: 'f425-table no-print' },
-          h(
-            'thead',
-            null,
-            h('tr', null, h('th', null, 'Date'), h('th', null, 'From'), h('th', null, 'To'), h('th', null, 'Amount'))
-          ),
-          h(
-            'tbody',
-            null,
-            !(lastQbo && (lastQbo.transfersInPeriod || []).length)
-              ? h('tr', null, h('td', { colSpan: 4 }, '\u2014'))
-              : (lastQbo.transfersInPeriod || []).map(function (t, ix) {
-                  return h(
-                    'tr',
-                    { key: ix },
-                    h('td', null, t.txnDate),
-                    h('td', null, String(t.from || '')),
-                    h('td', null, String(t.to || '')),
-                    h('td', { className: 'f425-money' }, String(t.amount))
-                  );
-                })
+
+          h('section', { className: 'f425-part f425-page-break' },
+            h('div', { className: 'f425-page-header print-only' }, 'Debtor Name ', report.paperDebtor || '_________________', '    Case number ', report.paperCase || '_________________'),
+            h('h3', { className: 'f425-part-title' }, '8. Additional Information'),
+            h('p', { className: 'f425-instruction' }, 'If available, check the box to the left and attach copies of the following documents.'),
+            h('label', { className: 'f425-checkline' }, h('input', { type: 'checkbox', checked: !!report.attachments.bankStmt, onChange: function (e) { var on = e.target.checked; setReport(function (r) { var att = { ...r.attachments }; att.bankStmt = on; return { ...r, attachments: att }; }); } }), ' 38. Bank statements for each open account (redact all but the last 4 digits of account numbers).'),
+            h('label', { className: 'f425-checkline' }, h('input', { type: 'checkbox', checked: !!report.attachments.bankRec, onChange: function (e) { var on = e.target.checked; setReport(function (r) { var att = { ...r.attachments }; att.bankRec = on; return { ...r, attachments: att }; }); } }), ' 39. Bank reconciliation reports for each account.'),
+            h('label', { className: 'f425-checkline' }, h('input', { type: 'checkbox', checked: !!report.attachments.pl, onChange: function (e) { var on = e.target.checked; setReport(function (r) { var att = { ...r.attachments }; att.pl = on; return { ...r, attachments: att }; }); } }), ' 40. Financial reports such as an income statement (profit & loss) and/or balance sheet.'),
+            h('label', { className: 'f425-checkline' }, h('input', { type: 'checkbox', checked: !!report.attachments.bs, onChange: function (e) { var on = e.target.checked; setReport(function (r) { var att = { ...r.attachments }; att.bs = on; return { ...r, attachments: att }; }); } }), ' 41. Budget, projection, or forecast reports.'),
+            h('label', { className: 'f425-checkline' }, h('input', { type: 'checkbox', checked: !!report.attachments.other, onChange: function (e) { var on = e.target.checked; setReport(function (r) { var att = { ...r.attachments }; att.other = on; return { ...r, attachments: att }; }); } }), ' 42. Project, job costing, or work-in-progress reports.')
           )
         )
       );

@@ -1,250 +1,364 @@
 /**
- * Form 425C workspace — scoped to this page only.
- * Uses design tokens from design-tokens.css / app-theme.css.
- * Light tool surface (do not use body.hub-page — it forces dark theme text).
+ * Form 425C styling tuned to U.S. Courts visual format.
  */
 
 body.form-425c-page {
   margin: 0;
   min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--color-bg-page);
-  color: var(--color-text-body);
+  background: #f5f5f5;
+  color: #111;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-body.form-425c-page a {
-  color: var(--color-border-focus);
-}
-
-body.form-425c-page a:hover {
-  color: var(--btn-post-qbo-hover);
 }
 
 #root {
   display: block;
-  min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-#root,
-#root .form-425c-root {
-  --f425-part-color: var(--color-app-frame-border, #1e3a5a);
-}
-
-#root .form-425c-root {
-  color: var(--color-text-body);
-}
-
 #root .form-425c-wrap {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: var(--space-md, 12px) var(--space-lg, 16px) var(--space-3xl, 48px);
+  padding: 14px 16px 48px;
 }
 
 #root .f425-tabs {
   display: flex;
-  gap: var(--space-sm, 8px);
+  gap: 8px;
   flex-wrap: wrap;
-  margin: var(--space-md, 12px) 0;
-  border-bottom: 1px solid var(--color-border, #e0e3e8);
-  padding-bottom: var(--space-sm, 8px);
+  margin: 12px 0;
+  border-bottom: 1px solid #d8d8d8;
+  padding-bottom: 8px;
 }
 
 #root .f425-tabs button {
-  padding: var(--space-sm, 8px) 14px;
-  border-radius: var(--radius-md, 8px) var(--radius-md, 8px) 0 0;
+  padding: 8px 14px;
+  border-radius: 6px 6px 0 0;
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: var(--font-md, 13px);
-  color: var(--color-text-body, #3c4257);
+  color: #2f2f2f;
 }
 
 #root .f425-tabs button.active {
-  background: var(--color-bg-card, #fff);
-  border-color: var(--color-border, #e0e3e8);
+  background: #fff;
+  border-color: #d8d8d8;
   border-bottom-color: transparent;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 #root .f425-panel {
   display: none;
-  background: var(--color-bg-card, #fff);
-  border: 1px solid var(--color-border, #e0e3e8);
-  border-radius: var(--radius-md, 10px);
-  padding: var(--space-md, 16px) 18px;
-  margin-bottom: var(--space-md, 16px);
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
 
 #root .f425-panel.active {
   display: block;
 }
 
-#root .f425-h2 {
-  font-size: var(--font-xl, 15px);
-  margin: 0 0 var(--space-md, 12px);
-  color: var(--color-text-primary, #1a1f36);
+#root .f425-court-panel {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 10pt;
+  line-height: 1.24;
 }
 
-#root .f425-h3 {
-  font-size: var(--font-lg, 14px);
-  margin: 18px 0 var(--space-sm, 8px);
-  color: var(--f425-part-color);
-  font-weight: 700;
+#root .f425-h2 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  color: #121212;
 }
 
 #root .f425-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 10px var(--space-lg, 16px);
+  gap: 10px 14px;
   align-items: end;
 }
 
 #root .f425-grid label {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs, 4px);
-  font-size: var(--font-base, 12px);
-  color: var(--color-text-label, #6b7385);
+  gap: 4px;
+  font-size: 12px;
+  color: #4f4f4f;
 }
 
 #root .f425-grid input,
 #root .f425-grid select,
-#root .f425-grid textarea {
-  padding: var(--space-sm, 8px) 10px;
-  border-radius: var(--radius-sm, 6px);
-  border: 1px solid var(--color-border-input, #d0d4da);
+#root .f425-grid textarea,
+#root .f425-panel input,
+#root .f425-panel select,
+#root .f425-panel textarea {
+  border: 1px solid #b7b7b7;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+  padding: 3px 6px;
   font: inherit;
-  background: var(--color-bg-card, #fff);
-  color: var(--color-text-primary, #1a1f36);
-}
-
-#root .f425-company-card {
-  border: 1px dashed var(--color-border, #e0e3e8);
-  border-radius: var(--radius-md, 10px);
-  padding: 14px;
-  margin-bottom: var(--space-md, 16px);
-  background: var(--color-bg-header, #f1f3f4);
-}
-
-#root .f425-company-card h3 {
-  margin: 0 0 10px;
-  font-size: var(--font-xl, 15px);
-  color: var(--color-text-primary, #1a1f36);
-}
-
-#root .f425-bank-pick {
-  max-height: 200px;
-  overflow: auto;
-  border: 1px solid var(--color-border, #e0e3e8);
-  border-radius: var(--radius-md, 8px);
-  padding: var(--space-sm, 8px);
-  background: var(--color-bg-card, #fff);
-  font-size: var(--font-base, 12px);
-}
-
-#root .f425-bank-pick label {
-  display: flex;
-  gap: var(--space-sm, 8px);
-  align-items: center;
-  margin: var(--space-xs, 4px) 0;
-  cursor: pointer;
-  color: var(--color-text-body, #3c4257);
-}
-
-#root table.f425-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-base, 12px);
-  margin-top: 10px;
-}
-
-#root table.f425-table th,
-#root table.f425-table td {
-  border: 1px solid var(--color-border, #e0e3e8);
-  padding: var(--space-sm, 6px) var(--space-sm, 8px);
-  text-align: left;
-  vertical-align: top;
-  color: var(--color-text-body);
-}
-
-#root table.f425-table th {
-  background: var(--color-bg-header, #f1f3f4);
-  color: var(--color-text-primary, #1a1f36);
-}
-
-#root .f425-proj-table input {
-  border: 1px solid var(--color-border-input, #d0d4da);
-  border-radius: var(--radius-sm, 4px);
-  padding: var(--space-xs, 4px) var(--space-sm, 6px);
-  font: inherit;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-
-#root .f425-calculated {
-  background: #f3f4f6;
-  color: #374151;
 }
 
 #root .f425-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm, 8px);
-  margin: var(--space-md, 12px) 0;
+  gap: 8px;
+  margin: 10px 0;
 }
 
 #root .f425-note {
-  font-size: var(--font-base, 12px);
-  color: var(--color-text-label, #6b7385);
-  line-height: 1.45;
-  margin: var(--space-sm, 8px) 0;
+  font-size: 12px;
+  color: #4f4f4f;
+  margin: 6px 0;
 }
 
-#root .f425-yn-row {
-  display: flex;
-  gap: var(--space-md, 16px);
-  flex-wrap: wrap;
+#root .f425-court-form {
+  border: 1px solid #111;
+  padding: 10px;
+  background: #fff;
+}
+
+#root .f425-official-header {
+  position: relative;
+  padding-right: 360px;
+  min-height: 170px;
+}
+
+#root .f425-case-box {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 338px;
+  border: 1px solid #111;
+  padding: 7px;
+  box-sizing: border-box;
+}
+
+#root .f425-case-box-title {
+  font-weight: 700;
+  font-size: 10pt;
+  margin-bottom: 6px;
+}
+
+#root .f425-case-box label {
+  display: block;
+  margin: 5px 0;
+  font-size: 10pt;
+}
+
+#root .f425-case-box input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#root .f425-form-id {
+  font-weight: 700;
+  font-size: 11pt;
+  margin-top: 2px;
+}
+
+#root .f425-form-title {
+  font-size: 11pt;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+#root .f425-form-rev {
+  float: right;
+  font-weight: 400;
+}
+
+#root .f425-meta-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#root .f425-meta-row label {
+  font-size: 10pt;
+}
+
+#root .f425-declaration {
+  margin: 10px 0;
+  max-width: 760px;
+}
+
+#root .f425-signature-line {
+  display: grid;
+  grid-template-columns: 230px 1fr;
   align-items: center;
-  margin: var(--space-sm, 6px) 0;
-  font-size: var(--font-md, 13px);
-  color: var(--color-text-body, #3c4257);
+  gap: 8px;
+  margin: 4px 0;
 }
 
-#root .f425-money {
+#root .f425-signature-line input {
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid #111;
+}
+
+#root .f425-part {
+  margin-top: 12px;
+}
+
+#root .f425-part-title {
+  margin: 8px 0 6px;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+#root .f425-line-no {
+  font-weight: 700;
+}
+
+#root .f425-instruction {
+  font-style: italic;
+  font-size: 9.5pt;
+  margin: 4px 0;
+}
+
+#root .f425-checkline {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+#root .f425-checkline input[type='checkbox'] {
+  margin-top: 2px;
+}
+
+#root .f425-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 10pt;
+}
+
+#root .f425-table th,
+#root .f425-table td {
+  border: 1px solid #111;
+  padding: 4px 6px;
+  vertical-align: top;
+}
+
+#root .f425-table th {
+  font-weight: 700;
+  background: #fff;
+}
+
+#root .f425-radio-cell,
+#root .f425-center {
+  text-align: center;
+}
+
+#root .f425-q-table td:first-child {
+  width: 78%;
+}
+
+#root .f425-money,
+#root .f425-money-wrap input,
+#root .f425-inline-money input,
+#root .f425-proj-table input {
+  text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-/* Narrow viewports: stack tabs and keep panels within width */
-@media (max-width: 720px) {
-  #root .form-425c-wrap {
-    padding-left: max(var(--space-md, 12px), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--space-md, 12px), env(safe-area-inset-right, 0px));
+#root .f425-calculated {
+  background: #f2f2f2;
+}
+
+#root .f425-cash-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#root .f425-cash-line {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  align-items: start;
+  gap: 8px;
+}
+
+#root .f425-money-wrap {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 4px;
+}
+
+#root .f425-money-prefix {
+  display: inline-block;
+  text-align: right;
+  font-weight: 700;
+}
+
+#root .f425-inline-money {
+  display: grid;
+  grid-template-columns: 1fr 170px;
+  align-items: center;
+  gap: 6px;
+  margin: 5px 0;
+}
+
+#root .f425-inline-money .f425-money-prefix {
+  margin-right: 4px;
+}
+
+#root .f425-employee-line {
+  display: grid;
+  grid-template-columns: 1fr 170px;
+  align-items: center;
+  gap: 6px;
+  margin: 5px 0;
+}
+
+#root .f425-operator-col {
+  width: 24px;
+}
+
+#root .f425-page-header {
+  border-bottom: 1px solid #111;
+  margin-bottom: 6px;
+  padding-bottom: 3px;
+  font-size: 10pt;
+}
+
+.print-only {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  #root .f425-official-header {
+    padding-right: 0;
   }
 
-  #root .f425-grid {
-    grid-template-columns: minmax(0, 1fr);
+  #root .f425-case-box {
+    position: static;
+    width: auto;
+    margin-bottom: 8px;
   }
 
-  #root table.f425-table {
-    font-size: var(--font-sm, 11px);
+  #root .f425-meta-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  #root table.f425-table th,
-  #root table.f425-table td {
-    overflow-wrap: anywhere;
-    word-break: break-word;
+  #root .f425-cash-line,
+  #root .f425-inline-money,
+  #root .f425-employee-line {
+    grid-template-columns: 1fr;
   }
 }
 
 @page {
   size: letter;
-  margin: 0.5in;
+  margin: 1in;
 }
 
 @media print {
@@ -254,45 +368,69 @@ body.form-425c-page a:hover {
   nav,
   header,
   .erp-connection-strip,
+  .breadcrumbs,
+  .breadcrumb,
   .no-print,
-  [class*="board-nav"],
-  [class*="nav-bar"] {
+  [class*='board-nav'],
+  [class*='nav-bar'],
+  [class*='breadcrumb'] {
     display: none !important;
+  }
+
+  html,
+  body,
+  body.form-425c-page,
+  #root,
+  #root .form-425c-root,
+  #root .form-425c-wrap {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  #root .f425-panel {
+    display: none !important;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  #root #panel-report {
+    display: block !important;
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  #root .f425-court-form {
+    border: 0;
+    padding: 0;
+  }
+
+  #root .print-only {
+    display: block !important;
+  }
+
+  #root .f425-page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  #root .f425-table th,
+  #root .f425-table td {
+    border-color: #000 !important;
+  }
+
+  #root .f425-panel input,
+  #root .f425-panel textarea,
+  #root .f425-panel select {
+    border-color: #000 !important;
   }
 
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-
-  body > *:not(.form-425c-page),
-  .form-425c-tabs-nav .tab-btn:not(.active) {
-    display: none !important;
-  }
-
-  #root .no-print {
-    display: none !important;
-  }
-
-  #root .f425-panel {
-    display: none !important;
-    border: none;
-    padding: 0;
-  }
-
-  #root #panel-report {
-    display: block !important;
-  }
-
-  body.form-425c-page {
-    background: var(--color-bg-card, #fff);
-  }
-}
-
-
-/* Highlight Form 425C in board nav when on this page */
-body.form-425c-page .board-nav-wrap a[href='/form-425c.html'] {
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
