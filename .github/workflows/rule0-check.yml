@@ -21,16 +21,27 @@ jobs:
       CI: 'true'
       # Per-fetch ceiling in scripts/system-smoke.mjs (default 10000 ms); CI runners can be noisy.
       SMOKE_TIMEOUT_MS: '15000'
+      # Keep native addon installs deterministic in CI.
+      npm_config_build_from_source: 'false'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.19.0'
           cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            apps/fleet-reports-hub/package-lock.json
+      - name: Verify Node runtime
+        run: node -v
       - name: Install dependencies
         run: npm ci
       - name: Install fleet-reports-hub dependencies
         run: npm ci --prefix apps/fleet-reports-hub
+      - name: Rebuild better-sqlite3 for Node 20 ABI
+        run: npm rebuild better-sqlite3 --prefix apps/fleet-reports-hub
+      - name: Rebuild native modules after install
+        run: npm rebuild --prefix apps/fleet-reports-hub
       - name: Build embedded fleet reports SPA
         run: npm run build:fleet
       - name: Full gate (smoke-gate sync, rule0:check, smoke on ephemeral server)
