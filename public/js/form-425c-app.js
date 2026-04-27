@@ -1161,6 +1161,7 @@
           onClick: function () {
             setTab(id);
             if (id === 'history') {
+              setTab('history');
               loadHistory();
               window.setTimeout(loadHistory, 100);
               window.setTimeout(loadHistory, 200);
@@ -2013,80 +2014,135 @@
     }
 
     function renderHistoryPanel() {
+      // Read directly from localStorage — don't rely on React state
+      var debtor = getActiveDebtorId() || 'ih35-transportation';
+      var historyKey = 'form425c_history_' + debtor;
+      var prefix = 'form425c_' + debtor + '_';
+
+      // Read history index
+      var histIndex = [];
+      try {
+        histIndex = JSON.parse(localStorage.getItem(historyKey) || '[]');
+      } catch (_) {
+        histIndex = [];
+      }
+      if (!Array.isArray(histIndex)) histIndex = [];
+
+      // Also scan localStorage for any matching keys
+      var allKeys = [];
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (
+            k &&
+            k.indexOf('form425c_') === 0 &&
+            k.indexOf('form425c_history_') !== 0 &&
+            k.indexOf('form425c_profiles') !== 0
+          ) {
+            allKeys.push(k);
+          }
+        }
+      } catch (_) {}
+
+      // Combine both sources
+      var seen = new Set();
+      var keys = [];
+      histIndex.concat(allKeys).forEach(function (k) {
+        if (!k || seen.has(k)) return;
+        seen.add(k);
+        keys.push(k);
+      });
+
+      // Prefer active-debtor items first but allow fallback records to surface.
+      keys = keys.sort(function (a, b) {
+        var aPri = a.indexOf(prefix) === 0 ? 0 : 1;
+        var bPri = b.indexOf(prefix) === 0 ? 0 : 1;
+        if (aPri !== bPri) return aPri - bPri;
+        return String(a).localeCompare(String(b));
+      });
+
+      var rows = keys
+        .map(function (key) {
+          try {
+            var data = JSON.parse(localStorage.getItem(key) || 'null');
+            if (!data) return null;
+            return {
+              key: key,
+              month: String(data.month || key.split('_').slice(-1)[0] || ''),
+              savedAt: String(data.savedAt || ''),
+              debtor: String(data.debtor || data.companyId || debtor)
+            };
+          } catch (_) {
+            return null;
+          }
+        })
+        .filter(Boolean)
+        .sort(function (a, b) {
+          return String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
+        });
+
       return h(
-        'section',
+        'div',
         { id: 'panel-history', className: 'f425-panel' + (tab === 'history' ? ' active' : '') },
-        h('h2', { className: 'f425-h2' }, 'Saved reports'),
+        h('h3', null, 'Saved reports'),
         h(
-          'div',
-          { className: 'f425-actions no-print' },
-          h(
-            'button',
-            { type: 'button', className: 'btn secondary', onClick: refreshHistory },
-            'Refresh list'
-          )
+          'button',
+          {
+            className: 'btn secondary',
+            onClick: function () {
+              // force re-render
+              setTab('history');
+              loadHistory();
+              window.setTimeout(loadHistory, 100);
+            }
+          },
+          'Refresh list'
         ),
-        !historyList.length
-          ? h('p', { className: 'f425-note' }, 'No saved reports yet.')
+        rows.length === 0
+          ? h('p', null, 'No saved reports yet.')
           : h(
-              'table',
-              { className: 'f425-table' },
-              h(
-                'thead',
-                null,
-                h(
-                  'tr',
-                  null,
-                  h('th', null, 'Company'),
-                  h('th', null, 'Month'),
-                  h('th', null, 'Updated'),
-                  h('th', { className: 'no-print' }, '')
-                )
-              ),
-              h(
-                'tbody',
-                null,
-                historyList.map(function (row) {
-                  return h(
-                    'tr',
-                    { key: row.key || (row.companyId + '-' + row.month) },
-                    h('td', null, row.companyId),
-                    h('td', null, row.month),
-                    h('td', null, row.updatedAt || row.savedAt || ''),
-                    h(
-                      'td',
-                      { className: 'no-print', style: { display: 'flex', gap: 8, alignItems: 'center' } },
-                      h(
-                        'button',
-                        {
-                          type: 'button',
-                          className: 'btn primary',
-                          onClick: function () {
-                            if (row.key) {
-                              loadSavedReportByKey(row.key);
-                              return;
-                            }
-                            void loadSavedReport(row.companyId, row.month);
-                          }
-                        },
-                        'Load'
-                      ),
-                      h(
-                        'button',
-                        {
-                          type: 'button',
-                          className: 'btn secondary',
-                          onClick: function () {
-                            if (!row.key) return;
-                            deleteSavedReportByKey(row.key);
-                          }
-                        },
-                        'Delete'
-                      )
-                    )
-                  );
-                })
-              )
+              'div',
+              null,
+              rows.map(function (row) {
+                var savedDate = row.savedAt ? new Date(row.savedAt).toLocaleDateString() : '';
+                return h(
+                  'div',
+                  {
+                    key: row.key,
+                    style: {
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 0',
+                      borderBottom: '1px solid #e5e7eb'
+                    }
+                  },
+                  h('span', { style: { fontWeight: 600, minWidth: 80 } }, row.month),
+                  h('span', { style: { color: '#666', fontSize: 13 } }, 'Saved: ' + savedDate),
+                  h(
+                    'button',
+                    {
+                      className: 'btn secondary',
+                      style: { fontSize: 12, padding: '4px 10px' },
+                      onClick: function () {
+                        loadSavedReportByKey(row.key);
+                      }
+                    },
+                    'Load'
+                  ),
+                  h(
+                    'button',
+                    {
+                      className: 'btn danger',
+                      style: { fontSize: 12, padding: '4px 10px' },
+                      onClick: function () {
+                        deleteSavedReportByKey(row.key);
+                      }
+                    },
+                    'Delete'
+                  )
+                );
+              })
             )
       );
     }
