@@ -682,9 +682,15 @@ async function ensureIntegrationResilienceTables() {
       error_message TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       synced_at TIMESTAMPTZ,
-      retry_count INTEGER DEFAULT 0
+      retry_count INTEGER DEFAULT 0,
+      last_attempt_at TIMESTAMPTZ,
+      next_retry_at TIMESTAMPTZ
     )
   `);
+  await dbQuery('ALTER TABLE qbo_sync_queue ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ');
+  await dbQuery('ALTER TABLE qbo_sync_queue ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMPTZ');
+  await dbQuery('CREATE INDEX IF NOT EXISTS idx_qbo_sync_queue_status_created ON qbo_sync_queue(status, created_at DESC)');
+  await dbQuery('CREATE INDEX IF NOT EXISTS idx_qbo_sync_queue_next_retry ON qbo_sync_queue(next_retry_at)');
   await dbQuery(`
     CREATE TABLE IF NOT EXISTS samsara_vehicle_assignments (
       unit_number TEXT PRIMARY KEY,
@@ -941,11 +947,13 @@ async function retryQboSyncQueue(logError, opts = {}) {
   if (!getPool()) return { ok: true, synced: 0, failed: 0, skipped: 0 };
   await ensureIntegrationResilienceTables();
   const limit = Number.isFinite(Number(opts?.limit)) ? Math.max(1, Number(opts.limit)) : 200;
+  const maxRetries = Number.isFinite(Number(opts?.maxRetries)) ? Math.max(1, Number(opts.maxRetries)) : 8;
   const qboFlags = qboConnectionFlags();
   if (!qboFlags.connected) return { ok: true, synced: 0, failed: 0, skipped: 0, reason: 'qbo_not_connected' };
   const { rows } = await dbQuery(
     `SELECT * FROM qbo_sync_queue
       WHERE status IN ('pending','failed')
+        AND (next_retry_at IS NULL OR next_retry_at <= now())
       ORDER BY created_at ASC, id ASC
       LIMIT $1`,
     [limit]
@@ -954,8 +962,23 @@ async function retryQboSyncQueue(logError, opts = {}) {
   let synced = 0;
   let failed = 0;
   let skipped = 0;
+  let dead = 0;
   for (const item of items) {
     const payload = item?.payload && typeof item.payload === 'object' ? item.payload : {};
+    const retries = Number(item?.retry_count || 0);
+    if (retries >= maxRetries) {
+      dead += 1;
+      await dbQuery(
+        `UPDATE qbo_sync_queue
+            SET status = 'dead',
+                error_message = COALESCE(error_message, 'Max retries exceeded'),
+                last_attempt_at = now(),
+                next_retry_at = NULL
+          WHERE id = $1`,
+        [item.id]
+      );
+      continue;
+    }
     try {
       if (String(item.transaction_type || '').toLowerCase() === 'fuel' || payload?.mode === 'fuel_expense_post') {
         const expenseId = Number(payload?.expense_id || item?.transaction_id);
@@ -972,7 +995,11 @@ async function retryQboSyncQueue(logError, opts = {}) {
         skipped += 1;
         await dbQuery(
           `UPDATE qbo_sync_queue
-              SET status = 'skipped', error_message = $2, retry_count = COALESCE(retry_count,0) + 1
+              SET status = 'skipped',
+                  error_message = $2,
+                  retry_count = COALESCE(retry_count,0) + 1,
+                  last_attempt_at = now(),
+                  next_retry_at = NULL
             WHERE id = $1`,
           [item.id, 'Unsupported queue payload']
         );
@@ -981,22 +1008,151 @@ async function retryQboSyncQueue(logError, opts = {}) {
       synced += 1;
       await dbQuery(
         `UPDATE qbo_sync_queue
-            SET status = 'synced', error_message = NULL, synced_at = now()
+            SET status = 'synced',
+                error_message = NULL,
+                synced_at = now(),
+                last_attempt_at = now(),
+                next_retry_at = NULL
           WHERE id = $1`,
         [item.id]
       );
     } catch (e) {
       failed += 1;
+      const nextRetries = retries + 1;
+      const backoffMinutes = Math.min(240, Math.max(2, Math.pow(2, Math.min(6, nextRetries))));
       await dbQuery(
         `UPDATE qbo_sync_queue
-            SET status = 'failed', error_message = $2, retry_count = COALESCE(retry_count,0) + 1
+            SET status = CASE WHEN COALESCE(retry_count,0) + 1 >= $3 THEN 'dead' ELSE 'failed' END,
+                error_message = $2,
+                retry_count = COALESCE(retry_count,0) + 1,
+                last_attempt_at = now(),
+                next_retry_at = CASE
+                  WHEN COALESCE(retry_count,0) + 1 >= $3 THEN NULL
+                  ELSE now() + ($4 || ' minutes')::interval
+                END
           WHERE id = $1`,
-        [item.id, String(e?.message || e || 'QBO sync failed').slice(0, 800)]
+        [item.id, String(e?.message || e || 'QBO sync failed').slice(0, 800), maxRetries, backoffMinutes]
       );
       logError('retryQboSyncQueue item failed', e);
     }
   }
-  return { ok: true, synced, failed, skipped };
+  return { ok: true, synced, failed, skipped, dead };
+}
+
+async function buildQboSyncAlertsPayload() {
+  const { configured, connected } = qboConnectionFlags();
+  const alerts = [];
+  const counts = { total: 0, high: 0, medium: 0, low: 0, pending: 0, failed: 0, dead: 0 };
+  if (!getPool()) {
+    if (!configured) {
+      alerts.push({
+        code: 'qbo_not_configured',
+        title: 'QuickBooks not configured',
+        message: 'Connect QuickBooks to enable posting and live catalog sync.',
+        severity: 'high',
+      });
+    } else if (!connected) {
+      alerts.push({
+        code: 'qbo_disconnected',
+        title: 'QuickBooks disconnected',
+        message: 'Posting is paused until the integration reconnects.',
+        severity: 'high',
+      });
+    }
+  } else {
+    await ensureIntegrationResilienceTables();
+    const { rows: countRows } = await dbQuery(
+      `SELECT status, COUNT(*)::int AS n
+         FROM qbo_sync_queue
+        WHERE status IN ('pending','failed','dead')
+        GROUP BY status`
+    );
+    for (const row of countRows || []) {
+      const s = String(row?.status || '').toLowerCase();
+      const n = Number(row?.n || 0);
+      if (s === 'pending') counts.pending = n;
+      if (s === 'failed') counts.failed = n;
+      if (s === 'dead') counts.dead = n;
+    }
+    const { rows: sampleRows } = await dbQuery(
+      `SELECT id, transaction_type, transaction_id, status, error_message, retry_count, created_at
+         FROM qbo_sync_queue
+        WHERE status IN ('failed','dead')
+        ORDER BY created_at DESC, id DESC
+        LIMIT 8`
+    );
+
+    const lastSyncRaw = await getIntegrationSetting('qbo_catalog_last_sync_at').catch(() => null);
+    const lastSyncMs = lastSyncRaw ? Date.parse(String(lastSyncRaw)) : NaN;
+    const staleMinutes = Number.isFinite(lastSyncMs) ? Math.max(0, Math.round((Date.now() - lastSyncMs) / 60000)) : null;
+
+    if (!configured) {
+      alerts.push({
+        code: 'qbo_not_configured',
+        title: 'QuickBooks not configured',
+        message: 'Connect QuickBooks to enable posting and catalog sync.',
+        severity: 'high',
+      });
+    } else if (!connected) {
+      alerts.push({
+        code: 'qbo_disconnected',
+        title: 'QuickBooks disconnected',
+        message: 'Posting is paused; transactions remain in queue until reconnected.',
+        severity: 'high',
+      });
+    }
+    if (counts.dead > 0) {
+      alerts.push({
+        code: 'qbo_dead_letters',
+        title: `${counts.dead} queue item(s) reached retry limit`,
+        message: 'Review dead-letter rows in Pending QBO Sync and re-submit after fixing data.',
+        severity: 'high',
+      });
+    }
+    if (counts.failed > 0) {
+      alerts.push({
+        code: 'qbo_failed_items',
+        title: `${counts.failed} queue item(s) failed`,
+        message: 'Auto-retry is active with backoff; manual retry is available.',
+        severity: 'medium',
+      });
+    }
+    if (counts.pending > 25) {
+      alerts.push({
+        code: 'qbo_queue_backlog',
+        title: `${counts.pending} item(s) pending QBO sync`,
+        message: 'Queue is growing; validate connection and mapping defaults.',
+        severity: 'medium',
+      });
+    }
+    if (connected && Number.isFinite(staleMinutes) && staleMinutes > 180) {
+      alerts.push({
+        code: 'qbo_catalog_stale',
+        title: 'QBO catalog cache is stale',
+        message: `Last successful catalog sync was ${staleMinutes} minute(s) ago.`,
+        severity: 'low',
+      });
+    }
+    (sampleRows || []).forEach((row) => {
+      const rowSeverity = String(row?.status || '').toLowerCase() === 'dead' ? 'high' : 'medium';
+      alerts.push({
+        code: `qbo_queue_${String(row?.status || 'failed').toLowerCase()}`,
+        title: `Queue #${row?.id || '—'} · ${String(row?.transaction_type || 'txn')}`,
+        message: String(row?.error_message || 'Sync failed').slice(0, 220),
+        severity: rowSeverity,
+        queue_id: row?.id || null,
+        queue_status: row?.status || null,
+        retry_count: Number(row?.retry_count || 0),
+        created_at: row?.created_at || null,
+      });
+    });
+  }
+
+  counts.total = alerts.length;
+  counts.high = alerts.filter((a) => String(a?.severity || '') === 'high').length;
+  counts.medium = alerts.filter((a) => String(a?.severity || '') === 'medium').length;
+  counts.low = alerts.filter((a) => String(a?.severity || '') === 'low').length;
+  return { ok: true, configured, connected, alerts, counts, lookbackDays: 120 };
 }
 
 /**
@@ -1308,16 +1464,22 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.get('/api/qbo/sync-alerts', (_req, res) => {
-    const { configured, connected } = qboConnectionFlags();
-    res.json({
-      ok: true,
-      alerts: [],
-      counts: { total: 0 },
-      lookbackDays: 120,
-      configured,
-      connected
-    });
+  app.get('/api/qbo/sync-alerts', async (_req, res) => {
+    try {
+      const payload = await buildQboSyncAlertsPayload();
+      res.json(payload);
+    } catch (e) {
+      logError('GET /api/qbo/sync-alerts', e);
+      const { configured, connected } = qboConnectionFlags();
+      res.json({
+        ok: true,
+        alerts: [],
+        counts: { total: 0, high: 0, medium: 0, low: 0, pending: 0, failed: 0, dead: 0 },
+        lookbackDays: 120,
+        configured,
+        connected,
+      });
+    }
   });
 
   app.post('/api/qbo/sync-catalog', async (_req, res) => {
@@ -1337,21 +1499,22 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.get('/api/qbo/sync-queue', async (_req, res) => {
     try {
-      if (!getPool()) return res.json({ ok: true, pending: 0, failed: 0, items: [] });
+      if (!getPool()) return res.json({ ok: true, pending: 0, failed: 0, dead: 0, items: [] });
       await ensureIntegrationResilienceTables();
       const { rows } = await dbQuery(
         `SELECT * FROM qbo_sync_queue
-          WHERE status IN ('pending','failed')
+          WHERE status IN ('pending','failed','dead')
           ORDER BY created_at DESC, id DESC
           LIMIT 500`
       );
       const items = rows || [];
       const pending = items.filter((r) => String(r.status || '').toLowerCase() === 'pending').length;
       const failed = items.filter((r) => String(r.status || '').toLowerCase() === 'failed').length;
-      return res.json({ ok: true, pending, failed, items });
+      const dead = items.filter((r) => String(r.status || '').toLowerCase() === 'dead').length;
+      return res.json({ ok: true, pending, failed, dead, items });
     } catch (e) {
       logError('GET /api/qbo/sync-queue', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e), pending: 0, failed: 0, items: [] });
+      return res.status(500).json({ ok: false, error: e?.message || String(e), pending: 0, failed: 0, dead: 0, items: [] });
     }
   });
 
@@ -1360,10 +1523,10 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set', synced: 0, failed: 0 });
       await ensureIntegrationResilienceTables();
       const out = await retryQboSyncQueue(logError, { limit: 500 });
-      return res.json({ ok: true, synced: Number(out?.synced || 0), failed: Number(out?.failed || 0), skipped: Number(out?.skipped || 0), reason: out?.reason || null });
+      return res.json({ ok: true, synced: Number(out?.synced || 0), failed: Number(out?.failed || 0), skipped: Number(out?.skipped || 0), dead: Number(out?.dead || 0), reason: out?.reason || null });
     } catch (e) {
       logError('POST /api/qbo/sync-queue/retry', e);
-      return res.status(500).json({ ok: false, error: e?.message || String(e), synced: 0, failed: 0, skipped: 0 });
+      return res.status(500).json({ ok: false, error: e?.message || String(e), synced: 0, failed: 0, skipped: 0, dead: 0 });
     }
   });
 
@@ -2902,6 +3065,8 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS settlement_load_id TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_txn_id TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_posted BOOLEAN DEFAULT false');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS state TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS miles_this_load NUMERIC');
     await dbQuery(
       `CREATE TABLE IF NOT EXISTS fuel_qbo_settings (
         id SERIAL PRIMARY KEY,
@@ -2954,6 +3119,24 @@ export function mountErpCoreApi(app, opts = {}) {
     const key = String(v || '').trim().toLowerCase();
     if (!key) return '';
     return key;
+  }
+
+  function detectStateFromText(raw) {
+    const txt = String(raw || '').trim().toUpperCase();
+    if (!txt) return '';
+    const map = [
+      [' TEXAS ', 'TX'], [' TX ', 'TX'],
+      [' OKLAHOMA ', 'OK'], [' OK ', 'OK'],
+      [' NEW MEXICO ', 'NM'], [' NM ', 'NM'],
+      [' ARKANSAS ', 'AR'], [' AR ', 'AR'],
+      [' LOUISIANA ', 'LA'], [' LA ', 'LA'],
+    ];
+    const wrapped = ` ${txt.replace(/[^A-Z0-9 ]+/g, ' ')} `;
+    for (const [needle, abbr] of map) {
+      if (wrapped.includes(needle)) return abbr;
+    }
+    const short = wrapped.match(/\s([A-Z]{2})\s/);
+    return short ? String(short[1] || '').trim() : '';
   }
 
   function normalizeLoadMode(v) {
@@ -3104,6 +3287,8 @@ export function mountErpCoreApi(app, opts = {}) {
       const fuelType = normalizeFuelTypeKey(b.fuel_type || b.fuelType);
       const loadNumber = String(b.load_number || b.loadNumber || '').trim();
       const reeferUnitNumber = String(b.reefer_unit_number || b.reeferUnitNumber || '').trim();
+      const stateCode = String(b.state || '').trim().toUpperCase() || detectStateFromText(String(b.location || b.station || b.station_name || ''));
+      const milesThisLoad = b.miles_this_load == null || b.miles_this_load === '' ? null : Number(b.miles_this_load);
       const { rows: mappingRows } = await dbQuery(
         'SELECT * FROM driver_expense_mappings WHERE expense_type = $1 LIMIT 1',
         [fuelType || '']
@@ -3120,8 +3305,8 @@ export function mountErpCoreApi(app, opts = {}) {
       const { rows } = await dbQuery(
         `INSERT INTO fuel_expenses (
           unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
-          load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo, qbo_posted
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false)
+          load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo, qbo_posted, state, miles_this_load
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false,$13,$14)
         RETURNING *`,
         [
           String(b.unit || b.unit_number || '').trim() || null,
@@ -3136,6 +3321,8 @@ export function mountErpCoreApi(app, opts = {}) {
           String(b.station || b.station_name || '').trim() || null,
           String(b.location || '').trim() || null,
           String(b.receipt_photo_base64 || b.receipt_photo || '').trim() || null,
+          stateCode || null,
+          Number.isFinite(milesThisLoad) ? milesThisLoad : null,
         ]
       );
       const expense = rows?.[0] || null;
@@ -3208,6 +3395,8 @@ export function mountErpCoreApi(app, opts = {}) {
         load_number: r?.load_number || null,
         reefer_unit_number: r?.reefer_unit_number || null,
         settlement_load_id: r?.settlement_load_id || null,
+        state: r?.state || null,
+        miles_this_load: r?.miles_this_load == null ? null : Number(r.miles_this_load),
         qbo_posted: r?.qbo_posted === true,
         qbo_txn_id: r?.qbo_txn_id || null,
       }));
@@ -3239,6 +3428,84 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/fuel/qbo-accounts', e);
       return res.json({ ok: true, accounts: [], items: [] });
+    }
+  });
+
+  app.get('/api/reports/ifta', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        return res.json({
+          ok: true,
+          quarter: null,
+          year: null,
+          tax_rate: null,
+          rows: [],
+          totals: { miles: 0, gallons: 0, tax_owed: 0, tax_credit: 0 },
+        });
+      }
+      await ensureFuelExpenseTables();
+      const now = new Date();
+      const qIn = Number(req.query?.quarter || 0);
+      const yIn = Number(req.query?.year || 0);
+      const quarter = Number.isFinite(qIn) && qIn >= 1 && qIn <= 4 ? qIn : Math.floor(now.getUTCMonth() / 3) + 1;
+      const year = Number.isFinite(yIn) && yIn >= 2000 ? yIn : now.getUTCFullYear();
+      const taxRate = Number.isFinite(Number(req.query?.tax_rate)) ? Number(req.query.tax_rate) : 0.24;
+      const startMonth = (quarter - 1) * 3;
+      const start = new Date(Date.UTC(year, startMonth, 1));
+      const end = new Date(Date.UTC(year, startMonth + 3, 1));
+      const { rows } = await dbQueryForRoute(
+        `SELECT
+            COALESCE(NULLIF(TRIM(unit_number), ''), '—') AS unit_number,
+            COALESCE(NULLIF(TRIM(state), ''), 'UNK') AS state,
+            SUM(COALESCE(miles_this_load, 0))::numeric AS miles,
+            SUM(COALESCE(gallons, 0))::numeric AS gallons
+          FROM fuel_expenses
+          WHERE submitted_at >= $1
+            AND submitted_at < $2
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC`,
+        [start.toISOString(), end.toISOString()]
+      );
+      const reportRows = (rows || []).map((r) => {
+        const miles = Number(r?.miles || 0);
+        const gallons = Number(r?.gallons || 0);
+        const mpg = gallons > 0 ? miles / gallons : 0;
+        const tax = gallons * taxRate;
+        return {
+          unit_number: String(r?.unit_number || '—'),
+          state: String(r?.state || 'UNK'),
+          miles: Number.isFinite(miles) ? miles : 0,
+          gallons: Number.isFinite(gallons) ? gallons : 0,
+          mpg: Number.isFinite(mpg) ? Math.round(mpg * 100) / 100 : 0,
+          tax_owed: Number.isFinite(tax) && tax > 0 ? Math.round(tax * 100) / 100 : 0,
+          tax_credit: 0,
+        };
+      });
+      const totals = reportRows.reduce((acc, row) => {
+        acc.miles += Number(row.miles || 0);
+        acc.gallons += Number(row.gallons || 0);
+        acc.tax_owed += Number(row.tax_owed || 0);
+        acc.tax_credit += Number(row.tax_credit || 0);
+        return acc;
+      }, { miles: 0, gallons: 0, tax_owed: 0, tax_credit: 0 });
+
+      if (String(req.query?.format || '').toLowerCase() === 'csv') {
+        const csv = [
+          'unit_number,state,miles,gallons,mpg,tax_owed,tax_credit',
+          ...reportRows.map((r) => [r.unit_number, r.state, r.miles, r.gallons, r.mpg, r.tax_owed, r.tax_credit].join(',')),
+        ].join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        return res.status(200).send(csv);
+      }
+      return res.json({ ok: true, quarter, year, tax_rate: taxRate, rows: reportRows, totals });
+    } catch (e) {
+      logError('GET /api/reports/ifta', e);
+      return res.status(500).json({
+        ok: false,
+        error: e?.message || String(e),
+        rows: [],
+        totals: { miles: 0, gallons: 0, tax_owed: 0, tax_credit: 0 },
+      });
     }
   });
 
