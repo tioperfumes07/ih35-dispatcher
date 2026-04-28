@@ -3999,6 +3999,43 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/reports/audit-log', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, data: [], count: 0 });
+      await ensureAuditLogTable();
+      const moduleKey = String(req.query?.module || '').trim().toLowerCase();
+      const actor = String(req.query?.actor || '').trim();
+      const action = String(req.query?.action || '').trim();
+      const limitRaw = Number(req.query?.limit);
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(1000, Math.floor(limitRaw))) : 200;
+      const where = [];
+      const values = [];
+      if (moduleKey) {
+        values.push(moduleKey === 'form 425c' || moduleKey === 'form_425c' ? 'form_425c' : moduleKey);
+        where.push(`LOWER(COALESCE(source_module, '')) = $${values.length}`);
+      }
+      if (actor) {
+        values.push(actor);
+        where.push(`actor = $${values.length}`);
+      }
+      if (action) {
+        values.push(action);
+        where.push(`action = $${values.length}`);
+      }
+      values.push(limit);
+      const sql = `SELECT id, actor, action, entity_type, entity_id, before_state, after_state, source_module, created_at
+                     FROM audit_log
+                     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+                    ORDER BY created_at DESC
+                    LIMIT $${values.length}`;
+      const { rows } = await dbQueryForRoute(sql, values);
+      return res.json({ ok: true, data: rows || [], count: Number(rows?.length || 0) });
+    } catch (e) {
+      logError('GET /api/reports/audit-log', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), data: [], count: 0 });
+    }
+  });
+
   app.get('/api/fuel/settings', async (_req, res) => {
     try {
       if (!getPool()) return res.json({ ok: true, settings: [] });

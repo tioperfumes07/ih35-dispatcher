@@ -45,6 +45,18 @@
       .replace(/>/g, '&gt;');
   }
 
+  function form425cAuthHeaders() {
+    var t = '';
+    try {
+      t = localStorage.getItem('ih35_token') || '';
+    } catch (_) {
+      t = '';
+    }
+    var h = { Accept: 'application/json' };
+    if (t) h.Authorization = 'Bearer ' + t;
+    return h;
+  }
+
   function defaultProjections() {
     var o = {};
     for (var i = 0; i < PROJ_ROWS.length; i++) {
@@ -134,6 +146,36 @@
     var qbCompany = qbCoState[0];
     var setQbCompany = qbCoState[1];
     var lastLoadedLocalKeyRef = React.useRef('');
+    var meState = React.useState({ name: 'operator', email: 'operator', role: 'admin' });
+    var currentUser = meState[0];
+    var setCurrentUser = meState[1];
+
+    function actorLabel() {
+      return String(currentUser?.name || currentUser?.email || 'operator').trim() || 'operator';
+    }
+
+    function isAdminUser() {
+      var role = String(currentUser?.role || '').trim().toLowerCase();
+      return role === 'admin' || role === 'administrator';
+    }
+
+    function postForm425cAudit(action, extra) {
+      var body = {
+        action: String(action || '').trim(),
+        entity_type: 'form_425c_report',
+        entity_id: String(extra?.entity_id || '').trim() || null,
+        after_state: extra?.after_state || null,
+        before_state: extra?.before_state || null
+      };
+      if (!body.action) return Promise.resolve(null);
+      return fetch('/api/form-425c/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
+        body: JSON.stringify(body)
+      }).catch(function () {
+        return null;
+      });
+    }
 
     function normalizeCompanyId(raw) {
       var s = String(raw || '').trim().toLowerCase();
@@ -220,12 +262,18 @@
           var data = safeJsonParse(localStorage.getItem(key));
           if (!data) return null;
           var month = String(data.month || '').trim();
+          var exportHistory = Array.isArray(data.exportHistory) ? data.exportHistory : [];
           return {
             key: key,
             companyId: String(data.debtor || debtor || ''),
             month: month || key.split('_').slice(-1)[0] || '',
             updatedAt: String(data.savedAt || ''),
             savedAt: String(data.savedAt || ''),
+            savedBy: String(data.savedBy || data.lastModifiedBy || ''),
+            lastModifiedAt: String(data.lastModifiedAt || data.savedAt || ''),
+            lastModifiedBy: String(data.lastModifiedBy || data.savedBy || ''),
+            exportHistoryCount: exportHistory.length,
+            lastExportAt: exportHistory.length ? String(exportHistory[exportHistory.length - 1]?.at || '') : ''
           };
         })
         .filter(Boolean)
@@ -274,6 +322,9 @@
         );
       }
       setTab('report');
+      postForm425cAudit('load_report', {
+        entity_id: String((debtor || '') + ':' + (month || ''))
+      });
       setReceiptMsg('📂 Restored report for ' + (month || 'selected month'));
       if (typeof window.erpShowToast === 'function') {
         window.erpShowToast('📂 Restored report for ' + (month || 'selected month'));
@@ -281,7 +332,24 @@
     }
 
     function deleteSavedReportByKey(key) {
+      if (!isAdminUser()) {
+        alert('Only Admin can delete saved reports.');
+        return;
+      }
       if (!window.confirm('Delete this saved report?')) return;
+      var local = safeJsonParse(localStorage.getItem(key));
+      var companyId = String(local?.debtor || local?.companyId || getActiveDebtorId() || '').trim();
+      var month = String(local?.month || key.split('_').slice(-1)[0] || '').trim();
+      fetch(
+        '/api/form-425c/saved-report?' +
+          new URLSearchParams({ companyId: companyId, month: month }),
+        {
+          method: 'DELETE',
+          headers: { ...form425cAuthHeaders() }
+        }
+      ).catch(function () {
+        return null;
+      });
       localStorage.removeItem(key);
       var debtor = getActiveDebtorId();
       var historyKey = historyStorageKey(debtor);
@@ -292,6 +360,10 @@
       });
       localStorage.setItem(historyKey, JSON.stringify(next));
       loadHistory();
+      postForm425cAudit('delete_report', {
+        entity_id: companyId && month ? companyId + ':' + month : key,
+        before_state: local || null
+      });
       if (typeof window.erpShowToast === 'function') window.erpShowToast('Deleted');
     }
 
@@ -492,7 +564,36 @@
       var cancelled = false;
       (async function () {
         try {
-          var r = await fetch('/api/form-425c/profiles');
+          var r = await fetch('/api/auth/me', { headers: form425cAuthHeaders() });
+          var d = await r.json().catch(function () {
+            return {};
+          });
+          if (cancelled) return;
+          if (d && d.user) {
+            setCurrentUser({
+              name: String(d.user.name || d.user.email || 'operator'),
+              email: String(d.user.email || d.user.name || 'operator'),
+              role: String(d.user.role || 'dispatcher')
+            });
+            return;
+          }
+          if (d && d.authDisabled) {
+            setCurrentUser({ name: 'operator', email: 'operator', role: 'admin' });
+          }
+        } catch (_) {
+          // keep default local actor
+        }
+      })();
+      return function () {
+        cancelled = true;
+      };
+    }, []);
+
+    React.useEffect(function () {
+      var cancelled = false;
+      (async function () {
+        try {
+          var r = await fetch('/api/form-425c/profiles', { headers: form425cAuthHeaders() });
           var data = await r.json();
           if (cancelled) return;
           var localSaved = safeJsonParse(localStorage.getItem(PROFILE_LOCAL_KEY));
@@ -711,7 +812,7 @@
     async function loadBanks() {
       setBankLoadMsg('Loading\u2026');
       try {
-        var r = await fetch('/api/form-425c/qbo-bank-accounts');
+        var r = await fetch('/api/form-425c/qbo-bank-accounts', { headers: form425cAuthHeaders() });
         var d = await r.json();
         if (!d.ok) throw new Error(d.error || 'QBO error');
         setBanks(d.accounts || []);
@@ -742,10 +843,14 @@
       try {
         await fetch('/api/form-425c/profiles', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
           body: JSON.stringify(profiles)
         }).catch(function () {
           return null;
+        });
+        postForm425cAudit('profile_changes', {
+          entity_id: 'profiles',
+          after_state: { companyId: repCompany || '', actor: actorLabel() }
         });
       } catch (_) {
         // local profile save is source of truth
@@ -886,7 +991,8 @@
       try {
         var r = await fetch(
           '/api/form-425c/prior-balance?' +
-            new URLSearchParams({ companyId: repCompany, month: repMonth })
+            new URLSearchParams({ companyId: repCompany, month: repMonth }),
+          { headers: form425cAuthHeaders() }
         );
         var d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Request failed');
@@ -912,8 +1018,16 @@
       var key = localReportKey(debtor, month);
       var payload = gatherReportPayload();
       var fields = collectAllFormFields();
+      var actor = actorLabel();
+      var nowIso = new Date().toISOString();
+      var prevLocal = safeJsonParse(localStorage.getItem(key));
+      var exportHistory = Array.isArray(prevLocal?.exportHistory) ? prevLocal.exportHistory : [];
       var data = {
-        savedAt: new Date().toISOString(),
+        savedAt: String(prevLocal?.savedAt || nowIso),
+        savedBy: String(prevLocal?.savedBy || actor),
+        lastModifiedAt: nowIso,
+        lastModifiedBy: actor,
+        exportHistory: exportHistory,
         month: month,
         debtor: debtor,
         fields: fields,
@@ -942,7 +1056,7 @@
         var body = { companyId: debtor, month: month, ...payload };
         await fetch('/api/form-425c/saved-report', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
           body: JSON.stringify(body)
         }).catch(function () {
           return null;
@@ -959,12 +1073,16 @@
         setRepCompany(localSaved.companyId || companyId);
         setRepMonth(localSaved.month || month);
         applyReportPayload(localRep);
+        postForm425cAudit('load_report', {
+          entity_id: String((localSaved.companyId || companyId || '') + ':' + (localSaved.month || month || ''))
+        });
         setReceiptMsg('📂 Restored from ' + (localSaved.month || month));
         if (typeof window.erpShowToast === 'function') window.erpShowToast('📂 Restored from ' + (localSaved.month || month));
         return;
       }
       var r = await fetch(
-        '/api/form-425c/saved-report?' + new URLSearchParams({ companyId: companyId, month: month })
+        '/api/form-425c/saved-report?' + new URLSearchParams({ companyId: companyId, month: month }),
+        { headers: form425cAuthHeaders() }
       );
       var d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Not found');
@@ -973,6 +1091,9 @@
       setRepMonth(rep.month || month);
       applyReportPayload(rep);
       saveReportToLocal(rep.companyId || companyId, rep.month || month, rep);
+      postForm425cAudit('load_report', {
+        entity_id: String((rep.companyId || companyId) + ':' + (rep.month || month))
+      });
       setReceiptMsg('📂 Restored from ' + (rep.month || month));
       if (typeof window.erpShowToast === 'function') window.erpShowToast('📂 Restored from ' + (rep.month || month));
     }
@@ -982,7 +1103,7 @@
       try {
         var r = await fetch('/api/form-425c/parse-qb-paste', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
           body: JSON.stringify({ text: pasteText, companyId: qbCompany || repCompany })
         });
         var d = await r.json();
@@ -1011,7 +1132,8 @@
       setReceiptMsg('Loading\u2026');
       try {
         var r = await fetch(
-          '/api/form-425c/receipts?' + new URLSearchParams({ companyId: repCompany, month: repMonth })
+          '/api/form-425c/receipts?' + new URLSearchParams({ companyId: repCompany, month: repMonth }),
+          { headers: form425cAuthHeaders() }
         );
         var d = await r.json();
         if (d.error) throw new Error(d.error);
@@ -1076,6 +1198,26 @@
     }
 
     function printWithPackageNotes() {
+      var debtor = getActiveDebtorId();
+      var month = getReportMonth();
+      var key = localReportKey(debtor, month);
+      var nowIso = new Date().toISOString();
+      var local = safeJsonParse(localStorage.getItem(key));
+      if (local && typeof local === 'object') {
+        var exports = Array.isArray(local.exportHistory) ? local.exportHistory : [];
+        exports.push({ type: 'print', at: nowIso, by: actorLabel() });
+        local.exportHistory = exports.slice(-100);
+        local.lastModifiedAt = nowIso;
+        local.lastModifiedBy = actorLabel();
+        localStorage.setItem(key, JSON.stringify(local));
+      }
+      fetch('/api/form-425c/saved-report/export-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
+        body: JSON.stringify({ companyId: debtor, month: month, type: 'print' })
+      }).catch(function () {
+        return null;
+      });
       setReceiptMsg('After printing the form, attach your P&L and bank statements as separate pages.');
       if (typeof window.erpShowToast === 'function') {
         window.erpShowToast('Print tip: disable browser headers/footers in print settings.');
@@ -1134,7 +1276,11 @@
       );
       setMergeMsg('Building ZIP…');
       try {
-        var r = await fetch('/api/form-425c/package', { method: 'POST', body: fd });
+        var r = await fetch('/api/form-425c/package', {
+          method: 'POST',
+          headers: form425cAuthHeaders(),
+          body: fd
+        });
         if (!r.ok) {
           var errJ = await r.json().catch(function () {
             return {};
@@ -1147,6 +1293,24 @@
         a.download = 'IH35-Form425C-package.zip';
         a.click();
         URL.revokeObjectURL(a.href);
+        fetch('/api/form-425c/saved-report/export-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
+          body: JSON.stringify({ companyId: repCompany, month: repMonth, type: 'download_zip' })
+        }).catch(function () {
+          return null;
+        });
+        var key = localReportKey(repCompany, repMonth);
+        var local = safeJsonParse(localStorage.getItem(key));
+        if (local && typeof local === 'object') {
+          var nowIso = new Date().toISOString();
+          var exports = Array.isArray(local.exportHistory) ? local.exportHistory : [];
+          exports.push({ type: 'download_zip', at: nowIso, by: actorLabel() });
+          local.exportHistory = exports.slice(-100);
+          local.lastModifiedAt = nowIso;
+          local.lastModifiedBy = actorLabel();
+          localStorage.setItem(key, JSON.stringify(local));
+        }
         setMergeMsg('Download started.');
       } catch (e) {
         setMergeMsg(String(e.message || e));
@@ -2035,7 +2199,14 @@
               key: k,
               month: String(d.month || d.companyId || k.split('_').slice(-1)[0] || ''),
               savedAt: String(d.savedAt || ''),
-              debtor: String(d.debtor || d.companyId || debtor)
+              debtor: String(d.debtor || d.companyId || debtor),
+              savedBy: String(d.savedBy || d.lastModifiedBy || ''),
+              lastModifiedAt: String(d.lastModifiedAt || d.savedAt || ''),
+              exportHistoryCount: Array.isArray(d.exportHistory) ? d.exportHistory.length : 0,
+              lastExportAt:
+                Array.isArray(d.exportHistory) && d.exportHistory.length
+                  ? String(d.exportHistory[d.exportHistory.length - 1]?.at || '')
+                  : ''
             });
           } catch(e2) {}
         }
@@ -2050,22 +2221,36 @@
           : React.createElement('div', null,
               allRows.map(function(row) {
                 var sd = row.savedAt ? new Date(row.savedAt).toLocaleDateString() : '';
+                var modified = row.lastModifiedAt ? new Date(row.lastModifiedAt).toLocaleString() : '';
+                var savedBy = String(row.savedBy || '—');
+                var exportCount = Number(row.exportHistoryCount || 0);
+                var exportMeta = exportCount
+                  ? 'Exports: ' + exportCount + (row.lastExportAt ? ' · Last: ' + new Date(row.lastExportAt).toLocaleString() : '')
+                  : 'Exports: 0';
                 return React.createElement('div', {
                   key: row.key,
                   style: { display:'flex', alignItems:'center', gap:'12px', padding:'10px 0', borderBottom:'1px solid #e5e7eb' }
                 },
                   React.createElement('span', { style: { fontWeight:600, minWidth:100 } }, row.month),
-                  React.createElement('span', { style: { color:'#666', fontSize:13, flex:1 } }, 'Saved: ' + sd),
+                  React.createElement(
+                    'span',
+                    { style: { color:'#666', fontSize:13, flex:1, display: 'grid', gap: '2px' } },
+                    'Saved: ' + sd + ' · By: ' + savedBy,
+                    'Last modified: ' + (modified || '—'),
+                    exportMeta
+                  ),
                   React.createElement('button', {
                     className: 'btn secondary',
                     style: { fontSize:12, padding:'4px 10px' },
                     onClick: function(k){ return function(){ loadSavedReportByKey(k); }; }(row.key)
                   }, 'Load'),
-                  React.createElement('button', {
-                    className: 'btn danger',
-                    style: { fontSize:12, padding:'4px 10px', background:'#ef4444', color:'white', border:'none', borderRadius:'4px', cursor:'pointer' },
-                    onClick: function(k){ return function(){ deleteSavedReportByKey(k); }; }(row.key)
-                  }, 'Delete')
+                  isAdminUser()
+                    ? React.createElement('button', {
+                        className: 'btn danger',
+                        style: { fontSize:12, padding:'4px 10px', background:'#ef4444', color:'white', border:'none', borderRadius:'4px', cursor:'pointer' },
+                        onClick: function(k){ return function(){ deleteSavedReportByKey(k); }; }(row.key)
+                      }, 'Delete')
+                    : null
                 );
               })
             )

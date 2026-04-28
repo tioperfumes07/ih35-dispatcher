@@ -6,7 +6,15 @@ import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { initializeDatabase } from "./lib/ensure-app-database-objects.mjs";
 import { getPool } from "./lib/db.mjs";
-import { authRequired, verifySessionToken } from "./lib/auth-users.mjs";
+import {
+  authRequired,
+  verifySessionToken,
+  readUsersStore,
+  writeUsersStore,
+  hashPassword,
+  verifyPassword,
+  signSessionToken
+} from "./lib/auth-users.mjs";
 import { mountErpCoreApi } from "./routes/erp-core-api.mjs";
 import { initializeDatabase as initializeFleetAccountingDb } from "./apps/fleet-reports-hub/server/lib/accounting-db.mjs";
 import { registerAccountingRoutes } from "./apps/fleet-reports-hub/server/lib/accounting-http.mjs";
@@ -65,6 +73,7 @@ function smokeApiSessionGate(req, res, next) {
   if (!req.path.startsWith("/api/")) return next();
   const pathOnly = String(req.path || "").split("?")[0];
   if (pathOnly === "/api/health" || pathOnly.startsWith("/api/health/")) return next();
+  if (pathOnly.startsWith("/api/auth/")) return next();
   if (pathOnly === "/api/__smoke_not_found__") return next();
   if (pathOnly === "/api/pdf/__smoke__") return next();
   const smokeGate = String(process.env.IH35_SMOKE_GATE || "").trim() === "1";
@@ -145,6 +154,167 @@ async function start() {
   );
 
   app.use(smokeApiSessionGate);
+
+  function normalizeRole(rawRole) {
+    const r = String(rawRole || '').trim().toLowerCase();
+    if (r === 'administrator') return 'admin';
+    if (['admin', 'manager', 'dispatcher', 'safety', 'accountant'].includes(r)) return r;
+    return 'dispatcher';
+  }
+
+  function authUserFromReq(req) {
+    const tok = readSessionTokenFromReq(req);
+    const v = tok && verifySessionToken(tok);
+    if (!v) return null;
+    return {
+      id: String(v.id || '').trim(),
+      email: String(v.email || '').trim(),
+      name: String(v.name || '').trim(),
+      role: normalizeRole(v.role || '')
+    };
+  }
+
+  function requireSignedIn(req, res) {
+    if (!authRequired()) return { id: '', email: '', name: 'operator', role: 'admin', authDisabled: true };
+    const user = authUserFromReq(req);
+    if (!user) {
+      res.status(401).json({ ok: false, error: 'Unauthorized' });
+      return null;
+    }
+    return user;
+  }
+
+  function requireAdmin(req, res) {
+    const user = requireSignedIn(req, res);
+    if (!user) return null;
+    if (!authRequired()) return user;
+    if (user.role !== 'admin') {
+      res.status(403).json({ ok: false, error: 'Admin role required' });
+      return null;
+    }
+    return user;
+  }
+
+  app.get('/api/auth/status', (_req, res) => {
+    const st = readUsersStore();
+    const hasUsers = Array.isArray(st.users) && st.users.length > 0;
+    res.json({ ok: true, hasUsers, authRequired: authRequired() });
+  });
+
+  app.get('/api/auth/me', (req, res) => {
+    if (!authRequired()) {
+      return res.json({ ok: true, authDisabled: true, user: null });
+    }
+    const user = authUserFromReq(req);
+    if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+    return res.json({ ok: true, authDisabled: false, user });
+  });
+
+  app.post('/api/auth/bootstrap-first-user', (req, res) => {
+    try {
+      const store = readUsersStore();
+      if (Array.isArray(store.users) && store.users.length > 0) {
+        return res.status(409).json({ ok: false, error: 'Users already exist. Use login.' });
+      }
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const password = String(req.body?.password || '');
+      const name = String(req.body?.name || '').trim() || email;
+      if (!email || !email.includes('@')) return res.status(400).json({ ok: false, error: 'Valid email is required' });
+      if (password.length < 6) return res.status(400).json({ ok: false, error: 'Password must be at least 6 characters' });
+      const user = {
+        id: `u_${Date.now().toString(36)}`,
+        email,
+        name,
+        role: 'admin',
+        passwordHash: hashPassword(password),
+        createdAt: new Date().toISOString()
+      };
+      writeUsersStore({ users: [user] });
+      const token = signSessionToken({ id: user.id, email: user.email, name: user.name, role: user.role });
+      return res.status(201).json({ ok: true, token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/auth/login', (req, res) => {
+    try {
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const password = String(req.body?.password || '');
+      if (!email || !password) return res.status(400).json({ ok: false, error: 'Email and password are required' });
+      const store = readUsersStore();
+      const user = (store.users || []).find((u) => String(u.email || '').trim().toLowerCase() === email);
+      if (!user || !verifyPassword(password, user.passwordHash)) {
+        return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      }
+      const token = signSessionToken({ id: user.id, email: user.email, name: user.name, role: normalizeRole(user.role) });
+      return res.json({ ok: true, token, user: { id: user.id, email: user.email, name: user.name, role: normalizeRole(user.role) } });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/users', (req, res) => {
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
+    const store = readUsersStore();
+    const users = (store.users || []).map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name || '',
+      role: normalizeRole(u.role || ''),
+      createdAt: u.createdAt || null
+    }));
+    return res.json({ ok: true, users });
+  });
+
+  app.post('/api/users', (req, res) => {
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const email = String(req.body?.email || '').trim().toLowerCase();
+      const password = String(req.body?.password || '');
+      const name = String(req.body?.name || '').trim() || email;
+      const role = normalizeRole(req.body?.role || 'dispatcher');
+      if (!email || !email.includes('@')) return res.status(400).json({ ok: false, error: 'Valid email is required' });
+      if (password.length < 6) return res.status(400).json({ ok: false, error: 'Password must be at least 6 characters' });
+      const store = readUsersStore();
+      if ((store.users || []).some((u) => String(u.email || '').trim().toLowerCase() === email)) {
+        return res.status(409).json({ ok: false, error: 'User already exists' });
+      }
+      const next = {
+        id: `u_${Date.now().toString(36)}`,
+        email,
+        name,
+        role,
+        passwordHash: hashPassword(password),
+        createdAt: new Date().toISOString()
+      };
+      store.users = [...(store.users || []), next];
+      writeUsersStore(store);
+      return res.status(201).json({ ok: true, user: { id: next.id, email: next.email, name: next.name, role: next.role } });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/users/:id', (req, res) => {
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'id required' });
+    const store = readUsersStore();
+    const users = store.users || [];
+    const target = users.find((u) => String(u.id) === id);
+    if (!target) return res.status(404).json({ ok: false, error: 'User not found' });
+    const admins = users.filter((u) => normalizeRole(u.role || '') === 'admin');
+    if (normalizeRole(target.role || '') === 'admin' && admins.length <= 1) {
+      return res.status(400).json({ ok: false, error: 'Cannot remove the last admin user' });
+    }
+    store.users = users.filter((u) => String(u.id) !== id);
+    writeUsersStore(store);
+    return res.json({ ok: true, removed: true, id });
+  });
 
   // Mount real ERP/Fleet API surfaces first (prevents stale/stub response regressions).
   mountErpCoreApi(app, { logError: console.error });
