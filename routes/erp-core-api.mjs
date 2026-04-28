@@ -2629,10 +2629,10 @@ export function mountErpCoreApi(app, opts = {}) {
       if (pool) {
         await dbQueryForRoute("UPDATE damage_reports SET status='acknowledged' WHERE id=$1", [req.params.id]);
       }
-      res.json({ ok: true, acknowledged: true });
+      res.json({ ok: true, acknowledged: true, data: { acknowledged: true } });
     } catch (e) {
       logError('POST /api/damage/reports/:id/acknowledge', e);
-      res.json({ ok: false, acknowledged: false });
+      res.json({ ok: false, acknowledged: false, data: { acknowledged: false } });
     }
   });
 
@@ -2712,7 +2712,7 @@ export function mountErpCoreApi(app, opts = {}) {
         };
         erp.workOrders = [row, ...list].slice(0, 1000);
         writeFullErpJson(erp);
-        return res.json({ ok: true, workOrder: row });
+        return res.json({ ok: true, workOrder: row, data: row });
       }
       await ensureWorkOrdersTable();
       const { rows } = await dbQueryForRoute(
@@ -2731,7 +2731,7 @@ export function mountErpCoreApi(app, opts = {}) {
           payload.source,
         ]
       );
-      return res.json({ ok: true, workOrder: rows?.[0] || null });
+      return res.json({ ok: true, workOrder: rows?.[0] || null, data: rows?.[0] || null });
     } catch (e) {
       logError('POST /api/work-orders', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });

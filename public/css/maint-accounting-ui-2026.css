@@ -3886,3 +3886,22 @@ body.erp-maintenance #erpDrawer #erpDrawerBody .search-row {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
+
+
+/* Wave 1 — shared click/scroll affordances for dashboard cards and panel previews. */
+body.erp-maintenance .maint-kpi-card--clickable {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+body.erp-maintenance .maint-kpi-card--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.18);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+body.erp-maintenance .erp-scroll-panel-400 {
+  max-height: 400px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}

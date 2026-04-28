@@ -1230,4 +1230,151 @@
   }
 
   global.erpToggleLegacyReportsCatalog = erpToggleLegacyReportsCatalog;
+
+  /** Wave 1: central section/subpage/anchor router for legacy ERP pages. */
+  function erpScrollToAnchor(anchorId) {
+    var id = String(anchorId || '').trim();
+    if (!id) return false;
+    var node = document.getElementById(id);
+    if (!node || typeof node.scrollIntoView !== 'function') return false;
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+
+  function erpOpenSectionSubPage(opts) {
+    var o = opts && typeof opts === 'object' ? opts : {};
+    var section = String(o.section || '').trim();
+    if (!section) return false;
+    var navSel = String(o.navSelector || '').trim();
+    var navBtn = navSel ? document.querySelector(navSel) : null;
+    if (typeof global.openSection === 'function') {
+      global.openSection(section, navBtn || undefined);
+    } else if (typeof global.openSectionByName === 'function') {
+      global.openSectionByName(section);
+    }
+
+    var subFnName = String(o.subPageFn || '').trim();
+    var args = Array.isArray(o.subPageArgs) ? o.subPageArgs : [];
+    if (subFnName && typeof global[subFnName] === 'function') {
+      try {
+        global[subFnName].apply(global, args);
+      } catch (_) {
+        // keep navigation resilient; anchor scroll still runs
+      }
+    }
+
+    var anchorId = String(o.anchorId || '').trim();
+    if (anchorId) {
+      var delay = Number(o.anchorDelayMs);
+      var ms = Number.isFinite(delay) ? Math.max(0, delay) : 30;
+      global.setTimeout(function () {
+        erpScrollToAnchor(anchorId);
+      }, ms);
+    }
+    return true;
+  }
+
+  /** Wave 1: close open modal surfaces globally with ESC. */
+  function erpCloseTopModalOnEscape(ev) {
+    if (!ev || ev.key !== 'Escape') return;
+    var actions = [
+      {
+        isOpen: function () {
+          var el = document.getElementById('erpDedicatedFormModal');
+          return !!el && !el.classList.contains('hidden');
+        },
+        close: function () {
+          if (typeof global.erpCloseDedicatedFormModal === 'function') global.erpCloseDedicatedFormModal({ force: true });
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('maintWorkOrderModal');
+          return !!el && el.classList.contains('on');
+        },
+        close: function () {
+          if (typeof global.closeMaintWorkOrderModal === 'function') global.closeMaintWorkOrderModal();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('shopDelayModal');
+          return !!el && el.classList.contains('on');
+        },
+        close: function () {
+          if (typeof global.closeShopDelayModal === 'function') global.closeShopDelayModal();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('shopQueueAddModal');
+          return !!el && el.classList.contains('on');
+        },
+        close: function () {
+          if (typeof global.closeShopQueueModal === 'function') global.closeShopQueueModal();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('maintCatModal');
+          return !!el && el.classList.contains('on');
+        },
+        close: function () {
+          if (typeof global.closeMaintCatModal === 'function') global.closeMaintCatModal();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('maintFleetTableModal');
+          return !!el && el.classList.contains('on');
+        },
+        close: function () {
+          if (typeof global.closeMaintFleetTableModal === 'function') global.closeMaintFleetTableModal();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('erpDrawer');
+          return !!el && !el.classList.contains('hidden');
+        },
+        close: function () {
+          if (typeof global.closeErpDrawer === 'function') global.closeErpDrawer();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('fleetHubOverlay');
+          return !!el && String(el.style.display || '').toLowerCase() === 'block';
+        },
+        close: function () {
+          if (typeof global.closeFleetHub === 'function') global.closeFleetHub();
+        },
+      },
+    ];
+
+    for (var i = 0; i < actions.length; i += 1) {
+      var item = actions[i];
+      try {
+        if (item.isOpen()) {
+          item.close();
+          ev.preventDefault();
+          return;
+        }
+      } catch (_) {
+        // continue to next known surface
+      }
+    }
+  }
+
+  function erpBindGlobalEscapeClose() {
+    if (global.__erpGlobalEscapeCloseBound) return;
+    global.__erpGlobalEscapeCloseBound = true;
+    document.addEventListener('keydown', erpCloseTopModalOnEscape);
+  }
+
+  global.erpScrollToAnchor = erpScrollToAnchor;
+  global.erpOpenSectionSubPage = erpOpenSectionSubPage;
+  global.erpCloseTopModalOnEscape = erpCloseTopModalOnEscape;
+  global.erpBindGlobalEscapeClose = erpBindGlobalEscapeClose;
+  erpBindGlobalEscapeClose();
 })(typeof window !== 'undefined' ? window : globalThis);

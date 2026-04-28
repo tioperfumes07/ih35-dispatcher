@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
@@ -43,15 +42,6 @@ const SMOKE_GATE_API_PATHS = new Set([
   "/api/integrity/counts",
   "/api/integrity/thresholds"
 ]);
-
-function readJsonFileSafe(filePath, fallback) {
-  try {
-    const raw = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
 
 function readSessionTokenFromReq(req) {
   const auth = String(req.headers.authorization || "").trim();
@@ -177,16 +167,6 @@ async function start() {
     }
   });
 
-  app.get("/api/health", (_req, res) => {
-    res.json({
-      ok: true,
-      version: deployRef,
-      serverTime: new Date().toISOString(),
-      hasSamsaraToken: false,
-      hasQboConfig: Boolean(String(process.env.QBO_CLIENT_ID || "").trim())
-    });
-  });
-
   app.get("/health", (_req, res) => {
     res.json({
       ok: true,
@@ -195,110 +175,9 @@ async function start() {
     });
   });
 
-  app.get("/api/health/db", async (_req, res) => {
-    if (!pool) {
-      return res.json({ ok: false, configured: false, error: "DATABASE_URL is not set" });
-    }
-    try {
-      await pool.query("SELECT 1 AS one");
-      return res.json({ ok: true, configured: true });
-    } catch (e) {
-      return res.status(503).json({ ok: false, configured: true, error: e?.message || String(e) });
-    }
-  });
-
-  app.get("/api/qbo/status", (_req, res) => {
-    const configured = Boolean(String(process.env.QBO_CLIENT_ID || "").trim());
-    res.json({ ok: true, connected: false, configured, realmId: null });
-  });
-
-  app.get("/api/qbo/sync-alerts", (_req, res) => {
-    const configured = Boolean(String(process.env.QBO_CLIENT_ID || "").trim());
-    res.json({
-      ok: true,
-      configured,
-      connected: false,
-      counts: { total: 0, errors: 0, warnings: 0 }
-    });
-  });
-
-  app.get("/api/accounting/qbo-items", (req, res) => {
-    const q = String(req.query.q || "").trim().toLowerCase();
-    const catalogPath = path.join(__dirname, "apps", "fleet-reports-hub", "server", "data", "accounting-catalog.json");
-    const catalog = readJsonFileSafe(catalogPath, { qboItems: [] });
-    const rows = Array.isArray(catalog?.qboItems) ? catalog.qboItems : [];
-    const items = q
-      ? rows.filter((it) =>
-          [it?.name, it?.category, it?.sku].some((v) => String(v || "").toLowerCase().includes(q))
-        )
-      : rows;
-    res.json({ ok: true, items });
-  });
-
-  app.get("/api/catalog/parts", (_req, res) => {
-    const partsPath = path.join(__dirname, "apps", "fleet-reports-hub", "server", "data", "parts-reference.json");
-    const parts = readJsonFileSafe(partsPath, []);
-    res.json({ ok: true, parts: Array.isArray(parts) ? parts : [] });
-  });
-
-  app.get("/api/catalog/service-types", (_req, res) => {
-    const serviceTypesPath = path.join(
-      __dirname,
-      "apps",
-      "fleet-reports-hub",
-      "server",
-      "data",
-      "service-types.json"
-    );
-    const services = readJsonFileSafe(serviceTypesPath, []);
-    res.json({ ok: true, services: Array.isArray(services) ? services : [] });
-  });
-
-  app.get("/api/maintenance/dashboard", (_req, res) => {
-    res.json({ ok: true, dashboard: [], vehicles: [], tireAlerts: [] });
-  });
-
+  // Keep legacy smoke-gate surface for maintenance records while canonical routes are expanded.
   app.get("/api/maintenance/records", (_req, res) => {
     res.json({ ok: true, records: [] });
-  });
-
-  app.get("/api/board", (_req, res) => {
-    res.json({ ok: true, vehicles: [], live: [], hos: [], assignments: [] });
-  });
-
-  app.get("/api/maintenance/service-types", (_req, res) => {
-    const serviceTypesPath = path.join(
-      __dirname,
-      "apps",
-      "fleet-reports-hub",
-      "server",
-      "data",
-      "service-types.json"
-    );
-    const rows = readJsonFileSafe(serviceTypesPath, []);
-    const names = Array.isArray(rows)
-      ? rows
-          .map((r) => String(r?.service_name || "").trim())
-          .filter(Boolean)
-      : [];
-    res.json({ ok: true, names });
-  });
-
-  app.get("/api/integrity/dashboard", (_req, res) => {
-    res.json({
-      ok: true,
-      alerts: [],
-      kpi: { active: 0, red: 0, amber: 0, resolvedThisMonth: 0 },
-      query: {}
-    });
-  });
-
-  app.get("/api/integrity/counts", (_req, res) => {
-    res.json({ ok: true, active: 0, red: 0, amber: 0, resolvedThisMonth: 0 });
-  });
-
-  app.get("/api/integrity/thresholds", (_req, res) => {
-    res.json({ ok: true, thresholds: { missingDriverPctWarn: 15 } });
   });
 
   app.get("/ih35-runtime.js", (_req, res) => {

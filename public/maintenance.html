@@ -17462,16 +17462,40 @@
     }
 
     function openDriversFuelHomePage() {
+      if (typeof erpOpenSectionSubPage === 'function') {
+        erpOpenSectionSubPage({
+          section: 'fuel',
+          navSelector: '.nav-btn[data-section=fuel]'
+        });
+        return;
+      }
       openSection('fuel', document.querySelector('.nav-btn[data-section=fuel]'));
     }
 
     function openDriversLeaveHomePage() {
+      if (typeof erpOpenSectionSubPage === 'function') {
+        erpOpenSectionSubPage({
+          section: 'drivers',
+          navSelector: '.nav-btn[data-section=drivers]',
+          anchorId: 'driversLeavePanel'
+        });
+        return;
+      }
       openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
       const panel = document.getElementById('driversLeavePanel');
       if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function openDriversProfilesHomePage() {
+      if (typeof erpOpenSectionSubPage === 'function') {
+        erpOpenSectionSubPage({
+          section: 'drivers',
+          navSelector: '.nav-btn[data-section=drivers]',
+          subPageFn: 'loadDriversProfilesLite',
+          anchorId: 'driversProfilesPanel'
+        });
+        return;
+      }
       openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
       loadDriversProfilesLite();
       const panel = document.getElementById('driversProfilesPanel');
@@ -17482,32 +17506,83 @@
       const t = String(target || '').trim();
       if (!t) return;
       if (t === 'tracked-assets' || t === 'vehicles-in-service') {
+        if (typeof erpOpenSectionSubPage === 'function') {
+          erpOpenSectionSubPage({
+            section: 'maintenance',
+            navSelector: '.nav-btn[data-section=maintenance]',
+            subPageFn: 'openMaintFleetTableModal'
+          });
+          return;
+        }
         openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
         if (typeof openMaintFleetTableModal === 'function') openMaintFleetTableModal();
         return;
       }
       if (t === 'assigned-working') {
+        if (typeof erpOpenSectionSubPage === 'function') {
+          erpOpenSectionSubPage({
+            section: 'safety',
+            navSelector: '.nav-btn[data-section=safety]',
+            subPageFn: 'openSafetyTab',
+            subPageArgs: ['safe-assign', document.querySelector('#section-safety .subtab[onclick*="safe-assign"]')]
+          });
+          return;
+        }
         openSection('safety', document.querySelector('.nav-btn[data-section=safety]'));
         if (typeof openSafetyTab === 'function') openSafetyTab('safe-assign', document.querySelector('#section-safety .subtab[onclick*="safe-assign"]'));
         return;
       }
       if (t === 'maintenance-past-due') {
+        if (typeof erpOpenSectionSubPage === 'function') {
+          erpOpenSectionSubPage({
+            section: 'maintenance',
+            navSelector: '.nav-btn[data-section=maintenance]',
+            subPageFn: 'openMaintMainTab',
+            subPageArgs: ['rm', document.querySelector('.maint-nav-tab[data-maint-main="rm"]'), { skipModal: true }]
+          });
+          return;
+        }
         openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
         if (typeof openMaintMainTab === 'function') openMaintMainTab('rm', document.querySelector('.maint-nav-tab[data-maint-main="rm"]'), { skipModal: true });
         return;
       }
       if (t === 'qbo-vendors') {
+        if (typeof erpOpenSectionSubPage === 'function') {
+          erpOpenSectionSubPage({
+            section: 'accounting',
+            navSelector: '.nav-btn[data-section=accounting]',
+            subPageFn: 'openAccountingTab',
+            subPageArgs: ['acct-lists', document.getElementById('acctListTabTrigger')]
+          });
+          return;
+        }
         openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
         if (typeof openAccountingTab === 'function') openAccountingTab('acct-lists', document.getElementById('acctListTabTrigger'));
         return;
       }
       if (t === 'open-damage-reports') {
+        if (typeof erpOpenSectionSubPage === 'function') {
+          erpOpenSectionSubPage({
+            section: 'drivers',
+            navSelector: '.nav-btn[data-section=drivers]',
+            anchorId: 'driversDamageReportsHome'
+          });
+          return;
+        }
         openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
         const panel = document.getElementById('driversDamageReportsHome');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
       if (t === 'pending-qbo-sync') {
+        if (typeof erpOpenSectionSubPage === 'function') {
+          erpOpenSectionSubPage({
+            section: 'accounting',
+            navSelector: '.nav-btn[data-section=accounting]',
+            anchorId: 'acctPendingQboSyncPanel'
+          });
+          return;
+        }
         openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'));
         const panel = document.getElementById('acctPendingQboSyncPanel');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
