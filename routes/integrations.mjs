@@ -57,4 +57,60 @@ router.get('/always-track/health', async (_req, res) => {
   }
 });
 
+
+// Relay fuel card integration
+router.get('/relay/settings', async (_req, res) => {
+  try {
+    const { dbQuery, getPool } = await import('../lib/db.mjs');
+    if (!getPool()) return res.json({ ok: true, settings: { enabled: false, auto_post_qbo: false } });
+    const { rows } = await dbQuery("SELECT value FROM integration_settings WHERE key = 'relay_settings' LIMIT 1");
+    const settings = rows?.[0]?.value ? JSON.parse(rows[0].value) : { enabled: false, auto_post_qbo: false };
+    return res.json({ ok: true, settings });
+  } catch (e) {
+    return res.json({ ok: true, settings: { enabled: false, auto_post_qbo: false } });
+  }
+});
+
+router.post('/relay/settings', async (req, res) => {
+  try {
+    const { dbQuery, getPool } = await import('../lib/db.mjs');
+    if (!getPool()) return res.json({ ok: false, error: 'No DB' });
+    const settings = req.body || {};
+    await dbQuery(
+      "INSERT INTO integration_settings (key, value) VALUES ('relay_settings', $1) ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()",
+      [JSON.stringify(settings)]
+    );
+    return res.json({ ok: true, settings });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.get('/relay/card-assignments', async (_req, res) => {
+  try {
+    const { dbQuery, getPool } = await import('../lib/db.mjs');
+    if (!getPool()) return res.json({ ok: true, data: [], count: 0 });
+    const { rows } = await dbQuery("SELECT * FROM relay_card_assignments WHERE active = true ORDER BY created_at DESC");
+    return res.json({ ok: true, data: rows || [], count: (rows || []).length });
+  } catch (e) {
+    return res.json({ ok: true, data: [], count: 0 });
+  }
+});
+
+router.post('/relay/card-assignments', async (req, res) => {
+  try {
+    const { dbQuery, getPool } = await import('../lib/db.mjs');
+    if (!getPool()) return res.status(500).json({ ok: false, error: 'No DB' });
+    const { card_last4, unit_number, driver_name, vendor_name, assigned_by, notes } = req.body || {};
+    if (!card_last4) return res.status(400).json({ ok: false, error: 'card_last4 required' });
+    const { rows } = await dbQuery(
+      "INSERT INTO relay_card_assignments (card_last4, unit_number, driver_name, vendor_name, assigned_by, notes) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (card_last4) WHERE active = true DO UPDATE SET unit_number=$2, driver_name=$3, vendor_name=$4, assigned_by=$5, notes=$6, updated_at=NOW() RETURNING *",
+      [card_last4, unit_number, driver_name, vendor_name, assigned_by, notes]
+    );
+    return res.json({ ok: true, data: rows?.[0] || {} });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 export default router;
