@@ -3,6 +3,7 @@
  */
 
 import { getPool, dbQuery } from '../lib/db.mjs';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { DEDUPE_SUPPORT_TABLE_NAMES } from '../lib/ensure-app-database-objects.mjs';
 import { readFullErpJson, writeFullErpJson } from '../lib/read-erp.mjs';
 import { mergeIntegrityThresholds, evaluateIntegrityCheck, defaultIntegrityThresholds } from '../lib/integrity-engine.mjs';
@@ -707,6 +708,43 @@ async function ensureIntegrationResilienceTables() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS relay_card_assignments (
+      id SERIAL PRIMARY KEY,
+      card_last4 TEXT NOT NULL,
+      unit_number TEXT,
+      driver_name TEXT,
+      vendor_name TEXT,
+      active BOOLEAN NOT NULL DEFAULT true,
+      assigned_by TEXT,
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await dbQuery(`
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_relay_card_assignments_card_last4_active
+    ON relay_card_assignments (card_last4)
+    WHERE active = true
+  `);
+  await dbQuery(`
+    CREATE INDEX IF NOT EXISTS idx_relay_card_assignments_unit
+    ON relay_card_assignments (unit_number, active)
+  `);
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS relay_webhook_events (
+      id SERIAL PRIMARY KEY,
+      external_event_id TEXT NOT NULL,
+      payload_hash TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'accepted',
+      error_message TEXT,
+      processed_count INTEGER NOT NULL DEFAULT 0,
+      received_at TIMESTAMPTZ DEFAULT NOW(),
+      processed_at TIMESTAMPTZ
+    )
+  `);
+  await dbQuery('CREATE UNIQUE INDEX IF NOT EXISTS uq_relay_webhook_events_external_event_id ON relay_webhook_events (external_event_id)');
+  await dbQuery('CREATE UNIQUE INDEX IF NOT EXISTS uq_relay_webhook_events_payload_hash ON relay_webhook_events (payload_hash)');
   return true;
 }
 
@@ -730,6 +768,67 @@ async function setIntegrationSetting(settingKey, settingValue) {
      DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = now()`,
     [String(settingKey || '').trim(), settingValue == null ? null : String(settingValue)]
   );
+}
+
+function toBoolSetting(v, fallback = false) {
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  if (!s) return Boolean(fallback);
+  if (['1', 'true', 'yes', 'on'].includes(s)) return true;
+  if (['0', 'false', 'no', 'off'].includes(s)) return false;
+  return Boolean(fallback);
+}
+
+function safeEqualText(a, b) {
+  const aa = Buffer.from(String(a || ''), 'utf8');
+  const bb = Buffer.from(String(b || ''), 'utf8');
+  if (aa.length === 0 || bb.length === 0 || aa.length !== bb.length) return false;
+  try {
+    return timingSafeEqual(aa, bb);
+  } catch {
+    return false;
+  }
+}
+
+function relayPayloadHash(payload) {
+  return createHash('sha256').update(JSON.stringify(payload || {})).digest('hex');
+}
+
+function relayExtractToken(req) {
+  const auth = String(req.headers?.authorization || '').trim();
+  if (auth.toLowerCase().startsWith('bearer ')) return auth.slice(7).trim();
+  const byHeader = String(req.headers?.['x-relay-token'] || req.headers?.['x-webhook-token'] || '').trim();
+  return byHeader || '';
+}
+
+function relayExtractSignature(req) {
+  return String(req.headers?.['x-relay-signature'] || req.headers?.['x-relay-signature-256'] || '').trim();
+}
+
+function relaySignatureValid(secret, payload, incoming) {
+  if (!String(secret || '').trim() || !String(incoming || '').trim()) return false;
+  const body = JSON.stringify(payload || {});
+  const digest = createHmac('sha256', String(secret)).update(body).digest('hex');
+  const normalizedIncoming = String(incoming).replace(/^sha256=/i, '').trim();
+  return safeEqualText(digest, normalizedIncoming);
+}
+
+function relayToArray(body) {
+  if (Array.isArray(body?.transactions)) return body.transactions;
+  if (Array.isArray(body?.events)) return body.events;
+  if (Array.isArray(body?.data)) return body.data;
+  if (body && typeof body === 'object') return [body];
+  return [];
+}
+
+function relayGetEventId(body) {
+  const v =
+    body?.event_id ||
+    body?.eventId ||
+    body?.id ||
+    body?.webhook_id ||
+    body?.transaction_id ||
+    body?.data?.id;
+  return String(v || '').trim();
 }
 
 function normalizeQboCatalogRow(entityType, row) {
@@ -1316,6 +1415,7 @@ export function mountErpCoreApi(app, opts = {}) {
       leave_requests: null,
       qbo_sync_queue: null,
       driver_schedules: null,
+      relay_webhook_events: null,
     };
     try {
       if (!getPoolForRoute()) {
@@ -3557,6 +3657,15 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS qbo_posted BOOLEAN DEFAULT false');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS state TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS miles_this_load NUMERIC');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_event_id TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_txn_id TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_card_last4 TEXT');
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_vendor TEXT');
+    await dbQuery(
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_fuel_expenses_relay_txn
+       ON fuel_expenses (relay_txn_id)
+       WHERE relay_txn_id IS NOT NULL`
+    );
     await dbQuery(
       `CREATE TABLE IF NOT EXISTS fuel_qbo_settings (
         id SERIAL PRIMARY KEY,
@@ -3706,6 +3815,318 @@ export function mountErpCoreApi(app, opts = {}) {
       return { ok: false, reason: e?.message || String(e) };
     }
   }
+
+  async function registerRelayWebhookEvent(externalEventId, payload) {
+    await ensureIntegrationResilienceTables();
+    const id = String(externalEventId || '').trim();
+    const hash = relayPayloadHash(payload);
+    if (!id) return { ok: false, error: 'missing_event_id', duplicate: false, payloadHash: hash };
+    try {
+      await dbQuery(
+        `INSERT INTO relay_webhook_events (external_event_id, payload_hash, status, received_at)
+         VALUES ($1,$2,'accepted',now())`,
+        [id, hash]
+      );
+      return { ok: true, duplicate: false, payloadHash: hash };
+    } catch (e) {
+      const msg = String(e?.message || e);
+      if (/duplicate key/i.test(msg) || /unique constraint/i.test(msg)) {
+        return { ok: true, duplicate: true, payloadHash: hash };
+      }
+      throw e;
+    }
+  }
+
+  async function finalizeRelayWebhookEvent(externalEventId, status, processedCount = 0, errorMessage = null) {
+    const id = String(externalEventId || '').trim();
+    if (!id) return;
+    await dbQuery(
+      `UPDATE relay_webhook_events
+          SET status = $2,
+              processed_count = $3,
+              error_message = $4,
+              processed_at = now()
+        WHERE external_event_id = $1`,
+      [id, String(status || 'processed').trim() || 'processed', Number(processedCount || 0), errorMessage ? String(errorMessage).slice(0, 800) : null]
+    );
+  }
+
+  app.get('/api/integrations/relay/settings', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        return res.json({
+          ok: true,
+          settings: {
+            enabled: false,
+            auto_post_qbo: false,
+            webhook_token_set: false,
+            webhook_secret_set: false,
+            endpoint: '/api/webhooks/relay',
+          },
+        });
+      }
+      await ensureIntegrationResilienceTables();
+      const enabled = toBoolSetting(await getIntegrationSetting('relay_webhook_enabled'), false);
+      const autoPost = toBoolSetting(await getIntegrationSetting('relay_auto_post_qbo'), false);
+      const token = String(await getIntegrationSetting('relay_webhook_token') || '').trim();
+      const secret = String(await getIntegrationSetting('relay_webhook_secret') || '').trim();
+      const updatedAt = await getIntegrationSetting('relay_settings_updated_at');
+      return res.json({
+        ok: true,
+        settings: {
+          enabled,
+          auto_post_qbo: autoPost,
+          webhook_token_set: Boolean(token),
+          webhook_secret_set: Boolean(secret),
+          endpoint: '/api/webhooks/relay',
+          updated_at: updatedAt || null,
+        },
+      });
+    } catch (e) {
+      logError('GET /api/integrations/relay/settings', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/integrations/relay/settings', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureIntegrationResilienceTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const enabled = Boolean(b.enabled);
+      const autoPost = Boolean(b.auto_post_qbo);
+      const token = String(b.webhook_token || '').trim();
+      const secret = String(b.webhook_secret || '').trim();
+      await setIntegrationSetting('relay_webhook_enabled', enabled ? '1' : '0');
+      await setIntegrationSetting('relay_auto_post_qbo', autoPost ? '1' : '0');
+      if (token) await setIntegrationSetting('relay_webhook_token', token);
+      if (secret) await setIntegrationSetting('relay_webhook_secret', secret);
+      await setIntegrationSetting('relay_settings_updated_at', new Date().toISOString());
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/integrations/relay/settings', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/integrations/relay/card-assignments', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, data: [] });
+      await ensureIntegrationResilienceTables();
+      const { rows } = await dbQueryForRoute(
+        `SELECT id, card_last4, unit_number, driver_name, vendor_name, active, assigned_by, notes, created_at, updated_at
+           FROM relay_card_assignments
+          ORDER BY active DESC, card_last4 ASC`
+      );
+      return res.json({ ok: true, data: rows || [] });
+    } catch (e) {
+      logError('GET /api/integrations/relay/card-assignments', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), data: [] });
+    }
+  });
+
+  app.post('/api/integrations/relay/card-assignments', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureIntegrationResilienceTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const cardLast4 = String(b.card_last4 || '').replace(/\D+/g, '').slice(-4);
+      if (cardLast4.length !== 4) return res.status(400).json({ ok: false, error: 'card_last4 must be 4 digits' });
+      const unit = String(b.unit_number || '').trim() || null;
+      const driver = String(b.driver_name || '').trim() || null;
+      const vendor = String(b.vendor_name || '').trim() || null;
+      const active = b.active == null ? true : Boolean(b.active);
+      const assignedBy = String(b.assigned_by || '').trim() || null;
+      const notes = String(b.notes || '').trim() || null;
+      await dbQueryForRoute(
+        `INSERT INTO relay_card_assignments (card_last4, unit_number, driver_name, vendor_name, active, assigned_by, notes, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,now())
+         ON CONFLICT (card_last4) WHERE active = true
+         DO UPDATE SET
+           unit_number = EXCLUDED.unit_number,
+           driver_name = EXCLUDED.driver_name,
+           vendor_name = EXCLUDED.vendor_name,
+           active = EXCLUDED.active,
+           assigned_by = EXCLUDED.assigned_by,
+           notes = EXCLUDED.notes,
+           updated_at = now()`,
+        [cardLast4, unit, driver, vendor, active, assignedBy, notes]
+      );
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/integrations/relay/card-assignments', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/integrations/relay/card-assignments/:cardLast4', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureIntegrationResilienceTables();
+      const cardLast4 = String(req.params?.cardLast4 || '').replace(/\D+/g, '').slice(-4);
+      if (cardLast4.length !== 4) return res.status(400).json({ ok: false, error: 'invalid cardLast4' });
+      await dbQueryForRoute(
+        `UPDATE relay_card_assignments
+            SET active = false, updated_at = now()
+          WHERE card_last4 = $1`,
+        [cardLast4]
+      );
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('DELETE /api/integrations/relay/card-assignments/:cardLast4', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/webhooks/relay', async (req, res) => {
+    const timeoutMs = 10000;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('relay webhook timeout')), timeoutMs)
+    );
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, ignored: true, reason: 'db_not_configured' });
+      await ensureIntegrationResilienceTables();
+      await ensureFuelExpenseTables();
+      const payload = req.body && typeof req.body === 'object' ? req.body : {};
+      const enabled = toBoolSetting(await getIntegrationSetting('relay_webhook_enabled'), false);
+      if (!enabled) return res.json({ ok: true, ignored: true, reason: 'relay_webhook_disabled' });
+
+      const token = String(await getIntegrationSetting('relay_webhook_token') || '').trim();
+      const secret = String(await getIntegrationSetting('relay_webhook_secret') || '').trim();
+      const hasAuthConfigured = Boolean(token || secret);
+      if (!hasAuthConfigured) {
+        return res.status(503).json({ ok: false, error: 'Relay webhook auth is not configured' });
+      }
+
+      const incomingToken = relayExtractToken(req);
+      const incomingSig = relayExtractSignature(req);
+      const tokenValid = token ? safeEqualText(token, incomingToken) : false;
+      const sigValid = secret ? relaySignatureValid(secret, payload, incomingSig) : false;
+      if (!tokenValid && !sigValid) {
+        return res.status(401).json({ ok: false, error: 'Relay webhook authentication failed' });
+      }
+
+      const eventId = relayGetEventId(payload) || `payload_${relayPayloadHash(payload).slice(0, 20)}`;
+      const registered = await registerRelayWebhookEvent(eventId, payload);
+      if (registered.duplicate) return res.json({ ok: true, duplicate: true, event_id: eventId, processed_count: 0 });
+
+      const process = async () => {
+        const rows = relayToArray(payload);
+        let processed = 0;
+        const autoPost = toBoolSetting(await getIntegrationSetting('relay_auto_post_qbo'), false);
+        for (const r of rows) {
+          if (!r || typeof r !== 'object') continue;
+          const relayTxnId = String(r.transaction_id || r.transactionId || r.id || '').trim() || null;
+          if (relayTxnId) {
+            const existing = await dbQueryForRoute(
+              'SELECT id FROM fuel_expenses WHERE relay_txn_id = $1 LIMIT 1',
+              [relayTxnId]
+            );
+            if (existing?.rows?.[0]?.id) continue;
+          }
+          const cardLast4 = String(r.card_last4 || r.cardLast4 || r.card || '').replace(/\D+/g, '').slice(-4) || null;
+          let assignment = null;
+          if (cardLast4) {
+            const { rows: aRows } = await dbQueryForRoute(
+              `SELECT card_last4, unit_number, driver_name, vendor_name
+                 FROM relay_card_assignments
+                WHERE card_last4 = $1 AND active = true
+                LIMIT 1`,
+              [cardLast4]
+            );
+            assignment = aRows?.[0] || null;
+          }
+
+          const unit = String(r.unit_number || r.unit || r.truck_number || assignment?.unit_number || '').trim() || null;
+          const driver = String(r.driver_name || r.driver || assignment?.driver_name || '').trim() || null;
+          const vendor = String(r.vendor_name || r.vendor || assignment?.vendor_name || '').trim() || null;
+          const fuelType = normalizeFuelTypeKey(r.fuel_type || r.product_type || r.kind || 'diesel') || 'diesel';
+          const gallons = r.gallons == null ? Number(r.volume ?? r.quantity ?? 0) : Number(r.gallons);
+          const totalAmount = Number(r.total_amount ?? r.total_price ?? r.amount ?? 0);
+          const pricePerGallon =
+            Number.isFinite(gallons) && gallons > 0 && Number.isFinite(totalAmount)
+              ? Number((totalAmount / gallons).toFixed(4))
+              : null;
+          const station = String(r.station_name || r.station || r.merchant || '').trim() || null;
+          const location = String(r.location || r.city_state || r.address || '').trim() || null;
+          const stateCode = String(r.state || '').trim().toUpperCase() || detectStateFromText(location || station || '');
+          const loadNumber = String(r.load_number || r.load || '').trim() || null;
+          const milesThisLoad = r.miles_this_load == null || r.miles_this_load === '' ? null : Number(r.miles_this_load);
+
+          const { rows: inserted } = await dbQueryForRoute(
+            `INSERT INTO fuel_expenses (
+              unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
+              load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo,
+              qbo_posted, state, miles_this_load, relay_event_id, relay_txn_id, relay_card_last4, relay_vendor
+            ) VALUES (
+              $1,$2,$3,$4,$5,$6,
+              $7,$8,$9,$10,$11,$12,
+              false,$13,$14,$15,$16,$17,$18
+            )
+            ON CONFLICT (relay_txn_id) WHERE relay_txn_id IS NOT NULL DO NOTHING
+            RETURNING *`,
+            [
+              unit,
+              driver,
+              fuelType,
+              Number.isFinite(gallons) ? gallons : null,
+              Number.isFinite(pricePerGallon) ? pricePerGallon : null,
+              Number.isFinite(totalAmount) ? totalAmount : null,
+              loadNumber,
+              null,
+              loadNumber,
+              station,
+              location,
+              null,
+              stateCode || null,
+              Number.isFinite(milesThisLoad) ? milesThisLoad : null,
+              eventId,
+              relayTxnId,
+              cardLast4,
+              vendor,
+            ]
+          );
+          const expense = inserted?.[0] || null;
+          if (!expense) continue;
+          processed += 1;
+
+          if (autoPost) {
+            const qboState = qboConnectionFlags();
+            if (!qboState.connected) {
+              await enqueueQboSyncQueue(
+                'fuel',
+                expense.id,
+                { mode: 'fuel_expense_post', expense_id: expense.id, payload: { source: 'relay_webhook', relay_event_id: eventId } },
+                'Relay auto-post deferred: QBO disconnected'
+              ).catch(() => null);
+            } else {
+              const posted = await postFuelExpenseToQbo(expense);
+              if (!posted?.ok) {
+                await enqueueQboSyncQueue(
+                  'fuel',
+                  expense.id,
+                  { mode: 'fuel_expense_post', expense_id: expense.id, payload: { source: 'relay_webhook', relay_event_id: eventId } },
+                  posted?.reason || 'Relay auto-post to QBO failed'
+                ).catch(() => null);
+              }
+            }
+          }
+        }
+        return processed;
+      };
+
+      const processedCount = await Promise.race([process(), timeoutPromise]);
+      await finalizeRelayWebhookEvent(eventId, 'processed', Number(processedCount || 0), null);
+      return res.json({ ok: true, event_id: eventId, processed_count: Number(processedCount || 0) });
+    } catch (e) {
+      logError('POST /api/webhooks/relay', e);
+      const eventId = relayGetEventId(req.body || {});
+      if (eventId) {
+        await finalizeRelayWebhookEvent(eventId, 'error', 0, e?.message || String(e)).catch(() => null);
+      }
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
 
   app.get('/api/fuel/expense-mapping', async (_req, res) => {
     try {

@@ -4336,6 +4336,40 @@
                   </div>
                 </div>
               </div>
+              <div class="acct-fuel-relay-import-panel" style="margin:0 0 14px;padding:12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg-card)">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                  <div class="qb-l" style="margin:0">Relay webhook settings (foundation)</div>
+                  <button type="button" class="qb-btn-add" onclick="loadRelayWebhookSettings()">Refresh</button>
+                </div>
+                <div class="wo-line-grid" style="margin:0 0 10px">
+                  <label>
+                    <span class="qb-l">Enable webhook</span>
+                    <select id="relayWebhookEnabled" class="qb-in">
+                      <option value="1">Enabled</option>
+                      <option value="0">Disabled</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span class="qb-l">Auto-post to QuickBooks</span>
+                    <select id="relayAutoPostQbo" class="qb-in">
+                      <option value="1">Enabled</option>
+                      <option value="0">Disabled</option>
+                    </select>
+                  </label>
+                  <label style="grid-column:span 2">
+                    <span class="qb-l">Webhook token (Bearer / x-relay-token)</span>
+                    <input id="relayWebhookToken" class="qb-in" type="password" placeholder="Optional: set/rotate token" autocomplete="off" />
+                  </label>
+                  <label style="grid-column:span 2">
+                    <span class="qb-l">Webhook HMAC secret (x-relay-signature)</span>
+                    <input id="relayWebhookSecret" class="qb-in" type="password" placeholder="Optional: set/rotate secret" autocomplete="off" />
+                  </label>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <button type="button" class="qb-btn-primary" onclick="saveRelayWebhookSettings()">Save Relay settings</button>
+                  <span id="relayWebhookSettingsStatus" class="mini-note"></span>
+                </div>
+              </div>
               <div id="fuelExpStatus" class="mini-note" style="margin-bottom:8px">Open this tab and refresh.</div>
               <div
                 id="fuelExpLedgerAnchor"
@@ -11954,6 +11988,7 @@
       if (id === 'acct-fuel-expense') {
         bindFuelManualFormOnce();
         void loadFuelExpenseTab().then(() => {
+          loadRelayWebhookSettings();
           if (typeof erpInitFuelLedgerDateBar === 'function') erpInitFuelLedgerDateBar();
           requestAnimationFrame(() => {
             const anchor = document.getElementById('fuelExpLedgerAnchor');
@@ -16146,6 +16181,61 @@
           ph.innerHTML = '';
           ph.hidden = true;
         }
+      }
+    }
+
+    async function loadRelayWebhookSettings() {
+      const status = document.getElementById('relayWebhookSettingsStatus');
+      const enabledEl = document.getElementById('relayWebhookEnabled');
+      const autoEl = document.getElementById('relayAutoPostQbo');
+      const tokenEl = document.getElementById('relayWebhookToken');
+      const secretEl = document.getElementById('relayWebhookSecret');
+      if (!enabledEl || !autoEl || !tokenEl || !secretEl) return;
+      if (status) status.textContent = 'Loading Relay settings...';
+      try {
+        const data = await j('/api/integrations/relay/settings');
+        const s = data && data.settings && typeof data.settings === 'object' ? data.settings : {};
+        enabledEl.value = s.enabled ? '1' : '0';
+        autoEl.value = s.auto_post_qbo ? '1' : '0';
+        tokenEl.value = '';
+        secretEl.value = '';
+        if (status) {
+          status.textContent =
+            `Endpoint: /api/webhooks/relay · token: ${s.webhook_token_set ? 'set' : 'not set'} · secret: ${s.webhook_secret_set ? 'set' : 'not set'}`;
+        }
+      } catch (e) {
+        if (status) status.textContent = e?.message || String(e);
+      }
+    }
+
+    async function saveRelayWebhookSettings() {
+      const status = document.getElementById('relayWebhookSettingsStatus');
+      const enabledEl = document.getElementById('relayWebhookEnabled');
+      const autoEl = document.getElementById('relayAutoPostQbo');
+      const tokenEl = document.getElementById('relayWebhookToken');
+      const secretEl = document.getElementById('relayWebhookSecret');
+      if (!enabledEl || !autoEl || !tokenEl || !secretEl) return;
+      if (status) status.textContent = 'Saving Relay settings...';
+      try {
+        const payload = {
+          enabled: enabledEl.value === '1',
+          auto_post_qbo: autoEl.value === '1',
+          webhook_token: String(tokenEl.value || '').trim(),
+          webhook_secret: String(secretEl.value || '').trim(),
+        };
+        const r = await fetch('/api/integrations/relay/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...erpWriteHeaders() },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data?.ok === false) throw new Error(data?.error || r.statusText || 'Failed to save Relay settings');
+        if (status) status.textContent = 'Relay settings saved.';
+        tokenEl.value = '';
+        secretEl.value = '';
+        await loadRelayWebhookSettings();
+      } catch (e) {
+        if (status) status.textContent = e?.message || String(e);
       }
     }
 
