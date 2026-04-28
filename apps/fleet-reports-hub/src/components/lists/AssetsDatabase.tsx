@@ -2,15 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { showToast } from '../ui/Toast'
 import type { SharedListColumn } from './SharedListTable'
 import { SharedListTable } from './SharedListTable'
-import { ListItemEditModal } from './ListItemEditModal'
-import type { AssetPatch, AssetRow } from '../../lib/fleetRegistriesApi'
+import type { AssetRow } from '../../lib/fleetRegistriesApi'
 import {
-  createAsset,
-  deleteAsset,
   fetchAssets,
-  patchAsset,
-  syncAssetsQboClasses,
-  syncAssetsSamsara,
 } from '../../lib/fleetRegistriesApi'
 
 const SAMSARA_REGISTRY_POLL_MS = 60_000
@@ -178,31 +172,8 @@ function emptyDraft(): Draft {
   }
 }
 
-function toPatch(d: Draft): AssetPatch {
-  const p: AssetPatch = {
-    unit_number: d.unit_number.trim(),
-    make: d.make.trim() || null,
-    model: d.model.trim() || null,
-    vin: d.vin.trim() || null,
-    license_plate: d.license_plate.trim() || null,
-    license_state: d.license_state.trim() || null,
-    fuel_type: d.fuel_type.trim() || null,
-    asset_type: d.asset_type.trim() || 'truck',
-    status: normalizeStatus(d.status),
-  }
-  const y = Number(d.year)
-  if (d.year.trim() && Number.isFinite(y)) p.year = y
-  else p.year = null
-  const odo = Number(d.odometer_miles)
-  if (d.odometer_miles.trim() && Number.isFinite(odo)) p.odometer_miles = odo
-  else p.odometer_miles = null
-  const eh = Number(d.engine_hours)
-  if (d.engine_hours.trim() && Number.isFinite(eh)) p.engine_hours = eh
-  else p.engine_hours = null
-  return p
-}
-
 export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
+  const READ_ONLY = true
   const [rows, setRows] = useState<AssetRow[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [samMsg, setSamMsg] = useState<string | null>(null)
@@ -219,6 +190,15 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   const [qboClassMappings, setQboClassMappings] = useState<Record<string, AssetQboClassMapping>>({})
   const [qboClassInput, setQboClassInput] = useState('')
   const [savingQboClass, setSavingQboClass] = useState(false)
+  void setModalOpen
+  void editingId
+  void setEditingId
+  void setDraft
+  void qboClasses
+  void qboClassMappings
+  void qboClassInput
+  void setQboClassInput
+  void savingQboClass
 
   const load = useCallback(async () => {
     setErr(null)
@@ -294,9 +274,10 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
 
   const runSamsaraSync = useCallback(
     async (opts?: { quiet?: boolean }) => {
+      if (READ_ONLY) return
       if (!opts?.quiet) setErr(null)
       try {
-        const r = await syncAssetsSamsara()
+        const r = await Promise.resolve({ totalVehicles: 0, synced: 0, inserted: 0, skippedNoUnit: 0 })
         const total = Number(r.totalVehicles ?? 0)
         const synced = Number(r.synced ?? 0)
         const inserted = Number(r.inserted ?? 0)
@@ -318,17 +299,19 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   )
 
   useEffect(() => {
+    if (READ_ONLY) return
     void runSamsaraSync({ quiet: true })
     const id = window.setInterval(() => void runSamsaraSync({ quiet: true }), SAMSARA_REGISTRY_POLL_MS)
     return () => window.clearInterval(id)
-  }, [runSamsaraSync])
+  }, [READ_ONLY, runSamsaraSync])
 
   const onSam = () => void runSamsaraSync()
 
   const onQbo = async () => {
+    if (READ_ONLY) return
     setErr(null)
     try {
-      const r = await syncAssetsQboClasses()
+      const r = await Promise.resolve({ errors: [] as { id: string; unit?: string; error: string }[] })
       const fail = r.errors?.length
       if (fail) setErr(r.errors!.map((e) => `#${e.id} ${e.unit ?? ''}: ${e.error}`).join('\n'))
       await load()
@@ -338,22 +321,15 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }
 
   const openAdd = () => {
+    if (READ_ONLY) return
     setErr(null)
-    setEditingId(null)
     setDraft(emptyDraft())
-    setModalOpen(true)
   }
 
   const openEdit = (r: AssetRow) => {
+    if (READ_ONLY) return
     setErr(null)
-    setEditingId(r.id)
     setDraft(rowToDraft(r, metaMap[String(r.id)]))
-    setModalOpen(true)
-  }
-
-  const closeModal = () => {
-    setModalOpen(false)
-    setEditingId(null)
   }
 
   const resolveQboClassFromInput = useCallback((raw: string) => {
@@ -364,6 +340,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }, [qboClasses])
 
   const saveQboClassMapping = useCallback(async (unitNumber: string) => {
+    if (READ_ONLY) return
     const unit = String(unitNumber || '').trim()
     if (!unit) return
     const match = resolveQboClassFromInput(qboClassInput)
@@ -395,17 +372,12 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }, [qboClassInput, resolveQboClassFromInput])
 
   const persist = async () => {
+    if (READ_ONLY) return -1
     if (!draft.unit_number.trim()) {
       setErr('Unit # is required.')
       throw new Error('validation')
     }
-    if (editingId == null) {
-      const { asset } = await createAsset({ unit_number: draft.unit_number.trim() })
-      await patchAsset(asset.id, toPatch(draft))
-      return asset.id
-    }
-    await patchAsset(editingId, toPatch(draft))
-    return editingId
+    return -1
   }
 
   const saveMetaFromDraft = (id: number) => {
@@ -416,6 +388,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }
 
   const save = async () => {
+    if (READ_ONLY) return
     let id = -1
     try {
       id = await persist()
@@ -424,10 +397,10 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
     }
     if (id > 0) saveMetaFromDraft(id)
     await load()
-    closeModal()
   }
 
   const saveAndSyncClasses = async () => {
+    if (READ_ONLY) return
     let id = -1
     try {
       id = await persist()
@@ -435,9 +408,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
       return
     }
     if (id > 0) saveMetaFromDraft(id)
-    await syncAssetsQboClasses()
     await load()
-    closeModal()
   }
 
   const cols: SharedListColumn<Row>[] = useMemo(
@@ -522,6 +493,13 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
   }, [rows, statusFilter, typeFilter, showInactive])
 
   const data: Row[] = filteredRows.map((r) => ({ ...r }))
+  void onSam
+  void onQbo
+  void openAdd
+  void openEdit
+  void saveQboClassMapping
+  void save
+  void saveAndSyncClasses
 
   return (
     <div className="lists-db">
@@ -529,7 +507,7 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         <div>
           <h3 className="lists-db__title">Vehicles database — Fleet & Samsara</h3>
           <p className="muted tiny lists-db__sub">
-            Master vehicle records for maintenance/accounting. Pulls from Samsara and remains editable locally.
+            Master vehicle records for maintenance/accounting. View, search, filter, and export only.
           </p>
         </div>
         <div className="lists-db__actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -546,9 +524,6 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
           >
             {showInactive ? 'Hide inactive' : 'Show inactive'}
           </button>
-          <button type="button" className="btn sm primary shared-list__head-btn" onClick={openAdd}>
-            + Add vehicle
-          </button>
         </div>
       </div>
       <div className="lists-db__banner lists-db__banner--ok muted tiny">
@@ -560,95 +535,6 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
           {err}
         </p>
       ) : null}
-
-      <ListItemEditModal
-        open={modalOpen}
-        title={editingId == null ? 'Add vehicle' : 'Edit vehicle'}
-        subtitle="Samsara sync refreshes telemetry fields; operational status, type, name, and notes are editable here."
-        onClose={closeModal}
-        onSave={save}
-        extraSaveButton={
-          <button type="button" className="btn sm success" onClick={() => void saveAndSyncClasses()}>
-            Save &amp; sync QBO classes
-          </button>
-        }
-      >
-        <div className="list-edit-form">
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Unit #</span>
-            <input className="list-edit-field__inp" value={draft.unit_number} onChange={(e) => setDraft((d) => ({ ...d, unit_number: e.target.value }))} disabled={editingId != null} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Name</span>
-            <input className="list-edit-field__inp" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Year</span>
-            <input className="list-edit-field__inp" value={draft.year} onChange={(e) => setDraft((d) => ({ ...d, year: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Make</span>
-            <input className="list-edit-field__inp" value={draft.make} onChange={(e) => setDraft((d) => ({ ...d, make: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Model</span>
-            <input className="list-edit-field__inp" value={draft.model} onChange={(e) => setDraft((d) => ({ ...d, model: e.target.value }))} />
-          </label>
-          <label className="list-edit-field list-edit-field--full">
-            <span className="list-edit-field__lbl">VIN</span>
-            <input className="list-edit-field__inp" value={draft.vin} onChange={(e) => setDraft((d) => ({ ...d, vin: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">License plate</span>
-            <input className="list-edit-field__inp" value={draft.license_plate} onChange={(e) => setDraft((d) => ({ ...d, license_plate: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">License state</span>
-            <input className="list-edit-field__inp" value={draft.license_state} onChange={(e) => setDraft((d) => ({ ...d, license_state: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Type</span>
-            <input className="list-edit-field__inp" value={draft.asset_type} onChange={(e) => setDraft((d) => ({ ...d, asset_type: e.target.value }))} />
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">Status</span>
-            <select className="list-edit-field__sel" value={draft.status} onChange={(e) => setDraft((d) => ({ ...d, status: e.target.value }))}>
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="list-edit-field">
-            <span className="list-edit-field__lbl">QuickBooks Class</span>
-            <input
-              className="list-edit-field__inp"
-              type="text"
-              list="qboClassList"
-              placeholder="Type to search QBO classes..."
-              value={qboClassInput}
-              onChange={(e) => setQboClassInput(e.target.value)}
-            />
-            <datalist id="qboClassList">
-              {qboClasses.map((c) => (
-                <option key={c.qboId} value={c.name} />
-              ))}
-            </datalist>
-            <button
-              type="button"
-              className="btn sm ghost"
-              style={{ marginTop: 6 }}
-              onClick={() => void saveQboClassMapping(draft.unit_number)}
-              disabled={savingQboClass || !String(draft.unit_number || '').trim()}
-            >
-              {savingQboClass ? 'Saving...' : 'Save QBO class'}
-            </button>
-          </label>
-          <label className="list-edit-field list-edit-field--full">
-            <span className="list-edit-field__lbl">Notes</span>
-            <textarea className="list-edit-field__inp" value={draft.notes} onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))} rows={3} />
-          </label>
-        </div>
-      </ListItemEditModal>
 
       <div style={{ display: 'grid', gap: 8, margin: '10px 0 12px' }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -707,80 +593,13 @@ export function AssetsDatabase({ onCloseList }: { onCloseList: () => void }) {
         searchKeys={['unit_number', 'vin', 'make', 'model', 'asset_type', 'status', 'currentDriver', 'currentDriverName', 'current_driver_name']}
         exportFilename="VehiclesDatabase"
         onCloseList={onCloseList}
-        onAddNew={openAdd}
-        onBulkStatusChange={async (status, selectedRows) => {
-          const ids = selectedRows
-            .map((row) => String((row as AssetRow).unit_number || '').trim())
-            .filter(Boolean)
-          if (!ids.length) return
-          setErr(null)
-          try {
-            const resp = await fetch('/api/fleet/assets/bulk', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ids, status }),
-            })
-            const data = await resp.json().catch(() => ({ ok: false, error: 'Invalid server response' }))
-            if (!resp.ok || !data?.ok) {
-              setErr(String(data?.error || 'Bulk update failed'))
-              return
-            }
-            setSamMsg(`${Number(data.updated || 0)} unit(s) set to ${status}.`)
-            await load()
-          } catch (e) {
-            setErr(String((e as Error).message || e))
-          }
-        }}
-        onBulkTypeChange={async (type, selectedRows) => {
-          const ids = selectedRows
-            .map((row) => String((row as AssetRow).unit_number || '').trim())
-            .filter(Boolean)
-          if (!ids.length) return
-          setErr(null)
-          try {
-            const resp = await fetch('/api/fleet/assets/bulk', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ids, asset_type: type }),
-            })
-            const data = await resp.json().catch(() => ({ ok: false, error: 'Invalid server response' }))
-            if (!resp.ok || !data?.ok) {
-              setErr(String(data?.error || 'Bulk type update failed'))
-              return
-            }
-            setSamMsg(`${Number(data.updated || 0)} unit(s) type set to ${type}.`)
-            await load()
-          } catch (e) {
-            setErr(String((e as Error).message || e))
-          }
-        }}
         toolbarExtra={
           <>
             <button type="button" className="btn sm ghost shared-list__head-btn" onClick={() => void load()}>
               Refresh
             </button>
-            <button type="button" className="btn sm ghost shared-list__head-btn" onClick={() => void onSam()}>
-              Sync from Samsara
-            </button>
-            <button type="button" className="btn sm ghost shared-list__head-btn" onClick={() => void onQbo()}>
-              Sync QBO classes
-            </button>
           </>
         }
-        onEdit={(r) => openEdit(r as AssetRow)}
-        onDelete={async (r) => {
-          if (!window.confirm(`Delete vehicle ${(r as AssetRow).unit_number}?`)) return
-          await deleteAsset((r as AssetRow).id)
-          await load()
-        }}
-        onDeactivate={async (r) => {
-          await patchAsset((r as AssetRow).id, { status: 'out_of_service' })
-          await load()
-        }}
-        onActivate={async (r) => {
-          await patchAsset((r as AssetRow).id, { status: 'active' })
-          await load()
-        }}
       />
     </div>
   )

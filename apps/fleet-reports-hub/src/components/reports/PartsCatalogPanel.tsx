@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ModalFullscreenToggle } from '../ModalFullscreenToggle'
 import { MODAL_FULLSCREEN_STYLE, useFullScreen } from '../../hooks/useFullScreen'
 import { useColumnResize } from '../../hooks/useColumnResize'
@@ -58,8 +58,7 @@ function statusLabel(s: DisplayRow['status']) {
 
 export function PartsCatalogPanel() {
   const { isFullScreen, toggle } = useFullScreen()
-  const col = useColumnResize([160, 88, 100, 64, 80, 88, 72])
-  const newNameRef = useRef<HTMLInputElement>(null)
+  const col = useColumnResize([160, 88, 100, 64, 80, 88])
   const [rows, setRows] = useState<DisplayRow[]>(() =>
     mergePartsCatalog([], PARTS_CATALOG_SEED),
   )
@@ -69,11 +68,6 @@ export function PartsCatalogPanel() {
   const [q, setQ] = useState('')
   const [cat, setCat] = useState('')
   const [status, setStatus] = useState<'all' | 'in' | 'low' | 'out'>('all')
-  const [draftName, setDraftName] = useState('')
-  const [draftNo, setDraftNo] = useState('')
-  const [draftCat, setDraftCat] = useState('general')
-  const [draftQty, setDraftQty] = useState('1')
-  const [draftCost, setDraftCost] = useState('')
 
   /** Merge API parts with embedded seed so rows always appear when the API is empty or partial. */
   const load = useCallback(async () => {
@@ -168,25 +162,6 @@ export function PartsCatalogPanel() {
     exportJsonRowsToXlsx(rows, 'PartsCatalog')
   }
 
-  const addRow = () => {
-    const name = draftName.trim()
-    if (!name) return
-    const cost = parseFloat(draftCost) || 0
-    const base: PartRefApiRow = {
-      category: draftCat.trim() || 'custom',
-      part_name: name,
-      cost_low: cost * 0.9,
-      cost_mid: cost,
-      cost_high: cost * 1.1,
-      notes: draftNo ? `PN ${draftNo}` : '',
-    }
-    setRows((prev) => [...prev, toDisplay(base, prev.length)])
-    setDraftName('')
-    setDraftNo('')
-    setDraftQty('1')
-    setDraftCost('')
-  }
-
   const rootStyle = isFullScreen ? MODAL_FULLSCREEN_STYLE : undefined
 
   return (
@@ -199,16 +174,6 @@ export function PartsCatalogPanel() {
           </button>
           <button type="button" className="btn sm fr-parts__tb-btn" onClick={exportXlsx}>
             Export to Excel
-          </button>
-          <button
-            type="button"
-            className="btn sm primary fr-parts__tb-btn"
-            onClick={() => {
-              newNameRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-              window.setTimeout(() => newNameRef.current?.focus(), 200)
-            }}
-          >
-            + Add part
           </button>
           <ModalFullscreenToggle
             isFullScreen={isFullScreen}
@@ -271,15 +236,7 @@ export function PartsCatalogPanel() {
           <thead>
             <tr>
               {(
-                [
-                  'Part name',
-                  'Part #',
-                  'Category',
-                  'Stock',
-                  'Unit cost',
-                  'Status',
-                  '',
-                ] as const
+                ['Part name', 'Part #', 'Category', 'Stock', 'Unit cost', 'Status'] as const
               ).map((h, i) => (
                 <th key={h || 'act'} className="fr-parts__th fr-th-resizable" style={{ width: col.widths[i] }}>
                   {h}
@@ -309,59 +266,10 @@ export function PartsCatalogPanel() {
                     {statusLabel(r.status)}
                   </span>
                 </td>
-                <td>
-                  <button type="button" className="btn sm">
-                    Edit
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="fr-parts__newrow">
-        <span className="fr-parts__newrow-lbl muted">New row:</span>
-        <input
-          ref={newNameRef}
-          className="fr-parts__cell-inp fr-parts__cell-inp--grow"
-          placeholder="Part name"
-          value={draftName}
-          onChange={(e) => setDraftName(e.target.value)}
-        />
-        <input
-          className="fr-parts__cell-inp"
-          placeholder="Part #"
-          value={draftNo}
-          onChange={(e) => setDraftNo(e.target.value)}
-        />
-        <select
-          className="fr-parts__cell-inp fr-parts__cell-sel"
-          value={draftCat}
-          onChange={(e) => setDraftCat(e.target.value)}
-        >
-          <option value="general">Category</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <input
-          className="fr-parts__cell-inp fr-parts__cell-qty"
-          placeholder="Qty"
-          value={draftQty}
-          onChange={(e) => setDraftQty(e.target.value)}
-        />
-        <input
-          className="fr-parts__cell-inp fr-parts__cell-cost"
-          placeholder="Cost"
-          value={draftCost}
-          onChange={(e) => setDraftCost(e.target.value)}
-        />
-        <button type="button" className="btn sm fr-parts__add-row" onClick={addRow}>
-          + Add row
-        </button>
       </div>
 
       <p className="fr-parts__hint muted">Drag column edges to resize · Tab to navigate</p>

@@ -1207,7 +1207,7 @@ export default function App() {
               </p>
               {FLEET_REPORTS_READ_ONLY ? (
                 <p className="muted" style={{ marginTop: 6 }}>
-                  Fleet Reports Hub is read-only. Create or edit records in Maintenance.
+                  Fleet Reports — View &amp; Export Only. To create or edit records, use the Maintenance system.
                 </p>
               ) : null}
               <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
