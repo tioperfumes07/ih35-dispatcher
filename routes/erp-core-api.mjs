@@ -1529,76 +1529,42 @@ export function mountErpCoreApi(app, opts = {}) {
       const statusQ = String(req.query?.status || '').trim().toLowerCase();
       const assets = await getMergedFleetAssetProfiles(logError);
 
-      const token = String(process.env.SAMSARA_API_TOKEN || '').trim();
-      let assignList = [];
-      let hosRows = [];
-      let cachedAssignments = [];
-      if (token) {
-        const assignments = await getDriverVehicleAssignments(token, {}).catch(() => ({ data: [] }));
-        assignList = Array.isArray(assignments?.data)
-          ? assignments.data
-          : Array.isArray(assignments)
-            ? assignments
-            : [];
-
-        const hosData = await samsaraGet('/fleet/hos/clocks', token, {}).catch(() => ({ data: [] }));
-        hosRows = Array.isArray(hosData?.data) ? hosData.data : [];
-        if (hosRows.length) {
-          await upsertSamsaraAssignmentsFromHosRows(hosRows).catch(() => 0);
-        }
-      }
-      if (!hosRows.length) {
-        cachedAssignments = await readCachedSamsaraAssignments().catch(() => []);
-      }
-
-      const hosByUnit = new Map();
-      hosRows.forEach((row) => {
-        const unitName = String(row?.currentVehicle?.name || '').trim();
-        const driverName = String(row?.driver?.name || '').trim();
+      // Wave 3 reliability: never wait on live Samsara for fleet table/assets reads.
+      const cachedAssignments = await readCachedSamsaraAssignments().catch(() => []);
+      const assignmentByUnit = new Map();
+      (Array.isArray(cachedAssignments) ? cachedAssignments : []).forEach((row) => {
+        const unitName = String(row?.unit_number || '').trim();
+        const driverName = String(row?.driver_name || '').trim();
         if (!unitName || !driverName) return;
-        hosByUnit.set(unitName, {
+        assignmentByUnit.set(unitName, {
           driverName,
-          driverStatus: String(row?.currentDutyStatus?.hosStatusType || '').trim().toLowerCase() || 'unknown',
+          driverStatus: String(row?.duty_status || '').trim().toLowerCase() || 'unknown',
+          driverId: String(row?.driver_samsara_id || '').trim() || null,
         });
       });
 
       const assetsWithAssignments = assets.map((asset) => {
         const unitName = String(asset?.unit_number || '').trim();
-        const hosMatch = hosByUnit.get(unitName);
-        if (hosMatch?.driverName) {
-          return {
-            ...asset,
-            current_driver_name: hosMatch.driverName,
-            currentDriverName: hosMatch.driverName,
-            currentDriver: hosMatch.driverName,
-            currentDriverStatus: hosMatch.driverStatus || 'unknown',
-            driver_name: hosMatch.driverName,
-          };
-        }
-
-        const match = assignList.find((a) =>
-          String(a?.vehicle?.id || '') === String(asset?.samsara_id || '')
-        );
-        const driverName = String(match?.driver?.name || '').trim();
-        const driverId = String(match?.driver?.id || '').trim();
-        if (!driverName && !driverId) return asset;
+        const m = assignmentByUnit.get(unitName);
+        if (!m?.driverName) return asset;
         return {
           ...asset,
-          current_driver_name: driverName,
-          currentDriverName: driverName,
-          currentDriver: driverName || null,
-          currentDriverId: driverId || null,
-          driver_name: driverName,
+          current_driver_name: m.driverName,
+          currentDriverName: m.driverName,
+          currentDriver: m.driverName,
+          currentDriverStatus: m.driverStatus || 'unknown',
+          currentDriverId: m.driverId || null,
+          driver_name: m.driverName,
         };
       });
 
       const filtered = statusQ
         ? assetsWithAssignments.filter((a) => String(a?.status || '').trim().toLowerCase() === statusQ)
         : assetsWithAssignments;
-      return res.json({ ok: true, assets: filtered, data: filtered, count: filtered.length });
+      return res.json({ ok: true, assets: filtered, data: filtered, count: filtered.length, source: 'internal-db' });
     } catch (e) {
       logError('GET /api/fleet/assets', e);
-      return res.json({ ok: true, error: e?.message || String(e), assets: [], data: [] });
+      return res.json({ ok: true, error: e?.message || String(e), assets: [], data: [], source: 'internal-db' });
     }
   });
 
@@ -2734,6 +2700,150 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({ ok: true, workOrder: rows?.[0] || null, data: rows?.[0] || null });
     } catch (e) {
       logError('POST /api/work-orders', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+
+  function normalizeTransactionTypeKey(raw) {
+    const s = String(raw || '').trim().toLowerCase();
+    if (!s) return '';
+    return s.replace(/[^a-z0-9]+/g, '_');
+  }
+
+  function transactionTypeRequiresDriver(typeKey) {
+    const t = normalizeTransactionTypeKey(typeKey);
+    return t.includes('repair') || t.includes('accident') || t.includes('tire');
+  }
+
+  function transactionTypeRequiresLoad(typeKey) {
+    const t = normalizeTransactionTypeKey(typeKey);
+    return t.includes('fuel') || t.includes('repair') || t.includes('accident') || t.includes('tire');
+  }
+
+  async function ensureTransactionsTable() {
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS transactions (
+        id SERIAL PRIMARY KEY,
+        transaction_type TEXT NOT NULL,
+        unit_id TEXT,
+        unit_number TEXT,
+        asset_category TEXT,
+        driver_id TEXT,
+        driver_name TEXT,
+        vendor_id TEXT,
+        vendor_name TEXT,
+        service_type TEXT,
+        description TEXT,
+        status TEXT DEFAULT 'open',
+        priority TEXT DEFAULT 'normal',
+        amount_estimated NUMERIC(12,2),
+        amount_actual NUMERIC(12,2),
+        load_number TEXT,
+        location_type TEXT,
+        qbo_status TEXT DEFAULT 'pending',
+        qbo_txn_id TEXT,
+        sync_error TEXT,
+        created_by TEXT,
+        updated_by TEXT,
+        source_module TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        due_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ
+      )`
+    );
+  }
+
+  app.post('/api/transactions', async (req, res) => {
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const transactionType = String(b.transaction_type || b.type || '').trim();
+    const typeKey = normalizeTransactionTypeKey(transactionType);
+    const driverId = String(b.driver_id || '').trim();
+    const driverName = String(b.driver_name || b.driver || '').trim();
+    const loadNumber = String(b.load_number || b.loadNumber || '').trim();
+
+    if (!transactionType) {
+      return res.status(400).json({ ok: false, error: 'transaction_type is required' });
+    }
+    if (transactionTypeRequiresDriver(typeKey) && !driverId && !driverName) {
+      return res.status(400).json({ ok: false, error: 'driver_id is required for repair, accident, and tire types' });
+    }
+    if (transactionTypeRequiresLoad(typeKey) && !loadNumber) {
+      return res.status(400).json({ ok: false, error: 'load_number is required for fuel, repair, accident, and tire types' });
+    }
+
+    const payload = {
+      transaction_type: transactionType,
+      unit_id: String(b.unit_id || '').trim() || null,
+      unit_number: String(b.unit_number || b.unit || '').trim() || null,
+      asset_category: String(b.asset_category || '').trim() || null,
+      driver_id: driverId || null,
+      driver_name: driverName || null,
+      vendor_id: String(b.vendor_id || '').trim() || null,
+      vendor_name: String(b.vendor_name || b.vendor || '').trim() || null,
+      service_type: String(b.service_type || b.expense_type || '').trim() || null,
+      description: String(b.description || '').trim() || null,
+      status: String(b.status || '').trim() || 'open',
+      priority: String(b.priority || '').trim() || 'normal',
+      amount_estimated: b.amount_estimated == null || b.amount_estimated === '' ? null : Number(b.amount_estimated),
+      amount_actual: b.amount_actual == null || b.amount_actual === '' ? null : Number(b.amount_actual),
+      load_number: loadNumber || null,
+      location_type: String(b.location_type || '').trim() || null,
+      qbo_status: String(b.qbo_status || '').trim() || 'pending',
+      qbo_txn_id: String(b.qbo_txn_id || '').trim() || null,
+      sync_error: String(b.sync_error || '').trim() || null,
+      created_by: String(b.created_by || '').trim() || null,
+      updated_by: String(b.updated_by || '').trim() || null,
+      source_module: String(b.source_module || 'maintenance_ui').trim(),
+      due_at: String(b.due_at || '').trim() || null,
+      completed_at: String(b.completed_at || '').trim() || null,
+    };
+
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const list = Array.isArray(erp.transactions) ? erp.transactions : [];
+        const row = {
+          id: String(Date.now()),
+          ...payload,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        erp.transactions = [row, ...list].slice(0, 3000);
+        writeFullErpJson(erp);
+        return res.json({ ok: true, transaction: row, data: row });
+      }
+
+      await ensureTransactionsTable();
+      const { rows } = await dbQueryForRoute(
+        `INSERT INTO transactions (
+          transaction_type, unit_id, unit_number, asset_category, driver_id, driver_name,
+          vendor_id, vendor_name, service_type, description, status, priority,
+          amount_estimated, amount_actual, load_number, location_type,
+          qbo_status, qbo_txn_id, sync_error, created_by, updated_by, source_module,
+          due_at, completed_at, created_at, updated_at
+        ) VALUES (
+          $1,$2,$3,$4,$5,$6,
+          $7,$8,$9,$10,$11,$12,
+          $13,$14,$15,$16,
+          $17,$18,$19,$20,$21,$22,
+          $23,$24,NOW(),NOW()
+        ) RETURNING *`,
+        [
+          payload.transaction_type, payload.unit_id, payload.unit_number, payload.asset_category,
+          payload.driver_id, payload.driver_name, payload.vendor_id, payload.vendor_name,
+          payload.service_type, payload.description, payload.status, payload.priority,
+          Number.isFinite(payload.amount_estimated) ? payload.amount_estimated : null,
+          Number.isFinite(payload.amount_actual) ? payload.amount_actual : null,
+          payload.load_number, payload.location_type, payload.qbo_status, payload.qbo_txn_id,
+          payload.sync_error, payload.created_by, payload.updated_by, payload.source_module,
+          payload.due_at, payload.completed_at,
+        ]
+      );
+      return res.json({ ok: true, transaction: rows?.[0] || null, data: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/transactions', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });

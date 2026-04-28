@@ -1334,6 +1334,24 @@
       },
       {
         isOpen: function () {
+          var el = document.getElementById('unifiedTxModal');
+          return !!el && el.classList.contains('on');
+        },
+        close: function () {
+          if (typeof global.closeUnifiedTransactionModal === 'function') global.closeUnifiedTransactionModal();
+        },
+      },
+      {
+        isOpen: function () {
+          var el = document.getElementById('driversProfileLiteModal');
+          return !!el && String(el.style.display || '').toLowerCase() === 'block';
+        },
+        close: function () {
+          if (typeof global.closeDriverProfileLiteModal === 'function') global.closeDriverProfileLiteModal();
+        },
+      },
+      {
+        isOpen: function () {
           var el = document.getElementById('erpDrawer');
           return !!el && !el.classList.contains('hidden');
         },

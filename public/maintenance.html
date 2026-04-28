@@ -472,11 +472,15 @@
   <div id="maintFleetTableModal" class="maint-modal-bg" onclick="if(event.target===this)closeMaintFleetTableModal()" aria-hidden="true">
     <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="maintFleetTableModalTitle" onclick="event.stopPropagation()" style="max-width:min(1120px,95vw)">
       <header class="erp-qb-dialog__head maint-modal-head-draggable" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <h3 id="maintFleetTableModalTitle" class="erp-qb-dialog__title" style="margin:0">Fleet table · Active trucks</h3>
-        <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
+        <h3 id="maintFleetTableModalTitle" class="erp-qb-dialog__title" style="margin:0">Fleet table · Internal DB</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button type="button" class="btn btn--small ghost" onclick="toggleMaintFleetTableFullscreen()">Full screen</button>
+          <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeMaintFleetTableModal()">×</button>
+        </div>
       </header>
       <div class="erp-qb-dialog__body">
-        <div class="mini-note" id="maintFleetTableMeta" style="margin:0 0 10px">Loading active trucks…</div>
+        <div class="mini-note" id="maintFleetTableMeta" style="margin:0 0 10px">Loading fleet assets…</div>
+        <div id="maintFleetTypeFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px"></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin:0 0 10px">
           <div>
             <label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:4px">QuickBooks Class</label>
@@ -499,6 +503,53 @@
       </div>
     </div>
   </div>
+
+  <div id="unifiedTxModal" class="maint-modal-bg" onclick="if(event.target===this)closeUnifiedTransactionModal()" aria-hidden="true">
+    <div class="maint-modal erp-qb-dialog" role="dialog" aria-modal="true" aria-labelledby="unifiedTxTitle" onclick="event.stopPropagation()" style="max-width:min(980px,96vw)">
+      <header class="erp-qb-dialog__head maint-modal-head-draggable" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <h3 id="unifiedTxTitle" class="erp-qb-dialog__title" style="margin:0">Unified Transaction Form</h3>
+        <button type="button" class="erp-qb-sheet-close" aria-label="Close" onclick="closeUnifiedTransactionModal()">×</button>
+      </header>
+      <div class="erp-qb-dialog__body">
+        <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <label class="qb-l" style="display:grid;gap:4px"><span>Vehicle Type Selector</span><select id="unifiedTxVehicleType" class="qb-in" onchange="refreshUnifiedUnitOptions()"><option value="all">All Units</option><option value="trucks">Trucks</option><option value="reefers">Reefers</option><option value="flatbeds">Flatbeds</option><option value="dry-vans">Dry Vans</option><option value="company">Company Vehicles</option></select></label>
+          <label class="qb-l" style="display:grid;gap:4px"><span>Unit Number (2 step picker)</span><input id="unifiedTxUnit" class="qb-in" list="unifiedTxUnitOptions" /></label>
+        </div>
+        <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <label class="qb-l" style="display:grid;gap:4px"><span>Date</span><input id="unifiedTxDate" type="date" class="qb-in" /></label>
+          <label class="qb-l" style="display:grid;gap:4px"><span>Vendor</span><input id="unifiedTxVendor" class="qb-in" list="vendorList" placeholder="Autocomplete from QBO cache" /></label>
+        </div>
+        <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <label class="qb-l" style="display:grid;gap:4px"><span id="unifiedTxDriverLabel">Driver</span><input id="unifiedTxDriver" class="qb-in" list="unifiedTxDriverOptions" placeholder="Autocomplete" /></label>
+          <label class="qb-l" style="display:grid;gap:4px"><span id="unifiedTxLoadLabel">Load #</span><input id="unifiedTxLoadNumber" class="qb-in" /></label>
+        </div>
+        <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <label class="qb-l" style="display:grid;gap:4px"><span>Service/Expense Type</span><select id="unifiedTxType" class="qb-in" onchange="applyUnifiedTransactionRules()"><option value="repair_order">Repair Order</option><option value="maintenance_order">Maintenance Order</option><option value="pm_service">PM Service</option><option value="accident_repair">Accident Repair</option><option value="tire_record">Tire Record</option><option value="maintenance_bill">Maintenance Bill</option><option value="repair_bill">Repair Bill</option><option value="service_bill">Service Bill</option><option value="accident_bill">Accident Bill</option><option value="tire_bill">Tire Bill</option><option value="fuel_expense">Fuel Expense</option><option value="maintenance_expense">Maintenance Expense</option><option value="repair_expense">Repair Expense</option><option value="tire_expense">Tire Expense</option><option value="toll">Toll</option><option value="lumper">Lumper</option><option value="per_diem">Per Diem</option></select></label>
+          <label class="qb-l" style="display:grid;gap:4px"><span>Amount</span><input id="unifiedTxAmount" type="number" step="0.01" class="qb-in" /></label>
+        </div>
+        <div style="margin-bottom:8px"><label class="qb-l" style="display:grid;gap:4px"><span>Description</span><textarea id="unifiedTxDescription" rows="2" class="qb-memo" style="width:100%"></textarea></label></div>
+        <div style="margin-bottom:8px"><label class="qb-l" style="display:grid;gap:4px"><span>Notes</span><textarea id="unifiedTxNotes" rows="2" class="qb-memo" style="width:100%"></textarea></label></div>
+        <div style="margin-bottom:8px"><label class="qb-l" style="display:grid;gap:4px"><span>Receipt/Photo Upload</span><input id="unifiedTxReceipt" type="file" class="qb-in" /></label></div>
+        <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <label class="qb-l" style="display:grid;gap:4px"><span>QBO Account</span><input id="unifiedTxQboAccount" class="qb-in" list="unifiedTxQboAccountOptions" /></label>
+          <label class="qb-l" style="display:grid;gap:4px"><span>QBO Class</span><input id="unifiedTxQboClass" class="qb-in" list="fleetQboClassOptions" /></label>
+        </div>
+        <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px">
+          <label class="qb-l" style="display:grid;gap:4px"><span>Status</span><select id="unifiedTxStatus" class="qb-in"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select></label>
+          <label class="qb-l" style="display:grid;gap:4px"><span>Priority</span><select id="unifiedTxPriority" class="qb-in"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
+        </div>
+      </div>
+      <footer class="erp-qb-dialog__foot" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn erp-qb-dialog__btn-secondary" onclick="closeUnifiedTransactionModal()">Cancel</button>
+        <button type="button" class="btn" onclick="saveUnifiedTransactionDraft()">Save Draft</button>
+        <button type="button" class="btn qb-btn-primary" onclick="submitUnifiedTransaction(true)">Save &amp; Post to QBO</button>
+      </footer>
+    </div>
+  </div>
+
+  <datalist id="unifiedTxUnitOptions"></datalist>
+  <datalist id="unifiedTxDriverOptions"></datalist>
+  <datalist id="unifiedTxQboAccountOptions"></datalist>
   <datalist id="unitOptions"></datalist>
   <datalist id="fleetQboClassOptions"></datalist>
   <datalist id="filteredUnitList"></datalist>
@@ -1005,6 +1056,9 @@
           <button type="button" class="subtab" onclick="openSafetyTab('safe-fleet', this)">Fleet snapshot</button>
           <button type="button" class="subtab active" onclick="openSafetyTab('safe-hos', this)">HOS clocks</button>
         </div>
+        <div id="safetyBackRow" style="margin:0 0 10px;display:flex;justify-content:flex-end">
+          <button type="button" class="btn btn--small ghost" onclick="openSection('safety', document.querySelector('.nav-btn[data-section=safety]'))">Back to Safety</button>
+        </div>
         <div id="safe-hos" class="tracking-sub">
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 4px">
             <div class="mr-violation-legend" aria-label="Violation legend">
@@ -1282,6 +1336,37 @@
           <div class="metric"><div class="metric-label">Pending requests</div><div class="metric-value" id="driversKpiPendingLeave">0</div><div class="metric-sub muted">Leave requests awaiting approval</div></div>
           <div class="metric"><div class="metric-label">Open damage reports</div><div class="metric-value" id="driversKpiOpenDamage">0</div><div class="metric-sub muted">New / acknowledged not resolved</div></div>
           <div class="metric"><div class="metric-label">Fuel submitted today</div><div class="metric-value" id="driversKpiFuelToday">0</div><div class="metric-sub muted">Driver mobile submissions</div></div>
+        </div>
+
+        <div id="driversFullPageHost" class="hidden" style="margin-bottom:14px;background:#0b1220;border:1px solid rgba(148,163,184,0.28);border-radius:10px;padding:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div id="driversFullPageTitle" style="font-size:15px;font-weight:700;color:#f8fafc">Drivers Full Page</div>
+            <button type="button" class="btn btn--small ghost" onclick="closeDriversFullPage()">Back to Drivers</button>
+          </div>
+          <div id="driversFullFuelPage" class="hidden">
+            <div class="search-row" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:8px">
+              <input id="driversFuelFilterDriver" class="qb-in" placeholder="Filter driver" oninput="renderDriversFuelFullPage()" />
+              <input id="driversFuelFilterUnit" class="qb-in" placeholder="Filter unit" oninput="renderDriversFuelFullPage()" />
+              <input id="driversFuelFilterFrom" class="qb-in" type="date" onchange="renderDriversFuelFullPage()" />
+              <input id="driversFuelFilterTo" class="qb-in" type="date" onchange="renderDriversFuelFullPage()" />
+            </div>
+            <div class="search-row" style="grid-template-columns:1fr auto;gap:8px;margin-bottom:8px">
+              <input id="driversFuelFilterType" class="qb-in" placeholder="Fuel type" oninput="renderDriversFuelFullPage()" />
+              <span class="mini-note" id="driversFuelFullMeta"></span>
+            </div>
+            <div class="erp-table-scroll" style="max-height:60vh;overflow:auto"><table class="table"><thead><tr><th>Date</th><th>Driver</th><th>Unit</th><th>Type</th><th>Gallons</th><th>Total</th><th>Load#</th><th>Station</th><th>QBO Status</th><th>Action</th></tr></thead><tbody id="driversFuelFullBody"></tbody></table></div>
+          </div>
+          <div id="driversFullLeavePage" class="hidden">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+              <span class="mini-note" id="driversLeaveFullMeta"></span>
+              <div style="display:flex;gap:8px"><button type="button" class="btn btn--small" onclick="bulkApproveLeave()">Approve all pending</button><button type="button" class="btn btn--small ghost" onclick="bulkDenyLeave()">Deny all pending</button></div>
+            </div>
+            <div class="erp-table-scroll" style="max-height:60vh;overflow:auto"><table class="table"><thead><tr><th>Driver</th><th>Dates</th><th>Type</th><th>Days</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead><tbody id="driversLeaveFullBody"></tbody></table></div>
+          </div>
+          <div id="driversFullProfilesPage" class="hidden">
+            <span class="mini-note" id="driversProfilesFullMeta"></span>
+            <div class="erp-table-scroll" style="max-height:60vh;overflow:auto;margin-top:8px"><table class="table"><thead><tr><th>Name</th><th>Unit</th><th>Phone</th><th>CDL#</th><th>CDL Expiry</th><th>Medical Expiry</th><th>QBO Vendor</th><th>Status</th></tr></thead><tbody id="driversProfilesFullBody"></tbody></table></div>
+          </div>
         </div>
 
         <div id="driversDamageReportsHome" style="background:#111827;border:1px solid rgba(148,163,184,0.25);border-radius:12px;padding:12px;margin-bottom:12px">
@@ -6365,6 +6450,181 @@
     };
     let activeAssetCategory = 'Trucks';
     let pendingMaintFlow = null;
+
+    const UNIFIED_TX_DRAFT_KEY = 'ih35_unified_tx_draft_v1';
+    let activeSafetyTabId = 'safe-hos';
+
+    function unifiedTxTypeKey(v) {
+      return String(v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    }
+
+    function unifiedTxNeedsDriver(typeVal) {
+      const t = unifiedTxTypeKey(typeVal);
+      return t.includes('repair') || t.includes('accident') || t.includes('tire');
+    }
+
+    function unifiedTxNeedsLoad(typeVal) {
+      const t = unifiedTxTypeKey(typeVal);
+      return t.includes('fuel') || t.includes('repair') || t.includes('accident') || t.includes('tire');
+    }
+
+    function refreshUnifiedUnitOptions() {
+      const dl = document.getElementById('unifiedTxUnitOptions');
+      const type = String(document.getElementById('unifiedTxVehicleType')?.value || 'all').trim();
+      if (!dl) return;
+      const list = Array.isArray(vehicles) ? vehicles : [];
+      const map = {
+        trucks: ['truck'],
+        reefers: ['reefer', 'refrigerated', 'reefer trailer'],
+        flatbeds: ['flatbed'],
+        'dry-vans': ['dry', 'van'],
+        company: ['company']
+      };
+      const needles = map[type] || [];
+      const filtered = type === 'all'
+        ? list
+        : list.filter((v) => {
+            const t = String(v?.asset_type || '').toLowerCase();
+            return needles.some((n) => t.includes(n));
+          });
+      dl.innerHTML = filtered.map((v) => `<option value="${escapeHtml(String(v?.name || v?.unit_number || ''))}"></option>`).join('');
+    }
+
+    function applyUnifiedTransactionRules() {
+      const txType = String(document.getElementById('unifiedTxType')?.value || '').trim();
+      const reqDriver = unifiedTxNeedsDriver(txType);
+      const reqLoad = unifiedTxNeedsLoad(txType);
+      const driverLabel = document.getElementById('unifiedTxDriverLabel');
+      const loadLabel = document.getElementById('unifiedTxLoadLabel');
+      const driverInput = document.getElementById('unifiedTxDriver');
+      const loadInput = document.getElementById('unifiedTxLoadNumber');
+      if (driverLabel) driverLabel.textContent = reqDriver ? 'Driver *' : 'Driver';
+      if (loadLabel) loadLabel.textContent = reqLoad ? 'Load # *' : 'Load #';
+      if (driverInput) driverInput.required = !!reqDriver;
+      if (loadInput) loadInput.required = !!reqLoad;
+    }
+
+    function openUnifiedTransactionModal(typeVal, preset) {
+      const modal = document.getElementById('unifiedTxModal');
+      if (!modal) return;
+      const p = preset && typeof preset === 'object' ? preset : {};
+      modal.classList.add('on');
+      modal.setAttribute('aria-hidden', 'false');
+      const title = document.getElementById('unifiedTxTitle');
+      if (title) title.textContent = 'Unified Transaction Form — ' + String(typeVal || 'Transaction');
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = String(val == null ? '' : val); };
+      set('unifiedTxType', typeVal || 'repair_order');
+      set('unifiedTxVehicleType', p.vehicle_type || 'all');
+      set('unifiedTxUnit', p.unit_number || selectedUnit || '');
+      set('unifiedTxDate', p.txn_date || new Date().toISOString().slice(0, 10));
+      set('unifiedTxVendor', p.vendor_name || '');
+      set('unifiedTxDriver', p.driver_name || '');
+      set('unifiedTxLoadNumber', p.load_number || '');
+      set('unifiedTxAmount', p.amount || p.amount_estimated || '');
+      set('unifiedTxDescription', p.description || '');
+      set('unifiedTxNotes', p.notes || '');
+      set('unifiedTxQboAccount', p.qbo_account_name || '');
+      set('unifiedTxQboClass', p.qbo_class_name || fleetQboClassNameForUnit(String(p.unit_number || selectedUnit || '')));
+      set('unifiedTxStatus', p.status || 'open');
+      set('unifiedTxPriority', p.priority || 'normal');
+
+      const drvDl = document.getElementById('unifiedTxDriverOptions');
+      if (drvDl) {
+        const names = (Array.isArray(driverProfiles) ? driverProfiles : [])
+          .map((r) => String(r?.full_name || r?.name || '').trim())
+          .filter(Boolean);
+        drvDl.innerHTML = Array.from(new Set(names)).sort((a,b)=>a.localeCompare(b)).map((n) => `<option value="${escapeHtml(n)}"></option>`).join('');
+      }
+      const accDl = document.getElementById('unifiedTxQboAccountOptions');
+      if (accDl) {
+        const accounts = Array.isArray(erp?.qboCache?.accounts) ? erp.qboCache.accounts : [];
+        accDl.innerHTML = accounts.map((a) => `<option value="${escapeHtml(String(a?.name || a?.accountName || ''))}"></option>`).join('');
+      }
+      refreshUnifiedUnitOptions();
+      applyUnifiedTransactionRules();
+    }
+
+    function closeUnifiedTransactionModal() {
+      const modal = document.getElementById('unifiedTxModal');
+      if (!modal) return;
+      modal.classList.remove('on');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function collectUnifiedTransactionPayload(postToQbo) {
+      const txType = String(document.getElementById('unifiedTxType')?.value || '').trim();
+      const unit = String(document.getElementById('unifiedTxUnit')?.value || '').trim();
+      const driverName = String(document.getElementById('unifiedTxDriver')?.value || '').trim();
+      const loadNumber = String(document.getElementById('unifiedTxLoadNumber')?.value || '').trim();
+      const driverRec = (Array.isArray(driverProfiles) ? driverProfiles : []).find((d) => String(d?.full_name || '').trim().toLowerCase() === driverName.toLowerCase());
+      return {
+        transaction_type: txType,
+        unit_number: unit || null,
+        asset_category: String(document.getElementById('unifiedTxVehicleType')?.value || '').trim() || null,
+        driver_id: String(driverRec?.id || '').trim() || null,
+        driver_name: driverName || null,
+        vendor_name: String(document.getElementById('unifiedTxVendor')?.value || '').trim() || null,
+        service_type: txType,
+        amount_estimated: Number(document.getElementById('unifiedTxAmount')?.value || 0) || null,
+        load_number: loadNumber || null,
+        description: String(document.getElementById('unifiedTxDescription')?.value || '').trim() || null,
+        notes: String(document.getElementById('unifiedTxNotes')?.value || '').trim() || null,
+        status: String(document.getElementById('unifiedTxStatus')?.value || 'open').trim(),
+        priority: String(document.getElementById('unifiedTxPriority')?.value || 'normal').trim(),
+        qbo_status: postToQbo ? 'ready_to_post' : 'pending',
+        qbo_account_name: String(document.getElementById('unifiedTxQboAccount')?.value || '').trim() || null,
+        qbo_class_name: String(document.getElementById('unifiedTxQboClass')?.value || '').trim() || null,
+        txn_date: String(document.getElementById('unifiedTxDate')?.value || '').trim() || null,
+      };
+    }
+
+    function saveUnifiedTransactionDraft() {
+      const payload = collectUnifiedTransactionPayload(false);
+      try {
+        localStorage.setItem(UNIFIED_TX_DRAFT_KEY, JSON.stringify(payload));
+        erpShowToast('Draft saved locally', 'success');
+      } catch (_) {
+        erpShowToast('Could not save draft', 'error');
+      }
+    }
+
+    async function submitUnifiedTransaction(postToQbo) {
+      const payload = collectUnifiedTransactionPayload(!!postToQbo);
+      const txType = String(payload.transaction_type || '');
+      if (unifiedTxNeedsDriver(txType) && !String(payload.driver_name || '').trim()) {
+        erpShowToast('Driver is required for this transaction type', 'error');
+        return;
+      }
+      if (unifiedTxNeedsLoad(txType) && !String(payload.load_number || '').trim()) {
+        erpShowToast('Load number is required for this transaction type', 'error');
+        return;
+      }
+      try {
+        const out = await j('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!out?.ok) throw new Error(out?.error || 'save failed');
+        erpShowToast(postToQbo ? 'Saved and queued for QBO post' : 'Transaction saved', 'success');
+        closeUnifiedTransactionModal();
+      } catch (e) {
+        erpShowToast(String(e?.message || e || 'save failed'), 'error');
+      }
+    }
+
+    function openUnifiedTransactionForDamage(row, reportId) {
+      const r = row && typeof row === 'object' ? row : {};
+      openUnifiedTransactionModal('accident_repair', {
+        unit_number: String(r.unit_number || '').trim(),
+        driver_name: String(r.driver_name || '').trim(),
+        vendor_name: String(r.vendor_name || r.shop_name || '').trim(),
+        amount_estimated: Number(r.estimated_cost || 0) || '',
+        description: String(r.description || '').trim(),
+        notes: reportId ? ('damage_report_id:' + String(reportId)) : ''
+      });
+    }
+
     let selectedTrackingVehicle = '';
     let tmsLoadsCache = [];
     let tmsEnabled = false;
@@ -8075,7 +8335,7 @@
       if (!a) return;
       if (a === 'createWorkOrder') {
         openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
-        openMaintMainTab('record', document.querySelector('#maintMainSubtabs [data-maint-main=record]'));
+        openUnifiedTransactionModal('repair_order', { unit_number: selectedUnit || '' });
         return;
       }
       if (a === 'openFleetHub') {
@@ -10830,7 +11090,11 @@
         requestAnimationFrame(() => initErpTrackingMap());
       }
       if (name === 'safety') {
-        requestAnimationFrame(() => renderSafetyLiveMap());
+        requestAnimationFrame(() => {
+          renderSafetyLiveMap();
+          const btn = document.querySelector('#section-safety .subtab[onclick*="' + activeSafetyTabId + '"]');
+          openSafetyTab(activeSafetyTabId || 'safe-hos', btn || null);
+        });
         setTimeout(function(){
           if(window.safetyMap) {
             window.safetyMap.invalidateSize(true);
@@ -10965,6 +11229,93 @@
       paintAccountingSidebarActive('');
     }
 
+    let maintFleetTableRows = [];
+    let maintFleetTableFilter = 'all';
+
+    function maintFleetTypeFilterPass(row, key) {
+      const t = String(row?.asset_type || '').toLowerCase();
+      const k = String(key || 'all').toLowerCase();
+      if (k === 'all') return true;
+      if (k === 'trucks') return t.includes('truck');
+      if (k === 'reefers') return t.includes('reefer') || t.includes('refrigerated');
+      if (k === 'flatbeds') return t.includes('flatbed');
+      if (k === 'dry-vans') return t.includes('dry') || t.includes('van');
+      if (k === 'company') return t.includes('company');
+      return true;
+    }
+
+    function renderMaintFleetTypeFilters() {
+      const host = document.getElementById('maintFleetTypeFilters');
+      if (!host) return;
+      const items = [
+        ['all', 'All Units'],
+        ['trucks', 'Trucks'],
+        ['reefers', 'Reefers'],
+        ['flatbeds', 'Flatbeds'],
+        ['dry-vans', 'Dry Vans'],
+        ['company', 'Company Vehicles'],
+      ];
+      host.innerHTML = items.map(([k, label]) =>
+        `<button type="button" class="maint-fleet-pill ${maintFleetTableFilter === k ? 'active' : ''}" onclick="setMaintFleetTableFilter('${k}')">${label}</button>`
+      ).join('');
+    }
+
+    function setMaintFleetTableFilter(key) {
+      maintFleetTableFilter = String(key || 'all').trim() || 'all';
+      renderMaintFleetTypeFilters();
+      renderMaintFleetTableModalRows();
+    }
+
+    function renderMaintFleetTableModalRows() {
+      const body = document.getElementById('maintFleetTableModalBody');
+      const meta = document.getElementById('maintFleetTableMeta');
+      if (!body) return;
+      const recs = Array.isArray(erp.records) ? erp.records : [];
+      const byUnit = new Map();
+      recs.forEach(r => {
+        const u = String(r.unit || '').trim();
+        if (!u) return;
+        const cur = byUnit.get(u);
+        const d = String(r.serviceDate || r.createdAt || '');
+        if (!cur || d > cur.d) byUnit.set(u, { d, due: r.nextDueDate || r.dueDate || '' });
+      });
+
+      const filtered = (Array.isArray(maintFleetTableRows) ? maintFleetTableRows : []).filter((r) => maintFleetTypeFilterPass(r, maintFleetTableFilter));
+      if (!filtered.length) {
+        body.innerHTML = '<tr><td colspan="12" class="mini-note">No units found for this filter.</td></tr>';
+        if (meta) meta.textContent = '0 units';
+        return;
+      }
+      body.innerHTML = filtered.map((r) => {
+        const unit = String(r.unit_number || r.name || '');
+        const svc = byUnit.get(unit) || { d: '', due: '' };
+        const currentDriverName = String(r.currentDriver || r.currentDriverName || r.current_driver_name || r.driver_name || '').trim();
+        const currentDriverStatus = String(r.currentDriverStatus || '').trim();
+        const currentDriver = currentDriverName
+          ? (currentDriverStatus ? `${currentDriverName} (${currentDriverStatus})` : currentDriverName)
+          : '—';
+        return `<tr data-unit="${escapeHtml(unit)}" onclick="selectFleetUnitForClass(this.getAttribute('data-unit') || '')">
+          <td><strong>${escapeHtml(unit)}</strong></td>
+          <td>${escapeHtml(currentDriver)}</td>
+          <td>${escapeHtml(fleetDisplayMake(r))}</td>
+          <td>${escapeHtml(fleetDisplayModel(r))}</td>
+          <td>${escapeHtml(fleetDisplayYearValue(r))}</td>
+          <td>${escapeHtml(fleetDisplayVin(r))}</td>
+          <td>${escapeHtml(fleetDisplayPlate(r))}</td>
+          <td>${escapeHtml(r.asset_type || '—')}</td>
+          <td>${escapeHtml(r.status || 'Active')}</td>
+          <td>
+            <input id="fleetQboClass_${String(unit).replace(/[^a-z0-9_-]/gi, '_')}" class="qb-in" type="text" list="fleetQboClassOptions"
+              placeholder="Type to search QBO classes..." value="${escapeHtml(fleetQboClassNameForUnit(unit))}" style="min-width:180px" />
+            <button type="button" class="btn btn--small" style="margin-left:6px" onclick='saveFleetQboClassFromModal(${JSON.stringify(unit)})'>Save</button>
+          </td>
+          <td>${escapeHtml(svc.d ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.d) : String(svc.d).slice(0,10)) : '—')}</td>
+          <td>${escapeHtml(svc.due ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.due) : String(svc.due).slice(0,10)) : '—')}</td>
+        </tr>`;
+      }).join('');
+      if (meta) meta.textContent = `${filtered.length} units · source: /api/fleet/assets`;
+    }
+
     async function openMaintFleetTableModal() {
       const modal = document.getElementById('maintFleetTableModal');
       const body = document.getElementById('maintFleetTableModalBody');
@@ -10973,62 +11324,39 @@
       modal.classList.add('on');
       modal.setAttribute('aria-hidden', 'false');
       body.innerHTML = '<tr><td colspan="12" class="mini-note">Loading…</td></tr>';
-      if (meta) meta.textContent = 'Loading active trucks…';
+      if (meta) meta.textContent = 'Loading fleet assets…';
+      maintFleetTableFilter = 'all';
+      renderMaintFleetTypeFilters();
       try {
         const data = await j('/api/fleet/assets');
-        const rows = Array.isArray(data.assets) ? data.assets : [];
-        const trucks = rows.filter(r => /^T(\d{3})$/i.test(String(r.unit_number || '')) && String(r.status || '') === 'Active');
-        const recs = Array.isArray(erp.records) ? erp.records : [];
-        const byUnit = new Map();
-        recs.forEach(r => {
-          const u = String(r.unit || '').trim();
-          if (!u) return;
-          const cur = byUnit.get(u);
-          const d = String(r.serviceDate || r.createdAt || '');
-          if (!cur || d > cur.d) byUnit.set(u, { d, due: r.nextDueDate || r.dueDate || '' });
-        });
-        if (!trucks.length) {
-          body.innerHTML = '<tr><td colspan="12" class="mini-note">No active trucks found.</td></tr>';
-          if (meta) meta.textContent = '0 active trucks';
-          return;
-        }
-        body.innerHTML = trucks.map(r => {
-          const unit = String(r.unit_number || '');
-          const svc = byUnit.get(unit) || { d: '', due: '' };
-          const currentDriverName = String(r.currentDriver || r.currentDriverName || r.current_driver_name || r.driver_name || '').trim();
-          const currentDriverStatus = String(r.currentDriverStatus || '').trim();
-          const currentDriver = currentDriverName
-            ? (currentDriverStatus ? `${currentDriverName} (${currentDriverStatus})` : currentDriverName)
-            : '—';
-          return `<tr data-unit="${escapeHtml(unit)}" onclick="selectFleetUnitForClass(this.getAttribute('data-unit') || '')">
-            <td><strong>${escapeHtml(unit)}</strong></td>
-            <td>${escapeHtml(currentDriver)}</td>
-            <td>${escapeHtml(fleetDisplayMake(r))}</td>
-            <td>${escapeHtml(fleetDisplayModel(r))}</td>
-            <td>${escapeHtml(fleetDisplayYearValue(r))}</td>
-            <td>${escapeHtml(fleetDisplayVin(r))}</td>
-            <td>${escapeHtml(fleetDisplayPlate(r))}</td>
-            <td>${escapeHtml(r.asset_type || 'Truck')}</td>
-            <td>${escapeHtml(r.status || 'Active')}</td>
-            <td>
-              <input id="fleetQboClass_${String(unit).replace(/[^a-z0-9_-]/gi, '_')}" class="qb-in" type="text" list="fleetQboClassOptions"
-                placeholder="Type to search QBO classes..." value="${escapeHtml(fleetQboClassNameForUnit(unit))}" style="min-width:180px" />
-              <button type="button" class="btn btn--small" style="margin-left:6px" onclick='saveFleetQboClassFromModal(${JSON.stringify(unit)})'>Save</button>
-            </td>
-            <td>${escapeHtml(svc.d ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.d) : String(svc.d).slice(0,10)) : '—')}</td>
-            <td>${escapeHtml(svc.due ? (typeof erpIsoToDisplayShort === 'function' ? erpIsoToDisplayShort(svc.due) : String(svc.due).slice(0,10)) : '—')}</td>
-          </tr>`;
-        }).join('');
+        maintFleetTableRows = Array.isArray(data.assets) ? data.assets : [];
         const classDl = document.getElementById('fleetQboClassOptions');
         if (classDl) classDl.innerHTML = fleetQboClassOptionsHtml();
         const classDlAlias = document.getElementById('qboClassList');
         if (classDlAlias) classDlAlias.innerHTML = fleetQboClassOptionsHtml();
         const classDlAlias2 = document.getElementById('qboClassDatalist');
         if (classDlAlias2) classDlAlias2.innerHTML = fleetQboClassOptionsHtml();
-        if (meta) meta.textContent = `${trucks.length} active trucks`;
+        renderMaintFleetTableModalRows();
       } catch (e) {
         body.innerHTML = `<tr><td colspan="12" style="color:var(--color-semantic-error)">${escapeHtml(e.message || String(e))}</td></tr>`;
         if (meta) meta.textContent = 'Load failed';
+      }
+    }
+
+    function toggleMaintFleetTableFullscreen() {
+      const modal = document.querySelector('#maintFleetTableModal .maint-modal');
+      if (!modal) return;
+      const full = modal.getAttribute('data-fullscreen') === '1';
+      if (full) {
+        modal.style.maxWidth = 'min(1120px,95vw)';
+        modal.style.width = '';
+        modal.style.height = '';
+        modal.setAttribute('data-fullscreen', '0');
+      } else {
+        modal.style.maxWidth = '98vw';
+        modal.style.width = '98vw';
+        modal.style.height = '96vh';
+        modal.setAttribute('data-fullscreen', '1');
       }
     }
 
@@ -16977,8 +17305,8 @@
       if (unit) {
         try { selectUnit(unit); } catch (_) {}
       }
-      erpNewWorkOrder('maintenance_order', { recordTypeLabel: 'Damage report' });
-      erpNotify('Opened new work order for damage report ' + String(id), 'info');
+      openUnifiedTransactionForDamage(row, id);
+      erpNotify('Opened unified transaction form for damage report ' + String(id), 'info');
     }
 
     async function erpAcknowledgeDamageReport(id) {
@@ -17061,49 +17389,20 @@
 
     async function resolveRoadService(reportId, unitNum, damageType, description, vendorName, estimatedCost) {
       try {
-        const woResp = await fetch('/api/maintenance/work-orders', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            unit_number: unitNum,
-            service_type: 'Road Service - ' + (damageType || ''),
-            description: description || 'Road service call',
-            vendor: vendorName || '',
-            estimated_cost: estimatedCost || 0,
-            priority: 'Urgent',
-            status: 'In Progress',
-            source: 'road_service_alert'
-          })
-        }).then(r=>r.json());
-
-        if (estimatedCost && parseFloat(String(estimatedCost)) > 0) {
-          await fetch('/api/expenses', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-              unit_number: unitNum,
-              amount: parseFloat(String(estimatedCost)),
-              vendor_name: vendorName || '',
-              description: 'Road Service - ' + (damageType || ''),
-              expense_type: 'road_repair'
-            })
-          }).then(r=>r.json()).catch(()=>null);
-        }
-
+        openUnifiedTransactionModal('accident_repair', {
+          unit_number: unitNum,
+          vendor_name: vendorName || '',
+          amount_estimated: estimatedCost || '',
+          description: description || ('Road Service - ' + (damageType || '')),
+          priority: 'urgent',
+          notes: reportId ? ('damage_report_id:' + String(reportId)) : ''
+        });
         await fetch('/api/damage/reports/' + encodeURIComponent(String(reportId || '')) + '/acknowledge', { method:'POST' }).catch(()=>null);
-
-        erpShowToast('✅ Work order created + expense logged','success');
-
         driversResolvedDamageIds().add(String(reportId || ''));
         driversCloseDamageDetail();
-        var modal = document.querySelector('.modal-overlay, .erp-modal');
-        if (modal) modal.style.display = 'none';
-        document.body.classList.remove('erp-modal-lock');
-
-        if (typeof loadOpenDamageReports === 'function') loadOpenDamageReports();
+        erpShowToast('Opened unified work order form and acknowledged damage report', 'success');
         if (typeof refreshDriversDashboardPanels === 'function') await refreshDriversDashboardPanels();
         if (typeof refreshDashboardDamageReports === 'function') await refreshDashboardDamageReports();
-        if (typeof loadAll === 'function') await loadAll();
       } catch (e) {
         erpShowToast('Error: ' + (e?.message || String(e)), 'error');
       }
@@ -17143,40 +17442,20 @@
       }
 
       try {
-        const wo = await fetch('/api/work-orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            unit_number: unitNum,
-            service_type: 'Road Service - ' + damageType,
-            description: description,
-            vendor: vendorName,
-            estimated_cost: estimatedCost,
-            priority: 'Urgent',
-            status: 'In Progress'
-          })
-        }).then((r) => r.json());
-
-        if (estimatedCost) {
-          await fetch('/api/expenses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              unit_number: unitNum,
-              amount: estimatedCost,
-              vendor_name: vendorName,
-              description: 'Road Service - ' + damageType,
-              expense_type: 'road_repair',
-              work_order_id: wo?.id || wo?.record?.id || ''
-            })
-          }).catch(() => null);
-        }
-
+        openUnifiedTransactionModal('accident_repair', {
+          unit_number: unitNum,
+          driver_name: String(row.driver_name || '').trim(),
+          vendor_name: vendorName,
+          amount_estimated: estimatedCost,
+          description: description,
+          priority: 'urgent',
+          notes: 'damage_report_id:' + reportId
+        });
         await fetch('/api/damage/reports/' + encodeURIComponent(reportId) + '/acknowledge', { method: 'POST' }).catch(() => null);
 
         driversResolvedDamageIds().add(String(reportId));
         driversCloseDamageDetail();
-        erpShowToast('✅ Work order created + expense logged', 'success');
+        erpShowToast('Opened unified form and acknowledged damage report', 'success');
         await Promise.all([
           refreshDashboardDamageReports(),
           refreshDriversDashboardPanels(),
@@ -17314,6 +17593,7 @@
           '<td style="padding:8px">' + action + '</td>' +
           '</tr>';
       }).join('');
+      if (!document.getElementById('driversFullFuelPage')?.classList.contains('hidden')) renderDriversFuelFullPage();
     }
 
     async function postFuelToQbo(id) {
@@ -17452,6 +17732,7 @@
           '</td>' +
           '</tr>';
       }).join('');
+      if (!document.getElementById('driversFullLeavePage')?.classList.contains('hidden')) renderDriversLeaveFullPage();
     }
 
     function openDriversProfilesPanel() {
@@ -17461,45 +17742,153 @@
       if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    function openDriversFuelHomePage() {
-      if (typeof erpOpenSectionSubPage === 'function') {
-        erpOpenSectionSubPage({
-          section: 'fuel',
-          navSelector: '.nav-btn[data-section=fuel]'
-        });
+
+    function openDriversFullPage(kind) {
+      openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
+      const host = document.getElementById('driversFullPageHost');
+      const title = document.getElementById('driversFullPageTitle');
+      if (!host || !title) return;
+      host.classList.remove('hidden');
+      const names = {
+        fuel: 'Fuel Submissions',
+        leave: 'Leave Requests',
+        profiles: 'Driver Profiles'
+      };
+      title.textContent = names[String(kind || '')] || 'Drivers Full Page';
+      ['driversFullFuelPage', 'driversFullLeavePage', 'driversFullProfilesPage'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      const active = document.getElementById(
+        kind === 'leave' ? 'driversFullLeavePage' : kind === 'profiles' ? 'driversFullProfilesPage' : 'driversFullFuelPage'
+      );
+      if (active) active.classList.remove('hidden');
+      if (kind === 'leave') renderDriversLeaveFullPage();
+      else if (kind === 'profiles') renderDriversProfilesFullPage();
+      else renderDriversFuelFullPage();
+    }
+
+    function closeDriversFullPage() {
+      const host = document.getElementById('driversFullPageHost');
+      if (host) host.classList.add('hidden');
+    }
+
+    function renderDriversFuelFullPage() {
+      const body = document.getElementById('driversFuelFullBody');
+      const meta = document.getElementById('driversFuelFullMeta');
+      if (!body) return;
+      const rows = Array.isArray(erp?.fuelPurchases) ? erp.fuelPurchases.slice() : [];
+      const fDriver = String(document.getElementById('driversFuelFilterDriver')?.value || '').trim().toLowerCase();
+      const fUnit = String(document.getElementById('driversFuelFilterUnit')?.value || '').trim().toLowerCase();
+      const fType = String(document.getElementById('driversFuelFilterType')?.value || '').trim().toLowerCase();
+      const fFrom = String(document.getElementById('driversFuelFilterFrom')?.value || '').trim();
+      const fTo = String(document.getElementById('driversFuelFilterTo')?.value || '').trim();
+      const filtered = rows.filter((r) => {
+        const d = String(r?.submitted_at || r?.created_at || '').slice(0, 10);
+        if (fFrom && d && d < fFrom) return false;
+        if (fTo && d && d > fTo) return false;
+        const driver = String(r?.driver_name || '').toLowerCase();
+        const unit = String(r?.unit_number || '').toLowerCase();
+        const type = String(r?.fuel_type || '').toLowerCase();
+        if (fDriver && !driver.includes(fDriver)) return false;
+        if (fUnit && !unit.includes(fUnit)) return false;
+        if (fType && !type.includes(fType)) return false;
+        return true;
+      });
+      if (meta) meta.textContent = filtered.length + ' rows';
+      if (!filtered.length) {
+        body.innerHTML = '<tr><td colspan="10" class="muted">No records found.</td></tr>';
         return;
       }
-      openSection('fuel', document.querySelector('.nav-btn[data-section=fuel]'));
+      body.innerHTML = filtered.map((r) => {
+        const posted = !!r?.qbo_posted;
+        const id = String(r?.id || '').replace(/'/g, "\'");
+        return '<tr>' +
+          '<td>' + escapeHtml(String(r?.submitted_at || r?.created_at || '').slice(0, 10) || '—') + '</td>' +
+          '<td>' + escapeHtml(String(r?.driver_name || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.unit_number || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.fuel_type || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.gallons ?? '—')) + '</td>' +
+          '<td>$' + escapeHtml(String(r?.total_amount || '0')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.load_number || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.station_name || '—')) + '</td>' +
+          '<td>' + (posted ? 'Posted' : 'Pending') + '</td>' +
+          '<td>' + (posted ? '' : '<button type="button" class="btn btn--small" onclick="postFuelToQbo(\'' + id + '\')">Post to QBO</button>') + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function renderDriversLeaveFullPage() {
+      const body = document.getElementById('driversLeaveFullBody');
+      const meta = document.getElementById('driversLeaveFullMeta');
+      if (!body) return;
+      const rows = Array.isArray(window.__driversLeaveRows) ? window.__driversLeaveRows.slice() : [];
+      if (meta) meta.textContent = rows.length + ' requests';
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="7" class="muted">No leave requests.</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map((r) => {
+        const rid = String(r?.id || '').replace(/'/g, "\'");
+        const start = String(r?.start_date || '');
+        const end = String(r?.end_date || '');
+        const days = Math.max(1, Math.round((Date.parse(end || start) - Date.parse(start || end || Date.now())) / 86400000) + 1);
+        return '<tr>' +
+          '<td>' + escapeHtml(String(r?.driver_name || '—')) + '</td>' +
+          '<td>' + escapeHtml(start) + ' → ' + escapeHtml(end) + '</td>' +
+          '<td>' + escapeHtml(String(r?.leave_type || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(days)) + '</td>' +
+          '<td>' + escapeHtml(String(r?.status || 'pending')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.submitted_at || '').slice(0, 10) || '—') + '</td>' +
+          '<td><button type="button" class="btn btn--small" onclick="approveLeave(\'' + rid + '\')">Approve</button> <button type="button" class="btn btn--small ghost" onclick="denyLeave(\'' + rid + '\')">Deny</button></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function renderDriversProfilesFullPage() {
+      const body = document.getElementById('driversProfilesFullBody');
+      const meta = document.getElementById('driversProfilesFullMeta');
+      if (!body) return;
+      const rows = Array.isArray(driverProfiles) ? driverProfiles.slice() : [];
+      if (meta) meta.textContent = rows.length + ' profiles';
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="8" class="muted">No driver profiles.</td></tr>';
+        return;
+      }
+      const expCls = (v) => {
+        const t = Date.parse(String(v || ''));
+        if (!Number.isFinite(t)) return '';
+        const d = Math.floor((t - Date.now()) / 86400000);
+        if (d < 0) return ' style="color:#ef4444;font-weight:700"';
+        if (d <= 30) return ' style="color:#f59e0b;font-weight:700"';
+        return '';
+      };
+      body.innerHTML = rows.map((r) => {
+        const cdlExp = String(r?.cdl_expiry || '');
+        const medExp = String(r?.medical_expiry || '');
+        return '<tr>' +
+          '<td>' + escapeHtml(String(r?.full_name || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.unit_number || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.phone || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.cdl_number || '—')) + '</td>' +
+          '<td' + expCls(cdlExp) + '>' + escapeHtml(cdlExp || '—') + '</td>' +
+          '<td' + expCls(medExp) + '>' + escapeHtml(medExp || '—') + '</td>' +
+          '<td>' + escapeHtml(String(r?.qbo_vendor_name || '—')) + '</td>' +
+          '<td>' + escapeHtml(String(r?.status || 'active')) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function openDriversFuelHomePage() {
+      openDriversFullPage('fuel');
     }
 
     function openDriversLeaveHomePage() {
-      if (typeof erpOpenSectionSubPage === 'function') {
-        erpOpenSectionSubPage({
-          section: 'drivers',
-          navSelector: '.nav-btn[data-section=drivers]',
-          anchorId: 'driversLeavePanel'
-        });
-        return;
-      }
-      openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
-      const panel = document.getElementById('driversLeavePanel');
-      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      openDriversFullPage('leave');
     }
 
     function openDriversProfilesHomePage() {
-      if (typeof erpOpenSectionSubPage === 'function') {
-        erpOpenSectionSubPage({
-          section: 'drivers',
-          navSelector: '.nav-btn[data-section=drivers]',
-          subPageFn: 'loadDriversProfilesLite',
-          anchorId: 'driversProfilesPanel'
-        });
-        return;
-      }
-      openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
-      loadDriversProfilesLite();
-      const panel = document.getElementById('driversProfilesPanel');
-      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      openDriversFullPage('profiles');
     }
 
     function openWorkspaceSnapshotCard(target) {
@@ -17561,17 +17950,8 @@
         return;
       }
       if (t === 'open-damage-reports') {
-        if (typeof erpOpenSectionSubPage === 'function') {
-          erpOpenSectionSubPage({
-            section: 'drivers',
-            navSelector: '.nav-btn[data-section=drivers]',
-            anchorId: 'driversDamageReportsHome'
-          });
-          return;
-        }
-        openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'));
-        const panel = document.getElementById('driversDamageReportsHome');
-        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'));
+        if (typeof openMaintMainTab === 'function') openMaintMainTab('record', document.querySelector('.maint-nav-tab[data-maint-main="record"]'), { skipModal: true });
         return;
       }
       if (t === 'pending-qbo-sync') {
@@ -17624,6 +18004,8 @@
       } catch (_) {
         body.innerHTML = '<tr><td colspan="7" style="padding:12px;color:#fca5a5;text-align:center">Could not load driver profiles</td></tr>';
       }
+      if (!document.getElementById('driversFullProfilesPage')?.classList.contains('hidden')) renderDriversProfilesFullPage();
+      hydrateDriverProfileLiteLookups();
     }
 
     function closeDriverProfileLiteModal() {
@@ -17633,9 +18015,45 @@
       if (importList) importList.style.display = 'none';
     }
 
+    function hydrateDriverProfileLiteLookups() {
+      const names = (Array.isArray(driverProfiles) ? driverProfiles : []).map((r) => String(r?.full_name || r?.name || '').trim()).filter(Boolean);
+      const units = (Array.isArray(vehicles) ? vehicles : []).map((v) => String(v?.unit_number || v?.name || '').trim()).filter(Boolean);
+      let namesDl = document.getElementById('driverProfileNameOptions');
+      if (!namesDl) {
+        namesDl = document.createElement('datalist');
+        namesDl.id = 'driverProfileNameOptions';
+        document.body.appendChild(namesDl);
+      }
+      namesDl.innerHTML = Array.from(new Set(names)).sort((a,b)=>a.localeCompare(b)).map((n)=>`<option value="${escapeHtml(n)}"></option>`).join('');
+      let unitsDl = document.getElementById('driverProfileUnitOptions');
+      if (!unitsDl) {
+        unitsDl = document.createElement('datalist');
+        unitsDl.id = 'driverProfileUnitOptions';
+        document.body.appendChild(unitsDl);
+      }
+      unitsDl.innerHTML = Array.from(new Set(units)).sort((a,b)=>a.localeCompare(b)).map((n)=>`<option value="${escapeHtml(n)}"></option>`).join('');
+      const nameInput = document.getElementById('driverProfileLiteName');
+      const unitInput = document.getElementById('driverProfileLiteUnit');
+      if (nameInput) {
+        nameInput.setAttribute('list', 'driverProfileNameOptions');
+      }
+      if (unitInput) {
+        unitInput.setAttribute('list', 'driverProfileUnitOptions');
+      }
+      const modal = document.getElementById('driversProfileLiteModal');
+      if (modal) {
+        modal.querySelectorAll('input, select, textarea').forEach((el) => {
+          el.style.background = '#111827';
+          el.style.color = '#f8fafc';
+          el.style.border = '1px solid rgba(148,163,184,0.55)';
+        });
+      }
+    }
+
     async function openDriverProfileLiteModal(id) {
       const modal = document.getElementById('driversProfileLiteModal');
       if (!modal) return;
+      hydrateDriverProfileLiteLookups();
       ['driverProfileLiteId','driverProfileLiteSamsaraId','driverProfileLiteQboVendorId'].forEach((fid)=>{ const el = document.getElementById(fid); if (el) el.value = ''; });
       ['driverProfileLiteName','driverProfileLiteUnit','driverProfileLitePhone','driverProfileLiteEmail','driverProfileLiteHireDate','driverProfileLiteCdlNumber','driverProfileLiteCdlState','driverProfileLiteCdlExpiry','driverProfileLiteMedicalExpiry','driverProfileLiteLicenseNumber','driverProfileLiteEmergencyContact','driverProfileLiteEmergencyPhone','driverProfileLiteQboVendorName','driverProfileLiteNotes'].forEach((fid)=>{ const el = document.getElementById(fid); if (el) el.value = ''; });
       const st = document.getElementById('driverProfileLiteStatus'); if (st) st.value = 'active';
@@ -17857,53 +18275,59 @@
     function renderFleetByType(type) {
       const container = document.getElementById('fleetByTypeContainer');
       if (!container) return;
-      const map = {
-        'Trucks': 'truck',
-        'Refrigerated Vans': 'van',
-        'Flatbeds': 'flatbed',
-        'Dry Vans': 'dry',
-        'Company Vehicles': 'company'
+      const needles = {
+        'Trucks': ['truck'],
+        'Refrigerated Vans': ['reefer', 'refrigerated', 'van'],
+        'Flatbeds': ['flatbed'],
+        'Dry Vans': ['dry', 'van'],
+        'Company Vehicles': ['company']
       };
-      const needle = String(map[type] || type || 'truck').toLowerCase();
-      container.innerHTML = '<p style="padding:16px;color:#888;margin:0">Loading fleet...</p>';
+      const picks = needles[type] || [];
+      container.innerHTML = '<p style="padding:16px;color:#94a3b8;margin:0">Loading fleet...</p>';
       fetch('/api/fleet/assets')
         .then(r => r.json())
         .then(data => {
           const assets = Array.isArray(data?.assets) ? data.assets : [];
           const filtered = type === 'all'
             ? assets
-            : assets.filter((a) => String(a?.asset_type || 'truck').toLowerCase().includes(needle));
-          if (!cacheQboClasses().length) {
-            const classDl = document.getElementById('fleetQboClassOptions');
-            if (classDl) classDl.innerHTML = fleetQboClassOptionsHtml();
-          }
+            : assets.filter((a) => {
+                const t = String(a?.asset_type || '').toLowerCase();
+                return picks.some((n) => t.includes(n));
+              });
           if (!filtered.length) {
-            container.innerHTML = '<p style="padding:16px;color:#888;margin:0">No vehicles in this category.</p>';
+            container.innerHTML = '<p style="padding:16px;color:#94a3b8;margin:0">No vehicles in this category.</p>';
             return;
           }
           container.innerHTML =
-            '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
-            '<thead><tr style="text-align:left;border-bottom:1px solid #eee">' +
-            '<th style="padding:8px">Unit</th><th style="padding:8px">Make</th><th style="padding:8px">Model</th><th style="padding:8px">Status</th><th style="padding:8px">QuickBooks Class</th><th style="padding:8px">Odometer</th>' +
+            '<div class="erp-table-scroll" style="max-height:60vh;overflow:auto">' +
+            '<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:auto">' +
+            '<thead><tr style="text-align:left;border-bottom:1px solid #1f2937;color:#cbd5e1">' +
+            '<th style="padding:8px">Unit#</th><th style="padding:8px">Current Driver</th><th style="padding:8px">Make</th><th style="padding:8px">Model</th><th style="padding:8px">Year</th><th style="padding:8px">VIN</th><th style="padding:8px">License Plate</th><th style="padding:8px">Type</th><th style="padding:8px">Status</th><th style="padding:8px">QBO Class</th><th style="padding:8px">Last Service</th><th style="padding:8px">Due Date</th>' +
             '</tr></thead><tbody>' +
             filtered.map((a) => {
-              const odo = Number(a?.odometerMiles || 0);
-              return '<tr style="border-bottom:0.5px solid #eee">' +
-                '<td style="padding:6px 8px;font-weight:600">' + escapeHtml(String(a?.unit_number || a?.name || '')) + '</td>' +
+              const unit = String(a?.unit_number || a?.name || '').trim();
+              const svcRows = (Array.isArray(erp.records) ? erp.records : []).filter((r) => String(r?.unit || '').trim() === unit).sort((x,y)=>String(y?.serviceDate||y?.createdAt||'').localeCompare(String(x?.serviceDate||x?.createdAt||'')));
+              const lastSvc = String(svcRows?.[0]?.serviceDate || svcRows?.[0]?.createdAt || '').slice(0,10) || '—';
+              const due = String(svcRows?.[0]?.nextDueDate || svcRows?.[0]?.dueDate || '').slice(0,10) || '—';
+              return '<tr style="border-bottom:1px solid rgba(148,163,184,0.18);cursor:pointer" onclick="selectUnit(' + JSON.stringify(unit) + ');openMaintMainTab('record', document.querySelector('.maint-nav-tab[data-maint-main=record]'));">' +
+                '<td style="padding:6px 8px;font-weight:700;white-space:nowrap">' + escapeHtml(unit) + '</td>' +
+                '<td style="padding:6px 8px;white-space:nowrap">' + escapeHtml(String(a?.currentDriver || a?.currentDriverName || a?.current_driver_name || '—')) + '</td>' +
                 '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayMake(a)) + '</td>' +
                 '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayModel(a)) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayYearValue(a)) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayVin(a)) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayPlate(a)) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(String(a?.asset_type || '—')) + '</td>' +
                 '<td style="padding:6px 8px">' + escapeHtml(String(a?.status || 'Active')) + '</td>' +
-                '<td style="padding:6px 8px">' +
-                  '<input id="fleetQboType_' + String(a?.unit_number || '').replace(/[^a-z0-9_-]/gi, '_') + '" class="qb-in" type="text" list="fleetQboClassOptions" placeholder="Type to search QBO classes..." value="' + escapeHtml(fleetQboClassNameForUnit(String(a?.unit_number || ''))) + '" style="min-width:170px" />' +
-                  '<button type="button" class="btn btn--small" style="margin-left:6px" onclick="saveFleetQboClassFromModal(' + JSON.stringify(String(a?.unit_number || '')) + ')">Save</button>' +
-                '</td>' +
-                '<td style="padding:6px 8px">' + (Number.isFinite(odo) && odo > 0 ? escapeHtml(String(Math.round(odo))) + ' mi' : '—') + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(fleetQboClassNameForUnit(unit) || '—') + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(lastSvc) + '</td>' +
+                '<td style="padding:6px 8px">' + escapeHtml(due) + '</td>' +
               '</tr>';
             }).join('') +
-            '</tbody></table>';
+            '</tbody></table></div>';
         })
         .catch(() => {
-          container.innerHTML = '<p style="padding:16px;color:#b91c1c;margin:0">Could not load fleet assets.</p>';
+          container.innerHTML = '<p style="padding:16px;color:#fca5a5;margin:0">Could not load fleet assets.</p>';
         });
     }
 
@@ -22482,7 +22906,26 @@
         </div>
         <div id="assetPartsRefHint" class="mini-note" style="margin-top:8px;line-height:1.45"></div>`;
       }
-      document.getElementById('selectedUnitInfo').innerHTML = '';
+      const selectedInfo = document.getElementById('selectedUnitInfo');
+      if (selectedInfo) {
+        const unitHistory = (Array.isArray(erp.records) ? erp.records : []).filter((r) => String(r?.unit || '').trim() === String(v.name || '').trim());
+        const unitOpenWos = (Array.isArray(erp.workOrders) ? erp.workOrders : []).filter((w) => String(w?.unit_number || w?.unit || '').trim() === String(v.name || '').trim() && String(w?.status || '').toLowerCase() !== 'completed' && String(w?.status || '').toLowerCase() !== 'closed');
+        const nextPm = unitHistory
+          .map((r) => String(r?.nextDueDate || r?.dueDate || '').trim())
+          .filter(Boolean)
+          .sort()[0] || '—';
+        selectedInfo.innerHTML = '<div style="margin-top:10px;background:#0b1220;border:1px solid rgba(148,163,184,0.25);border-radius:10px;padding:10px">' +
+          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">' +
+            '<div style="font-weight:700;color:#e2e8f0">Vehicle detail — ' + escapeHtml(String(v.name || '')) + '</div>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal('repair_order',{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Repair</button>' +
+              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal('pm_service',{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Service</button>' +
+              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal('maintenance_order',{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Work Order</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mini-note" style="margin-top:8px">Maintenance history: <b>' + String(unitHistory.length) + '</b> · Open work orders: <b>' + String(unitOpenWos.length) + '</b> · Next PM due: <b>' + escapeHtml(String(nextPm)) + '</b></div>' +
+        '</div>';
+      }
       loadPartsReferenceHint();
 
       document.getElementById('unitMileageBox').textContent =
@@ -25418,14 +25861,17 @@
     }
 
     function openSafetyTab(id, btn) {
+      activeSafetyTabId = String(id || 'safe-hos').trim() || 'safe-hos';
       document.querySelectorAll('#section-safety .tracking-sub').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('#section-safety .subtabs .subtab').forEach(el => el.classList.remove('active'));
-      const target = document.getElementById(id);
+      const target = document.getElementById(activeSafetyTabId);
       if (target) target.classList.remove('hidden');
       if (btn) btn.classList.add('active');
-      if (id === 'safe-active') renderSafetyActivePanels();
-      if (id === 'safe-files') renderDriverFiles();
-      if (id === 'safe-fleet') renderSafetyFleet();
+      if (activeSafetyTabId === 'safe-active') renderSafetyActivePanels();
+      if (activeSafetyTabId === 'safe-files') renderDriverFiles();
+      if (activeSafetyTabId === 'safe-fleet') renderSafetyFleet();
+      if (activeSafetyTabId === 'safe-assign') renderSafetyAssignments();
+      if (activeSafetyTabId === 'safe-hos') renderSafetyHos();
     }
 
     function dateDaysFromNow(iso) {
