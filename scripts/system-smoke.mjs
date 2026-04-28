@@ -25,6 +25,7 @@ const CRITICAL = [
   ['GET', '/api/accounting/qbo-items'],
   ['GET', '/api/catalog/parts'],
   ['GET', '/api/catalog/service-types'],
+  ['GET', '/api/equipment/assignments'],
   ['GET', '/api/form-425c/profiles'],
   ['GET', '/api/qbo/sync-alerts'],
   ['GET', '/api/maintenance/dashboard'],
@@ -143,6 +144,8 @@ function criticalContractError(path, json) {
       return Array.isArray(json.parts) ? null : 'expected { parts: [] }';
     case '/api/catalog/service-types':
       return Array.isArray(json.services) ? null : 'expected { services: [] }';
+    case '/api/equipment/assignments':
+      return json.ok === true && Array.isArray(json.data) ? null : 'expected { ok:true, data: [] }';
     case '/api/form-425c/profiles':
       return Array.isArray(json.companies) ? null : 'expected { companies: [] }';
     case '/api/qbo/sync-alerts':
@@ -365,6 +368,7 @@ function summarize(j, path) {
   if (path === '/api/accounting/qbo-items' && Array.isArray(j.items)) return `items=${j.items.length}`;
   if (path === '/api/catalog/parts' && Array.isArray(j.parts)) return `parts=${j.parts.length}`;
   if (path === '/api/catalog/service-types' && Array.isArray(j.services)) return `services=${j.services.length}`;
+  if (path === '/api/equipment/assignments' && Array.isArray(j.data)) return `assignments=${j.data.length}`;
   if (path === '/api/form-425c/profiles' && Array.isArray(j.companies)) return `companies=${j.companies.length}`;
   if (path === '/api/qbo/status' && typeof j.connected === 'boolean') return `connected=${j.connected} configured=${j.configured}`;
   if (path === '/api/board' && Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length} live=${Array.isArray(j.live) ? j.live.length : 0}`;

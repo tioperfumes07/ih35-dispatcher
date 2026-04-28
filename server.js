@@ -33,6 +33,7 @@ const SMOKE_GATE_API_PATHS = new Set([
   "/api/accounting/qbo-items",
   "/api/catalog/parts",
   "/api/catalog/service-types",
+  "/api/equipment/assignments",
   "/api/form-425c/profiles",
   "/api/maintenance/dashboard",
   "/api/maintenance/records",

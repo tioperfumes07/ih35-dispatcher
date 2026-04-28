@@ -8478,7 +8478,7 @@
         return;
       }
       if (section === 'lists') {
-        window.location.href = '/fleet-reports/?section=lists';
+        openSection('catalog', document.querySelector('.nav-btn[data-section=lists]'));
         return;
       }
       if (section === 'reports') {
@@ -11133,7 +11133,9 @@
     }
 
     function openSection(name, btn) {
-      const REACT_SECTIONS = { 'lists': 'lists', 'reports': 'reports', 'scheduler': 'scheduler' };
+      const LOCAL_ALIAS = { lists: 'catalog' };
+      name = LOCAL_ALIAS[name] || name;
+      const REACT_SECTIONS = { 'reports': 'reports', 'scheduler': 'scheduler' };
       if (REACT_SECTIONS[name]) {
         window.location.href = '/fleet-reports?section=' + REACT_SECTIONS[name];
         return;
@@ -11151,10 +11153,11 @@
         el.classList.remove('active');
         el.removeAttribute('aria-current');
       });
+      const navFallback = name === 'catalog' ? ', #erpIconNav .nav-btn[data-section="lists"], #erpSectionGhostNav .nav-btn[data-section="lists"]' : '';
       const navBtn =
         btn ||
         document.querySelector(
-          `#erpIconNav .nav-btn[data-section="${name}"], #erpSectionGhostNav .nav-btn[data-section="${name}"]`
+          `#erpIconNav .nav-btn[data-section="${name}"], #erpSectionGhostNav .nav-btn[data-section="${name}"]${navFallback}`
         );
       if (navBtn) {
         navBtn.classList.add('active');
