@@ -1045,7 +1045,7 @@
           <div class="metric"><div class="metric-label">HOS rows</div><div class="metric-value" id="safetyHomeHos">0</div></div>
         </div>
         <div id="safetyHomeQuickActions" class="erp-home-quick-actions">
-          <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'))">Create work order</button>
+          <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]')); openUnifiedTransactionModal('maintenance_order', { unit_number: selectedUnit || '' });">Create work order</button>
           <button type="button" class="btn" onclick="openSection('drivers', document.querySelector('.nav-btn[data-section=drivers]'))">Driver files</button>
           <button type="button" class="btn" onclick="openSection('tracking', document.querySelector('.nav-btn[data-section=tracking]'))">Open tracking</button>
         </div>
@@ -1501,7 +1501,7 @@
         </div>
 
         <div id="driversHomeQuickActions" class="erp-home-quick-actions">
-          <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]'))">Create work order</button>
+          <button type="button" class="btn" onclick="openSection('maintenance', document.querySelector('.nav-btn[data-section=maintenance]')); openUnifiedTransactionModal('maintenance_order', { unit_number: selectedUnit || '' });">Create work order</button>
           <button type="button" class="btn" onclick="window.open('/driver/','_blank','noopener')">Open driver app</button>
           <button type="button" class="btn" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]'))">Open accounting</button>
         </div>
@@ -22918,9 +22918,9 @@
           '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">' +
             '<div style="font-weight:700;color:#e2e8f0">Vehicle detail — ' + escapeHtml(String(v.name || '')) + '</div>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal('repair_order',{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Repair</button>' +
-              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal('pm_service',{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Service</button>' +
-              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal('maintenance_order',{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Work Order</button>' +
+              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal(&quot;repair_order&quot;,{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Repair</button>' +
+              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal(&quot;pm_service&quot;,{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Service</button>' +
+              '<button type="button" class="btn btn--small" onclick="openUnifiedTransactionModal(&quot;maintenance_order&quot;,{unit_number:' + JSON.stringify(String(v.name || '')) + '})">Create Work Order</button>' +
             '</div>' +
           '</div>' +
           '<div class="mini-note" style="margin-top:8px">Maintenance history: <b>' + String(unitHistory.length) + '</b> · Open work orders: <b>' + String(unitOpenWos.length) + '</b> · Next PM due: <b>' + escapeHtml(String(nextPm)) + '</b></div>' +
