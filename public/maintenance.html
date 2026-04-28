@@ -5407,6 +5407,7 @@
           <div class="panel-body">
             <div class="subtabs" style="margin-bottom:14px">
               <button type="button" class="subtab" data-cat-sub="fleet" onclick="openCatalogSubpanel('fleet', this)">Fleet &amp; Samsara</button>
+              <button type="button" class="subtab" data-cat-sub="equipment" onclick="openCatalogSubpanel('equipment', this)">Equipment assignments</button>
               <button type="button" class="subtab" data-cat-sub="operational" onclick="openCatalogSubpanel('operational', this)">Operational status</button>
               <button type="button" class="subtab" data-cat-sub="qbo" onclick="openCatalogSubpanel('qbo', this)">QuickBooks items &amp; accounts</button>
               <button type="button" class="subtab active" data-cat-sub="service" onclick="openCatalogSubpanel('service', this)">Service types (DB)</button>
@@ -5571,6 +5572,94 @@
                 <input id="samsaraDriverIdInput" class="qb-in maint-field" placeholder="Samsara driver id">
                 <input id="samsaraDriverNameInput" class="qb-in maint-field" placeholder="New driver name">
                 <button type="button" onclick="pushSamsaraDriverName()">POST update to Samsara</button>
+              </div>
+            </div>
+            <div id="catalog-panel-equipment" class="catalog-subpanel">
+              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+                <span class="mini-note" style="margin:0">
+                  Bulk assign equipment inventory to one/many units, unassign with reason/date, and review assignment history.
+                </span>
+              </div>
+              <div class="catalog-add-card" style="margin-bottom:14px">
+                <div class="catalog-add-card__head">
+                  <span class="catalog-add-card__title">Bulk equipment assignment</span>
+                  <span class="catalog-add-card__badge">+</span>
+                </div>
+                <div class="catalog-add-card__body form-stack">
+                  <label class="qb-l">Equipment IDs (comma-separated)</label>
+                  <input id="equipmentAssignItemsInput" class="qb-in maint-field" placeholder="e.g. tarp_20x20, chain_binder, corner_protector">
+                  <label class="qb-l">Notes</label>
+                  <input id="equipmentAssignNotesInput" class="qb-in maint-field" placeholder="Optional assignment note">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                    <span class="qb-l" style="margin:0">Select units</span>
+                    <label class="mini-note" style="display:inline-flex;align-items:center;gap:6px;margin:0">
+                      <input type="checkbox" id="equipmentAssignSelectAllUnits" onchange="toggleAllEquipmentUnits(this.checked)">
+                      Select all
+                    </label>
+                  </div>
+                  <div id="equipmentAssignUnitsHost" class="erp-scroll-panel-400" style="max-height:220px;border:1px solid var(--color-border);border-radius:8px;padding:10px;background:var(--color-surface-muted)">
+                    <span class="mini-note">Loading units…</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <button type="button" class="catalog-plus-btn" onclick="assignEquipmentSelectedUnits()">Assign Selected</button>
+                    <button type="button" class="btn btn--small" onclick="loadEquipmentAssignmentHub()">Refresh</button>
+                  </div>
+                  <div id="equipmentAssignHint" class="mini-note" role="status" aria-live="polite"></div>
+                </div>
+              </div>
+
+              <div class="panel" style="margin-top:10px">
+                <div class="panel-head">
+                  <div class="panel-title">Active assignments</div>
+                </div>
+                <div class="panel-body">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                    <input id="equipmentUnassignReasonInput" class="qb-in maint-field" style="max-width:420px" placeholder="Unassign reason (required)">
+                    <button type="button" class="btn btn--small" onclick="unassignSelectedEquipmentAssignments()">Unassign selected</button>
+                  </div>
+                  <div class="table-wrap erp-scroll-panel-400">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th><input type="checkbox" id="equipmentAssignSelectAllRows" onchange="toggleAllEquipmentAssignmentRows(this.checked)"></th>
+                          <th>Equipment</th>
+                          <th>Unit</th>
+                          <th>Assigned</th>
+                          <th>Assigned by</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody id="equipmentAssignmentsBody">
+                        <tr><td colspan="6" class="muted">No assignments loaded.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel" style="margin-top:10px">
+                <div class="panel-head">
+                  <div class="panel-title">Assignment history</div>
+                </div>
+                <div class="panel-body">
+                  <div class="table-wrap erp-scroll-panel-400">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Equipment</th>
+                          <th>Unit</th>
+                          <th>Assigned</th>
+                          <th>Unassigned</th>
+                          <th>Status</th>
+                          <th>Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody id="equipmentAssignmentsHistoryBody">
+                        <tr><td colspan="6" class="muted">No history loaded.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -9510,6 +9599,7 @@
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openDedupeTool()">Find &amp; merge duplicates</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'equipment\');">Equipment assignments</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'service\');">Service types (database)</button>' +
@@ -9528,6 +9618,7 @@
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="location.href=\'/banking.html\'">Bank CSV matching</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="connectQuickBooks()">Connect QuickBooks</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'fleet\');">Fleet &amp; Samsara writes</button>' +
+        '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'equipment\');">Equipment assignments</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'operational\');">Operational status labels</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openSection(\'catalog\', document.querySelector(\'.nav-btn[data-section=catalog]\')); openCatalogSubpanel(\'qbo\');">QuickBooks items &amp; accounts</button>' +
         '<button type="button" class="erp-sb-link sidebar-child-item" onclick="window.open(\'https://cloud.samsara.com\',\'_blank\',\'noopener\');">Samsara Cloud</button>' +
@@ -9730,6 +9821,7 @@
             'Sub-tabs',
             true,
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;fleet&quot;);">Fleet &amp; Samsara writes</button>' +
+              '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;equipment&quot;);">Equipment assignments</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;operational&quot;);">Operational labels</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;qbo&quot;);">QuickBooks items &amp; accounts</button>' +
               '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openCatalogSubpanel(&quot;service&quot;);">Service types</button>' +
@@ -11700,7 +11792,7 @@
         let which = 'service';
         if (section.startsWith('catalog-')) {
           const rest = section.slice('catalog-'.length);
-          if (['service', 'qbo', 'vendors', 'operational', 'fleet', 'name-mgmt'].includes(rest)) which = rest;
+          if (['service', 'qbo', 'vendors', 'operational', 'fleet', 'equipment', 'name-mgmt'].includes(rest)) which = rest;
         }
         requestAnimationFrame(() => openCatalogSubpanel(which, null));
         return;
@@ -19884,6 +19976,7 @@
       if (which === 'service') loadServiceCatalogAdminOnly();
       if (which === 'vendors') loadVendorCatalogPanel();
       if (which === 'operational') loadOperationalCatalogPanel();
+      if (which === 'equipment') loadEquipmentAssignmentHub();
       if (which === 'name-mgmt') {
         const firstNm = document.querySelector('#catalog-panel-name-mgmt .subtabs .subtab');
         openNameMgmtCatalogDedupeTab(firstNm);
@@ -19911,6 +20004,208 @@
       if (d) d.style.display = 'none';
       if (r) r.style.display = '';
       if (typeof window.erpNameMgmtInit === 'function') window.erpNameMgmtInit({ catalog: true });
+    }
+
+    let equipmentAssignmentUnits = [];
+    let equipmentAssignmentRows = [];
+
+    function catalogCurrentRole() {
+      const a = String(window.erpAuthMe?.role || '').trim().toLowerCase();
+      if (a) return a;
+      const b = String(localStorage.getItem('ih35_role') || '').trim().toLowerCase();
+      if (b) return b;
+      return '';
+    }
+
+    function canWriteCatalogs() {
+      const role = catalogCurrentRole();
+      if (!role) return true;
+      return ['admin', 'administrator', 'manager'].includes(role);
+    }
+
+    function setEquipmentAssignmentHint(message, isError) {
+      const el = document.getElementById('equipmentAssignHint');
+      if (!el) return;
+      el.textContent = String(message || '');
+      el.style.color = isError ? 'var(--color-semantic-error)' : 'var(--color-text-label)';
+    }
+
+    function selectedEquipmentUnits() {
+      const checks = Array.from(document.querySelectorAll('.equipment-unit-check:checked'));
+      return checks.map((el) => String(el.value || '').trim()).filter(Boolean);
+    }
+
+    function selectedEquipmentAssignmentIds() {
+      const checks = Array.from(document.querySelectorAll('.equipment-assignment-check:checked'));
+      return checks
+        .map((el) => Number(el.value))
+        .filter((v) => Number.isFinite(v));
+    }
+
+    function toggleAllEquipmentUnits(checked) {
+      document.querySelectorAll('.equipment-unit-check').forEach((el) => {
+        el.checked = !!checked;
+      });
+    }
+
+    function toggleAllEquipmentAssignmentRows(checked) {
+      document.querySelectorAll('.equipment-assignment-check').forEach((el) => {
+        el.checked = !!checked;
+      });
+    }
+
+    function renderEquipmentUnits() {
+      const host = document.getElementById('equipmentAssignUnitsHost');
+      if (!host) return;
+      if (!equipmentAssignmentUnits.length) {
+        host.innerHTML = '<span class="mini-note">No units available.</span>';
+        return;
+      }
+      host.innerHTML = equipmentAssignmentUnits
+        .map((u) => {
+          const unit = escapeHtml(String(u.unit_number || u.unit || '').trim());
+          const meta = [u.asset_type, u.status].filter(Boolean).map((x) => escapeHtml(String(x))).join(' · ');
+          return `<label class="mini-note" style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px dashed var(--color-border)">
+            <input type="checkbox" class="equipment-unit-check" value="${unit}">
+            <span style="font-weight:600">${unit}</span>
+            <span style="opacity:0.8">${meta}</span>
+          </label>`;
+        })
+        .join('');
+    }
+
+    function renderEquipmentAssignments() {
+      const body = document.getElementById('equipmentAssignmentsBody');
+      if (!body) return;
+      if (!equipmentAssignmentRows.length) {
+        body.innerHTML = '<tr><td colspan="6" class="muted">No active assignments.</td></tr>';
+        return;
+      }
+      body.innerHTML = equipmentAssignmentRows
+        .map((row) => {
+          const id = Number(row.id);
+          return `<tr>
+            <td><input type="checkbox" class="equipment-assignment-check" value="${Number.isFinite(id) ? id : ''}"></td>
+            <td>${escapeHtml(String(row.equipment_id || ''))}</td>
+            <td>${escapeHtml(String(row.unit_number || ''))}</td>
+            <td>${escapeHtml(formatDateTimeLocal(row.assigned_date) || '')}</td>
+            <td>${escapeHtml(String(row.assigned_by || ''))}</td>
+            <td>${escapeHtml(String(row.status || 'assigned'))}</td>
+          </tr>`;
+        })
+        .join('');
+    }
+
+    function renderEquipmentAssignmentHistory(rows) {
+      const body = document.getElementById('equipmentAssignmentsHistoryBody');
+      if (!body) return;
+      const history = Array.isArray(rows) ? rows : [];
+      if (!history.length) {
+        body.innerHTML = '<tr><td colspan="6" class="muted">No assignment history yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = history
+        .map((row) => `<tr>
+          <td>${escapeHtml(String(row.equipment_id || ''))}</td>
+          <td>${escapeHtml(String(row.unit_number || ''))}</td>
+          <td>${escapeHtml(formatDateTimeLocal(row.assigned_date) || '')}</td>
+          <td>${escapeHtml(formatDateTimeLocal(row.unassigned_date) || '')}</td>
+          <td>${escapeHtml(String(row.status || 'assigned'))}</td>
+          <td>${escapeHtml(String(row.notes || ''))}</td>
+        </tr>`)
+        .join('');
+    }
+
+    async function loadEquipmentAssignmentHub() {
+      const host = document.getElementById('equipmentAssignUnitsHost');
+      if (!host) return;
+      setEquipmentAssignmentHint('Loading equipment assignment data…', false);
+      try {
+        const [unitsData, activeData, historyData] = await Promise.all([
+          j('/api/fleet/assets/units'),
+          j('/api/equipment/assignments?status=assigned'),
+          j('/api/equipment/assignments/history')
+        ]);
+        equipmentAssignmentUnits = Array.isArray(unitsData?.units) ? unitsData.units : [];
+        equipmentAssignmentRows = Array.isArray(activeData?.data) ? activeData.data : [];
+        renderEquipmentUnits();
+        renderEquipmentAssignments();
+        renderEquipmentAssignmentHistory(Array.isArray(historyData?.data) ? historyData.data : []);
+        setEquipmentAssignmentHint('Equipment assignments loaded.', false);
+      } catch (e) {
+        if (host) host.innerHTML = '<span class="mini-note">Failed to load units.</span>';
+        equipmentAssignmentRows = [];
+        renderEquipmentAssignments();
+        renderEquipmentAssignmentHistory([]);
+        setEquipmentAssignmentHint(e?.message || String(e), true);
+      }
+    }
+
+    async function assignEquipmentSelectedUnits() {
+      if (!canWriteCatalogs()) {
+        setEquipmentAssignmentHint('Manager/Admin role required for assignments.', true);
+        return;
+      }
+      const equipmentRaw = String(document.getElementById('equipmentAssignItemsInput')?.value || '').trim();
+      const equipmentIds = equipmentRaw
+        .split(',')
+        .map((v) => String(v || '').trim())
+        .filter(Boolean);
+      const units = selectedEquipmentUnits();
+      const notes = String(document.getElementById('equipmentAssignNotesInput')?.value || '').trim();
+      if (!equipmentIds.length) {
+        setEquipmentAssignmentHint('Enter at least one equipment id.', true);
+        return;
+      }
+      if (!units.length) {
+        setEquipmentAssignmentHint('Select at least one unit.', true);
+        return;
+      }
+      try {
+        setEquipmentAssignmentHint('Saving assignments…', false);
+        const r = await fetch('/api/equipment/assignments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authFetchHeaders(), ...erpWriteHeaders() },
+          body: JSON.stringify({ equipment_ids: equipmentIds, unit_numbers: units, notes })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data?.ok === false) throw new Error(data?.error || r.statusText || 'Failed to save assignments');
+        setEquipmentAssignmentHint(`Assigned ${data?.created_count || 0} equipment records.`, false);
+        await loadEquipmentAssignmentHub();
+      } catch (e) {
+        setEquipmentAssignmentHint(e?.message || String(e), true);
+      }
+    }
+
+    async function unassignSelectedEquipmentAssignments() {
+      if (!canWriteCatalogs()) {
+        setEquipmentAssignmentHint('Manager/Admin role required for unassign.', true);
+        return;
+      }
+      const ids = selectedEquipmentAssignmentIds();
+      const reason = String(document.getElementById('equipmentUnassignReasonInput')?.value || '').trim();
+      if (!ids.length) {
+        setEquipmentAssignmentHint('Select assignment rows to unassign.', true);
+        return;
+      }
+      if (!reason) {
+        setEquipmentAssignmentHint('Unassign reason is required.', true);
+        return;
+      }
+      try {
+        setEquipmentAssignmentHint('Updating assignments…', false);
+        const r = await fetch('/api/equipment/assignments/unassign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authFetchHeaders(), ...erpWriteHeaders() },
+          body: JSON.stringify({ assignment_ids: ids, reason })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data?.ok === false) throw new Error(data?.error || r.statusText || 'Failed to unassign');
+        setEquipmentAssignmentHint(`Unassigned ${data?.updated_count || 0} record(s).`, false);
+        await loadEquipmentAssignmentHub();
+      } catch (e) {
+        setEquipmentAssignmentHint(e?.message || String(e), true);
+      }
     }
 
     let __vendorLinkPick = { qboId: '', qboName: '', samsaraId: '', samsaraName: '' };

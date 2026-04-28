@@ -1168,6 +1168,72 @@ export function mountErpCoreApi(app, opts = {}) {
     return String(req.headers['x-ih35-user'] || req.headers['x-user-email'] || 'operator').trim() || 'operator';
   }
 
+  function reqRole(req) {
+    const raw = String(
+      req.headers['x-ih35-role'] ||
+      req.headers['x-user-role'] ||
+      req.headers['x-role'] ||
+      ''
+    ).trim().toLowerCase();
+    return raw || '';
+  }
+
+  function requireCatalogWriteRole(req, res) {
+    const role = reqRole(req);
+    if (!role) return true; // Backward-compatible until full RBAC rollout in Wave 7.
+    if (['admin', 'administrator', 'manager'].includes(role)) return true;
+    res.status(403).json({ ok: false, error: 'Catalog write requires manager/admin role' });
+    return false;
+  }
+
+  function requireAdminRole(req, res) {
+    const role = reqRole(req);
+    if (!role) return true; // Backward-compatible until full RBAC rollout in Wave 7.
+    if (['admin', 'administrator'].includes(role)) return true;
+    res.status(403).json({ ok: false, error: 'Admin role required' });
+    return false;
+  }
+
+  async function ensureAuditLogTable() {
+    if (!getPoolForRoute()) return false;
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        actor TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT,
+        before_state JSONB,
+        after_state JSONB,
+        source_module TEXT,
+        ip_address TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`
+    );
+    return true;
+  }
+
+  async function writeAuditLog(req, payload = {}) {
+    if (!getPoolForRoute()) return;
+    await ensureAuditLogTable();
+    await dbQueryForRoute(
+      `INSERT INTO audit_log (
+        actor, action, entity_type, entity_id,
+        before_state, after_state, source_module, ip_address, created_at
+      ) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,now())`,
+      [
+        String(payload.actor || maintActor(req) || 'operator').trim() || 'operator',
+        String(payload.action || 'unknown_action').trim(),
+        String(payload.entity_type || 'unknown_entity').trim(),
+        String(payload.entity_id || '').trim() || null,
+        payload.before_state == null ? null : JSON.stringify(payload.before_state),
+        payload.after_state == null ? null : JSON.stringify(payload.after_state),
+        String(payload.source_module || 'maintenance').trim() || 'maintenance',
+        String(req.headers['x-forwarded-for'] || req.ip || '').trim() || null,
+      ]
+    );
+  }
+
   async function ensureWorkOrdersTable() {
     await dbQueryForRoute(
       `CREATE TABLE IF NOT EXISTS work_orders (
@@ -1906,6 +1972,224 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/catalog/service-types', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, services: [], data: [] });
+      await ensureFleetCatalogSeedRows(logError);
+      const { rows } = await dbQueryForRoute(
+        `SELECT id, slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model
+           FROM service_types
+          ORDER BY name ASC`
+      );
+      const services = rows || [];
+      return res.json({ ok: true, services, data: services });
+    } catch (e) {
+      logError('GET /api/catalog/service-types', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), services: [], data: [] });
+    }
+  });
+
+  app.post('/api/catalog/service-types', async (req, res) => {
+    try {
+      if (!requireCatalogWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const name = String(b.name || '').trim();
+      if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
+      const slug = String(b.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')).trim();
+      const intervalMiles = b.interval_miles == null || b.interval_miles === '' ? null : Number(b.interval_miles);
+      const intervalMonths = b.interval_months == null || b.interval_months === '' ? null : Number(b.interval_months);
+      const result = await dbQueryForRoute(
+        `INSERT INTO service_types
+          (slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         RETURNING id, slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model`,
+        [
+          slug,
+          name,
+          String(b.category || '').trim() || null,
+          Number.isFinite(intervalMiles) ? intervalMiles : null,
+          Number.isFinite(intervalMonths) ? intervalMonths : null,
+          String(b.notes || '').trim() || null,
+          String(b.vehicle_make || '').trim() || null,
+          String(b.vehicle_model || '').trim() || null,
+        ]
+      );
+      const row = result.rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'catalog_service_type_create',
+        entity_type: 'service_type',
+        entity_id: String(row?.id || ''),
+        before_state: null,
+        after_state: row,
+        source_module: 'catalog',
+      }).catch(() => null);
+      return res.status(201).json({ ok: true, service: row, data: row });
+    } catch (e) {
+      logError('POST /api/catalog/service-types', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/catalog/service-types/:id', async (req, res) => {
+    try {
+      if (!requireCatalogWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const id = String(req.params.id || '').trim();
+      if (!id) return res.status(400).json({ ok: false, error: 'valid id required' });
+      const before = await dbQueryForRoute('SELECT * FROM service_types WHERE id=$1', [id]);
+      if (!before.rows?.length) return res.status(404).json({ ok: false, error: 'service type not found' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const name = String(b.name || before.rows[0].name || '').trim();
+      if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
+      const slug = String(b.slug || before.rows[0].slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '_')).trim();
+      const intervalMiles = b.interval_miles == null || b.interval_miles === '' ? null : Number(b.interval_miles);
+      const intervalMonths = b.interval_months == null || b.interval_months === '' ? null : Number(b.interval_months);
+      const result = await dbQueryForRoute(
+        `UPDATE service_types
+            SET slug=$1, name=$2, category=$3, interval_miles=$4, interval_months=$5,
+                notes=$6, vehicle_make=$7, vehicle_model=$8
+          WHERE id=$9
+        RETURNING id, slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model`,
+        [
+          slug,
+          name,
+          String(b.category || '').trim() || null,
+          Number.isFinite(intervalMiles) ? intervalMiles : null,
+          Number.isFinite(intervalMonths) ? intervalMonths : null,
+          String(b.notes || '').trim() || null,
+          String(b.vehicle_make || '').trim() || null,
+          String(b.vehicle_model || '').trim() || null,
+          id,
+        ]
+      );
+      const row = result.rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'catalog_service_type_update',
+        entity_type: 'service_type',
+        entity_id: String(id),
+        before_state: before.rows[0],
+        after_state: row,
+        source_module: 'catalog',
+      }).catch(() => null);
+      return res.json({ ok: true, service: row, data: row });
+    } catch (e) {
+      logError('PUT /api/catalog/service-types/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/catalog/service-types/:id', async (req, res) => {
+    try {
+      if (!requireAdminRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const id = String(req.params.id || '').trim();
+      if (!id) return res.status(400).json({ ok: false, error: 'valid id required' });
+      const before = await dbQueryForRoute('SELECT * FROM service_types WHERE id=$1', [id]);
+      if (!before.rows?.length) return res.status(404).json({ ok: false, error: 'service type not found' });
+      await dbQueryForRoute('DELETE FROM service_types WHERE id=$1', [id]);
+      await writeAuditLog(req, {
+        action: 'catalog_service_type_delete',
+        entity_type: 'service_type',
+        entity_id: String(id),
+        before_state: before.rows[0],
+        after_state: null,
+        source_module: 'catalog',
+      }).catch(() => null);
+      return res.json({ ok: true, deleted: true, id });
+    } catch (e) {
+      logError('DELETE /api/catalog/service-types/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/catalog/parts', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, parts: [], data: [] });
+      await ensureFleetCatalogSeedRows(logError);
+      const { rows } = await dbQueryForRoute(
+        `SELECT part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid
+           FROM vehicle_parts_reference
+          ORDER BY label ASC`
+      );
+      const parts = rows || [];
+      return res.json({ ok: true, parts, data: parts });
+    } catch (e) {
+      logError('GET /api/catalog/parts', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), parts: [], data: [] });
+    }
+  });
+
+  app.post('/api/catalog/parts', async (req, res) => {
+    try {
+      if (!requireCatalogWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const label = String(b.label || '').trim();
+      if (!label) return res.status(400).json({ ok: false, error: 'label is required' });
+      const partKey = String(b.part_key || label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')).trim();
+      if (!partKey) return res.status(400).json({ ok: false, error: 'part_key is required' });
+      const miles = b.avg_replacement_miles == null || b.avg_replacement_miles === '' ? null : Number(b.avg_replacement_miles);
+      const months = b.avg_replacement_months == null || b.avg_replacement_months === '' ? null : Number(b.avg_replacement_months);
+      const cost = b.avg_cost_mid == null || b.avg_cost_mid === '' ? null : Number(b.avg_cost_mid);
+      const result = await dbQueryForRoute(
+        `INSERT INTO vehicle_parts_reference (part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid)
+         VALUES ($1,$2,$3,$4,$5)
+         ON CONFLICT (part_key)
+         DO UPDATE SET
+           label = EXCLUDED.label,
+           avg_replacement_miles = EXCLUDED.avg_replacement_miles,
+           avg_replacement_months = EXCLUDED.avg_replacement_months,
+           avg_cost_mid = EXCLUDED.avg_cost_mid
+         RETURNING part_key, label, avg_replacement_miles, avg_replacement_months, avg_cost_mid`,
+        [
+          partKey,
+          label,
+          Number.isFinite(miles) ? miles : null,
+          Number.isFinite(months) ? months : null,
+          Number.isFinite(cost) ? cost : null,
+        ]
+      );
+      const row = result.rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'catalog_part_upsert',
+        entity_type: 'vehicle_part',
+        entity_id: String(row?.part_key || partKey),
+        before_state: null,
+        after_state: row,
+        source_module: 'catalog',
+      }).catch(() => null);
+      return res.status(201).json({ ok: true, part: row, data: row });
+    } catch (e) {
+      logError('POST /api/catalog/parts', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/catalog/parts/:partKey', async (req, res) => {
+    try {
+      if (!requireAdminRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      const partKey = String(req.params.partKey || '').trim();
+      if (!partKey) return res.status(400).json({ ok: false, error: 'partKey is required' });
+      const before = await dbQueryForRoute('SELECT * FROM vehicle_parts_reference WHERE part_key=$1', [partKey]);
+      if (!before.rows?.length) return res.status(404).json({ ok: false, error: 'part not found' });
+      await dbQueryForRoute('DELETE FROM vehicle_parts_reference WHERE part_key=$1', [partKey]);
+      await writeAuditLog(req, {
+        action: 'catalog_part_delete',
+        entity_type: 'vehicle_part',
+        entity_id: partKey,
+        before_state: before.rows[0],
+        after_state: null,
+        source_module: 'catalog',
+      }).catch(() => null);
+      return res.json({ ok: true, deleted: true, part_key: partKey });
+    } catch (e) {
+      logError('DELETE /api/catalog/parts/:partKey', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.get('/api/maintenance/parts-reference', async (_req, res) => {
     const fallbackParts = COMMON_PARTS_REFERENCE_SEEDS.map(p => ({ ...p }));
     const fallbackNames = dedupeCatalogNames(fallbackParts.map(p => p.label));
@@ -2619,6 +2903,212 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({ ok: true, imported });
     } catch (e) {
       logError('POST /api/drivers/sync-from-samsara', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  async function ensureEquipmentAssignmentsTable() {
+    if (!getPoolForRoute()) return false;
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS equipment_assignments (
+        id SERIAL PRIMARY KEY,
+        equipment_id TEXT NOT NULL,
+        unit_number TEXT NOT NULL,
+        assigned_date TIMESTAMPTZ DEFAULT NOW(),
+        unassigned_date TIMESTAMPTZ,
+        assigned_by TEXT,
+        notes TEXT,
+        status TEXT DEFAULT 'assigned',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`
+    );
+    await dbQueryForRoute(
+      `CREATE INDEX IF NOT EXISTS idx_equipment_assignments_equipment
+         ON equipment_assignments (equipment_id, status, assigned_date DESC)`
+    );
+    await dbQueryForRoute(
+      `CREATE INDEX IF NOT EXISTS idx_equipment_assignments_unit
+         ON equipment_assignments (unit_number, status, assigned_date DESC)`
+    );
+    return true;
+  }
+
+  app.get('/api/equipment/assignments', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, data: [], count: 0 });
+      await ensureEquipmentAssignmentsTable();
+      const unit = String(req.query?.unit || '').trim();
+      const equipmentId = String(req.query?.equipment_id || '').trim();
+      const status = String(req.query?.status || '').trim().toLowerCase();
+      const where = [];
+      const values = [];
+      if (unit) {
+        values.push(unit);
+        where.push(`unit_number = $${values.length}`);
+      }
+      if (equipmentId) {
+        values.push(equipmentId);
+        where.push(`equipment_id = $${values.length}`);
+      }
+      if (status) {
+        values.push(status);
+        where.push(`status = $${values.length}`);
+      }
+      const sql = `SELECT id, equipment_id, unit_number, assigned_date, unassigned_date, assigned_by, notes, status
+                     FROM equipment_assignments
+                    ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+                    ORDER BY assigned_date DESC, id DESC
+                    LIMIT 2000`;
+      const { rows } = await dbQueryForRoute(sql, values);
+      return res.json({ ok: true, data: rows || [], count: Number(rows?.length || 0) });
+    } catch (e) {
+      logError('GET /api/equipment/assignments', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), data: [], count: 0 });
+    }
+  });
+
+  app.get('/api/equipment/assignments/history', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, data: [], count: 0 });
+      await ensureEquipmentAssignmentsTable();
+      const unit = String(req.query?.unit || '').trim();
+      const equipmentId = String(req.query?.equipment_id || '').trim();
+      const where = [];
+      const values = [];
+      if (unit) {
+        values.push(unit);
+        where.push(`unit_number = $${values.length}`);
+      }
+      if (equipmentId) {
+        values.push(equipmentId);
+        where.push(`equipment_id = $${values.length}`);
+      }
+      const sql = `SELECT id, equipment_id, unit_number, assigned_date, unassigned_date, assigned_by, notes, status
+                     FROM equipment_assignments
+                    ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+                    ORDER BY COALESCE(unassigned_date, assigned_date) DESC, id DESC
+                    LIMIT 3000`;
+      const { rows } = await dbQueryForRoute(sql, values);
+      return res.json({ ok: true, data: rows || [], count: Number(rows?.length || 0) });
+    } catch (e) {
+      logError('GET /api/equipment/assignments/history', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), data: [], count: 0 });
+    }
+  });
+
+  app.post('/api/equipment/assignments', async (req, res) => {
+    try {
+      if (!requireCatalogWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureEquipmentAssignmentsTable();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const equipmentIds = Array.isArray(b.equipment_ids)
+        ? b.equipment_ids
+        : b.equipment_id != null
+          ? [b.equipment_id]
+          : [];
+      const unitNumbers = Array.isArray(b.unit_numbers)
+        ? b.unit_numbers
+        : b.unit_number != null
+          ? [b.unit_number]
+          : [];
+      const cleanEquipmentIds = [...new Set(equipmentIds.map((v) => String(v || '').trim()).filter(Boolean))];
+      const cleanUnitNumbers = [...new Set(unitNumbers.map((v) => String(v || '').trim()).filter(Boolean))];
+      if (!cleanEquipmentIds.length || !cleanUnitNumbers.length) {
+        return res.status(400).json({ ok: false, error: 'equipment_ids and unit_numbers are required arrays' });
+      }
+      const status = String(b.status || 'assigned').trim().toLowerCase() || 'assigned';
+      const notes = String(b.notes || '').trim() || null;
+      const assignedBy = String(b.assigned_by || maintActor(req)).trim() || maintActor(req);
+      const assignedDate = String(b.assigned_date || '').trim() || new Date().toISOString();
+      const created = [];
+      for (const equipmentId of cleanEquipmentIds) {
+        for (const unitNumber of cleanUnitNumbers) {
+          const inserted = await dbQueryForRoute(
+            `INSERT INTO equipment_assignments
+              (equipment_id, unit_number, assigned_date, assigned_by, notes, status, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,now())
+             RETURNING id, equipment_id, unit_number, assigned_date, unassigned_date, assigned_by, notes, status`,
+            [equipmentId, unitNumber, assignedDate, assignedBy, notes, status]
+          );
+          const row = inserted.rows?.[0];
+          if (row) {
+            created.push(row);
+            await writeAuditLog(req, {
+              action: 'equipment_assignment_create',
+              entity_type: 'equipment_assignment',
+              entity_id: String(row.id || ''),
+              before_state: null,
+              after_state: row,
+              source_module: 'equipment',
+            }).catch(() => null);
+          }
+        }
+      }
+      return res.status(201).json({
+        ok: true,
+        data: created,
+        created_count: created.length,
+        assignment_mode: `${cleanEquipmentIds.length} equipment x ${cleanUnitNumbers.length} units`,
+      });
+    } catch (e) {
+      logError('POST /api/equipment/assignments', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/equipment/assignments/unassign', async (req, res) => {
+    try {
+      if (!requireCatalogWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureEquipmentAssignmentsTable();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const ids = Array.isArray(b.assignment_ids)
+        ? b.assignment_ids.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+        : [];
+      const reason = String(b.reason || '').trim() || null;
+      const unassignedDate = String(b.unassigned_date || '').trim() || new Date().toISOString();
+      if (!ids.length) return res.status(400).json({ ok: false, error: 'assignment_ids array is required' });
+      const before = await dbQueryForRoute(
+        `SELECT id, equipment_id, unit_number, assigned_date, unassigned_date, assigned_by, notes, status
+           FROM equipment_assignments
+          WHERE id = ANY($1::int[])`,
+        [ids]
+      );
+      if (!before.rows?.length) return res.status(404).json({ ok: false, error: 'No assignments found for ids' });
+      const updated = await dbQueryForRoute(
+        `UPDATE equipment_assignments
+            SET status='unassigned',
+                unassigned_date=$2,
+                notes=CASE
+                  WHEN $3::text IS NULL OR $3::text = '' THEN notes
+                  WHEN notes IS NULL OR notes = '' THEN $3::text
+                  ELSE notes || E'\n[Unassign reason] ' || $3::text
+                END,
+                updated_at=now()
+          WHERE id = ANY($1::int[])
+        RETURNING id, equipment_id, unit_number, assigned_date, unassigned_date, assigned_by, notes, status`,
+        [ids, unassignedDate, reason]
+      );
+      for (const row of updated.rows || []) {
+        const prior = (before.rows || []).find((r) => Number(r.id) === Number(row.id)) || null;
+        await writeAuditLog(req, {
+          action: 'equipment_assignment_unassign',
+          entity_type: 'equipment_assignment',
+          entity_id: String(row.id || ''),
+          before_state: prior,
+          after_state: row,
+          source_module: 'equipment',
+        }).catch(() => null);
+      }
+      return res.json({
+        ok: true,
+        data: updated.rows || [],
+        updated_count: Number(updated.rowCount || 0),
+      });
+    } catch (e) {
+      logError('POST /api/equipment/assignments/unassign', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
