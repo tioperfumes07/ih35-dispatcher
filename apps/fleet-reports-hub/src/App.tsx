@@ -45,6 +45,18 @@ import { DriverProfilesPage } from './components/drivers/DriverProfilesPage'
 import { EquipmentPage } from './components/equipment/EquipmentPage'
 import { ToastContainer, installGlobalSaveFeedback } from './components/ui/Toast'
 
+const FLEET_REPORTS_READ_ONLY =
+  String(import.meta.env.VITE_FLEET_REPORTS_READ_ONLY ?? '1').trim() !== '0'
+
+const READ_ONLY_ALLOWED_SECTIONS: AppSection[] = ['home', 'reports']
+
+const READ_ONLY_BLOCKED_ACTIONS = new Set([
+  'createWorkOrder',
+  'openFuelExpenseForm',
+  'postToQBO',
+  'refreshQBO',
+])
+
 function matchesSearch(r: ReportDef, q: string, titleOverride?: string) {
   if (!q.trim()) return true
   const s = q.toLowerCase()
@@ -391,7 +403,12 @@ function parseDateValue(v: unknown): Date | null {
 
 export default function App() {
   const [initialLocation] = useState(readInitialLocationState)
-  const [activeSection, setActiveSection] = useState<AppSection>(initialLocation.section)
+  const [activeSection, setActiveSection] = useState<AppSection>(
+    FLEET_REPORTS_READ_ONLY &&
+      !READ_ONLY_ALLOWED_SECTIONS.includes(initialLocation.section)
+      ? 'reports'
+      : initialLocation.section,
+  )
   const [tab, setTab] = useState<ReportCategory>(initialLocation.tab)
   /** True for the session when opened from ERP record-tab iframe (?erpWoEmbed=1), after URL cleanup. */
   const [erpRecordEmbed] = useState(readErpRecordEmbedFlag)
@@ -437,19 +454,23 @@ export default function App() {
   const [schedulerFocusUnit, setSchedulerFocusUnit] = useState<string | null>(null)
 
   const openSection = useCallback((section: AppSection) => {
-    setActiveSection(section)
+    const nextSection =
+      FLEET_REPORTS_READ_ONLY && !READ_ONLY_ALLOWED_SECTIONS.includes(section)
+        ? 'reports'
+        : section
+    setActiveSection(nextSection)
     if (section !== 'scheduler') setSchedulerFocusUnit(null)
     setActive(null)
     setFuelPlannerTxn(null)
     setAppWoPickOpen(false)
     setAppWoModalOpen(false)
-    if (section === 'lists') {
+    if (nextSection === 'lists') {
       setListsTab('fleet-samsara')
       setListsDeepLink(null)
       setListsParentSection('lists')
       return
     }
-    if (section === 'reports') setTab('overview')
+    if (nextSection === 'reports') setTab('overview')
     setListsDeepLink(null)
   }, [])
 
@@ -482,6 +503,29 @@ export default function App() {
 
   useEffect(() => {
     installGlobalSaveFeedback()
+  }, [])
+
+  useEffect(() => {
+    if (!FLEET_REPORTS_READ_ONLY || typeof window === 'undefined') return
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = String(init?.method || 'GET').toUpperCase()
+      const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+      if (!isMutation) return originalFetch(input, init)
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : String(input.url || '')
+      if (!url.startsWith('/api/')) return originalFetch(input, init)
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'Fleet Reports Hub is read-only. Use Maintenance for transactional actions.',
+          readOnly: true,
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+    return () => {
+      window.fetch = originalFetch
+    }
   }, [])
 
   useEffect(() => {
@@ -987,6 +1031,10 @@ export default function App() {
       }
 
       const action = String(f.action || '').trim()
+      if (FLEET_REPORTS_READ_ONLY && READ_ONLY_BLOCKED_ACTIONS.has(action)) {
+        setCommandMsg('Read-only mode: use Maintenance to perform transactional actions.')
+        return
+      }
       if (action === 'createWorkOrder') {
         openSection('maintenance')
         setAppWoPickOpen(true)
@@ -1085,7 +1133,7 @@ export default function App() {
           aria-label="Application sections"
           style={{ margin: '8px 12px 0' }}
         >
-          {ORDERED_APP_SECTIONS.map((s) => (
+          {ORDERED_APP_SECTIONS.filter((s) => !FLEET_REPORTS_READ_ONLY || READ_ONLY_ALLOWED_SECTIONS.includes(s.id)).map((s) => (
             <button
               key={s.id}
               type="button"
@@ -1157,6 +1205,11 @@ export default function App() {
                   ? `${SECTION_DESCRIPTIONS.home} ${homeKpis.lastKpiRefreshSub}.`
                   : SECTION_DESCRIPTIONS[activeSection]}
               </p>
+              {FLEET_REPORTS_READ_ONLY ? (
+                <p className="muted" style={{ marginTop: 6 }}>
+                  Fleet Reports Hub is read-only. Create or edit records in Maintenance.
+                </p>
+              ) : null}
               <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                 <button type="button" className="btn sm" onClick={goToMaintenance}>
                   ← Maintenance
@@ -1240,7 +1293,10 @@ export default function App() {
                         homeKpis.lastKpiRefreshSub}
                     </p>
                     <div className="acct-hub__quick" aria-label="Home shortcuts">
-                      {ORDERED_APP_SECTIONS.filter((s) => s.id !== 'home').map((s) => (
+                      {ORDERED_APP_SECTIONS
+                        .filter((s) => s.id !== 'home')
+                        .filter((s) => !FLEET_REPORTS_READ_ONLY || READ_ONLY_ALLOWED_SECTIONS.includes(s.id))
+                        .map((s) => (
                         <button
                           key={`home-link-${s.id}`}
                           type="button"
@@ -1354,7 +1410,9 @@ export default function App() {
                     <section className="fr-report-dropdown-shell" aria-live="polite">
                       <label className="fr-report-dropdown-label">Feature commands</label>
                       <ul className="fr-report-dropdown-list">
-                        {featureCommandResults.map((f) => (
+                        {featureCommandResults
+                          .filter((f) => !FLEET_REPORTS_READ_ONLY || !READ_ONLY_BLOCKED_ACTIONS.has(String(f.action || '').trim()))
+                          .map((f) => (
                           <li key={`${f.title}:${f.section || ''}:${f.action || ''}:${f.reportId || ''}`}>
                             <button
                               type="button"
@@ -1377,7 +1435,7 @@ export default function App() {
                     </section>
                   ) : null}
                   {commandMsg ? <p className="muted" style={{ marginTop: 6 }}>{commandMsg}</p> : null}
-                  {reportTabForSection === 'fuel' ? (
+                  {reportTabForSection === 'fuel' && !FLEET_REPORTS_READ_ONLY ? (
                     <div className="fr-fuel-entry-strip" role="region" aria-label="Fuel bills and expenses">
                       <p className="fr-fuel-entry-strip__lead muted">
                         Opens the same fuel / DEF entry dialog as Accounting. Choose a transaction type below.
@@ -1471,7 +1529,7 @@ export default function App() {
         />
       )}
 
-      {appWoPickOpen ? (
+      {appWoPickOpen && !FLEET_REPORTS_READ_ONLY ? (
         <div
           className={
             'maint-modal-backdrop' +
@@ -1543,6 +1601,7 @@ export default function App() {
         </div>
       ) : null}
 
+      {!FLEET_REPORTS_READ_ONLY ? (
       <FuelTransactionForm
         open={fuelPlannerTxn !== null}
         transactionType={fuelPlannerTxn ?? 'fuel-bill'}
@@ -1569,8 +1628,9 @@ export default function App() {
           openMaintenanceIntegrityView()
         }}
       />
+      ) : null}
 
-      {appWoModalOpen ? (
+      {appWoModalOpen && !FLEET_REPORTS_READ_ONLY ? (
         <div
           className="maint-modal-backdrop"
           role="presentation"
