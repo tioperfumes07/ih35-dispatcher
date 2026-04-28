@@ -26,6 +26,8 @@ const CRITICAL = [
   ['GET', '/api/catalog/parts'],
   ['GET', '/api/catalog/service-types'],
   ['GET', '/api/equipment/assignments'],
+  ['GET', '/api/integrations/relay/settings'],
+  ['GET', '/api/integrations/relay/card-assignments'],
   ['GET', '/api/form-425c/profiles'],
   ['GET', '/api/qbo/sync-alerts'],
   ['GET', '/api/maintenance/dashboard'],
@@ -145,6 +147,12 @@ function criticalContractError(path, json) {
     case '/api/catalog/service-types':
       return Array.isArray(json.services) ? null : 'expected { services: [] }';
     case '/api/equipment/assignments':
+      return json.ok === true && Array.isArray(json.data) ? null : 'expected { ok:true, data: [] }';
+    case '/api/integrations/relay/settings':
+      return json.ok === true && json.settings && typeof json.settings === 'object'
+        ? null
+        : 'expected { ok:true, settings:{...} }';
+    case '/api/integrations/relay/card-assignments':
       return json.ok === true && Array.isArray(json.data) ? null : 'expected { ok:true, data: [] }';
     case '/api/form-425c/profiles':
       return Array.isArray(json.companies) ? null : 'expected { companies: [] }';
@@ -369,6 +377,10 @@ function summarize(j, path) {
   if (path === '/api/catalog/parts' && Array.isArray(j.parts)) return `parts=${j.parts.length}`;
   if (path === '/api/catalog/service-types' && Array.isArray(j.services)) return `services=${j.services.length}`;
   if (path === '/api/equipment/assignments' && Array.isArray(j.data)) return `assignments=${j.data.length}`;
+  if (path === '/api/integrations/relay/settings' && j.settings && typeof j.settings === 'object') {
+    return `relay_enabled=${Boolean(j.settings.enabled)} auto_post=${Boolean(j.settings.auto_post_qbo)}`;
+  }
+  if (path === '/api/integrations/relay/card-assignments' && Array.isArray(j.data)) return `relay_cards=${j.data.length}`;
   if (path === '/api/form-425c/profiles' && Array.isArray(j.companies)) return `companies=${j.companies.length}`;
   if (path === '/api/qbo/status' && typeof j.connected === 'boolean') return `connected=${j.connected} configured=${j.configured}`;
   if (path === '/api/board' && Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length} live=${Array.isArray(j.live) ? j.live.length : 0}`;
