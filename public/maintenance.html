@@ -18309,7 +18309,7 @@
               const svcRows = (Array.isArray(erp.records) ? erp.records : []).filter((r) => String(r?.unit || '').trim() === unit).sort((x,y)=>String(y?.serviceDate||y?.createdAt||'').localeCompare(String(x?.serviceDate||x?.createdAt||'')));
               const lastSvc = String(svcRows?.[0]?.serviceDate || svcRows?.[0]?.createdAt || '').slice(0,10) || '—';
               const due = String(svcRows?.[0]?.nextDueDate || svcRows?.[0]?.dueDate || '').slice(0,10) || '—';
-              return '<tr style="border-bottom:1px solid rgba(148,163,184,0.18);cursor:pointer" onclick="selectUnit(' + JSON.stringify(unit) + ');openMaintMainTab('record', document.querySelector('.maint-nav-tab[data-maint-main=record]'));">' +
+              return '<tr style="border-bottom:1px solid rgba(148,163,184,0.18);cursor:pointer" onclick="selectUnit(' + JSON.stringify(unit) + ');openMaintMainTab(&quot;record&quot;, document.querySelector(&quot;.maint-nav-tab[data-maint-main=record]&quot;));">' +
                 '<td style="padding:6px 8px;font-weight:700;white-space:nowrap">' + escapeHtml(unit) + '</td>' +
                 '<td style="padding:6px 8px;white-space:nowrap">' + escapeHtml(String(a?.currentDriver || a?.currentDriverName || a?.current_driver_name || '—')) + '</td>' +
                 '<td style="padding:6px 8px">' + escapeHtml(fleetDisplayMake(a)) + '</td>' +
