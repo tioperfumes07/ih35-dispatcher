@@ -633,6 +633,9 @@
         <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Acctg</span>
         <span id="navAccountingBadge" class="nav-badge nav-badge--danger erp-icon-nav__badge hidden" aria-label="QuickBooks sync needs attention">0</span>
       </button>
+      <button type="button" class="erp-icon-nav__btn nav-btn" data-section="banking" title="Banking — DIP accounts and reconciliation" onclick="openSection('banking', this)">
+        <span class="erp-icon-nav__glyph" aria-hidden="true">🏦</span><span class="erp-icon-nav__lbl">Banking</span>
+      </button>
       <button
         type="button"
         class="erp-icon-nav__btn nav-btn"
@@ -950,6 +953,36 @@
                 
               </div>
               <div id="dashboardQboSummary" class="mini-note">No data yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+            <div class="panel-title" style="margin:0">Relay transactions</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span class="mini-note" id="fuelRelayLastSync">Last sync: --</span>
+              <button type="button" class="btn btn--small" onclick="loadRelayFuelTransactions(true)">Sync now</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
+              <label style="min-width:140px"><span class="qb-l">From</span><input id="fuelRelayFrom" class="qb-in" type="date" /></label>
+              <label style="min-width:140px"><span class="qb-l">To</span><input id="fuelRelayTo" class="qb-in" type="date" /></label>
+              <label style="min-width:160px"><span class="qb-l">Driver</span><input id="fuelRelayDriver" class="qb-in" placeholder="Any driver" /></label>
+              <label style="min-width:120px"><span class="qb-l">Unit</span><input id="fuelRelayUnit" class="qb-in" placeholder="Any unit" /></label>
+              <label style="min-width:100px"><span class="qb-l">State</span><input id="fuelRelayState" class="qb-in" maxlength="2" placeholder="TX" /></label>
+              <button type="button" class="btn btn--small" onclick="loadRelayFuelTransactions(false)">Apply</button>
+            </div>
+            <div style="overflow:auto;max-height:420px;border:1px solid var(--color-border);border-radius:8px">
+              <table class="table" style="min-width:980px">
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Driver</th><th>Unit</th><th>Gallons</th><th>Amount</th><th>Station</th><th>State</th><th>QBO status</th><th>Source</th>
+                  </tr>
+                </thead>
+                <tbody id="fuelRelayTableBody"><tr><td colspan="9" class="muted">Loading relay transactions…</td></tr></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -4396,12 +4429,13 @@
                       <th>Line customer</th>
                       <th>Product</th>
                       <th>Location</th>
+                      <th>Source</th>
                       <th>Status</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody id="fuelExpBody">
-                    <tr><td colspan="18" class="mini-note">—</td></tr>
+                    <tr><td colspan="19" class="mini-note">—</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -4744,6 +4778,44 @@
         <div id="erpNameMgmtRoot" style="min-height:320px"></div>
       </section>
 
+      <section id="section-banking" class="section">
+        <div class="panel">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="panel-title" style="margin:0">DIP Bank Accounts</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input id="bankingMonth" class="qb-in" type="month" style="max-width:170px" />
+              <button type="button" class="btn btn--small" onclick="loadBankingAccounts()">Refresh</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="bankingAccountsGrid" class="grid grid-3" style="gap:10px"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="panel-title" style="margin:0">Transaction register</div>
+            <button type="button" class="btn btn--small" onclick="bankingReconcileCurrent()">Reconcile selected month</button>
+          </div>
+          <div class="panel-body">
+            <div style="overflow:auto;max-height:420px;border:1px solid var(--color-border);border-radius:8px">
+              <table class="table" style="min-width:980px">
+                <thead>
+                  <tr><th>Date</th><th>Payee</th><th>Description</th><th>Amount</th><th>Running balance</th><th>Cleared</th><th>Source</th></tr>
+                </thead>
+                <tbody id="bankingRegisterBody"><tr><td colspan="7" class="muted">Choose an account card.</td></tr></tbody>
+              </table>
+            </div>
+            <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+              <label><span class="qb-l">Date</span><input id="bankTxnDate" class="qb-in" type="date" /></label>
+              <label><span class="qb-l">Payee</span><input id="bankTxnPayee" class="qb-in" /></label>
+              <label style="min-width:260px;flex:1 1 260px"><span class="qb-l">Description</span><input id="bankTxnDescription" class="qb-in" /></label>
+              <label><span class="qb-l">Amount</span><input id="bankTxnAmount" class="qb-in" type="number" step="0.01" /></label>
+              <button type="button" class="btn btn--small" onclick="createBankingTransaction()">New transaction</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="section-reports" class="section">
         <style>
           #section-reports .rep-grp-summary-card[data-scroll]:hover {
@@ -4806,6 +4878,56 @@
           </div>
           <div id="repRoadmapBanner" class="mini-note erp-reports-roadmap hidden" role="status" aria-live="polite"></div>
           <div id="erpFleetMileageBannerRep" class="mini-note print-hide-actions" style="display:none;margin:0 0 10px;padding:8px 12px;border-radius:6px;border:1px solid #c5d9f7;background:#f0f7ff;color:#1557a0;font-size:11px;line-height:1.45"></div>
+          <div class="panel print-hide-actions" style="margin:0 0 12px">
+            <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Financial Reports (QuickBooks mirror)</div>
+              <span class="mini-note" id="qboFinSourceBanner"></span>
+            </div>
+            <div class="panel-body">
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">Report</span>
+                  <select id="qboFinReport" class="qb-in">
+                    <option value="profit-loss">Profit &amp; Loss</option>
+                    <option value="profit-loss-detail">P&amp;L Detail</option>
+                    <option value="balance-sheet">Balance Sheet</option>
+                    <option value="trial-balance">Trial Balance</option>
+                    <option value="cash-flow">Cash Flow</option>
+                    <option value="general-ledger">General Ledger</option>
+                    <option value="ar-aging">AR Aging</option>
+                    <option value="ap-aging">AP Aging</option>
+                    <option value="transaction-list">Transaction List</option>
+                    <option value="vendor-expenses">Vendor Expenses</option>
+                  </select>
+                </label>
+                <label><span class="qb-l">From</span><input id="qboFinFrom" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">To</span><input id="qboFinTo" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">As of</span><input id="qboFinAsOf" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">Method</span>
+                  <select id="qboFinMethod" class="qb-in">
+                    <option value="Cash">Cash</option>
+                    <option value="Accrual">Accrual</option>
+                  </select>
+                </label>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <button type="button" class="btn btn--small" onclick="qboFinQuickRange('this-month')">This Month</button>
+                  <button type="button" class="btn btn--small" onclick="qboFinQuickRange('last-month')">Last Month</button>
+                  <button type="button" class="btn btn--small" onclick="qboFinQuickRange('this-year')">This Year</button>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <button type="button" class="btn btn--small" onclick="runQboFinancialReport()">Run Report</button>
+                  <button type="button" class="btn btn--small" onclick="exportQboFinancialCsv()">Export CSV</button>
+                  <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+                </div>
+              </div>
+              <div class="mini-note" id="qboFinLoadingMsg">Fetching from QuickBooks...</div>
+              <div style="overflow:auto;max-height:460px;border:1px solid var(--color-border);border-radius:8px;margin-top:8px">
+                <table class="table" style="min-width:920px">
+                  <thead><tr><th>Account</th><th>Value 1</th><th>Value 2</th><th>Value 3</th></tr></thead>
+                  <tbody id="qboFinTableBody"><tr><td colspan="4" class="muted">Run a report to view data.</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
           <div id="erpReportsCatalogShell" class="erp-reports-catalog-shell">
             <aside id="repFilterSidebar" class="rep-filter-sidebar erp-reports-sidebar" aria-label="Report filters"></aside>
             <div class="erp-reports-catalog-main">
@@ -6566,6 +6688,7 @@
       drivers: 'Drivers',
       tracking: 'Tracking',
       accounting: 'Accounting',
+      banking: 'Banking',
       catalog: 'Lists & catalogs',
       reports: 'Reports',
       uploads: 'Uploads',
@@ -11170,7 +11293,7 @@
     function openSection(name, btn) {
       const LOCAL_ALIAS = { lists: 'catalog' };
       name = LOCAL_ALIAS[name] || name;
-      const REACT_SECTIONS = { 'reports': 'reports', 'scheduler': 'scheduler' };
+      const REACT_SECTIONS = { 'scheduler': 'scheduler' };
       if (REACT_SECTIONS[name]) {
         window.location.href = '/fleet-reports?section=' + REACT_SECTIONS[name];
         return;
@@ -16521,7 +16644,7 @@
       const filtered = filterFuelPurchasesForExpenseTab();
 
       if (!filtered.length) {
-        tb.innerHTML = '<tr><td colspan="18" class="mini-note">No rows for current filters.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="19" class="mini-note">No rows for current filters.</td></tr>';
         if (pagerHost) {
           pagerHost.innerHTML = '';
           pagerHost.hidden = true;
@@ -16579,6 +16702,13 @@
               : status === 'error'
                 ? `Error${errTail}`
                 : 'Not posted';
+          const sourceVal = String(r.source || (String(r.relayTxnId || '').trim() ? 'relay' : 'manual')).trim().toLowerCase();
+          const sourceBadge =
+            sourceVal === 'relay'
+              ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#1f8b4c22;color:#1f8b4c;font-weight:600;font-size:11px">Relay</span>'
+              : sourceVal === 'driver_app'
+                ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#d9770622;color:#d97706;font-weight:600;font-size:11px">Driver App</span>'
+                : '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#2563eb22;color:#2563eb;font-weight:600;font-size:11px">Manual</span>';
           const btn =
             status === 'posted'
               ? `<button type="button" onclick="revertQboPostedClient('fuel', ${idJs})">Revert in QuickBooks</button>
@@ -16674,6 +16804,7 @@
             <td class="mini-note">${escapeHtml(qboNameByQboId(cacheQboCustomers(), r.fuelPostedCustomerId))}</td>
             <td>${prod}</td>
             <td>${loc || '—'}</td>
+            <td>${sourceBadge}</td>
             <td class="mini-note">${stLabel}</td>
             <td style="text-align:right;white-space:nowrap">
               ${btn}
@@ -16717,6 +16848,7 @@
             </td>
             <td>${prod}</td>
             <td>${loc || '—'}</td>
+            <td>${sourceBadge}</td>
             <td class="mini-note">${stLabel}</td>
             <td style="text-align:right;white-space:nowrap">
               ${btn}
@@ -28551,6 +28683,290 @@
       const __wl = document.getElementById('woLines');
       if (__wl && !__wl.querySelector('.wo-line')) addWoLine();
     }
+    var bankingSelectedAccountId = '';
+    var qboFinLastReport = null;
+
+    function qboMoneyFmt(v) {
+      var n = Number(v);
+      if (!Number.isFinite(n)) return '$0.00';
+      var abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return n < 0 ? '(' + '$' + abs + ')' : ('$' + abs);
+    }
+
+    function sourceBadgeHtml(src) {
+      var raw = String(src || '').trim().toLowerCase();
+      var label = raw === 'relay' ? 'Relay' : (raw === 'driver_app' || raw === 'driver app' ? 'Driver App' : 'Manual');
+      var color = raw === 'relay' ? '#1f8b4c' : ((raw === 'driver_app' || raw === 'driver app') ? '#d97706' : '#2563eb');
+      return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:' + color + '22;color:' + color + ';font-weight:600;font-size:11px">' + label + '</span>';
+    }
+
+    async function loadRelayFuelTransactions(syncFirst) {
+      var body = document.getElementById('fuelRelayTableBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="9" class="muted">Loading relay transactions…</td></tr>';
+      try {
+        if (syncFirst) {
+          await fetch('/api/integrations/relay/transactions?dry_run=0', { headers: { Accept: 'application/json' } }).catch(function () { return null; });
+        }
+        var from = String(document.getElementById('fuelRelayFrom')?.value || '').trim();
+        var to = String(document.getElementById('fuelRelayTo')?.value || '').trim();
+        var driverQ = String(document.getElementById('fuelRelayDriver')?.value || '').trim().toLowerCase();
+        var unitQ = String(document.getElementById('fuelRelayUnit')?.value || '').trim().toLowerCase();
+        var stateQ = String(document.getElementById('fuelRelayState')?.value || '').trim().toLowerCase();
+        var rsp = await fetch('/api/fuel/expenses', { headers: { Accept: 'application/json' } });
+        var json = await rsp.json();
+        var rows = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.expenses) ? json.expenses : []);
+        rows = rows.filter(function (r) { return String(r?.source || '').toLowerCase() === 'relay'; });
+        if (from) rows = rows.filter(function (r) { return String(r?.transaction_date || r?.submitted_at || '').slice(0, 10) >= from; });
+        if (to) rows = rows.filter(function (r) { return String(r?.transaction_date || r?.submitted_at || '').slice(0, 10) <= to; });
+        if (driverQ) rows = rows.filter(function (r) { return String(r?.driver_name || '').toLowerCase().includes(driverQ); });
+        if (unitQ) rows = rows.filter(function (r) { return String(r?.unit_number || '').toLowerCase().includes(unitQ); });
+        if (stateQ) rows = rows.filter(function (r) { return String(r?.state || '').toLowerCase().includes(stateQ); });
+        document.getElementById('fuelRelayLastSync').textContent = 'Last sync: ' + new Date().toLocaleString();
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="9" class="muted">No relay transactions for the selected filters.</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.slice(0, 500).map(function (r) {
+          var amount = Number(r?.total_amount || 0);
+          var dt = String(r?.transaction_date || r?.submitted_at || '').slice(0, 10) || '--';
+          var qbo = r?.qbo_posted ? 'Posted' : (r?.qbo_txn_id ? 'Synced' : 'Pending');
+          return '<tr>' +
+            '<td>' + dt + '</td>' +
+            '<td>' + (r?.driver_name || '--') + '</td>' +
+            '<td>' + (r?.unit_number || '--') + '</td>' +
+            '<td>' + (r?.gallons == null ? '--' : Number(r.gallons).toFixed(2)) + '</td>' +
+            '<td>' + qboMoneyFmt(amount) + '</td>' +
+            '<td>' + (r?.station_name || '--') + '</td>' +
+            '<td>' + (r?.state || '--') + '</td>' +
+            '<td>' + qbo + '</td>' +
+            '<td>' + sourceBadgeHtml(r?.source) + '</td>' +
+          '</tr>';
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<tr><td colspan="9" class="muted">Relay transactions unavailable: ' + String(e?.message || e) + '</td></tr>';
+      }
+    }
+
+    async function loadBankingAccounts() {
+      var monthInput = document.getElementById('bankingMonth');
+      if (monthInput && !monthInput.value) monthInput.value = new Date().toISOString().slice(0, 7);
+      var month = String(monthInput?.value || '').trim();
+      var grid = document.getElementById('bankingAccountsGrid');
+      if (!grid) return;
+      grid.innerHTML = '<div class="mini-note">Loading accounts…</div>';
+      try {
+        var rsp = await fetch('/api/banking/accounts?' + new URLSearchParams({ month: month }), { headers: { Accept: 'application/json' } });
+        var json = await rsp.json();
+        var rows = Array.isArray(json?.data) ? json.data : [];
+        if (!rows.length) {
+          grid.innerHTML = '<div class="mini-note">No bank accounts found in cache.</div>';
+          return;
+        }
+        grid.innerHTML = rows.map(function (a) {
+          var id = String(a?.account_id || '');
+          return '<button type="button" class="metric" style="text-align:left;cursor:pointer" onclick="selectBankingAccount(' + JSON.stringify(id) + ')">' +
+            '<div class="metric-label">' + (a?.account_name || 'Account') + ' • ' + (a?.account_last4 || '----') + '</div>' +
+            '<div class="metric-value">' + qboMoneyFmt(a?.balance || a?.ending_balance || 0) + '</div>' +
+            '<div class="mini-note">Type: ' + (a?.account_type || 'Bank') + ' • Last txn: ' + (a?.last_transaction_date || '--') + '</div>' +
+          '</button>';
+        }).join('');
+      } catch (e) {
+        grid.innerHTML = '<div class="mini-note">Unable to load banking accounts: ' + String(e?.message || e) + '</div>';
+      }
+    }
+
+    function selectBankingAccount(accountId) {
+      bankingSelectedAccountId = String(accountId || '').trim();
+      loadBankingRegister();
+    }
+
+    async function loadBankingRegister() {
+      var body = document.getElementById('bankingRegisterBody');
+      if (!body) return;
+      if (!bankingSelectedAccountId) {
+        body.innerHTML = '<tr><td colspan="7" class="muted">Choose an account card.</td></tr>';
+        return;
+      }
+      var month = String(document.getElementById('bankingMonth')?.value || '').trim();
+      try {
+        var rsp = await fetch('/api/banking/transactions?' + new URLSearchParams({ account_id: bankingSelectedAccountId, month: month }), { headers: { Accept: 'application/json' } });
+        var json = await rsp.json();
+        var rows = Array.isArray(json?.data) ? json.data : [];
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="7" class="muted">No transactions for this account/month.</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.map(function (r) {
+          return '<tr>' +
+            '<td>' + (String(r?.txn_date || '').slice(0, 10) || '--') + '</td>' +
+            '<td>' + (r?.vendor_name || '--') + '</td>' +
+            '<td>' + (r?.description || r?.memo || '--') + '</td>' +
+            '<td style="color:' + (Number(r?.amount || 0) < 0 ? '#b42318' : 'inherit') + '">' + qboMoneyFmt(r?.amount || 0) + '</td>' +
+            '<td>' + (r?.running_balance == null ? '--' : qboMoneyFmt(r.running_balance)) + '</td>' +
+            '<td>' + (r?.cleared ? 'Yes' : 'No') + '</td>' +
+            '<td>' + sourceBadgeHtml(r?.source) + '</td>' +
+          '</tr>';
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<tr><td colspan="7" class="muted">Unable to load register: ' + String(e?.message || e) + '</td></tr>';
+      }
+    }
+
+    async function createBankingTransaction() {
+      if (!bankingSelectedAccountId) return;
+      var payload = {
+        account_id: bankingSelectedAccountId,
+        txn_date: String(document.getElementById('bankTxnDate')?.value || '').trim(),
+        vendor_name: String(document.getElementById('bankTxnPayee')?.value || '').trim(),
+        description: String(document.getElementById('bankTxnDescription')?.value || '').trim(),
+        amount: Number(document.getElementById('bankTxnAmount')?.value || 0),
+        source: 'manual',
+      };
+      await fetch('/api/banking/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(function () { return null; });
+      loadBankingRegister();
+    }
+
+    async function bankingReconcileCurrent() {
+      if (!bankingSelectedAccountId) return;
+      var month = String(document.getElementById('bankingMonth')?.value || '').trim();
+      await fetch('/api/banking/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ account_id: bankingSelectedAccountId, month: month }),
+      }).catch(function () { return null; });
+      loadBankingRegister();
+    }
+
+    function qboFinQuickRange(mode) {
+      var now = new Date();
+      var y = now.getFullYear();
+      var m = now.getMonth();
+      var start = '';
+      var end = '';
+      if (mode === 'this-month') {
+        start = new Date(y, m, 1).toISOString().slice(0, 10);
+        end = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+      } else if (mode === 'last-month') {
+        start = new Date(y, m - 1, 1).toISOString().slice(0, 10);
+        end = new Date(y, m, 0).toISOString().slice(0, 10);
+      } else {
+        start = new Date(y, 0, 1).toISOString().slice(0, 10);
+        end = new Date(y, 11, 31).toISOString().slice(0, 10);
+      }
+      var fromEl = document.getElementById('qboFinFrom');
+      var toEl = document.getElementById('qboFinTo');
+      var asOfEl = document.getElementById('qboFinAsOf');
+      if (fromEl) fromEl.value = start;
+      if (toEl) toEl.value = end;
+      if (asOfEl) asOfEl.value = end;
+    }
+
+    function flattenQboRows(report) {
+      var out = [];
+      function walk(rows, depth) {
+        (rows || []).forEach(function (r) {
+          var cols = Array.isArray(r?.ColData) ? r.ColData : [];
+          var header = r?.Header?.ColData?.[0]?.value || '';
+          var label = String(header || (cols[0] && cols[0].value) || '').trim();
+          if (label || cols.length) {
+            out.push({
+              depth: depth,
+              type: String(r?.type || r?.RowType || 'Data'),
+              label: label || '--',
+              values: cols.map(function (c) { return c?.value || ''; }),
+            });
+          }
+          if (Array.isArray(r?.Rows?.Row)) walk(r.Rows.Row, depth + 1);
+        });
+      }
+      walk(report?.Rows?.Row || [], 0);
+      return out;
+    }
+
+    async function runQboFinancialReport() {
+      var report = String(document.getElementById('qboFinReport')?.value || 'profit-loss').trim();
+      var loadingEl = document.getElementById('qboFinLoadingMsg');
+      var body = document.getElementById('qboFinTableBody');
+      if (loadingEl) loadingEl.textContent = 'Fetching from QuickBooks...';
+      if (body) body.innerHTML = '<tr><td colspan="4" class="muted">Fetching from QuickBooks...</td></tr>';
+      try {
+        var params = new URLSearchParams();
+        var from = String(document.getElementById('qboFinFrom')?.value || '').trim();
+        var to = String(document.getElementById('qboFinTo')?.value || '').trim();
+        var asOf = String(document.getElementById('qboFinAsOf')?.value || '').trim();
+        var method = String(document.getElementById('qboFinMethod')?.value || '').trim();
+        if (from) params.set('start_date', from);
+        if (to) params.set('end_date', to);
+        if (asOf) params.set('as_of_date', asOf);
+        if (method) params.set('accounting_method', method);
+        var rsp = await fetch('/api/reports/qbo/' + encodeURIComponent(report) + '?' + params.toString(), { headers: { Accept: 'application/json' } });
+        var json = await rsp.json();
+        qboFinLastReport = { report: report, params: params.toString() };
+        var lines = flattenQboRows(json?.report || {});
+        var sourceBanner = document.getElementById('qboFinSourceBanner');
+        if (sourceBanner) {
+          sourceBanner.textContent = json?.source === 'cache'
+            ? ('Showing cached data from ' + (json?.generatedAt || '--'))
+            : ('Source: QuickBooks live (' + (json?.generatedAt || '--') + ')');
+        }
+        if (!lines.length) {
+          body.innerHTML = '<tr><td colspan="4" class="muted">No rows in this report.</td></tr>';
+          if (loadingEl) loadingEl.textContent = '';
+          return;
+        }
+        body.innerHTML = lines.slice(0, 1500).map(function (r) {
+          var v1 = r.values[1] || '';
+          var v2 = r.values[2] || '';
+          var v3 = r.values[3] || r.values[r.values.length - 1] || '';
+          var isNeg = /^\(.*\)$/.test(String(v3 || '').trim()) || String(v3 || '').trim().startsWith('-');
+          var fw = (String(r.type).toLowerCase().includes('summary') || String(r.type).toLowerCase().includes('total')) ? '600' : '400';
+          return '<tr>' +
+            '<td style="padding-left:' + (r.depth * 20) + 'px;font-weight:' + fw + '">' + r.label + '</td>' +
+            '<td>' + v1 + '</td>' +
+            '<td>' + v2 + '</td>' +
+            '<td style="font-weight:' + fw + ';color:' + (isNeg ? '#b42318' : 'inherit') + '">' + v3 + '</td>' +
+          '</tr>';
+        }).join('');
+        if (loadingEl) loadingEl.textContent = '';
+      } catch (e) {
+        if (loadingEl) loadingEl.textContent = '';
+        if (body) body.innerHTML = '<tr><td colspan="4" class="muted">Unable to load report: ' + String(e?.message || e) + '</td></tr>';
+      }
+    }
+
+    function exportQboFinancialCsv() {
+      if (!qboFinLastReport) return;
+      var href = '/api/reports/qbo/' + encodeURIComponent(qboFinLastReport.report) + '?format=csv' + (qboFinLastReport.params ? '&' + qboFinLastReport.params : '');
+      window.open(href, '_blank');
+    }
+
+    window.loadRelayFuelTransactions = loadRelayFuelTransactions;
+    window.loadBankingAccounts = loadBankingAccounts;
+    window.selectBankingAccount = selectBankingAccount;
+    window.loadBankingRegister = loadBankingRegister;
+    window.createBankingTransaction = createBankingTransaction;
+    window.bankingReconcileCurrent = bankingReconcileCurrent;
+    window.qboFinQuickRange = qboFinQuickRange;
+    window.runQboFinancialReport = runQboFinancialReport;
+    window.exportQboFinancialCsv = exportQboFinancialCsv;
+
+    var __openSectionOrig = window.openSection;
+    if (typeof __openSectionOrig === 'function') {
+      window.openSection = function (name, btn) {
+        var out = __openSectionOrig(name, btn);
+        var n = String(name || '').trim().toLowerCase();
+        if (n === 'fuel') loadRelayFuelTransactions(false);
+        if (n === 'banking') loadBankingAccounts();
+        if (n === 'reports') runQboFinancialReport();
+        return out;
+      };
+    }
+
     if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
     syncApDocTitle();
     refreshApDocTotal();

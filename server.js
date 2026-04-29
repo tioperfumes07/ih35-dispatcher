@@ -44,6 +44,8 @@ const SMOKE_GATE_API_PATHS = new Set([
   "/api/equipment/assignments",
   "/api/integrations/relay/settings",
   "/api/integrations/relay/card-assignments",
+  "/api/banking/accounts",
+  "/api/banking/transactions",
   "/api/form-425c/profiles",
   "/api/maintenance/dashboard",
   "/api/maintenance/records",
@@ -77,7 +79,15 @@ function smokeApiSessionGate(req, res, next) {
   if (pathOnly === "/api/health" || pathOnly.startsWith("/api/health/")) return next();
   if (pathOnly.startsWith("/api/auth/")) return next();
   if (pathOnly === "/api/webhooks/relay") return next();
-  if (req.method === "GET" && (pathOnly === "/api/integrations/relay/settings" || pathOnly === "/api/integrations/relay/card-assignments")) return next();
+  if (
+    req.method === "GET" &&
+    (
+      pathOnly === "/api/integrations/relay/settings" ||
+      pathOnly === "/api/integrations/relay/card-assignments" ||
+      pathOnly === "/api/banking/accounts" ||
+      pathOnly === "/api/banking/transactions"
+    )
+  ) return next();
   if (pathOnly === "/api/__smoke_not_found__") return next();
   if (pathOnly === "/api/pdf/__smoke__") return next();
   const smokeGate = String(process.env.IH35_SMOKE_GATE || "").trim() === "1";

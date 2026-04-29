@@ -3661,6 +3661,8 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_txn_id TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_card_last4 TEXT');
     await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS relay_vendor TEXT');
+    await dbQuery("ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual'");
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS transaction_date DATE');
     await dbQuery(
       `CREATE UNIQUE INDEX IF NOT EXISTS uq_fuel_expenses_relay_txn
        ON fuel_expenses (relay_txn_id)
@@ -3695,6 +3697,51 @@ export function mountErpCoreApi(app, opts = {}) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`
     );
+  }
+
+  async function ensureBankingTables() {
+    await ensureIntegrationResilienceTables();
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS dip_bank_account_balances (
+        id SERIAL PRIMARY KEY,
+        account_id TEXT NOT NULL,
+        account_name TEXT,
+        account_last4 TEXT,
+        account_type TEXT,
+        month_key TEXT NOT NULL,
+        opening_balance NUMERIC(14,2) DEFAULT 0,
+        receipts NUMERIC(14,2) DEFAULT 0,
+        disbursements NUMERIC(14,2) DEFAULT 0,
+        ending_balance NUMERIC(14,2) DEFAULT 0,
+        source TEXT DEFAULT 'manual',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (account_id, month_key)
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS banking_transactions (
+        id SERIAL PRIMARY KEY,
+        qbo_txn_id TEXT UNIQUE,
+        account_id TEXT NOT NULL,
+        account_name TEXT,
+        txn_type TEXT,
+        txn_date DATE,
+        amount NUMERIC(14,2),
+        running_balance NUMERIC(14,2),
+        description TEXT,
+        vendor_name TEXT,
+        memo TEXT,
+        cleared BOOLEAN DEFAULT false,
+        reconciled BOOLEAN DEFAULT false,
+        source TEXT DEFAULT 'qbo',
+        qbo_status TEXT DEFAULT 'synced',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`
+    );
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_account_date ON banking_transactions(account_id, txn_date DESC)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_source ON banking_transactions(source, txn_date DESC)');
   }
 
   async function ensureLoadExpenseLinksTable() {
@@ -4057,11 +4104,11 @@ export function mountErpCoreApi(app, opts = {}) {
             `INSERT INTO fuel_expenses (
               unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
               load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo,
-              qbo_posted, state, miles_this_load, relay_event_id, relay_txn_id, relay_card_last4, relay_vendor
+              qbo_posted, state, miles_this_load, relay_event_id, relay_txn_id, relay_card_last4, relay_vendor, source, transaction_date
             ) VALUES (
               $1,$2,$3,$4,$5,$6,
               $7,$8,$9,$10,$11,$12,
-              false,$13,$14,$15,$16,$17,$18
+              false,$13,$14,$15,$16,$17,$18,$19,$20
             )
             ON CONFLICT (relay_txn_id) WHERE relay_txn_id IS NOT NULL DO NOTHING
             RETURNING *`,
@@ -4084,6 +4131,8 @@ export function mountErpCoreApi(app, opts = {}) {
               relayTxnId,
               cardLast4,
               vendor,
+              'relay',
+              String(r.txn_date || r.date || '').trim() || null,
             ]
           );
           const expense = inserted?.[0] || null;
@@ -4216,8 +4265,8 @@ export function mountErpCoreApi(app, opts = {}) {
       const { rows } = await dbQuery(
         `INSERT INTO fuel_expenses (
           unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
-          load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo, qbo_posted, state, miles_this_load
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false,$13,$14)
+          load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo, qbo_posted, state, miles_this_load, source, transaction_date
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false,$13,$14,$15,$16)
         RETURNING *`,
         [
           String(b.unit || b.unit_number || '').trim() || null,
@@ -4234,6 +4283,8 @@ export function mountErpCoreApi(app, opts = {}) {
           String(b.receipt_photo_base64 || b.receipt_photo || '').trim() || null,
           stateCode || null,
           Number.isFinite(milesThisLoad) ? milesThisLoad : null,
+          'driver_app',
+          String(b.txn_date || b.date || '').trim() || new Date().toISOString().slice(0, 10),
         ]
       );
       const expense = rows?.[0] || null;
@@ -4310,6 +4361,8 @@ export function mountErpCoreApi(app, opts = {}) {
         miles_this_load: r?.miles_this_load == null ? null : Number(r.miles_this_load),
         qbo_posted: r?.qbo_posted === true,
         qbo_txn_id: r?.qbo_txn_id || null,
+        source: String(r?.source || (r?.relay_txn_id ? 'relay' : 'manual')).trim() || 'manual',
+        transaction_date: r?.transaction_date || null,
       }));
       return res.json({ ok: true, expenses, data: expenses });
     } catch (e) {
@@ -4339,6 +4392,419 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/fuel/qbo-accounts', e);
       return res.json({ ok: true, accounts: [], items: [] });
+    }
+  });
+
+  function toReportKebab(s) {
+    return String(s || '')
+      .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+      .replace(/[\s_]+/g, '-')
+      .toLowerCase();
+  }
+
+  function normalizeAccountingMethod(v) {
+    const s = String(v || '').trim().toLowerCase();
+    if (s === 'cash') return 'Cash';
+    if (s === 'accrual') return 'Accrual';
+    return '';
+  }
+
+  function qboReportFlattenRows(report) {
+    const rows = [];
+    function walk(list, depth) {
+      (Array.isArray(list) ? list : []).forEach((r) => {
+        const rowType = String(r?.type || r?.RowType || '').trim();
+        const header = r?.Header?.ColData?.[0]?.value ?? r?.Header?.ColData?.[0]?.Value ?? '';
+        const summary = r?.Summary?.ColData?.[0]?.value ?? r?.Summary?.ColData?.[0]?.Value ?? '';
+        const cols = Array.isArray(r?.ColData) ? r.ColData : [];
+        const values = cols.map((c) => c?.value ?? c?.Value ?? '');
+        const label = String(header || values?.[0] || summary || '').trim();
+        if (label || values.length) {
+          rows.push({
+            rowType: rowType || 'Data',
+            depth,
+            label,
+            values,
+            amount: String(values?.[values.length - 1] || '').trim(),
+          });
+        }
+        if (Array.isArray(r?.Rows?.Row)) walk(r.Rows.Row, depth + 1);
+      });
+    }
+    walk(report?.Rows?.Row || [], 0);
+    return rows;
+  }
+
+  function qboReportRowsToCsv(report) {
+    const lines = qboReportFlattenRows(report);
+    const maxCols = lines.reduce((m, r) => Math.max(m, r.values.length), 1);
+    const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const header = ['row_type', 'depth', 'label'];
+    for (let i = 0; i < maxCols; i += 1) header.push(`col_${i + 1}`);
+    return [
+      header.join(','),
+      ...lines.map((r) => [esc(r.rowType), r.depth, esc(r.label), ...Array.from({ length: maxCols }, (_, i) => esc(r.values?.[i] || ''))].join(',')),
+    ].join('\n');
+  }
+
+  async function readCachedQboReport(cacheKey) {
+    if (!getPool()) return null;
+    await ensureIntegrationResilienceTables();
+    const { rows } = await dbQuery(
+      `SELECT full_data, last_synced_at
+         FROM qbo_catalog_cache
+        WHERE entity_type = 'qbo_report' AND qbo_id = $1
+        LIMIT 1`,
+      [cacheKey]
+    );
+    const row = rows?.[0];
+    if (!row) return null;
+    const raw = row?.full_data && typeof row.full_data === 'object' ? row.full_data : {};
+    const syncedAt = String(row?.last_synced_at || '').trim() || null;
+    return {
+      report: raw?.report || null,
+      generatedAt: String(raw?.generatedAt || syncedAt || '').trim() || null,
+      params: raw?.params || {},
+      syncedAt,
+    };
+  }
+
+  async function writeCachedQboReport(cacheKey, reportName, payload) {
+    if (!getPool()) return;
+    await ensureIntegrationResilienceTables();
+    await dbQuery(
+      `INSERT INTO qbo_catalog_cache (entity_type, qbo_id, name, full_data, last_synced_at)
+       VALUES ('qbo_report', $1, $2, $3::jsonb, now())
+       ON CONFLICT (entity_type, qbo_id)
+       DO UPDATE SET name = EXCLUDED.name, full_data = EXCLUDED.full_data, last_synced_at = now()`,
+      [cacheKey, reportName, JSON.stringify(payload || {})]
+    );
+  }
+
+  async function runQboReportMirror(req, res, reportName, paramBuilder) {
+    const format = String(req.query?.format || 'json').trim().toLowerCase();
+    const params = typeof paramBuilder === 'function' ? paramBuilder(req) : {};
+    const cacheParams = Object.keys(params)
+      .sort()
+      .reduce((acc, k) => {
+        acc[k] = params[k];
+        return acc;
+      }, {});
+    const cacheKey = `report:${reportName}:${JSON.stringify(cacheParams)}`;
+    const nowMs = Date.now();
+    const oneHourMs = 60 * 60 * 1000;
+
+    let cached = null;
+    try {
+      cached = await readCachedQboReport(cacheKey);
+    } catch (_e) {
+      cached = null;
+    }
+    const cacheAgeMs = cached?.syncedAt ? nowMs - Date.parse(String(cached.syncedAt)) : Number.POSITIVE_INFINITY;
+    const freshCache = Number.isFinite(cacheAgeMs) && cacheAgeMs <= oneHourMs;
+
+    let source = 'cache';
+    let reportPayload = cached?.report || null;
+    let generatedAt = cached?.generatedAt || (cached?.syncedAt || null);
+
+    if (!freshCache) {
+      try {
+        const qbo = createQboApiClient();
+        const query = new URLSearchParams();
+        Object.entries(params || {}).forEach(([k, v]) => {
+          if (v == null || String(v).trim() === '') return;
+          query.set(k, String(v));
+        });
+        const relPath = `reports/${reportName}${query.toString() ? `?${query.toString()}` : ''}`;
+        const live = await qbo.qboGet(relPath);
+        reportPayload = live;
+        generatedAt = new Date().toISOString();
+        source = 'live';
+        await writeCachedQboReport(cacheKey, reportName, {
+          report: reportPayload,
+          generatedAt,
+          params: cacheParams,
+        });
+      } catch (e) {
+        if (!cached?.report) {
+          return res.status(502).json({
+            ok: false,
+            error: e?.message || String(e),
+            report: null,
+            generatedAt: null,
+            source: 'error',
+            params: cacheParams,
+          });
+        }
+        source = 'cache';
+      }
+    }
+
+    if (format === 'csv') {
+      const csv = qboReportRowsToCsv(reportPayload || {});
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      return res.status(200).send(csv);
+    }
+    return res.json({
+      ok: true,
+      report: reportPayload,
+      generatedAt,
+      source,
+      params: cacheParams,
+    });
+  }
+
+  const QBO_REPORT_MIRROR = [
+    ['profit-loss', 'ProfitAndLoss', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+      accounting_method: normalizeAccountingMethod(req.query?.accounting_method),
+    })],
+    ['profit-loss-detail', 'ProfitAndLossDetail', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+      accounting_method: normalizeAccountingMethod(req.query?.accounting_method),
+    })],
+    ['balance-sheet', 'BalanceSheet', (req) => ({
+      as_of_date: String(req.query?.as_of_date || '').trim(),
+      accounting_method: normalizeAccountingMethod(req.query?.accounting_method),
+    })],
+    ['trial-balance', 'TrialBalance', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+    })],
+    ['ar-aging', 'AgedReceivables', (req) => ({
+      as_of_date: String(req.query?.as_of_date || '').trim(),
+    })],
+    ['ap-aging', 'AgedPayables', (req) => ({
+      as_of_date: String(req.query?.as_of_date || '').trim(),
+    })],
+    ['cash-flow', 'CashFlow', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+      accounting_method: normalizeAccountingMethod(req.query?.accounting_method),
+    })],
+    ['general-ledger', 'GeneralLedger', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+      account: String(req.query?.account_id || '').trim(),
+    })],
+    ['transaction-list', 'TransactionList', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+      transaction_type: String(req.query?.type || '').trim(),
+      vendor: String(req.query?.vendor_id || '').trim(),
+    })],
+    ['vendor-expenses', 'VendorExpenses', (req) => ({
+      start_date: String(req.query?.start_date || '').trim(),
+      end_date: String(req.query?.end_date || '').trim(),
+    })],
+  ];
+  QBO_REPORT_MIRROR.forEach(([slug, reportName, paramBuilder]) => {
+    app.get(`/api/reports/qbo/${slug}`, async (req, res) => {
+      return runQboReportMirror(req, res, String(reportName), paramBuilder);
+    });
+  });
+
+  app.get('/api/banking/accounts', async (req, res) => {
+    try {
+      await ensureBankingTables();
+      const month = String(req.query?.month || '').trim() || new Date().toISOString().slice(0, 7);
+      const qboRows = (await dbQuery(
+        `SELECT qbo_id, name, full_data
+           FROM qbo_catalog_cache
+          WHERE entity_type = 'account'
+          ORDER BY name ASC
+          LIMIT 1000`
+      ))?.rows || [];
+      const balRows = (await dbQuery(
+        `SELECT account_id, account_name, account_last4, account_type, month_key, opening_balance, receipts, disbursements, ending_balance
+           FROM dip_bank_account_balances
+          WHERE month_key = $1`,
+        [month]
+      ))?.rows || [];
+      const balById = new Map();
+      balRows.forEach((r) => balById.set(String(r.account_id || '').trim(), r));
+      const txRows = (await dbQuery(
+        `SELECT account_id, MAX(txn_date) AS last_txn_date
+           FROM banking_transactions
+          GROUP BY account_id`
+      ))?.rows || [];
+      const lastById = new Map();
+      txRows.forEach((r) => lastById.set(String(r.account_id || '').trim(), r?.last_txn_date || null));
+
+      const out = qboRows.map((r) => {
+        const accountId = String(r?.qbo_id || '').trim();
+        const full = r?.full_data && typeof r.full_data === 'object' ? r.full_data : {};
+        const acctNo = String(full?.AcctNum || full?.acctNum || '').replace(/\D+/g, '');
+        const mapped = balById.get(accountId);
+        return {
+          account_id: accountId,
+          account_name: String(r?.name || full?.Name || '').trim(),
+          account_last4: String(mapped?.account_last4 || acctNo.slice(-4) || '').trim(),
+          account_type: String(mapped?.account_type || full?.AccountType || '').trim() || 'Bank',
+          month,
+          opening_balance: Number(mapped?.opening_balance || 0),
+          receipts: Number(mapped?.receipts || 0),
+          disbursements: Number(mapped?.disbursements || 0),
+          ending_balance: Number(mapped?.ending_balance || 0),
+          balance: Number(mapped?.ending_balance || 0),
+          last_transaction_date: lastById.get(accountId) || null,
+        };
+      });
+      return res.json({ ok: true, data: out });
+    } catch (e) {
+      logError('GET /api/banking/accounts', e);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
+  app.post('/api/banking/accounts/balances', async (req, res) => {
+    try {
+      await ensureBankingTables();
+      const b = req.body || {};
+      const accountId = String(b.account_id || '').trim();
+      const month = String(b.month || '').trim();
+      if (!accountId || !month) return res.status(400).json({ ok: false, error: 'account_id and month are required' });
+      const opening = Number(b.opening_balance || 0);
+      const receipts = Number(b.receipts || 0);
+      const disb = Number(b.disbursements || 0);
+      const ending = Number.isFinite(Number(b.ending_balance)) ? Number(b.ending_balance) : (opening + receipts - disb);
+      await dbQuery(
+        `INSERT INTO dip_bank_account_balances (
+          account_id, account_name, account_last4, account_type, month_key,
+          opening_balance, receipts, disbursements, ending_balance, source, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+        ON CONFLICT (account_id, month_key)
+        DO UPDATE SET
+          account_name = EXCLUDED.account_name,
+          account_last4 = EXCLUDED.account_last4,
+          account_type = EXCLUDED.account_type,
+          opening_balance = EXCLUDED.opening_balance,
+          receipts = EXCLUDED.receipts,
+          disbursements = EXCLUDED.disbursements,
+          ending_balance = EXCLUDED.ending_balance,
+          source = EXCLUDED.source,
+          updated_at = now()`,
+        [
+          accountId,
+          String(b.account_name || '').trim() || null,
+          String(b.account_last4 || '').trim() || null,
+          String(b.account_type || '').trim() || null,
+          month,
+          opening,
+          receipts,
+          disb,
+          ending,
+          String(b.source || 'manual').trim() || 'manual',
+        ]
+      );
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/banking/accounts/balances', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/banking/transactions', async (req, res) => {
+    try {
+      await ensureBankingTables();
+      const accountId = String(req.query?.account_id || '').trim();
+      const month = String(req.query?.month || '').trim();
+      const from = String(req.query?.from || '').trim();
+      const to = String(req.query?.to || '').trim();
+      const where = [];
+      const values = [];
+      if (accountId) {
+        values.push(accountId);
+        where.push(`account_id = $${values.length}`);
+      }
+      if (month) {
+        values.push(`${month}-01`);
+        where.push(`txn_date >= $${values.length}::date`);
+        values.push(`${month}-31`);
+        where.push(`txn_date <= $${values.length}::date`);
+      } else {
+        if (from) {
+          values.push(from);
+          where.push(`txn_date >= $${values.length}::date`);
+        }
+        if (to) {
+          values.push(to);
+          where.push(`txn_date <= $${values.length}::date`);
+        }
+      }
+      const sql = `
+        SELECT id, qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, running_balance,
+               description, vendor_name, memo, cleared, reconciled, source, qbo_status, created_at, updated_at
+          FROM banking_transactions
+          ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+         ORDER BY txn_date DESC, id DESC
+         LIMIT 2000`;
+      const rows = (await dbQuery(sql, values))?.rows || [];
+      return res.json({ ok: true, data: rows });
+    } catch (e) {
+      logError('GET /api/banking/transactions', e);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
+  app.post('/api/banking/transactions', async (req, res) => {
+    try {
+      await ensureBankingTables();
+      const b = req.body || {};
+      const accountId = String(b.account_id || '').trim();
+      if (!accountId) return res.status(400).json({ ok: false, error: 'account_id is required' });
+      const txnDate = String(b.txn_date || '').trim() || new Date().toISOString().slice(0, 10);
+      const amount = Number(b.amount || 0);
+      const source = String(b.source || 'manual').trim() || 'manual';
+      const qboStatus = 'queued';
+      const out = await dbQuery(
+        `INSERT INTO banking_transactions (
+          qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, running_balance,
+          description, vendor_name, memo, cleared, reconciled, source, qbo_status, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now())
+        RETURNING id`,
+        [
+          String(b.qbo_txn_id || '').trim() || null,
+          accountId,
+          String(b.account_name || '').trim() || null,
+          String(b.txn_type || '').trim() || 'manual',
+          txnDate,
+          amount,
+          Number.isFinite(Number(b.running_balance)) ? Number(b.running_balance) : null,
+          String(b.description || '').trim() || null,
+          String(b.vendor_name || '').trim() || null,
+          String(b.memo || '').trim() || null,
+          Boolean(b.cleared),
+          Boolean(b.reconciled),
+          source,
+          qboStatus,
+        ]
+      );
+      return res.json({ ok: true, id: out?.rows?.[0]?.id || null });
+    } catch (e) {
+      logError('POST /api/banking/transactions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/reconcile', async (req, res) => {
+    try {
+      await ensureBankingTables();
+      const accountId = String(req.body?.account_id || '').trim();
+      const month = String(req.body?.month || '').trim();
+      if (!accountId || !month) return res.status(400).json({ ok: false, error: 'account_id and month are required' });
+      await dbQuery(
+        `UPDATE banking_transactions
+            SET reconciled = true, updated_at = now()
+          WHERE account_id = $1 AND txn_date >= $2::date AND txn_date <= $3::date`,
+        [accountId, `${month}-01`, `${month}-31`]
+      );
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('POST /api/banking/reconcile', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 

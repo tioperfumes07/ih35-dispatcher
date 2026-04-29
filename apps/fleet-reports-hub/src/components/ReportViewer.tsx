@@ -33,9 +33,22 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
   const [sort, setSort] = useState<'date' | 'amount'>('date')
   const [sched, setSched] = useState(false)
   const [schedFreq, setSchedFreq] = useState<'daily' | 'weekly'>('weekly')
+  const [qboFrom, setQboFrom] = useState('')
+  const [qboTo, setQboTo] = useState('')
+  const [qboAsOf, setQboAsOf] = useState('')
+  const [qboMethod, setQboMethod] = useState<'Cash' | 'Accrual'>('Cash')
+  const [qboLoading, setQboLoading] = useState(false)
+  const [qboErr, setQboErr] = useState('')
+  const [qboSource, setQboSource] = useState('')
+  const [qboGeneratedAt, setQboGeneratedAt] = useState('')
+  const [qboRows, setQboRows] = useState<Array<{ type: string; depth: number; label: string; values: string[] }>>([])
+  const [relayRows, setRelayRows] = useState<Array<any>>([])
+  const [relayLoading, setRelayLoading] = useState(false)
 
   const custom = report.viewer
   const isEmbed = Boolean(report.embedToolUrl)
+  const isQboMirror = Boolean(report.qboReportName)
+  const isRelayReport = report.id === 'D6'
 
   const { rows, total } = useMemo(
     () =>
@@ -61,7 +74,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
     [report.hasChart, sorted],
   )
 
-  const empty = !custom && !isEmbed && total === 0
+  const empty = !custom && !isEmbed && !isQboMirror && !isRelayReport && total === 0
 
   useTableTabOrder(dataCol.tableRef, [sorted, empty])
 
@@ -86,6 +99,117 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
       if (el && typeof el.focus === 'function') window.setTimeout(() => el.focus(), 0)
     }
   }, [onClose])
+
+  useEffect(() => {
+    if (!isQboMirror) return
+    const d = new Date()
+    const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10)
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
+    setQboFrom(start)
+    setQboTo(end)
+    setQboAsOf(end)
+  }, [isQboMirror, report.id])
+
+  const qboSupportsMethod = useMemo(() => {
+    const slug = String(report.qboReportName || '')
+    return slug === 'profit-loss' || slug === 'balance-sheet' || slug === 'cash-flow'
+  }, [report.qboReportName])
+
+  const qboQuickRange = (key: 'this-month' | 'last-month' | 'this-year' | 'last-year') => {
+    const d = new Date()
+    let from = ''
+    let to = ''
+    if (key === 'this-month') {
+      from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
+    } else if (key === 'last-month') {
+      from = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10)
+    } else if (key === 'this-year') {
+      from = new Date(d.getFullYear(), 0, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), 11, 31).toISOString().slice(0, 10)
+    } else {
+      from = new Date(d.getFullYear() - 1, 0, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear() - 1, 11, 31).toISOString().slice(0, 10)
+    }
+    setQboFrom(from)
+    setQboTo(to)
+    setQboAsOf(to)
+  }
+
+  const runQboReport = async (format: 'json' | 'csv' = 'json') => {
+    if (!report.qboReportName) return
+    const p = new URLSearchParams()
+    if (qboFrom) p.set('start_date', qboFrom)
+    if (qboTo) p.set('end_date', qboTo)
+    if (qboAsOf) p.set('as_of_date', qboAsOf)
+    if (qboSupportsMethod) p.set('accounting_method', qboMethod)
+    if (format === 'csv') {
+      p.set('format', 'csv')
+      window.open(`/api/reports/qbo/${encodeURIComponent(report.qboReportName)}?${p.toString()}`, '_blank')
+      return
+    }
+    setQboLoading(true)
+    setQboErr('')
+    try {
+      const out = await fetch(`/api/reports/qbo/${encodeURIComponent(report.qboReportName)}?${p.toString()}`, {
+        headers: { Accept: 'application/json' },
+      }).then((r) => r.json())
+      const list: Array<{ type: string; depth: number; label: string; values: string[] }> = []
+      const walk = (rowsIn: any[], depth: number) => {
+        ;(Array.isArray(rowsIn) ? rowsIn : []).forEach((row) => {
+          const cols = Array.isArray(row?.ColData) ? row.ColData : []
+          const head = String(row?.Header?.ColData?.[0]?.value || '')
+          const label = (head || String(cols?.[0]?.value || '')).trim() || '--'
+          if (label || cols.length) {
+            list.push({
+              type: String(row?.type || row?.RowType || 'Data'),
+              depth,
+              label,
+              values: cols.map((c: any) => String(c?.value || '')),
+            })
+          }
+          if (Array.isArray(row?.Rows?.Row)) walk(row.Rows.Row, depth + 1)
+        })
+      }
+      walk(out?.report?.Rows?.Row || [], 0)
+      setQboRows(list)
+      setQboSource(String(out?.source || ''))
+      setQboGeneratedAt(String(out?.generatedAt || ''))
+    } catch (e: any) {
+      setQboErr(String(e?.message || e))
+      setQboRows([])
+    } finally {
+      setQboLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isQboMirror) return
+    void runQboReport('json')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report.id])
+
+  useEffect(() => {
+    if (!isRelayReport) return
+    let cancelled = false
+    const run = async () => {
+      setRelayLoading(true)
+      try {
+        const out = await fetch('/api/fuel/expenses', { headers: { Accept: 'application/json' } }).then((r) => r.json())
+        const rows = (Array.isArray(out?.data) ? out.data : []).filter(
+          (r: any) => String(r?.source || '').toLowerCase() === 'relay',
+        )
+        if (!cancelled) setRelayRows(rows)
+      } finally {
+        if (!cancelled) setRelayLoading(false)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [isRelayReport, report.id])
 
   const locationBody =
     custom === 'location_work_by_service' ? (
@@ -160,6 +284,109 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
         <div className="viewer__scroll">
           {custom ? (
             <div className="viewer__custom">{locationBody}</div>
+          ) : isQboMirror ? (
+            <>
+              <section className="viewer__toolbar">
+                <div className="sort" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <label>
+                    <span className="muted">From</span>
+                    <input type="date" value={qboFrom} onChange={(e) => setQboFrom(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">To</span>
+                    <input type="date" value={qboTo} onChange={(e) => setQboTo(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">As of</span>
+                    <input type="date" value={qboAsOf} onChange={(e) => setQboAsOf(e.target.value)} />
+                  </label>
+                  {qboSupportsMethod ? (
+                    <label>
+                      <span className="muted">Method</span>
+                      <select value={qboMethod} onChange={(e) => setQboMethod(e.target.value as 'Cash' | 'Accrual')}>
+                        <option value="Cash">Cash</option>
+                        <option value="Accrual">Accrual</option>
+                      </select>
+                    </label>
+                  ) : null}
+                </div>
+                <div className="exports">
+                  <button type="button" className="btn sm ghost" onClick={() => qboQuickRange('this-month')}>This Month</button>
+                  <button type="button" className="btn sm ghost" onClick={() => qboQuickRange('last-month')}>Last Month</button>
+                  <button type="button" className="btn sm ghost" onClick={() => qboQuickRange('this-year')}>This Year</button>
+                  <button type="button" className="btn sm ghost" onClick={() => void runQboReport('json')}>Run Report</button>
+                  <button type="button" className="btn sm ghost" onClick={() => void runQboReport('csv')}>Export CSV</button>
+                  <button type="button" className="btn sm ghost" onClick={() => window.print()}>Print</button>
+                </div>
+              </section>
+              <section className="table-wrap reports-integrity-table-scroll">
+                <p className="muted" style={{ marginBottom: 8 }}>
+                  IH 35 Transportation LLC · {report.title}
+                </p>
+                {qboSource === 'cache' && qboGeneratedAt ? (
+                  <p className="muted">Showing cached data from {qboGeneratedAt}</p>
+                ) : null}
+                {qboLoading ? <p className="empty">Fetching from QuickBooks...</p> : null}
+                {qboErr ? <p className="empty">{qboErr}</p> : null}
+                {!qboLoading && !qboErr ? (
+                  <table className="data-table fr-data-table reports-integrity-data-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>Account</th>
+                        <th>Value 1</th>
+                        <th>Value 2</th>
+                        <th>Value 3</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {qboRows.map((r, i) => {
+                        const v = r.values
+                        const last = String(v[v.length - 1] || '')
+                        const negative = /^\(.*\)$/.test(last) || last.startsWith('-')
+                        const bold = String(r.type).toLowerCase().includes('summary') || String(r.type).toLowerCase().includes('total')
+                        return (
+                          <tr key={`${r.label}-${i}`}>
+                            <td style={{ paddingLeft: `${r.depth * 20}px`, fontWeight: bold ? 700 : 400 }}>{r.label}</td>
+                            <td>{v[1] || ''}</td>
+                            <td>{v[2] || ''}</td>
+                            <td style={{ fontWeight: bold ? 700 : 400, color: negative ? '#b42318' : undefined }}>{v[3] || last || ''}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                ) : null}
+              </section>
+            </>
+          ) : isRelayReport ? (
+            <section className="table-wrap reports-integrity-table-scroll">
+              {relayLoading ? <p className="empty">Loading relay transactions...</p> : null}
+              {!relayLoading && !relayRows.length ? <p className="empty">No Relay transactions found.</p> : null}
+              {!relayLoading && relayRows.length ? (
+                <table className="data-table fr-data-table reports-integrity-data-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Driver</th><th>Unit</th><th>Gallons</th><th>Amount</th><th>Station</th><th>State</th><th>QBO</th><th>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {relayRows.slice(0, 1000).map((r, i) => (
+                      <tr key={`${r?.id || i}`}>
+                        <td>{String(r?.transaction_date || r?.submitted_at || '').slice(0, 10)}</td>
+                        <td>{r?.driver_name || '--'}</td>
+                        <td>{r?.unit_number || '--'}</td>
+                        <td>{r?.gallons == null ? '--' : Number(r.gallons).toFixed(2)}</td>
+                        <td>{Number(r?.total_amount || 0).toFixed(2)}</td>
+                        <td>{r?.station_name || '--'}</td>
+                        <td>{r?.state || '--'}</td>
+                        <td>{r?.qbo_posted ? 'Posted' : 'Pending'}</td>
+                        <td>{String(r?.source || 'relay')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+            </section>
           ) : (
             <>
               <section className="viewer__toolbar">

@@ -1735,6 +1735,66 @@
         : [];
     var isPasteC = !lastQbo && !!lastPaste;
 
+    async function importFromBanking() {
+      try {
+        var month = String(repMonth || '').trim();
+        if (!month) {
+          setReceiptMsg('Select the report month before importing from Banking.');
+          return;
+        }
+        var accRes = await fetch('/api/banking/accounts?' + new URLSearchParams({ month: month }), {
+          headers: form425cAuthHeaders()
+        });
+        var accJson = await accRes.json();
+        var accounts = Array.isArray(accJson?.data) ? accJson.data : [];
+        if (!accounts.length) {
+          setReceiptMsg('No DIP bank accounts found. Add or sync Banking accounts first.');
+          return;
+        }
+        var options = accounts.map(function (a, i) {
+          return (i + 1) + '. ' + (a.account_name || 'Account') + ' • ' + (a.account_last4 || '----');
+        }).join('\n');
+        var pickRaw = window.prompt('Select Banking account number:\n' + options, '1');
+        var pickIx = Number(pickRaw || 1) - 1;
+        if (!Number.isInteger(pickIx) || pickIx < 0 || pickIx >= accounts.length) {
+          setReceiptMsg('Banking import cancelled.');
+          return;
+        }
+        var picked = accounts[pickIx];
+        var txRes = await fetch('/api/banking/transactions?' + new URLSearchParams({
+          account_id: String(picked.account_id || ''),
+          month: month
+        }), { headers: form425cAuthHeaders() });
+        var txJson = await txRes.json();
+        var tx = Array.isArray(txJson?.data) ? txJson.data : [];
+        var opening = toNumber(picked.opening_balance);
+        var receipts = toNumber(picked.receipts);
+        var disb = toNumber(picked.disbursements);
+        if (!receipts && !disb && tx.length) {
+          tx.forEach(function (r) {
+            var amt = toNumber(r?.amount);
+            if (amt >= 0) receipts += amt;
+            else disb += Math.abs(amt);
+          });
+        }
+        var line22 = Math.round((receipts - disb) * 100) / 100;
+        var line23 = Math.round((opening + line22) * 100) / 100;
+        setReport(function (r) {
+          return {
+            ...r,
+            line19: opening,
+            line20: receipts,
+            line21: disb,
+            line22: line22,
+            line23: line23
+          };
+        });
+        setReceiptMsg('Imported Banking values for lines 19–23 and Part 7 column B (rows 32–34).');
+      } catch (e) {
+        setReceiptMsg('Banking import failed: ' + String(e?.message || e));
+      }
+    }
+
     function renderReportPanel() {
       return h(
         'section',
@@ -1751,6 +1811,11 @@
             'button',
             { type: 'button', className: 'btn secondary', onClick: fetchPriorOpening },
             'Carry line 19 from prior saved month'
+          ),
+          h(
+            'button',
+            { type: 'button', className: 'btn secondary', onClick: importFromBanking },
+            'Import from Banking'
           ),
           h(
             'button',

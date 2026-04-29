@@ -100,6 +100,12 @@ export async function syncRelayTransactions({ from = '', to = '', limit = 200, d
   if (!getPool()) {
     return { ok: false, error: 'DATABASE_URL is not set', total: 0, imported: 0, skipped: 0, failed: 0 };
   }
+  try {
+    await dbQuery("ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual'");
+    await dbQuery('ALTER TABLE fuel_expenses ADD COLUMN IF NOT EXISTS transaction_date DATE');
+  } catch (_e) {
+    // best-effort schema hardening
+  }
 
   const rows = await fetchRelayTransactions({ from, to, limit: Math.max(1, Math.min(1000, Number(limit) || 200)) });
   let imported = 0;
@@ -185,11 +191,11 @@ export async function syncRelayTransactions({ from = '', to = '', limit = 200, d
         `INSERT INTO fuel_expenses (
           unit_number, driver_name, fuel_type, gallons, price_per_gallon, total_amount,
           load_number, reefer_unit_number, settlement_load_id, station_name, location, receipt_photo,
-          qbo_posted, state, miles_this_load, relay_event_id, relay_txn_id, relay_card_last4, relay_vendor, submitted_at
+          qbo_posted, state, miles_this_load, relay_event_id, relay_txn_id, relay_card_last4, relay_vendor, submitted_at, source, transaction_date
         ) VALUES (
           $1,$2,$3,$4,$5,$6,
           NULL,NULL,NULL,$7,$8,NULL,
-          false,$9,NULL,$10,$11,$12,$13,COALESCE($14::timestamptz, now())
+          false,$9,NULL,$10,$11,$12,$13,COALESCE($14::timestamptz, now()),$15,$16
         )
         ON CONFLICT (relay_txn_id) WHERE relay_txn_id IS NOT NULL DO NOTHING`,
         [
@@ -207,6 +213,8 @@ export async function syncRelayTransactions({ from = '', to = '', limit = 200, d
           cardLast4 || null,
           vendorName,
           submittedAt || null,
+          'relay',
+          submittedAt ? String(submittedAt).slice(0, 10) : null,
         ]
       );
       imported += 1;

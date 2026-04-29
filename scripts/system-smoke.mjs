@@ -28,6 +28,8 @@ const CRITICAL = [
   ['GET', '/api/equipment/assignments'],
   ['GET', '/api/integrations/relay/settings'],
   ['GET', '/api/integrations/relay/card-assignments'],
+  ['GET', '/api/banking/accounts'],
+  ['GET', '/api/banking/transactions'],
   ['GET', '/api/form-425c/profiles'],
   ['GET', '/api/qbo/sync-alerts'],
   ['GET', '/api/maintenance/dashboard'],
@@ -153,6 +155,10 @@ function criticalContractError(path, json) {
         ? null
         : 'expected { ok:true, settings:{...} }';
     case '/api/integrations/relay/card-assignments':
+      return json.ok === true && Array.isArray(json.data) ? null : 'expected { ok:true, data: [] }';
+    case '/api/banking/accounts':
+      return json.ok === true && Array.isArray(json.data) ? null : 'expected { ok:true, data: [] }';
+    case '/api/banking/transactions':
       return json.ok === true && Array.isArray(json.data) ? null : 'expected { ok:true, data: [] }';
     case '/api/form-425c/profiles':
       return Array.isArray(json.companies) ? null : 'expected { companies: [] }';
@@ -381,6 +387,8 @@ function summarize(j, path) {
     return `relay_enabled=${Boolean(j.settings.enabled)} auto_post=${Boolean(j.settings.auto_post_qbo)}`;
   }
   if (path === '/api/integrations/relay/card-assignments' && Array.isArray(j.data)) return `relay_cards=${j.data.length}`;
+  if (path === '/api/banking/accounts' && Array.isArray(j.data)) return `bank_accounts=${j.data.length}`;
+  if (path === '/api/banking/transactions' && Array.isArray(j.data)) return `bank_txns=${j.data.length}`;
   if (path === '/api/form-425c/profiles' && Array.isArray(j.companies)) return `companies=${j.companies.length}`;
   if (path === '/api/qbo/status' && typeof j.connected === 'boolean') return `connected=${j.connected} configured=${j.configured}`;
   if (path === '/api/board' && Array.isArray(j.vehicles)) return `vehicles=${j.vehicles.length} live=${Array.isArray(j.live) ? j.live.length : 0}`;

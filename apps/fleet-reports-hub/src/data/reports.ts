@@ -1,8 +1,8 @@
 import type { ReportCategory, ReportDef } from '../types'
 
-const qbo = (reportName: string): Pick<ReportDef, 'qboReportName' | 'apiHint'> => ({
-  qboReportName: reportName,
-  apiHint: `GET /api/reports/qbo/${reportName}`,
+const qbo = (reportSlug: string): Pick<ReportDef, 'qboReportName' | 'apiHint'> => ({
+  qboReportName: reportSlug,
+  apiHint: `GET /api/reports/qbo/${reportSlug}`,
 })
 
 export const REPORTS: ReportDef[] = [
@@ -136,43 +136,51 @@ export const REPORTS: ReportDef[] = [
   // Accounting B1–B16 (mix QBO + ERP)
   {
     id: 'B1',
-    title: 'Profit and Loss',
-    description: 'Standard QBO P&L for the linked company.',
+    title: 'Profit & Loss',
+    description: 'QBO mirror report (live-first with cache fallback).',
     category: 'accounting',
-    tags: ['qbo', 'financial'],
-    ...qbo('ProfitAndLoss'),
+    tags: ['qbo', 'financial', 'mirror'],
+    ...qbo('profit-loss'),
+  },
+  {
+    id: 'B1A',
+    title: 'P&L Detail',
+    description: 'QBO Profit & Loss detail report.',
+    category: 'accounting',
+    tags: ['qbo', 'financial', 'detail'],
+    ...qbo('profit-loss-detail'),
   },
   {
     id: 'B2',
     title: 'Balance Sheet',
-    description: 'Standard QBO balance sheet.',
+    description: 'QBO mirror balance sheet.',
     category: 'accounting',
-    tags: ['qbo', 'financial'],
-    ...qbo('BalanceSheet'),
+    tags: ['qbo', 'financial', 'mirror'],
+    ...qbo('balance-sheet'),
   },
   {
     id: 'B3',
     title: 'General Ledger',
-    description: 'Detailed GL activity from QuickBooks.',
+    description: 'QBO mirror general ledger.',
     category: 'accounting',
-    tags: ['qbo', 'gl'],
-    ...qbo('GeneralLedger'),
+    tags: ['qbo', 'gl', 'financial'],
+    ...qbo('general-ledger'),
   },
   {
     id: 'B4',
-    title: 'Aged Payables',
-    description: 'Open bills and aging buckets.',
+    title: 'AP Aging',
+    description: 'QBO aged payables report.',
     category: 'accounting',
-    tags: ['qbo', 'ap'],
-    ...qbo('AgedPayables'),
+    tags: ['qbo', 'ap', 'financial'],
+    ...qbo('ap-aging'),
   },
   {
     id: 'B5',
-    title: 'Aged Receivables',
-    description: 'Open invoices and aging buckets.',
+    title: 'AR Aging',
+    description: 'QBO aged receivables report.',
     category: 'accounting',
-    tags: ['qbo', 'ar'],
-    ...qbo('AgedReceivables'),
+    tags: ['qbo', 'ar', 'financial'],
+    ...qbo('ar-aging'),
   },
   {
     id: 'B6',
@@ -260,18 +268,34 @@ export const REPORTS: ReportDef[] = [
   {
     id: 'B15',
     title: 'Trial Balance',
-    description: 'QBO trial balance for reconciliation.',
+    description: 'QBO mirror trial balance.',
     category: 'accounting',
-    tags: ['qbo', 'tb'],
-    ...qbo('TrialBalance'),
+    tags: ['qbo', 'tb', 'financial'],
+    ...qbo('trial-balance'),
   },
   {
     id: 'B16',
     title: 'Cash flow',
-    description: 'Operating/investing/financing cash movement.',
+    description: 'QBO mirror cash flow report.',
     category: 'accounting',
-    tags: ['qbo', 'cash'],
-    ...qbo('CashFlow'),
+    tags: ['qbo', 'cash', 'financial'],
+    ...qbo('cash-flow'),
+  },
+  {
+    id: 'B19',
+    title: 'Transaction List',
+    description: 'QBO transaction list report.',
+    category: 'accounting',
+    tags: ['qbo', 'transactions', 'financial'],
+    ...qbo('transaction-list'),
+  },
+  {
+    id: 'B20',
+    title: 'Vendor Expenses',
+    description: 'QBO vendor expenses report.',
+    category: 'accounting',
+    tags: ['qbo', 'vendors', 'financial'],
+    ...qbo('vendor-expenses'),
   },
   {
     id: 'B17',
@@ -403,6 +427,14 @@ export const REPORTS: ReportDef[] = [
     category: 'fuel',
     tags: ['mpg', 'efficiency'],
     hasChart: true,
+  },
+  {
+    id: 'D6',
+    title: 'Relay Transactions',
+    description: 'Relay pulls mirrored from fuel expenses with source/QBO state.',
+    category: 'fuel',
+    tags: ['relay', 'transactions', 'fuel'],
+    apiHint: 'GET /api/fuel/expenses?source=relay',
   },
 
   // Operations E1–E7
