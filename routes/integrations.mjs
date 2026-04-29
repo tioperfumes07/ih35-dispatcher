@@ -380,7 +380,7 @@ router.get('/relay/transactions', async (req, res) => {
 
 router.get('/relay/drivers', async (_req, res) => {
   try {
-    const data = await relayFetch('/v1/drivers');
+    const data = await relayFetch('/api/fuel/drivers/');
     return res.json({ ok: true, data: relayRows(data) });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message });
