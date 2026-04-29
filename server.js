@@ -21,7 +21,7 @@ import { registerAccountingRoutes } from "./apps/fleet-reports-hub/server/lib/ac
 import { registerCatalogRoutes } from "./apps/fleet-reports-hub/server/lib/catalog-http.mjs";
 
 import tmsRoutes from "./routes/tms.mjs";
-import integrationsRoutes from "./routes/integrations.mjs";
+import integrationsRoutes, { startRelayAutoSync } from "./routes/integrations.mjs";
 import { mountReportsRestApi } from "./routes/reports-rest-api.mjs";
 import { mountScheduledReports, startReportScheduleRunner } from "./routes/scheduled-reports.mjs";
 import pdfRouter from "./routes/pdf.mjs";
@@ -372,6 +372,7 @@ async function start() {
 
   app.use("/api/tms", tmsRoutes);
   app.use("/api/integrations", integrationsRoutes);
+  startRelayAutoSync(console);
 
   mountReportsRestApi(app, {
     readErp: () => ({}),

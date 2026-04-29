@@ -4367,6 +4367,7 @@
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
                   <button type="button" class="qb-btn-primary" onclick="saveRelayWebhookSettings()">Save Relay settings</button>
+                  <button type="button" class="qb-btn-add" onclick="syncRelayTransactionsNow()">Sync transactions</button>
                   <span id="relayWebhookSettingsStatus" class="mini-note"></span>
                 </div>
               </div>
@@ -16234,6 +16235,27 @@
         tokenEl.value = '';
         secretEl.value = '';
         await loadRelayWebhookSettings();
+      } catch (e) {
+        if (status) status.textContent = e?.message || String(e);
+      }
+    }
+
+    async function syncRelayTransactionsNow() {
+      const status = document.getElementById('relayWebhookSettingsStatus');
+      if (status) status.textContent = 'Syncing Relay transactions...';
+      try {
+        const r = await fetch('/api/integrations/relay/transactions?limit=300', {
+          method: 'GET',
+          headers: { Accept: 'application/json', ...erpWriteHeaders() },
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data?.ok === false) throw new Error(data?.error || r.statusText || 'Relay sync failed');
+        const total = Number(data?.total || 0);
+        const imported = Number(data?.imported || 0);
+        const skipped = Number(data?.skipped || 0);
+        const failed = Number(data?.failed || 0);
+        if (status) status.textContent = `Relay sync complete: total ${total}, imported ${imported}, skipped ${skipped}, failed ${failed}.`;
+        if (typeof loadFuelExpenseTab === 'function') await loadFuelExpenseTab();
       } catch (e) {
         if (status) status.textContent = e?.message || String(e);
       }
