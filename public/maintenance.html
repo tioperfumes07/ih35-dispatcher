@@ -4779,22 +4779,111 @@
       </section>
 
       <section id="section-banking" class="section">
+        <style>
+          #section-banking .banking-accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            align-items: stretch;
+          }
+          #section-banking .banking-account-card {
+            min-width: 280px;
+            max-width: 320px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            padding: 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            background: var(--color-bg-card);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+          }
+          #section-banking .banking-account-card:hover {
+            border-color: var(--color-border-focus);
+            box-shadow: 0 4px 14px rgba(17, 24, 39, 0.08);
+          }
+          #section-banking .banking-account-name {
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+          }
+          #section-banking .banking-account-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #1557a01a;
+            color: #1557a0;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          #section-banking .banking-account-balance {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.2;
+          }
+          #section-banking .banking-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            z-index: 10040;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+          }
+          #section-banking .banking-modal-backdrop.active { display: flex; }
+          #section-banking .banking-modal {
+            width: min(760px, 100%);
+            max-height: min(82vh, 760px);
+            overflow: auto;
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-card);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+            padding: 14px;
+          }
+          #section-banking .banking-modal-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+          }
+          #section-banking .banking-modal-item {
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+          }
+        </style>
+
         <div class="panel">
           <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-            <div class="panel-title" style="margin:0">DIP Bank Accounts</div>
+            <div class="panel-title" style="margin:0">DIP Accounts</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <input id="bankingMonth" class="qb-in" type="month" style="max-width:170px" />
+              <button type="button" class="btn btn--small" onclick="openBankingAccountManager()">Manage Accounts</button>
               <button type="button" class="btn btn--small" onclick="loadBankingAccounts()">Refresh</button>
             </div>
           </div>
           <div class="panel-body">
-            <div id="bankingAccountsGrid" class="grid grid-3" style="gap:10px"></div>
+            <div id="bankingAccountsGrid" class="banking-accounts-grid"></div>
           </div>
         </div>
+
         <div class="panel" style="margin-top:12px">
           <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-            <div class="panel-title" style="margin:0">Transaction register</div>
-            <button type="button" class="btn btn--small" onclick="bankingReconcileCurrent()">Reconcile selected month</button>
+            <div class="panel-title" style="margin:0">Transaction Register</div>
           </div>
           <div class="panel-body">
             <div style="overflow:auto;max-height:420px;border:1px solid var(--color-border);border-radius:8px">
@@ -4811,6 +4900,30 @@
               <label style="min-width:260px;flex:1 1 260px"><span class="qb-l">Description</span><input id="bankTxnDescription" class="qb-in" /></label>
               <label><span class="qb-l">Amount</span><input id="bankTxnAmount" class="qb-in" type="number" step="0.01" /></label>
               <button type="button" class="btn btn--small" onclick="createBankingTransaction()">New transaction</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="panel-title" style="margin:0">Reconciliation</div>
+            <button type="button" class="btn btn--small" onclick="bankingReconcileCurrent()">Reconcile selected month</button>
+          </div>
+          <div class="panel-body">
+            <div class="mini-note" id="bankingReconcileMeta">Select an account, then reconcile the current month.</div>
+          </div>
+        </div>
+
+        <div id="bankingAccountManagerModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Manage visible banking accounts">
+          <div class="banking-modal">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Manage Accounts</div>
+              <button type="button" class="btn btn--small" onclick="closeBankingAccountManager()">Close</button>
+            </div>
+            <p class="mini-note" style="margin:8px 0 0">Choose which eligible bank accounts are visible in DIP Accounts.</p>
+            <div id="bankingAccountManagerList" class="banking-modal-list"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+              <button type="button" class="btn btn--small" onclick="saveBankingVisibleAccounts()">Save selection</button>
             </div>
           </div>
         </div>
@@ -28685,6 +28798,9 @@
     }
     var bankingSelectedAccountId = '';
     var qboFinLastReport = null;
+    var bankingEligibleAccounts = [];
+    var bankingVisibleAccounts = [];
+    var BANKING_VISIBLE_STORAGE_KEY = 'ih35_banking_visible_accounts';
 
     function qboMoneyFmt(v) {
       var n = Number(v);
@@ -28748,6 +28864,97 @@
       }
     }
 
+
+    function normalizeBankingType(v) {
+      var t = String(v || '').trim().toLowerCase();
+      if (t === 'credit card' || t === 'creditcard') return 'credit card';
+      if (t === 'bank') return 'bank';
+      if (t === 'other current asset' || t === 'othercurrentasset') return 'other current asset';
+      return t;
+    }
+
+    function isBankingEligibleAccount(a) {
+      var t = normalizeBankingType(a?.account_type || a?.type || '');
+      if (t === 'bank' || t === 'credit card') return true;
+      if (t === 'other current asset') {
+        var nm = String(a?.account_name || '').toLowerCase();
+        return nm.includes('checking') || nm.includes('savings') || nm.includes('cash');
+      }
+      return false;
+    }
+
+    function loadBankingVisibleAccounts() {
+      try {
+        var raw = localStorage.getItem(BANKING_VISIBLE_STORAGE_KEY);
+        var parsed = raw ? JSON.parse(raw) : [];
+        bankingVisibleAccounts = Array.isArray(parsed) ? parsed.map(function (x) { return String(x || '').trim(); }).filter(Boolean) : [];
+      } catch (_e) {
+        bankingVisibleAccounts = [];
+      }
+    }
+
+    function saveBankingVisibleAccountsStore() {
+      try {
+        localStorage.setItem(BANKING_VISIBLE_STORAGE_KEY, JSON.stringify(bankingVisibleAccounts));
+      } catch (_e) {
+        // no-op
+      }
+    }
+
+    function ensureBankingDefaultSelection() {
+      if (bankingVisibleAccounts.length) return;
+      bankingVisibleAccounts = bankingEligibleAccounts
+        .filter(function (a) { return normalizeBankingType(a?.account_type) === 'bank'; })
+        .map(function (a) { return String(a?.account_id || ''); })
+        .filter(Boolean);
+      saveBankingVisibleAccountsStore();
+    }
+
+    function renderBankingAccountManager() {
+      var host = document.getElementById('bankingAccountManagerList');
+      if (!host) return;
+      if (!bankingEligibleAccounts.length) {
+        host.innerHTML = '<div class="mini-note">No eligible bank or credit card accounts found.</div>';
+        return;
+      }
+      var vis = new Set(bankingVisibleAccounts);
+      host.innerHTML = bankingEligibleAccounts.map(function (a, i) {
+        var id = String(a?.account_id || '');
+        var checked = vis.has(id) ? ' checked' : '';
+        var typeLabel = String(a?.account_type || 'Bank');
+        var label = (a?.account_name || 'Account') + ' • ' + (a?.account_last4 || '----');
+        return '<label class="banking-modal-item">' +
+          '<input type="checkbox" class="banking-acct-vis-cb" data-account-id="' + escapeHtml(id) + '"' + checked + ' />' +
+          '<span style="min-width:0;display:flex;flex-direction:column;gap:3px">' +
+            '<strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(label) + '</strong>' +
+            '<span class="mini-note">' + escapeHtml(typeLabel) + '</span>' +
+          '</span>' +
+        '</label>';
+      }).join('');
+    }
+
+    function openBankingAccountManager() {
+      renderBankingAccountManager();
+      var modal = document.getElementById('bankingAccountManagerModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeBankingAccountManager() {
+      var modal = document.getElementById('bankingAccountManagerModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function saveBankingVisibleAccounts() {
+      var ids = [];
+      document.querySelectorAll('.banking-acct-vis-cb:checked').forEach(function (el) {
+        ids.push(String(el.getAttribute('data-account-id') || '').trim());
+      });
+      bankingVisibleAccounts = ids.filter(Boolean);
+      saveBankingVisibleAccountsStore();
+      closeBankingAccountManager();
+      loadBankingAccounts();
+    }
+
     async function loadBankingAccounts() {
       var monthInput = document.getElementById('bankingMonth');
       if (monthInput && !monthInput.value) monthInput.value = new Date().toISOString().slice(0, 7);
@@ -28755,20 +28962,30 @@
       var grid = document.getElementById('bankingAccountsGrid');
       if (!grid) return;
       grid.innerHTML = '<div class="mini-note">Loading accounts…</div>';
+      loadBankingVisibleAccounts();
       try {
         var rsp = await fetch('/api/banking/accounts?' + new URLSearchParams({ month: month }), { headers: { Accept: 'application/json' } });
         var json = await rsp.json();
         var rows = Array.isArray(json?.data) ? json.data : [];
-        if (!rows.length) {
-          grid.innerHTML = '<div class="mini-note">No bank accounts found in cache.</div>';
+        bankingEligibleAccounts = rows.filter(isBankingEligibleAccount);
+        ensureBankingDefaultSelection();
+        var visible = new Set(bankingVisibleAccounts);
+        var displayRows = bankingEligibleAccounts.filter(function (a) {
+          return visible.has(String(a?.account_id || ''));
+        });
+        if (!displayRows.length) {
+          grid.innerHTML = '<div class="mini-note">No visible accounts selected. Use Manage Accounts.</div>';
           return;
         }
-        grid.innerHTML = rows.map(function (a) {
+        grid.innerHTML = displayRows.map(function (a) {
           var id = String(a?.account_id || '');
-          return '<button type="button" class="metric" style="text-align:left;cursor:pointer" onclick="selectBankingAccount(' + JSON.stringify(id) + ')">' +
-            '<div class="metric-label">' + (a?.account_name || 'Account') + ' • ' + (a?.account_last4 || '----') + '</div>' +
-            '<div class="metric-value">' + qboMoneyFmt(a?.balance || a?.ending_balance || 0) + '</div>' +
-            '<div class="mini-note">Type: ' + (a?.account_type || 'Bank') + ' • Last txn: ' + (a?.last_transaction_date || '--') + '</div>' +
+          var typeRaw = normalizeBankingType(a?.account_type || 'bank');
+          var typeLabel = typeRaw === 'credit card' ? 'Credit Card' : (typeRaw === 'other current asset' ? 'Other Current Asset' : 'Bank');
+          return '<button type="button" class="banking-account-card" onclick="selectBankingAccount(' + JSON.stringify(id) + ')">' +
+            '<span class="banking-account-name" title="' + escapeHtml(a?.account_name || 'Account') + '">' + escapeHtml(a?.account_name || 'Account') + '</span>' +
+            '<span class="banking-account-type" title="' + escapeHtml(typeLabel) + '">' + escapeHtml(typeLabel) + '</span>' +
+            '<div class="banking-account-balance">' + qboMoneyFmt(a?.balance || a?.ending_balance || 0) + '</div>' +
+            '<div class="mini-note">Last transaction: ' + escapeHtml(a?.last_transaction_date || '--') + '</div>' +
           '</button>';
         }).join('');
       } catch (e) {
@@ -28778,6 +28995,8 @@
 
     function selectBankingAccount(accountId) {
       bankingSelectedAccountId = String(accountId || '').trim();
+      var meta = document.getElementById('bankingReconcileMeta');
+      if (meta) meta.textContent = 'Selected account: ' + bankingSelectedAccountId + '. Ready to reconcile.';
       loadBankingRegister();
     }
 
@@ -28839,6 +29058,8 @@
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ account_id: bankingSelectedAccountId, month: month }),
       }).catch(function () { return null; });
+      var meta = document.getElementById('bankingReconcileMeta');
+      if (meta) meta.textContent = 'Reconciled account ' + bankingSelectedAccountId + ' for ' + (month || 'selected month') + '.';
       loadBankingRegister();
     }
 
@@ -28939,6 +29160,12 @@
       }
     }
 
+
+    function handleBankingModalBackdropClick(e) {
+      var t = e && e.target;
+      if (t && t.id === 'bankingAccountManagerModal') closeBankingAccountManager();
+    }
+
     function exportQboFinancialCsv() {
       if (!qboFinLastReport) return;
       var href = '/api/reports/qbo/' + encodeURIComponent(qboFinLastReport.report) + '?format=csv' + (qboFinLastReport.params ? '&' + qboFinLastReport.params : '');
@@ -28951,9 +29178,14 @@
     window.loadBankingRegister = loadBankingRegister;
     window.createBankingTransaction = createBankingTransaction;
     window.bankingReconcileCurrent = bankingReconcileCurrent;
+    window.openBankingAccountManager = openBankingAccountManager;
+    window.closeBankingAccountManager = closeBankingAccountManager;
+    window.saveBankingVisibleAccounts = saveBankingVisibleAccounts;
     window.qboFinQuickRange = qboFinQuickRange;
     window.runQboFinancialReport = runQboFinancialReport;
     window.exportQboFinancialCsv = exportQboFinancialCsv;
+    var __bankingModal = document.getElementById('bankingAccountManagerModal');
+    if (__bankingModal) __bankingModal.addEventListener('click', handleBankingModalBackdropClick);
 
     var __openSectionOrig = window.openSection;
     if (typeof __openSectionOrig === 'function') {
