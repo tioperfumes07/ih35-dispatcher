@@ -1293,6 +1293,13 @@ export function mountErpCoreApi(app, opts = {}) {
     return false;
   }
 
+  function requireBankingWriteRole(req, res) {
+    const role = reqRole(req);
+    if (role === 'admin' || role === 'administrator' || role === 'accountant') return true;
+    res.status(403).json({ ok: false, error: 'Banking write requires admin/accountant role' });
+    return false;
+  }
+
   async function ensureAuditLogTable() {
     if (!getPoolForRoute()) return false;
     await dbQueryForRoute(
@@ -3721,27 +3728,217 @@ export function mountErpCoreApi(app, opts = {}) {
     );
     await dbQuery(
       `CREATE TABLE IF NOT EXISTS banking_transactions (
-        id SERIAL PRIMARY KEY,
+        id BIGSERIAL PRIMARY KEY,
+        idempotency_key TEXT UNIQUE,
         qbo_txn_id TEXT UNIQUE,
         account_id TEXT NOT NULL,
         account_name TEXT,
         txn_type TEXT,
-        txn_date DATE,
-        amount NUMERIC(14,2),
+        txn_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        posted_at TIMESTAMPTZ,
+        amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+        txn_direction TEXT DEFAULT 'debit',
         running_balance NUMERIC(14,2),
         description TEXT,
         vendor_name TEXT,
         memo TEXT,
+        status TEXT NOT NULL DEFAULT 'uncategorized',
+        category TEXT,
+        category_source TEXT,
         cleared BOOLEAN DEFAULT false,
         reconciled BOOLEAN DEFAULT false,
         source TEXT DEFAULT 'qbo',
+        source_ref TEXT,
+        statement_id TEXT,
         qbo_status TEXT DEFAULT 'synced',
+        qbo_sync_error TEXT,
+        created_by TEXT,
+        updated_by TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`
     );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS bank_account_preferences (
+        id BIGSERIAL PRIMARY KEY,
+        account_id TEXT NOT NULL UNIQUE,
+        account_name TEXT,
+        account_type TEXT,
+        visible BOOLEAN NOT NULL DEFAULT true,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        is_dip BOOLEAN NOT NULL DEFAULT true,
+        entity TEXT NOT NULL DEFAULT 'ih35-transportation',
+        color_tag TEXT,
+        is_relay_account BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS banking_rules (
+        id BIGSERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 100,
+        match_field TEXT NOT NULL,
+        match_operator TEXT NOT NULL DEFAULT 'contains',
+        match_value TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        category TEXT,
+        vendor_id TEXT,
+        split_template_json JSONB,
+        auto_apply BOOLEAN NOT NULL DEFAULT false,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS bank_txn_links (
+        id BIGSERIAL PRIMARY KEY,
+        txn_id BIGINT NOT NULL REFERENCES banking_transactions(id) ON DELETE CASCADE,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        amount NUMERIC(14,2),
+        link_role TEXT DEFAULT 'primary',
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS driver_settlements (
+        id BIGSERIAL PRIMARY KEY,
+        driver_id TEXT NOT NULL,
+        driver_name TEXT,
+        period_start DATE NOT NULL,
+        period_end DATE NOT NULL,
+        gross_pay NUMERIC(14,2) NOT NULL DEFAULT 0,
+        gross_source TEXT NOT NULL DEFAULT 'manual',
+        load_table_ref TEXT,
+        fuel_deduction NUMERIC(14,2) NOT NULL DEFAULT 0,
+        advance_deduction NUMERIC(14,2) NOT NULL DEFAULT 0,
+        other_deductions NUMERIC(14,2) NOT NULL DEFAULT 0,
+        net_pay NUMERIC(14,2) NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'unpaid',
+        paid_date DATE,
+        bank_txn_id BIGINT REFERENCES banking_transactions(id) ON DELETE SET NULL,
+        notes TEXT,
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS driver_settlement_loads (
+        id BIGSERIAL PRIMARY KEY,
+        settlement_id BIGINT NOT NULL REFERENCES driver_settlements(id) ON DELETE CASCADE,
+        load_number TEXT NOT NULL,
+        gross_component NUMERIC(14,2),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS factoring_advances (
+        id BIGSERIAL PRIMARY KEY,
+        factor_name TEXT NOT NULL,
+        invoice_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+        advance_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+        fee_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+        net_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+        deposit_date DATE,
+        bank_txn_id BIGINT REFERENCES banking_transactions(id) ON DELETE SET NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS factoring_advance_loads (
+        id BIGSERIAL PRIMARY KEY,
+        factoring_advance_id BIGINT NOT NULL REFERENCES factoring_advances(id) ON DELETE CASCADE,
+        load_number TEXT NOT NULL,
+        invoice_number TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS bank_import_batches (
+        id BIGSERIAL PRIMARY KEY,
+        source_type TEXT NOT NULL,
+        account_id TEXT,
+        filename TEXT,
+        rows_total INTEGER NOT NULL DEFAULT 0,
+        rows_inserted INTEGER NOT NULL DEFAULT 0,
+        rows_skipped INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'preview',
+        parser_notes TEXT,
+        uploaded_by TEXT,
+        uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS bank_reconciliation_sessions (
+        id BIGSERIAL PRIMARY KEY,
+        account_id TEXT NOT NULL,
+        statement_month TEXT NOT NULL,
+        statement_end_date DATE,
+        statement_ending_balance NUMERIC(14,2) NOT NULL DEFAULT 0,
+        cleared_total NUMERIC(14,2) NOT NULL DEFAULT 0,
+        difference NUMERIC(14,2) NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'open',
+        lock_reason_code TEXT,
+        lock_reason_notes TEXT,
+        locked_by TEXT,
+        locked_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (account_id, statement_month)
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS bank_reconciliation_items (
+        id BIGSERIAL PRIMARY KEY,
+        reconciliation_session_id BIGINT NOT NULL REFERENCES bank_reconciliation_sessions(id) ON DELETE CASCADE,
+        banking_txn_id BIGINT NOT NULL REFERENCES banking_transactions(id) ON DELETE CASCADE,
+        cleared BOOLEAN NOT NULL DEFAULT false,
+        cleared_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (reconciliation_session_id, banking_txn_id)
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS report_cache (
+        id BIGSERIAL PRIMARY KEY,
+        report_key TEXT NOT NULL,
+        params_hash TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'cache',
+        payload_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+        generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (report_key, params_hash)
+      )`
+    );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS period_locks (
+        id BIGSERIAL PRIMARY KEY,
+        module TEXT NOT NULL,
+        period_key TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open',
+        locked_by TEXT,
+        lock_reason TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (module, period_key)
+      )`
+    );
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_account_date ON banking_transactions(account_id, txn_date DESC)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_status ON banking_transactions(status)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_source ON banking_transactions(source, txn_date DESC)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_rules_active_priority ON banking_rules(active, priority)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_driver_settlements_driver_period ON driver_settlements(driver_id, period_start)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_recon_sessions_account_month ON bank_reconciliation_sessions(account_id, statement_month)');
   }
 
   async function ensureLoadExpenseLinksTable() {
@@ -4661,6 +4858,7 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/banking/accounts/balances', async (req, res) => {
     try {
+      if (!requireBankingWriteRole(req, res)) return;
       await ensureBankingTables();
       const b = req.body || {};
       const accountId = String(b.account_id || '').trim();
@@ -4670,6 +4868,13 @@ export function mountErpCoreApi(app, opts = {}) {
       const receipts = Number(b.receipts || 0);
       const disb = Number(b.disbursements || 0);
       const ending = Number.isFinite(Number(b.ending_balance)) ? Number(b.ending_balance) : (opening + receipts - disb);
+      const { rows: beforeRows } = await dbQuery(
+        `SELECT account_id, month_key, opening_balance, receipts, disbursements, ending_balance
+           FROM dip_bank_account_balances
+          WHERE account_id = $1 AND month_key = $2
+          LIMIT 1`,
+        [accountId, month]
+      );
       await dbQuery(
         `INSERT INTO dip_bank_account_balances (
           account_id, account_name, account_last4, account_type, month_key,
@@ -4699,6 +4904,21 @@ export function mountErpCoreApi(app, opts = {}) {
           String(b.source || 'manual').trim() || 'manual',
         ]
       );
+      const { rows: afterRows } = await dbQuery(
+        `SELECT account_id, month_key, opening_balance, receipts, disbursements, ending_balance
+           FROM dip_bank_account_balances
+          WHERE account_id = $1 AND month_key = $2
+          LIMIT 1`,
+        [accountId, month]
+      );
+      await writeAuditLog(req, {
+        action: beforeRows?.[0] ? 'update' : 'insert',
+        entity_type: 'dip_bank_account_balances',
+        entity_id: `${accountId}:${month}`,
+        before_state: beforeRows?.[0] || null,
+        after_state: afterRows?.[0] || null,
+        source_module: 'banking',
+      });
       return res.json({ ok: true });
     } catch (e) {
       logError('POST /api/banking/accounts/balances', e);
@@ -4751,6 +4971,7 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/banking/transactions', async (req, res) => {
     try {
+      if (!requireBankingWriteRole(req, res)) return;
       await ensureBankingTables();
       const b = req.body || {};
       const accountId = String(b.account_id || '').trim();
@@ -4762,9 +4983,9 @@ export function mountErpCoreApi(app, opts = {}) {
       const out = await dbQuery(
         `INSERT INTO banking_transactions (
           qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, running_balance,
-          description, vendor_name, memo, cleared, reconciled, source, qbo_status, updated_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now())
-        RETURNING id`,
+          description, vendor_name, memo, cleared, reconciled, source, qbo_status, status, created_by, updated_by, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'uncategorized',$15,$15,now())
+        RETURNING *`,
         [
           String(b.qbo_txn_id || '').trim() || null,
           accountId,
@@ -4780,9 +5001,19 @@ export function mountErpCoreApi(app, opts = {}) {
           Boolean(b.reconciled),
           source,
           qboStatus,
+          maintActor(req),
         ]
       );
-      return res.json({ ok: true, id: out?.rows?.[0]?.id || null });
+      const inserted = out?.rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'insert',
+        entity_type: 'banking_transactions',
+        entity_id: String(inserted?.id || '').trim() || null,
+        before_state: null,
+        after_state: inserted,
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, id: inserted?.id || null });
     } catch (e) {
       logError('POST /api/banking/transactions', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -4791,16 +5022,39 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/banking/reconcile', async (req, res) => {
     try {
+      if (!requireBankingWriteRole(req, res)) return;
       await ensureBankingTables();
       const accountId = String(req.body?.account_id || '').trim();
       const month = String(req.body?.month || '').trim();
       if (!accountId || !month) return res.status(400).json({ ok: false, error: 'account_id and month are required' });
+      const { rows: beforeRows } = await dbQuery(
+        `SELECT id, account_id, txn_date, reconciled
+           FROM banking_transactions
+          WHERE account_id = $1 AND txn_date >= $2::date AND txn_date <= $3::date
+          ORDER BY id ASC`,
+        [accountId, `${month}-01`, `${month}-31`]
+      );
       await dbQuery(
         `UPDATE banking_transactions
             SET reconciled = true, updated_at = now()
           WHERE account_id = $1 AND txn_date >= $2::date AND txn_date <= $3::date`,
         [accountId, `${month}-01`, `${month}-31`]
       );
+      const { rows: afterRows } = await dbQuery(
+        `SELECT id, account_id, txn_date, reconciled
+           FROM banking_transactions
+          WHERE account_id = $1 AND txn_date >= $2::date AND txn_date <= $3::date
+          ORDER BY id ASC`,
+        [accountId, `${month}-01`, `${month}-31`]
+      );
+      await writeAuditLog(req, {
+        action: 'update',
+        entity_type: 'banking_transactions',
+        entity_id: `${accountId}:${month}`,
+        before_state: { count: beforeRows.length, rows: beforeRows },
+        after_state: { count: afterRows.length, rows: afterRows },
+        source_module: 'banking',
+      });
       return res.json({ ok: true });
     } catch (e) {
       logError('POST /api/banking/reconcile', e);

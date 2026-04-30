@@ -1,0 +1,460 @@
+IH35 TRANSPORTATION LLC
+WAVE 0 ARCHITECTURE LOCK
+Banking + Reports Parity Program
+Status: Approved Scope Lock (No Code)
+Date: 2026-04-29
+
+======================================================================
+1) PROGRAM OBJECTIVE
+======================================================================
+Build a QuickBooks-familiar Banking and Reports experience inside IH35 TMS
+for a single entity only:
+  - Company: IH 35 Transportation LLC
+  - Bankruptcy context: Chapter 11, debtor in possession
+  - One QBO company file
+  - Multiple DIP bank accounts
+  - Dedicated Relay bank account in QBO
+
+Parity target:
+  - Visual parity and output parity with QBO reports
+  - Familiar filters and layouts
+  - Not strict 1:1 interaction cloning
+
+Execution policy:
+  - Queue-first posting to QBO always (never synchronous posting on UI action)
+  - Auto-sync worker every 15 minutes + manual sync button
+  - All writes audited
+  - Admin/Accountant write controls
+
+======================================================================
+2) ARCHITECTURAL COMPONENTS
+======================================================================
+A. Banking Ledger Engine
+  - Canonical transaction store for imports (bank statement, Relay, manual)
+  - Transaction status lifecycle: uncategorized -> categorized -> reconciled
+  - Register views per account + global uncategorized queue
+
+B. Categorization and Matching Engine
+  - Rule-based and suggestion-based categorization
+  - Supports action types:
+    * Create Expense
+    * Apply to Bill
+    * Bill Payment
+    * Transfer
+    * Driver Settlement
+    * Split Transaction
+    * Factoring Advance
+  - Confidence score + explanation for suggested matches
+  - Dry-run preview before batch rule apply
+
+C. Settlement and Factoring Engine
+  - Driver settlements module with manual gross pay source of truth
+  - Future-ready load reference field for dispatch integration
+  - Factoring advances support one-to-many load/invoice linkage
+
+D. Reconciliation Engine
+  - Monthly per-account reconciliation sessions
+  - Lock on zero difference only
+  - Admin-only reversal with reason code
+  - Lock/unlock events logged in audit_log
+
+E. QBO Posting and Sync Engine
+  - Queue-first outbox for all QBO writes
+  - Retry/dead-letter controls
+  - Header queue count indicator
+  - Manual sync + scheduler every 15 minutes
+
+F. Reporting Mirror Engine
+  - QBO report mirror API layer with cache and source metadata
+  - Same report outputs and filters as approved list
+  - CSV/PDF export parity for visible filtered results
+  - Snapshot parity tests against QBO output
+
+G. Compliance Bridge (Form 425C)
+  - Banking summary feed for lines 19-23 and Part 7 actuals
+  - One-click import flow from Banking engine
+
+H. Operational Control Plane
+  - Dashboard: uncategorized aging, queue failures, unreconciled accounts,
+    settlement liabilities, factoring reconciliation status
+  - Idempotency protections for imports and categorize actions
+  - Period lock support for month-end integrity
+
+======================================================================
+3) FINAL APPROVED DATA MODEL (WAVE 1+ IMPLEMENTATION TARGET)
+======================================================================
+All tables are logical targets for implementation in Wave 1+.
+Names and fields below are architecture-locked for contract design.
+
+3.1 banking_transactions
+  - id (pk)
+  - idempotency_key (unique)
+  - account_id (text, not null)
+  - account_name (text)
+  - txn_date (date, not null)
+  - posted_at (timestamptz, nullable)
+  - description (text)
+  - vendor_name (text)
+  - memo (text)
+  - amount (numeric(14,2), not null)
+  - txn_direction (text: debit|credit)
+  - running_balance (numeric(14,2), nullable)
+  - status (text: uncategorized|categorized|reconciled|voided)
+  - category (text)
+  - category_source (text: rule|manual|suggested)
+  - source (text: manual|relay|bank_import)
+  - source_ref (text)                -- statement line id / relay txn id / etc.
+  - statement_id (text, nullable)
+  - qbo_txn_id (text, nullable)
+  - qbo_sync_status (text: queued|synced|error|not_required)
+  - qbo_sync_error (text, nullable)
+  - created_by (text)
+  - updated_by (text)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.2 bank_account_preferences
+  - id (pk)
+  - account_id (text, unique, not null)
+  - account_name (text)
+  - account_type (text)              -- Bank, Credit Card, Other Current Asset, etc.
+  - visible (boolean)
+  - display_order (int)
+  - is_dip (boolean)
+  - entity (text)                    -- locked to IH35 Transportation LLC
+  - color_tag (text)
+  - is_relay_account (boolean)
+  - keyword_match_enabled (boolean)  -- for Other Current Asset inclusion policy
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.3 bank_account_keyword_config
+  - id (pk)
+  - keyword (text, unique, not null)
+  - active (boolean)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+Approved initial keywords:
+  cash, checking, savings, prepay, escrow, reserves, factoring
+
+3.4 banking_rules
+  - id (pk)
+  - name (text)
+  - priority (int)
+  - match_field (text)
+  - match_operator (text)            -- equals, contains, regex, amount_range, etc.
+  - match_value (text)
+  - action_type (text)
+  - category (text)
+  - vendor_id (text, nullable)
+  - split_template_json (jsonb, nullable)
+  - auto_apply (boolean)
+  - active (boolean)
+  - last_dry_run_at (timestamptz, nullable)
+  - created_by (text)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.5 bank_txn_links
+  - id (pk)
+  - txn_id (fk -> banking_transactions.id)
+  - entity_type (text: expense|bill|payment|settlement|transfer|factoring)
+  - entity_id (text)
+  - amount (numeric(14,2))
+  - link_role (text: primary|split|offset)
+  - created_by (text)
+  - created_at (timestamptz)
+
+3.6 driver_settlements
+  - id (pk)
+  - driver_id (text, not null)
+  - driver_name (text)
+  - period_start (date)
+  - period_end (date)
+  - gross_pay (numeric(14,2))        -- manual override source of truth
+  - gross_source (text)              -- manual|dispatch_ref
+  - load_table_ref (text, nullable)  -- future dispatch/load integration pointer
+  - fuel_deduction (numeric(14,2))
+  - advance_deduction (numeric(14,2))
+  - other_deductions (numeric(14,2))
+  - net_pay (numeric(14,2))
+  - status (text: paid|unpaid|partial|voided)
+  - paid_date (date, nullable)
+  - bank_txn_id (fk -> banking_transactions.id, nullable)
+  - notes (text)
+  - created_by (text)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.7 driver_settlement_loads
+  - id (pk)
+  - settlement_id (fk -> driver_settlements.id)
+  - load_number (text)
+  - gross_component (numeric(14,2), nullable)
+  - created_at (timestamptz)
+
+3.8 factoring_advances
+  - id (pk)
+  - factor_name (text)
+  - invoice_amount (numeric(14,2))
+  - advance_amount (numeric(14,2))
+  - fee_amount (numeric(14,2))
+  - net_amount (numeric(14,2))
+  - deposit_date (date)
+  - bank_txn_id (fk -> banking_transactions.id, nullable)
+  - status (text: pending|received|reconciled)
+  - created_by (text)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.9 factoring_advance_loads
+  - id (pk)
+  - factoring_advance_id (fk -> factoring_advances.id)
+  - load_number (text)
+  - invoice_number (text, nullable)
+  - created_at (timestamptz)
+
+3.10 bank_import_batches
+  - id (pk)
+  - source_type (text: pdf|csv|relay_api|relay_file)
+  - account_id (text)
+  - filename (text)
+  - rows_total (int)
+  - rows_inserted (int)
+  - rows_skipped (int)
+  - status (text: preview|imported|failed)
+  - parser_notes (text, nullable)
+  - uploaded_by (text)
+  - uploaded_at (timestamptz)
+
+3.11 bank_reconciliation_sessions
+  - id (pk)
+  - account_id (text)
+  - statement_month (text YYYY-MM)
+  - statement_end_date (date)
+  - statement_ending_balance (numeric(14,2))
+  - cleared_total (numeric(14,2))
+  - difference (numeric(14,2))
+  - status (text: open|locked)
+  - lock_reason_code (text, nullable)
+  - locked_by (text, nullable)
+  - locked_at (timestamptz, nullable)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.12 bank_reconciliation_unlocks
+  - id (pk)
+  - reconciliation_session_id (fk)
+  - reversed_by (text)               -- admin only
+  - reason_code (text, not null)
+  - reason_notes (text, nullable)
+  - created_at (timestamptz)
+
+3.13 bank_reconciliation_items
+  - id (pk)
+  - reconciliation_session_id (fk)
+  - banking_txn_id (fk)
+  - cleared (boolean)
+  - cleared_at (timestamptz, nullable)
+
+3.14 period_locks
+  - id (pk)
+  - module (text: banking|settlements|factoring|reports)
+  - period_key (text, not null)      -- YYYY-MM
+  - status (text: open|locked)
+  - locked_by (text, nullable)
+  - lock_reason (text, nullable)
+  - created_at (timestamptz)
+  - updated_at (timestamptz)
+
+3.15 qbo_sync_queue (existing, extended usage)
+  - Existing queue is used queue-first for all banking/report writebacks
+  - Add mode values for banking actions if missing
+
+3.16 report_snapshot_parity
+  - id (pk)
+  - report_name (text)
+  - params_hash (text)
+  - qbo_total_json (jsonb)
+  - tms_total_json (jsonb)
+  - match_status (text: pass|fail)
+  - run_at (timestamptz)
+
+3.17 driver_mobile_access_policy
+  - id (pk)
+  - user_id (text)
+  - driver_id (text)
+  - scope (text: settlements_read_only)
+  - active (boolean)
+  - created_at (timestamptz)
+
+======================================================================
+4) ENDPOINT CONTRACT LIST (WAVE 1+ IMPLEMENTATION TARGET)
+======================================================================
+Contract standard:
+  - Response envelope: { ok: boolean, data: any, error?: string }
+  - All write endpoints produce audit_log entries.
+  - Admin/Accountant-only permissions on posting/deletes/reversals.
+
+4.1 Banking Accounts
+  - GET    /api/banking/accounts
+    Purpose: list visible DIP cards with balance, uncategorized count, last txn.
+  - GET    /api/banking/accounts/all
+    Purpose: list all eligible bank/credit/keyword-matched accounts for manager UI.
+  - POST   /api/banking/accounts/visibility
+    Purpose: save visible account ids + display order.
+  - POST   /api/banking/accounts/preferences
+    Purpose: save tags, relay flag, color, DIP metadata.
+  - GET    /api/banking/keyword-config
+    Purpose: read account inclusion keywords for Other Current Asset filtering.
+  - POST   /api/banking/keyword-config
+    Purpose: update keyword list (admin).
+
+4.2 Transaction Register + Queue
+  - GET    /api/banking/transactions
+    Purpose: paged transaction search/filter across accounts.
+  - GET    /api/banking/accounts/:accountId/register
+    Purpose: per-account register view.
+  - GET    /api/banking/transactions/uncategorized
+    Purpose: global uncategorized queue.
+  - POST   /api/banking/transactions/import
+    Purpose: upload PDF/CSV; create preview/import batch.
+  - POST   /api/banking/transactions/:txnId/categorize
+    Purpose: categorize one transaction to selected action type.
+  - POST   /api/banking/transactions/bulk-categorize
+    Purpose: bulk categorize selected transaction ids.
+  - POST   /api/banking/transactions/:txnId/split
+    Purpose: split transaction into multiple links/categories.
+  - POST   /api/banking/transactions/:txnId/reverse
+    Purpose: reverse/void categorization with reason.
+  - GET    /api/banking/transactions/:txnId/suggestions
+    Purpose: confidence-scored suggested matches + explanation.
+
+4.3 Rules Engine
+  - GET    /api/banking/rules
+  - POST   /api/banking/rules
+  - PUT    /api/banking/rules/:id
+  - DELETE /api/banking/rules/:id
+  - POST   /api/banking/rules/:id/dry-run
+    Purpose: preview affected rows, no writes.
+  - POST   /api/banking/rules/:id/apply
+    Purpose: execute rule apply to queue.
+
+4.4 Reconciliation
+  - GET    /api/banking/reconciliation/sessions
+  - POST   /api/banking/reconciliation/sessions
+  - GET    /api/banking/reconciliation/sessions/:id
+  - POST   /api/banking/reconciliation/sessions/:id/items
+    Purpose: clear/unclear reconciliation items.
+  - POST   /api/banking/reconciliation/sessions/:id/lock
+    Purpose: lock reconciled month when difference is zero.
+  - POST   /api/banking/reconciliation/sessions/:id/unlock
+    Purpose: admin-only unlock; requires reason code.
+  - GET    /api/banking/reconciliation/sessions/:id/export
+    Purpose: CSV/PDF reconciliation report.
+
+4.5 QBO Queue and Sync
+  - GET    /api/qbo/queue/count
+    Purpose: pending count for header badge.
+  - GET    /api/qbo/queue
+    Purpose: queue visibility.
+  - POST   /api/qbo/queue/sync-now
+    Purpose: trigger manual queue processing.
+  - POST   /api/qbo/queue/retry/:queueId
+    Purpose: retry failed row.
+  - POST   /api/qbo/queue/auto-sync/config
+    Purpose: interval config (default 15 min).
+
+4.6 Relay Fuel Card
+  - GET    /api/integrations/relay/status
+    Purpose: relay integration + last sync heartbeat.
+  - POST   /api/integrations/relay/sync
+    Purpose: manual relay fetch/import trigger.
+  - POST   /api/webhooks/relay
+    Purpose: idempotent webhook ingest when API ready.
+  - GET    /api/banking/relay/transactions
+    Purpose: relay-focused bank/register listing.
+
+4.7 Driver Settlements
+  - GET    /api/settlements
+  - POST   /api/settlements
+  - GET    /api/settlements/:id
+  - PUT    /api/settlements/:id
+  - POST   /api/settlements/:id/loads
+    Purpose: attach/remove load refs.
+  - POST   /api/settlements/:id/link-bank-txn
+    Purpose: link payout disbursement.
+  - POST   /api/settlements/:id/recalculate
+  - GET    /api/settlements/:id/export
+    Purpose: driver PDF.
+  - GET    /api/driver/me/settlements
+    Purpose: driver app read-only self-settlement list/detail.
+
+4.8 Factoring
+  - GET    /api/factoring/advances
+  - POST   /api/factoring/advances
+  - GET    /api/factoring/advances/:id
+  - POST   /api/factoring/advances/:id/loads
+  - POST   /api/factoring/advances/:id/link-bank-txn
+  - POST   /api/factoring/advances/:id/reconcile
+  - GET    /api/factoring/reports/reconciliation
+
+4.9 Reports (QBO Mirror + TMS)
+  - GET /api/reports/qbo/profit-loss
+  - GET /api/reports/qbo/profit-loss-detail
+  - GET /api/reports/qbo/balance-sheet
+  - GET /api/reports/qbo/trial-balance
+  - GET /api/reports/qbo/cash-flow
+  - GET /api/reports/qbo/general-ledger
+  - GET /api/reports/qbo/ar-aging
+  - GET /api/reports/qbo/ap-aging
+  - GET /api/reports/qbo/transaction-list
+  - GET /api/reports/qbo/vendor-expenses
+  - GET /api/reports/banking/by-account
+  - GET /api/reports/tms/load-pnl
+  - GET /api/reports/tms/driver-settlement
+  - GET /api/reports/tms/fuel-ifta
+  - GET /api/reports/tms/factoring
+
+4.10 Form 425C Banking Bridge
+  - GET  /api/form-425c/banking-summary
+    Purpose: lines 19-23 + Part 7 actuals for selected month.
+  - POST /api/form-425c/import-banking
+    Purpose: apply banking-derived values to active report payload.
+
+======================================================================
+5) ROLE AND ACCESS POLICY LOCK
+======================================================================
+Admin
+  - Full access including lock reversal, rule admin, queue controls.
+Accountant
+  - Full banking operations except lock reversal policy can remain admin-only.
+Dispatcher/Ops
+  - Read-only where explicitly granted, no financial posting/deletes.
+Driver
+  - Driver app: own settlements only, read-only.
+
+======================================================================
+6) NON-FUNCTIONAL LOCK
+======================================================================
+  - Queue-first write strategy to QBO only
+  - Auto sync every 15 minutes
+  - Header pending queue count required
+  - All monetary values in accounting format ($1,234.56)
+  - Negative values in red as ($1,234.56)
+  - Default pagination size 50 rows on financial tables
+  - CSV + PDF export on all major tables
+  - Mobile-responsive views required for driver-access pages
+  - Idempotency required for import and categorize/post actions
+  - Snapshot parity tests required for report validation
+
+======================================================================
+7) WAVE 0 EXIT CRITERIA
+======================================================================
+Wave 0 is complete when:
+  - Schema target is approved (this document)
+  - Endpoint contract target is approved (this document)
+  - No code/migration execution has been started
+  - Approval is granted to begin Wave 1 implementation
+
+END OF DOCUMENT
