@@ -5008,6 +5008,8 @@
             <div class="panel-title" style="margin:0">DIP Accounts</div>
             <div class="banking-home-actions">
               <button type="button" class="btn btn--small" onclick="openBankingImportModal()">Import Statement</button>
+              <button type="button" class="btn btn--small" onclick="openBankingRulesEngine()">Rules Engine</button>
+              <button type="button" class="btn btn--small" onclick="openBankingImportHistory()">Import History</button>
               <button type="button" class="btn btn--small" onclick="openBankingAccountManager()">Manage Accounts</button>
               <button type="button" class="btn btn--small" onclick="loadBankingAccounts()">Refresh</button>
               <input id="bankingMonth" class="qb-in" type="month" style="max-width:170px" />
@@ -5214,17 +5216,93 @@
               <div class="panel-title" style="margin:0">Import Statement</div>
               <button type="button" class="btn btn--small" onclick="closeBankingImportModal()">Cancel</button>
             </div>
-            <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
-              <label style="min-width:240px;flex:1 1 240px"><span class="qb-l">Account</span><select id="bankImportAccount" class="qb-in"></select></label>
-              <label><span class="qb-l">Month</span><input id="bankImportMonth" class="qb-in" type="month" /></label>
-              <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Statement file</span><input id="bankImportFile" class="qb-in" type="file" accept=".pdf,.csv,text/csv,application/pdf" /></label>
-              <button type="button" class="btn btn--small" onclick="bankingUploadAndParse()">Upload &amp; Parse</button>
+            <div id="bankImportStepUpload">
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+                <label style="min-width:240px;flex:1 1 240px"><span class="qb-l">Account</span><select id="bankImportAccount" class="qb-in"></select></label>
+                <label><span class="qb-l">Statement month</span><input id="bankImportMonth" class="qb-in" type="month" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">File (PDF/CSV)</span><input id="bankImportFile" class="qb-in" type="file" accept=".pdf,.csv,text/csv,application/pdf" /></label>
+              </div>
+              <div class="mini-note" style="margin-top:8px;padding:10px;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc">
+                Drag &amp; drop your bank statement here or click to browse. Accepts: PDF, CSV.
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="bankingUploadAndParse()">Upload &amp; Parse</button>
+              </div>
             </div>
-            <div id="bankImportPreview" class="mini-note" style="margin-top:10px">No file selected.</div>
-            <div class="banking-modal-footer">
-              <button type="button" class="btn btn--small" onclick="bankingConfirmImport()">Confirm Import</button>
+            <div id="bankImportStepPreview" class="banking-hidden">
+              <div id="bankImportPreview" class="mini-note" style="margin-top:10px">No file selected.</div>
+              <div style="overflow:auto;max-height:240px;border:1px solid var(--color-border);border-radius:8px;margin-top:8px">
+                <table class="table" style="min-width:680px">
+                  <thead><tr><th>Date</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th></tr></thead>
+                  <tbody id="bankImportPreviewBody"><tr><td colspan="4" class="muted">No preview rows.</td></tr></tbody>
+                </table>
+              </div>
+              <div class="banking-modal-footer">
+                <button type="button" class="btn btn--small" onclick="bankingImportBack()">← Back</button>
+                <button type="button" class="btn btn--small" onclick="bankingConfirmImport()">Confirm Import</button>
+              </div>
             </div>
-            <div id="bankImportResults" class="mini-note" style="margin-top:8px"></div>
+            <div id="bankImportStepResult" class="banking-hidden">
+              <div id="bankImportResults" class="mini-note" style="margin-top:8px"></div>
+              <div class="banking-modal-footer">
+                <button type="button" class="btn btn--small" onclick="closeBankingImportModal()">Import Another</button>
+                <button type="button" class="btn btn--small" onclick="bankingViewImportedRegister()">View in Register</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingRulesModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Banking rules engine">
+          <div class="banking-modal" style="width:min(980px,100%)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Rules Engine</div>
+              <button type="button" class="btn btn--small" onclick="closeBankingRulesEngine()">Close</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+              <div class="mini-note">Priority | Rule Name | Matches | Action | Auto-apply | Status</div>
+              <button type="button" class="btn btn--small" onclick="openBankingRuleEditor()">+ Create Rule</button>
+            </div>
+            <div style="overflow:auto;max-height:240px;border:1px solid var(--color-border);border-radius:8px;margin-top:8px">
+              <table class="table" style="min-width:920px">
+                <thead><tr><th>Priority</th><th>Rule</th><th>Action</th><th>Auto-apply</th><th>Status</th><th>Test</th><th>Edit</th><th>Delete</th></tr></thead>
+                <tbody id="bankingRulesTableBody"><tr><td colspan="8" class="muted">Loading rules...</td></tr></tbody>
+              </table>
+            </div>
+            <div id="bankingRuleEditor" class="banking-form-panel banking-hidden" style="margin-top:10px">
+              <div class="mini-note"><strong>Create / Edit Rule</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">Rule name</span><input id="bankRuleName" class="qb-in" /></label>
+                <label><span class="qb-l">Priority</span><input id="bankRulePriority" class="qb-in" type="number" min="1" max="100" value="10" /></label>
+                <label><span class="qb-l">When field</span><select id="bankRuleField" class="qb-in"><option value="description">Description</option><option value="vendor_name">Vendor</option><option value="amount">Amount</option><option value="amount_range">Amount Range</option></select></label>
+                <label><span class="qb-l">Operator</span><select id="bankRuleOp" class="qb-in"><option value="contains">Contains</option><option value="equals">Equals</option><option value="starts_with">Starts with</option><option value="between">Between</option></select></label>
+                <label><span class="qb-l">Value</span><input id="bankRuleValue1" class="qb-in" /></label>
+                <label><span class="qb-l">Value 2</span><input id="bankRuleValue2" class="qb-in" /></label>
+                <label><span class="qb-l">Action type</span><select id="bankRuleAction" class="qb-in"><option value="expense">Expense</option><option value="bill_payment">Bill Payment</option><option value="transfer">Transfer</option><option value="settlement">Settlement</option></select></label>
+                <label><span class="qb-l">Vendor</span><input id="bankRuleVendor" class="qb-in" list="qboVendorList" /></label>
+                <label><span class="qb-l">Category/Account</span><input id="bankRuleCategory" class="qb-in" list="qboAccountList" /></label>
+                <label><span class="qb-l">Auto-apply</span><input id="bankRuleAutoApply" type="checkbox" /></label>
+              </div>
+              <div class="banking-modal-footer">
+                <button type="button" class="btn btn--small" onclick="testBankingRuleDraft()">Test Rule</button>
+                <button type="button" class="btn btn--small" onclick="saveBankingRuleDraft()">Save Rule</button>
+              </div>
+              <div id="bankRuleTestResult" class="mini-note"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingImportHistoryModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Banking import history">
+          <div class="banking-modal" style="width:min(980px,100%)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Import History</div>
+              <button type="button" class="btn btn--small" onclick="closeBankingImportHistory()">Close</button>
+            </div>
+            <div style="overflow:auto;max-height:340px;border:1px solid var(--color-border);border-radius:8px;margin-top:8px">
+              <table class="table" style="min-width:920px">
+                <thead><tr><th>Date</th><th>Account</th><th>File</th><th>Rows</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="bankingImportHistoryBody"><tr><td colspan="6" class="muted">Loading import history...</td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -30257,6 +30335,352 @@
       };
 
       document.getElementById('bankingCategorizeDrawerBackdrop')?.addEventListener('click', drawerClose);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var __importPreviewRows = [];
+      var __importBatchId = null;
+      var __editingRuleId = null;
+
+      function byId(id) { return document.getElementById(id); }
+      function bankToast(msg, ok) {
+        if (typeof window.toast === 'function') window.toast(String(msg || ''), ok);
+        else console.log(msg);
+      }
+      function setImportStep(step) {
+        ['Upload', 'Preview', 'Result'].forEach(function (k) {
+          byId('bankImportStep' + k)?.classList.add('banking-hidden');
+        });
+        if (step === 'preview') byId('bankImportStepPreview')?.classList.remove('banking-hidden');
+        else if (step === 'result') byId('bankImportStepResult')?.classList.remove('banking-hidden');
+        else byId('bankImportStepUpload')?.classList.remove('banking-hidden');
+      }
+
+      function renderImportPreviewRows(rows) {
+        var body = byId('bankImportPreviewBody');
+        if (!body) return;
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="4" class="muted">No preview rows.</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.map(function (r) {
+          var amt = Number(r?.amount || 0);
+          return '<tr>' +
+            '<td>' + escapeHtml(String(r?.txn_date || '').slice(0, 10) || '--') + '</td>' +
+            '<td>' + escapeHtml(String(r?.description || '--')) + '</td>' +
+            '<td class="num">' + (amt > 0 ? qboMoneyFmt(amt) : '--') + '</td>' +
+            '<td class="num">' + (amt < 0 ? qboMoneyFmt(Math.abs(amt)) : '--') + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      async function uploadAndParseBankStatement() {
+        var file = byId('bankImportFile')?.files?.[0] || null;
+        var accountId = String(byId('bankImportAccount')?.value || '').trim();
+        var accountName = String(byId('bankImportAccount')?.selectedOptions?.[0]?.textContent || '').trim();
+        var statementMonth = String(byId('bankImportMonth')?.value || '').trim();
+        if (!accountId) { bankToast('Select an account before upload.', false); return; }
+        if (!file) { bankToast('Choose a PDF or CSV file to upload.', false); return; }
+        var fd = new FormData();
+        fd.append('file', file);
+        fd.append('account_id', accountId);
+        fd.append('account_name', accountName);
+        fd.append('statement_month', statementMonth);
+        fd.append('source', 'bank_import');
+        byId('bankImportPreview').textContent = 'Parsing statement...';
+        try {
+          var rsp = await fetch('/api/banking/transactions/import', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Import parse failed');
+          __importBatchId = Number(json?.batch_id || 0) || null;
+          __importPreviewRows = Array.isArray(json?.preview) ? json.preview : [];
+          var periodLabel = statementMonth ? statementMonth : 'selected period';
+          byId('bankImportPreview').innerHTML =
+            '✅ Found ' + Number(json?.inserted || 0) + ' imported rows (' + Number(json?.skipped || 0) + ' duplicates skipped) in ' + escapeHtml(accountName || accountId) +
+            '<br/>📅 Period: ' + escapeHtml(periodLabel);
+          renderImportPreviewRows(__importPreviewRows);
+          var more = Math.max(0, Number((json?.inserted || 0) + (json?.skipped || 0)) - __importPreviewRows.length);
+          if (more > 0) byId('bankImportPreview').innerHTML += '<br/>and ' + more + ' more rows';
+          byId('bankImportResults').innerHTML =
+            '✅ Import complete<br/>' +
+            Number(json?.inserted || 0) + ' transactions imported<br/>' +
+            Number(json?.skipped || 0) + ' duplicates skipped<br/>' +
+            'Total deposits: ' + qboMoneyFmt(json?.totals?.deposits || 0) + '<br/>' +
+            'Total withdrawals: ' + qboMoneyFmt(json?.totals?.withdrawals || 0);
+          setImportStep('preview');
+        } catch (e) {
+          byId('bankImportPreview').textContent = 'Import parse failed: ' + String(e?.message || e);
+          bankToast('Import parse failed.', false);
+        }
+      }
+
+      function importBackStep() { setImportStep('upload'); }
+      function confirmImportStep() { setImportStep('result'); }
+      function viewImportedRegister() {
+        if (typeof window.closeBankingImportModal === 'function') window.closeBankingImportModal();
+        if (typeof window.loadBankingRegisterPage === 'function') window.loadBankingRegisterPage(0);
+        if (typeof window.loadBankingUncategorizedQueue === 'function') window.loadBankingUncategorizedQueue(0);
+      }
+
+      async function loadImportHistory() {
+        var body = byId('bankingImportHistoryBody');
+        if (!body) return;
+        body.innerHTML = '<tr><td colspan="6" class="muted">Loading import history...</td></tr>';
+        try {
+          var rsp = await fetch('/api/banking/import/batches?limit=200', { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          var rows = Array.isArray(json?.batches) ? json.batches : [];
+          if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="6" class="muted">No import batches.</td></tr>';
+            return;
+          }
+          body.innerHTML = rows.map(function (r) {
+            var rowsTxt = Number(r?.rows_inserted || 0) + '/' + Number(r?.rows_total || 0);
+            return '<tr>' +
+              '<td>' + escapeHtml(String(r?.uploaded_at || '').slice(0, 19).replace('T', ' ') || '--') + '</td>' +
+              '<td>' + escapeHtml(String(r?.account_name || r?.account_id || '--')) + '</td>' +
+              '<td>' + escapeHtml(String(r?.filename || '--')) + '</td>' +
+              '<td>' + escapeHtml(rowsTxt) + '</td>' +
+              '<td>' + escapeHtml(String(r?.status || '--')) + '</td>' +
+              '<td><button type="button" class="btn btn--small" onclick="viewBankImportBatch(' + Number(r?.id || 0) + ')">View</button> <button type="button" class="btn btn--small" onclick="deleteBankImportBatch(' + Number(r?.id || 0) + ')">Delete batch</button></td>' +
+            '</tr>';
+          }).join('');
+        } catch (e) {
+          body.innerHTML = '<tr><td colspan="6" class="muted">Unable to load import history: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      async function viewBatch(id) {
+        try {
+          var rsp = await fetch('/api/banking/import/batches/' + encodeURIComponent(id), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Batch lookup failed');
+          var rows = Array.isArray(json?.rows) ? json.rows : [];
+          bankToast('Batch #' + id + ' previewed (' + rows.length + ' rows).');
+          __importPreviewRows = rows.map(function (r) { return { txn_date: r.txn_date, description: r.description, amount: r.amount }; });
+          renderImportPreviewRows(__importPreviewRows.slice(0, 10));
+          byId('bankImportPreview').innerHTML = 'Batch #' + id + ' preview (first 10 rows).';
+          setImportStep('preview');
+          byId('bankingImportHistoryModal')?.classList.remove('active');
+          byId('bankingImportStatementModal')?.classList.add('active');
+        } catch (e) {
+          bankToast('Unable to view batch: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function deleteBatch(id) {
+        if (!window.confirm('Delete import batch #' + id + '?')) return;
+        try {
+          var rsp = await fetch('/api/banking/import/batches/' + encodeURIComponent(id), { method: 'DELETE', headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Delete failed');
+          bankToast('Batch deleted: ' + Number(json?.deleted || 0) + ' rows removed.');
+          loadImportHistory();
+          if (typeof window.loadBankingUncategorizedQueue === 'function') window.loadBankingUncategorizedQueue(0);
+        } catch (e) {
+          bankToast('Unable to delete batch: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function loadRules() {
+        var body = byId('bankingRulesTableBody');
+        if (!body) return;
+        body.innerHTML = '<tr><td colspan="8" class="muted">Loading rules...</td></tr>';
+        try {
+          var rsp = await fetch('/api/banking/rules', { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          var rows = Array.isArray(json?.rules) ? json.rules : [];
+          if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="8" class="muted">No active rules.</td></tr>';
+            return;
+          }
+          body.innerHTML = rows.map(function (r) {
+            return '<tr>' +
+              '<td>' + Number(r?.priority || 0) + '</td>' +
+              '<td>' + escapeHtml(String(r?.name || '--')) + '</td>' +
+              '<td>' + escapeHtml(String(r?.action_type || '--')) + '</td>' +
+              '<td>' + (r?.auto_apply ? 'Yes' : 'No') + '</td>' +
+              '<td>' + (r?.active ? 'Active' : 'Inactive') + '</td>' +
+              '<td><button type="button" class="btn btn--small" onclick="testBankingRule(' + Number(r?.id || 0) + ')">Test</button></td>' +
+              '<td><button type="button" class="btn btn--small" onclick="editBankingRule(' + Number(r?.id || 0) + ')">Edit</button></td>' +
+              '<td><button type="button" class="btn btn--small" onclick="deleteBankingRule(' + Number(r?.id || 0) + ')">Delete</button></td>' +
+            '</tr>';
+          }).join('');
+        } catch (e) {
+          body.innerHTML = '<tr><td colspan="8" class="muted">Unable to load rules: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      function openRuleEditor(rule) {
+        __editingRuleId = Number(rule?.id || 0) || null;
+        byId('bankRuleName').value = String(rule?.name || '');
+        byId('bankRulePriority').value = String(rule?.priority || 10);
+        byId('bankRuleField').value = String(rule?.match_field || 'description');
+        byId('bankRuleOp').value = String(rule?.match_operator || 'contains');
+        byId('bankRuleValue1').value = String(rule?.match_value || '');
+        byId('bankRuleValue2').value = String(rule?.match_value_2 || '');
+        byId('bankRuleAction').value = String(rule?.action_type || 'expense');
+        byId('bankRuleVendor').value = String(rule?.vendor_name || '');
+        byId('bankRuleCategory').value = String(rule?.qbo_account_id || rule?.category || '');
+        byId('bankRuleAutoApply').checked = Boolean(rule?.auto_apply);
+        byId('bankRuleEditor')?.classList.remove('banking-hidden');
+        byId('bankRuleTestResult').textContent = '';
+      }
+
+      async function saveRuleDraft() {
+        var payload = {
+          name: String(byId('bankRuleName')?.value || '').trim(),
+          priority: Number(byId('bankRulePriority')?.value || 10),
+          match_field: String(byId('bankRuleField')?.value || 'description').trim(),
+          match_operator: String(byId('bankRuleOp')?.value || 'contains').trim(),
+          match_value: String(byId('bankRuleValue1')?.value || '').trim(),
+          match_value_2: String(byId('bankRuleValue2')?.value || '').trim(),
+          action_type: String(byId('bankRuleAction')?.value || 'expense').trim(),
+          vendor_name: String(byId('bankRuleVendor')?.value || '').trim(),
+          category: String(byId('bankRuleCategory')?.value || '').trim(),
+          qbo_account_id: String(byId('bankRuleCategory')?.value || '').trim(),
+          auto_apply: Boolean(byId('bankRuleAutoApply')?.checked),
+        };
+        if (!payload.name) { bankToast('Rule name is required.', false); return; }
+        try {
+          var url = __editingRuleId ? '/api/banking/rules/' + encodeURIComponent(__editingRuleId) : '/api/banking/rules';
+          var method = __editingRuleId ? 'PUT' : 'POST';
+          var rsp = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Save rule failed');
+          bankToast('Rule saved.');
+          __editingRuleId = null;
+          byId('bankRuleEditor')?.classList.add('banking-hidden');
+          loadRules();
+        } catch (e) {
+          bankToast('Unable to save rule: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function testRule(id) {
+        try {
+          var rsp = await fetch('/api/banking/rules/' + encodeURIComponent(id) + '/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              sample_description: String(byId('bankRuleValue1')?.value || '').trim(),
+              sample_amount: Number(byId('bankRuleValue1')?.value || 0),
+            }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Rule test failed');
+          byId('bankRuleTestResult').innerHTML = 'This rule would match ' + Number(json?.count || 0) + ' uncategorized transactions. ' +
+            '<button type="button" class="btn btn--small" onclick="applyBankingRule(' + Number(id) + ')">Apply to All ' + Number(json?.count || 0) + '</button>';
+        } catch (e) {
+          byId('bankRuleTestResult').textContent = 'Rule test failed: ' + String(e?.message || e);
+        }
+      }
+
+      async function applyRule(id) {
+        try {
+          var rsp = await fetch('/api/banking/rules/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ rule_id: id }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Apply rule failed');
+          bankToast('Rule applied: ' + Number(json?.applied || 0) + ' applied, ' + Number(json?.skipped || 0) + ' skipped.');
+          loadRules();
+          if (typeof window.loadBankingUncategorizedQueue === 'function') window.loadBankingUncategorizedQueue(0);
+        } catch (e) {
+          bankToast('Unable to apply rule: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function deleteRule(id) {
+        if (!window.confirm('Deactivate this rule?')) return;
+        try {
+          var rsp = await fetch('/api/banking/rules/' + encodeURIComponent(id), { method: 'DELETE', headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Delete rule failed');
+          bankToast('Rule deactivated.');
+          loadRules();
+        } catch (e) {
+          bankToast('Unable to delete rule: ' + String(e?.message || e), false);
+        }
+      }
+
+      function openRulesEngine() { byId('bankingRulesModal')?.classList.add('active'); loadRules(); }
+      function closeRulesEngine() { byId('bankingRulesModal')?.classList.remove('active'); }
+      function openImportHistory() { byId('bankingImportHistoryModal')?.classList.add('active'); loadImportHistory(); }
+      function closeImportHistory() { byId('bankingImportHistoryModal')?.classList.remove('active'); }
+      function createRuleFromBanner(vendor, desc) {
+        openRulesEngine();
+        openRuleEditor({
+          name: 'Auto rule: ' + String(vendor || '').trim(),
+          priority: 10,
+          match_field: 'description',
+          match_operator: 'contains',
+          match_value: String(desc || '').trim(),
+          action_type: 'expense',
+          vendor_name: String(vendor || '').trim(),
+          qbo_account_id: '',
+          auto_apply: false,
+        });
+      }
+      var oldApplyBannerFn = window.applyBankingRuleBannerAll;
+      async function applyRuleOnceFromBanner(vendor, desc) {
+        if (typeof oldApplyBannerFn === 'function') return oldApplyBannerFn(vendor, desc);
+      }
+
+      window.bankingUploadAndParse = uploadAndParseBankStatement;
+      window.bankingImportBack = importBackStep;
+      window.bankingConfirmImport = confirmImportStep;
+      window.bankingViewImportedRegister = viewImportedRegister;
+      window.openBankingRulesEngine = openRulesEngine;
+      window.closeBankingRulesEngine = closeRulesEngine;
+      window.openBankingRuleEditor = function () { openRuleEditor(null); };
+      window.saveBankingRuleDraft = saveRuleDraft;
+      window.testBankingRuleDraft = function () { if (__editingRuleId) testRule(__editingRuleId); else byId('bankRuleTestResult').textContent = 'Save rule first, then test.'; };
+      window.testBankingRule = testRule;
+      window.applyBankingRule = applyRule;
+      window.editBankingRule = function (id) {
+        fetch('/api/banking/rules', { headers: { Accept: 'application/json' } })
+          .then(function (r) { return r.json(); })
+          .then(function (json) {
+            var row = (Array.isArray(json?.rules) ? json.rules : []).find(function (x) { return Number(x?.id) === Number(id); }) || null;
+            openRuleEditor(row || null);
+          });
+      };
+      window.deleteBankingRule = deleteRule;
+      window.openBankingImportHistory = openImportHistory;
+      window.closeBankingImportHistory = closeImportHistory;
+      window.viewBankImportBatch = viewBatch;
+      window.deleteBankImportBatch = deleteBatch;
+      window.createBankingRuleFromBanner = createRuleFromBanner;
+      window.applyBankingRuleBannerAll = applyRuleOnceFromBanner;
+
+      var oldOpenImport = window.openBankingImportModal;
+      window.openBankingImportModal = function () {
+        if (typeof oldOpenImport === 'function') oldOpenImport();
+        setImportStep('upload');
+        __importPreviewRows = [];
+        __importBatchId = null;
+      };
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        closeRulesEngine();
+        closeImportHistory();
+      });
+      byId('bankingRulesModal')?.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'bankingRulesModal') closeRulesEngine();
+      });
+      byId('bankingImportHistoryModal')?.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'bankingImportHistoryModal') closeImportHistory();
+      });
     })();
   </script>
 

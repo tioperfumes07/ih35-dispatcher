@@ -25,6 +25,8 @@ import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-ca
 import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
 import { createQboApiClient } from '../lib/qbo-api-client.mjs';
 import { getVehicles, samsaraGet, getDriverVehicleAssignments } from '../services/samsara.js';
+import multer from 'multer';
+import { extractPdfText } from '../lib/pdf-text.mjs';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 const SAMSARA_HEALTH_CACHE_MS = 60 * 1000;
@@ -1298,6 +1300,165 @@ export function mountErpCoreApi(app, opts = {}) {
     if (role === 'admin' || role === 'administrator' || role === 'accountant') return true;
     res.status(403).json({ ok: false, error: 'Banking write requires admin/accountant role' });
     return false;
+  }
+
+  const bankImportUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 20 * 1024 * 1024 },
+  }).single('file');
+
+  function runBankImportUpload(req, res) {
+    return new Promise((resolve, reject) => {
+      bankImportUpload(req, res, (err) => (err ? reject(err) : resolve()));
+    });
+  }
+
+  function parseCsvLine(line = '') {
+    const out = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      const next = line[i + 1];
+      if (ch === '"' && inQuotes && next === '"') {
+        cur += '"';
+        i += 1;
+        continue;
+      }
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if (ch === ',' && !inQuotes) {
+        out.push(cur.trim());
+        cur = '';
+        continue;
+      }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  }
+
+  function normalizeHeaderKey(v = '') {
+    return String(v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  }
+
+  function parseMoneyLike(raw = '') {
+    if (raw == null) return 0;
+    const txt = String(raw).trim();
+    if (!txt) return 0;
+    const neg = txt.startsWith('(') && txt.endsWith(')');
+    const cleaned = txt.replace(/[^\d.-]/g, '');
+    const n = Number(cleaned);
+    if (!Number.isFinite(n)) return 0;
+    return neg ? -Math.abs(n) : n;
+  }
+
+  function parseDateLike(raw = '') {
+    const txt = String(raw || '').trim();
+    if (!txt) return '';
+    const mmddyyyy = txt.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+    if (mmddyyyy) {
+      let y = Number(mmddyyyy[3]);
+      if (y < 100) y += 2000;
+      const m = String(Number(mmddyyyy[1])).padStart(2, '0');
+      const d = String(Number(mmddyyyy[2])).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    const yyyymmdd = txt.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (yyyymmdd) return txt;
+    const dt = new Date(txt);
+    if (Number.isFinite(dt.getTime())) return dt.toISOString().slice(0, 10);
+    return '';
+  }
+
+  function buildTxnIdempotency(accountId, txnDate, amount, description, externalRef = '') {
+    return createHash('sha256')
+      .update([String(accountId || ''), String(txnDate || ''), String(amount || ''), String(description || ''), String(externalRef || '')].join('|'))
+      .digest('hex');
+  }
+
+  function parseCsvBankTransactions(buffer, statementMonth = '') {
+    const text = String(buffer?.toString('utf8') || '').replace(/\r\n/g, '\n');
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return [];
+    const headers = parseCsvLine(lines[0]).map(normalizeHeaderKey);
+    const idx = (cands) => {
+      for (const c of cands) {
+        const i = headers.indexOf(c);
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
+    const dateIdx = idx(['date', 'transaction_date', 'posted_date']);
+    const descIdx = idx(['description', 'memo', 'details', 'vendor', 'payee']);
+    const debitIdx = idx(['debit', 'withdrawal', 'withdrawals', 'outflow']);
+    const creditIdx = idx(['credit', 'deposit', 'deposits', 'inflow']);
+    const amountIdx = idx(['amount', 'transaction_amount', 'amt']);
+    const balanceIdx = idx(['balance', 'running_balance']);
+    const refIdx = idx(['reference', 'reference_id', 'id', 'external_ref', 'transaction_id']);
+    const monthPrefix = String(statementMonth || '').trim();
+    const rows = [];
+    for (let i = 1; i < lines.length; i += 1) {
+      const cols = parseCsvLine(lines[i]);
+      const rawDate = dateIdx >= 0 ? cols[dateIdx] : '';
+      let txnDate = parseDateLike(rawDate);
+      if (!txnDate && monthPrefix && /^\d{1,2}$/.test(String(rawDate || '').trim())) {
+        txnDate = `${monthPrefix}-${String(Number(rawDate)).padStart(2, '0')}`;
+      }
+      const description = String(descIdx >= 0 ? cols[descIdx] : cols[1] || '').trim();
+      const debit = debitIdx >= 0 ? parseMoneyLike(cols[debitIdx]) : 0;
+      const credit = creditIdx >= 0 ? parseMoneyLike(cols[creditIdx]) : 0;
+      let amount = amountIdx >= 0 ? parseMoneyLike(cols[amountIdx]) : 0;
+      if (!amount && (debit || credit)) amount = credit ? Math.abs(credit) : -Math.abs(debit);
+      const runningBalance = balanceIdx >= 0 ? parseMoneyLike(cols[balanceIdx]) : null;
+      const externalRef = refIdx >= 0 ? String(cols[refIdx] || '').trim() : '';
+      if (!txnDate || !description) continue;
+      rows.push({
+        txn_date: txnDate,
+        description,
+        amount,
+        running_balance: Number.isFinite(Number(runningBalance)) ? Number(runningBalance) : null,
+        external_ref: externalRef || null,
+      });
+    }
+    return rows;
+  }
+
+  function parsePdfBankTransactions(pdfText = '', statementMonth = '') {
+    const lines = String(pdfText || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    const rows = [];
+    const monthPrefix = String(statementMonth || '').trim();
+    for (const line of lines) {
+      const generic = line.match(/^(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\s+(.+?)\s+(-?\$?[\d,]+\.\d{2})$/);
+      const ibc = line.match(/^(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\s+(.+?)\s+([\d,]*\.\d{2})\s+([\d,]*\.\d{2})$/);
+      let txnDate = '';
+      let description = '';
+      let amount = 0;
+      if (ibc) {
+        txnDate = parseDateLike(ibc[1]);
+        description = String(ibc[2] || '').trim();
+        const debit = parseMoneyLike(ibc[3]);
+        const credit = parseMoneyLike(ibc[4]);
+        amount = credit ? Math.abs(credit) : -Math.abs(debit);
+      } else if (generic) {
+        txnDate = parseDateLike(generic[1]);
+        description = String(generic[2] || '').trim();
+        amount = parseMoneyLike(generic[3]);
+      } else {
+        continue;
+      }
+      if (!txnDate && monthPrefix && /^(\d{1,2})[/-](\d{1,2})$/.test(String(generic?.[1] || ibc?.[1] || ''))) {
+        const m = String((generic?.[1] || ibc?.[1]).split(/[/-]/)[0]).padStart(2, '0');
+        const d = String((generic?.[1] || ibc?.[1]).split(/[/-]/)[1]).padStart(2, '0');
+        const yy = String(monthPrefix).split('-')[0];
+        txnDate = `${yy}-${m}-${d}`;
+      }
+      if (!txnDate || !description || !Number.isFinite(Number(amount))) continue;
+      rows.push({ txn_date: txnDate, description, amount, running_balance: null, external_ref: null });
+    }
+    return rows;
   }
 
   async function ensureAuditLogTable() {
@@ -3955,6 +4116,23 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_driver_settlements_driver_period ON driver_settlements(driver_id, period_start)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_recon_sessions_account_month ON bank_reconciliation_sessions(account_id, statement_month)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_qbo_post_queue_status_created ON qbo_post_queue(status, created_at DESC)');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS external_ref TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS import_batch_id BIGINT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS raw_payload_json JSONB');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS source_file TEXT');
+    await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS account_name TEXT');
+    await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS statement_month TEXT');
+    await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS source TEXT');
+    await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS parser_format TEXT');
+    await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS preview_json JSONB');
+    await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS totals_json JSONB');
+    await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS match_value_2 TEXT');
+    await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS vendor_name TEXT');
+    await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS qbo_account_id TEXT');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_external_ref ON banking_transactions(external_ref)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_import_batch ON banking_transactions(import_batch_id)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_import_batches_uploaded_at ON bank_import_batches(uploaded_at DESC)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_rules_match ON banking_rules(match_field, match_operator, active)');
   }
 
   async function ensureLoadExpenseLinksTable() {
@@ -5669,7 +5847,7 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'Invalid transaction id' });
       if (!Number.isFinite(ruleId) || ruleId <= 0) return res.status(400).json({ ok: false, error: 'rule_id is required' });
       const { rows: ruleRows } = await dbQuery(
-        `SELECT id, action_type, category, vendor_id
+        `SELECT id, action_type, category, vendor_id, vendor_name, qbo_account_id
            FROM banking_rules
           WHERE id = $1
             AND active = true
@@ -5681,7 +5859,9 @@ export function mountErpCoreApi(app, opts = {}) {
       const payload = {
         action: String(rule?.action_type || 'expense').trim().toLowerCase(),
         category: String(rule?.category || '').trim(),
-        qbo_account_id: String(rule?.vendor_id || '').trim(),
+        vendor_name: String(rule?.vendor_name || '').trim(),
+        vendor_id: String(rule?.vendor_id || '').trim(),
+        qbo_account_id: String(rule?.qbo_account_id || '').trim(),
         memo: `Applied banking rule #${ruleId}`,
       };
       const result = await categorizeBankingTransaction(req, txnId, payload, { auditAction: 'apply_rule' });
@@ -5696,37 +5876,609 @@ export function mountErpCoreApi(app, opts = {}) {
   app.post('/api/banking/transactions/import', async (req, res) => {
     try {
       if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
       await ensureBankingTables();
-      const accountId = String(req.body?.account_id || '').trim();
-      const month = String(req.body?.month || '').trim();
-      const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
-      const parsed = rows.length;
-      await dbQuery(
-        `INSERT INTO bank_import_batches (source_type, account_id, filename, rows_total, rows_inserted, rows_skipped, status, parser_notes, uploaded_by, uploaded_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())`,
+
+      let uploadError = null;
+      try {
+        await runBankImportUpload(req, res);
+      } catch (err) {
+        uploadError = err;
+      }
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const accountId = String(body.account_id || '').trim();
+      const accountName = String(body.account_name || '').trim() || null;
+      const statementMonth = String(body.statement_month || body.month || '').trim();
+      const source = String(body.source || body.source_type || 'bank_import').trim() || 'bank_import';
+      const actor = maintActor(req);
+      if (!accountId) return res.status(400).json({ ok: false, error: 'account_id is required' });
+      if (uploadError && !Array.isArray(body.rows)) {
+        return res.status(400).json({ ok: false, error: uploadError?.message || 'Import upload failed' });
+      }
+
+      const file = req.file || null;
+      const ext = String(file?.originalname || '').toLowerCase();
+      let parserFormat = '';
+      let parsedRows = [];
+      if (file && (ext.endsWith('.csv') || String(file?.mimetype || '').includes('csv'))) {
+        parserFormat = 'csv';
+        parsedRows = parseCsvBankTransactions(file.buffer, statementMonth);
+      } else if (file && (ext.endsWith('.pdf') || String(file?.mimetype || '').includes('pdf'))) {
+        parserFormat = 'pdf';
+        const parsed = await extractPdfText(file.buffer);
+        parsedRows = parsePdfBankTransactions(parsed?.text || '', statementMonth);
+      } else if (Array.isArray(body.rows)) {
+        parserFormat = 'json';
+        parsedRows = body.rows.map((r) => ({
+          txn_date: parseDateLike(r?.txn_date || r?.date || ''),
+          description: String(r?.description || r?.memo || '').trim(),
+          amount: Number(r?.amount || 0),
+          running_balance: Number.isFinite(Number(r?.running_balance)) ? Number(r.running_balance) : null,
+          external_ref: String(r?.external_ref || r?.id || '').trim() || null,
+        })).filter((r) => r.txn_date && r.description);
+      } else {
+        return res.status(400).json({ ok: false, error: 'file upload (PDF/CSV) or rows[] is required' });
+      }
+
+      const preview = parsedRows.slice(0, 10);
+      const totalDeposits = parsedRows.reduce((sum, r) => sum + (Number(r?.amount || 0) > 0 ? Number(r.amount) : 0), 0);
+      const totalWithdrawals = parsedRows.reduce((sum, r) => sum + (Number(r?.amount || 0) < 0 ? Math.abs(Number(r.amount)) : 0), 0);
+      const { rows: batchRows } = await dbQuery(
+        `INSERT INTO bank_import_batches (
+          source_type, source, account_id, account_name, filename, statement_month,
+          rows_total, rows_inserted, rows_skipped, status, parser_format, preview_json, totals_json, parser_notes, uploaded_by, uploaded_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,0,0,'processing',$8,$9::jsonb,$10::jsonb,$11,$12,now())
+        RETURNING id, uploaded_at`,
         [
-          String(req.body?.source_type || 'manual').trim() || 'manual',
-          accountId || null,
-          String(req.body?.filename || '').trim() || null,
-          parsed,
-          0,
-          0,
-          'preview',
-          'Wave 2 UI placeholder import endpoint',
+          source,
+          source,
+          accountId,
+          accountName,
+          String(file?.originalname || body.filename || '').trim() || null,
+          statementMonth || null,
+          parsedRows.length,
+          parserFormat || 'generic',
+          JSON.stringify(preview),
+          JSON.stringify({ deposits: totalDeposits, withdrawals: totalWithdrawals }),
+          file ? `Uploaded ${parserFormat.toUpperCase()} file` : 'JSON rows import',
+          actor,
+        ]
+      );
+      const batchId = Number(batchRows?.[0]?.id || 0);
+
+      let inserted = 0;
+      let skipped = 0;
+      const dedupeChecks = [];
+      for (const row of parsedRows) {
+        const txnDate = parseDateLike(row?.txn_date || '');
+        const description = String(row?.description || '').trim();
+        const amount = Number(row?.amount || 0);
+        const externalRef = String(row?.external_ref || '').trim() || null;
+        if (!txnDate || !description || !Number.isFinite(amount)) {
+          skipped += 1;
+          continue;
+        }
+        const idem = buildTxnIdempotency(accountId, txnDate, amount, description, externalRef || '');
+        dedupeChecks.push(idem);
+        const { rows: dupRows } = await dbQuery(
+          `SELECT id
+             FROM banking_transactions
+            WHERE (external_ref IS NOT NULL AND external_ref = $1)
+               OR (account_id = $2 AND txn_date = $3::date AND amount = $4 AND LOWER(COALESCE(description, '')) = LOWER($5))
+               OR (idempotency_key = $6)
+            LIMIT 1`,
+          [externalRef, accountId, txnDate, amount, description, idem]
+        );
+        if (dupRows?.length) {
+          skipped += 1;
+          continue;
+        }
+        await dbQuery(
+          `INSERT INTO banking_transactions (
+            idempotency_key, account_id, account_name, txn_type, txn_date, amount, running_balance,
+            description, vendor_name, memo, status, category, category_source, source, source_ref, external_ref,
+            statement_id, import_batch_id, source_file, raw_payload_json, qbo_status, created_by, updated_by, updated_at
+          ) VALUES (
+            $1,$2,$3,'import',$4,$5,$6,$7,$8,$9,'uncategorized',NULL,NULL,'bank_import',$10,$11,$12,$13,$14,$15::jsonb,'queued',$16,$16,now()
+          )`,
+          [
+            idem,
+            accountId,
+            accountName,
+            txnDate,
+            amount,
+            Number.isFinite(Number(row?.running_balance)) ? Number(row.running_balance) : null,
+            description,
+            null,
+            description,
+            statementMonth || null,
+            externalRef,
+            statementMonth || null,
+            batchId || null,
+            String(file?.originalname || body.filename || '').trim() || null,
+            JSON.stringify(row || {}),
+            actor,
+          ]
+        );
+        inserted += 1;
+      }
+
+      await dbQuery(
+        `UPDATE bank_import_batches
+            SET rows_inserted = $2,
+                rows_skipped = $3,
+                status = 'completed',
+                parser_notes = $4
+          WHERE id = $1`,
+        [batchId, inserted, skipped, `Processed ${parsedRows.length} rows (${inserted} inserted, ${skipped} skipped)`]
+      );
+
+      if (inserted > 0) {
+        const { rows: autoRules } = await dbQuery(
+          `SELECT id
+             FROM banking_rules
+            WHERE active = true
+              AND auto_apply = true
+            ORDER BY priority ASC, id ASC`
+        );
+        for (const rr of autoRules || []) {
+          const ruleId = Number(rr?.id || 0);
+          if (!ruleId) continue;
+          const { rows: ruleRows } = await dbQuery(
+            `SELECT id, match_field, match_operator, match_value, match_value_2,
+                    action_type, category, vendor_id, vendor_name, qbo_account_id
+               FROM banking_rules
+              WHERE id = $1
+                AND active = true
+              LIMIT 1`,
+            [ruleId]
+          );
+          const rule = ruleRows?.[0] || null;
+          if (!rule) continue;
+          const { rows: targetRows } = await dbQuery(
+            `SELECT id, amount, description, vendor_name
+               FROM banking_transactions
+              WHERE import_batch_id = $1
+                AND LOWER(COALESCE(status, '')) = 'uncategorized'`,
+            [batchId]
+          );
+          for (const txn of targetRows || []) {
+            const amount = Number(txn?.amount || 0);
+            const textDescription = String(txn?.description || '').toLowerCase();
+            const textVendor = String(txn?.vendor_name || '').toLowerCase();
+            const matchValue = String(rule?.match_value || '').toLowerCase();
+            const matchValue2 = String(rule?.match_value_2 || '').toLowerCase();
+            let matched = false;
+            const field = String(rule?.match_field || 'description').toLowerCase();
+            const op = String(rule?.match_operator || 'contains').toLowerCase();
+            const sourceText = field === 'vendor_name' ? textVendor : textDescription;
+            if (field === 'amount') {
+              if (op === 'equals') matched = amount === Number(matchValue);
+            } else if (field === 'amount_range') {
+              matched = amount >= Number(matchValue || 0) && amount <= Number(matchValue2 || 0);
+            } else if (op === 'equals') {
+              matched = sourceText === matchValue;
+            } else if (op === 'starts_with') {
+              matched = sourceText.startsWith(matchValue);
+            } else {
+              matched = sourceText.includes(matchValue);
+            }
+            if (!matched) continue;
+            await categorizeBankingTransaction(req, Number(txn.id), {
+              action: String(rule?.action_type || 'expense').trim().toLowerCase(),
+              vendor_id: String(rule?.vendor_id || '').trim(),
+              vendor_name: String(rule?.vendor_name || txn?.vendor_name || '').trim(),
+              category: String(rule?.category || '').trim(),
+              memo: `Auto-applied rule #${ruleId} on import batch #${batchId}`,
+              amount: Number(txn?.amount || 0),
+              qbo_account_id: String(rule?.qbo_account_id || '').trim(),
+            }, { auditAction: 'auto_apply_rule' });
+          }
+        }
+      }
+
+      await writeAuditLog(req, {
+        action: 'import_transactions',
+        entity_type: 'bank_import_batches',
+        entity_id: String(batchId || ''),
+        before_state: null,
+        after_state: {
+          account_id: accountId,
+          statement_month: statementMonth || null,
+          parser_format: parserFormat,
+          rows_total: parsedRows.length,
+          inserted,
+          skipped,
+        },
+        source_module: 'banking',
+      });
+
+      return res.json({
+        ok: true,
+        batch_id: batchId,
+        inserted,
+        skipped,
+        preview,
+        totals: { deposits: totalDeposits, withdrawals: totalWithdrawals },
+      });
+    } catch (e) {
+      logError('POST /api/banking/transactions/import', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/banking/import/batches', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, batches: [], total: 0 });
+      await ensureBankingTables();
+      const accountId = String(req.query?.account_id || '').trim();
+      const limit = Math.max(1, Math.min(500, Number(req.query?.limit) || 50));
+      const offset = Math.max(0, Number(req.query?.offset) || 0);
+      const where = [];
+      const values = [];
+      if (accountId) {
+        values.push(accountId);
+        where.push(`account_id = $${values.length}`);
+      }
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const { rows: countRows } = await dbQuery(
+        `SELECT COUNT(*)::int AS total
+           FROM bank_import_batches
+           ${whereSql}`,
+        values
+      );
+      const total = Number(countRows?.[0]?.total || 0);
+      const listValues = [...values, limit, offset];
+      const { rows } = await dbQuery(
+        `SELECT id, uploaded_at, account_id, account_name, filename, statement_month, rows_total, rows_inserted, rows_skipped, status, parser_format, totals_json
+           FROM bank_import_batches
+           ${whereSql}
+          ORDER BY uploaded_at DESC, id DESC
+          LIMIT $${listValues.length - 1} OFFSET $${listValues.length}`,
+        listValues
+      );
+      return res.json({ ok: true, batches: rows || [], total });
+    } catch (e) {
+      logError('GET /api/banking/import/batches', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), batches: [], total: 0 });
+    }
+  });
+
+  app.get('/api/banking/import/batches/:id', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid batch id' });
+      const { rows: batchRows } = await dbQuery(
+        `SELECT *
+           FROM bank_import_batches
+          WHERE id = $1
+          LIMIT 1`,
+        [id]
+      );
+      const batch = batchRows?.[0] || null;
+      if (!batch) return res.status(404).json({ ok: false, error: 'Batch not found' });
+      const { rows } = await dbQuery(
+        `SELECT id, txn_date, description, amount, running_balance, status, category, source
+           FROM banking_transactions
+          WHERE import_batch_id = $1
+          ORDER BY txn_date ASC, id ASC
+          LIMIT 20`,
+        [id]
+      );
+      return res.json({ ok: true, batch, rows: rows || [] });
+    } catch (e) {
+      logError('GET /api/banking/import/batches/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/banking/import/batches/:id', async (req, res) => {
+    try {
+      if (!requireAdminRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid batch id' });
+      const { rows: rowsCheck } = await dbQuery(
+        `SELECT id, status
+           FROM banking_transactions
+          WHERE import_batch_id = $1`,
+        [id]
+      );
+      if (!rowsCheck.length) {
+        await dbQuery('DELETE FROM bank_import_batches WHERE id = $1', [id]);
+        return res.json({ ok: true, deleted: 0, skipped_categorized: 0 });
+      }
+      const categorized = rowsCheck.filter((r) => String(r?.status || '').toLowerCase() !== 'uncategorized');
+      if (categorized.length) {
+        return res.status(409).json({ ok: false, error: 'Cannot delete batch with categorized rows', deleted: 0, skipped_categorized: categorized.length });
+      }
+      await dbQuery('DELETE FROM qbo_post_queue WHERE txn_id IN (SELECT id FROM banking_transactions WHERE import_batch_id = $1)', [id]);
+      const { rowCount } = await dbQuery('DELETE FROM banking_transactions WHERE import_batch_id = $1', [id]);
+      await dbQuery('DELETE FROM bank_import_batches WHERE id = $1', [id]);
+      await writeAuditLog(req, {
+        action: 'delete_import_batch',
+        entity_type: 'bank_import_batches',
+        entity_id: String(id),
+        before_state: { rows: rowsCheck.length },
+        after_state: { deleted: rowCount || 0, skipped_categorized: categorized.length },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, deleted: Number(rowCount || 0), skipped_categorized: categorized.length });
+    } catch (e) {
+      logError('DELETE /api/banking/import/batches/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/banking/rules', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, rules: [], count: 0 });
+      await ensureBankingTables();
+      const { rows } = await dbQuery(
+        `SELECT id, name, priority, match_field, match_operator, match_value, match_value_2,
+                action_type, category, vendor_id, vendor_name, qbo_account_id, auto_apply, active, created_by, created_at, updated_at
+           FROM banking_rules
+          WHERE active = true
+          ORDER BY priority ASC, id ASC`
+      );
+      return res.json({ ok: true, rules: rows || [], count: Number(rows?.length || 0) });
+    } catch (e) {
+      logError('GET /api/banking/rules', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rules: [], count: 0 });
+    }
+  });
+
+  app.post('/api/banking/rules', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const name = String(b.name || '').trim();
+      if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
+      const priority = Math.max(1, Math.min(1000, Number(b.priority) || 100));
+      const { rows } = await dbQuery(
+        `INSERT INTO banking_rules (
+          name, priority, match_field, match_operator, match_value, match_value_2,
+          action_type, category, vendor_id, vendor_name, qbo_account_id, auto_apply, active, created_by, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,true,$13,now(),now())
+        RETURNING *`,
+        [
+          name,
+          priority,
+          String(b.match_field || 'description').trim(),
+          String(b.match_operator || 'contains').trim(),
+          String(b.match_value || '').trim(),
+          String(b.match_value_2 || '').trim() || null,
+          String(b.action_type || 'expense').trim(),
+          String(b.category || '').trim() || null,
+          String(b.vendor_id || '').trim() || null,
+          String(b.vendor_name || '').trim() || null,
+          String(b.qbo_account_id || '').trim() || null,
+          Boolean(b.auto_apply),
           maintActor(req),
         ]
       );
+      const rule = rows?.[0] || null;
       await writeAuditLog(req, {
-        action: 'import_preview',
-        entity_type: 'bank_import_batches',
-        entity_id: accountId || null,
+        action: 'create_rule',
+        entity_type: 'banking_rules',
+        entity_id: String(rule?.id || ''),
         before_state: null,
-        after_state: { account_id: accountId, month, parsed },
+        after_state: rule,
         source_module: 'banking',
       });
-      return res.json({ ok: true, data: { imported: 0, skipped: 0, parsed } });
+      return res.json({ ok: true, rule });
     } catch (e) {
-      logError('POST /api/banking/transactions/import', e);
+      logError('POST /api/banking/rules', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/banking/rules/:id', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid rule id' });
+      const { rows: beforeRows } = await dbQuery('SELECT * FROM banking_rules WHERE id = $1 LIMIT 1', [id]);
+      const before = beforeRows?.[0] || null;
+      if (!before) return res.status(404).json({ ok: false, error: 'Rule not found' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const { rows } = await dbQuery(
+        `UPDATE banking_rules
+            SET name = COALESCE($2, name),
+                priority = COALESCE($3, priority),
+                match_field = COALESCE($4, match_field),
+                match_operator = COALESCE($5, match_operator),
+                match_value = COALESCE($6, match_value),
+                match_value_2 = COALESCE($7, match_value_2),
+                action_type = COALESCE($8, action_type),
+                category = COALESCE($9, category),
+                vendor_id = COALESCE($10, vendor_id),
+                vendor_name = COALESCE($11, vendor_name),
+                qbo_account_id = COALESCE($12, qbo_account_id),
+                auto_apply = COALESCE($13, auto_apply),
+                updated_at = now()
+          WHERE id = $1
+        RETURNING *`,
+        [
+          id,
+          b.name == null ? null : String(b.name || '').trim(),
+          b.priority == null ? null : Math.max(1, Math.min(1000, Number(b.priority) || 100)),
+          b.match_field == null ? null : String(b.match_field || '').trim(),
+          b.match_operator == null ? null : String(b.match_operator || '').trim(),
+          b.match_value == null ? null : String(b.match_value || '').trim(),
+          b.match_value_2 == null ? null : String(b.match_value_2 || '').trim(),
+          b.action_type == null ? null : String(b.action_type || '').trim(),
+          b.category == null ? null : String(b.category || '').trim(),
+          b.vendor_id == null ? null : String(b.vendor_id || '').trim(),
+          b.vendor_name == null ? null : String(b.vendor_name || '').trim(),
+          b.qbo_account_id == null ? null : String(b.qbo_account_id || '').trim(),
+          b.auto_apply == null ? null : Boolean(b.auto_apply),
+        ]
+      );
+      const rule = rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'update_rule',
+        entity_type: 'banking_rules',
+        entity_id: String(id),
+        before_state: before,
+        after_state: rule,
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, rule });
+    } catch (e) {
+      logError('PUT /api/banking/rules/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/banking/rules/:id', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid rule id' });
+      await dbQuery('UPDATE banking_rules SET active = false, updated_at = now() WHERE id = $1', [id]);
+      await writeAuditLog(req, {
+        action: 'deactivate_rule',
+        entity_type: 'banking_rules',
+        entity_id: String(id),
+        before_state: null,
+        after_state: { active: false },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true });
+    } catch (e) {
+      logError('DELETE /api/banking/rules/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/rules/:id/test', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid rule id' });
+      const { rows: ruleRows } = await dbQuery(
+        `SELECT id, match_field, match_operator, match_value, match_value_2
+           FROM banking_rules
+          WHERE id = $1
+          LIMIT 1`,
+        [id]
+      );
+      const rule = ruleRows?.[0] || null;
+      if (!rule) return res.status(404).json({ ok: false, error: 'Rule not found' });
+      const sampleDescription = String(req.body?.sample_description || '').trim().toLowerCase();
+      const sampleAmount = Number(req.body?.sample_amount || 0);
+      const { rows } = await dbQuery(
+        `SELECT id, account_id, txn_date, amount, description, vendor_name
+           FROM banking_transactions
+          WHERE LOWER(COALESCE(status, '')) = 'uncategorized'
+          ORDER BY txn_date ASC, id ASC
+          LIMIT 2000`
+      );
+      const matches = (rows || []).filter((r) => {
+        const field = String(rule?.match_field || 'description').toLowerCase();
+        const op = String(rule?.match_operator || 'contains').toLowerCase();
+        const matchValue = String(rule?.match_value || '').toLowerCase();
+        const matchValue2 = String(rule?.match_value_2 || '').toLowerCase();
+        const description = String(r?.description || '').toLowerCase();
+        const vendor = String(r?.vendor_name || '').toLowerCase();
+        const amount = Number(r?.amount || 0);
+        if (field === 'amount') return op === 'equals' ? amount === Number(matchValue) : false;
+        if (field === 'amount_range') return amount >= Number(matchValue || 0) && amount <= Number(matchValue2 || 0);
+        const sourceText = field === 'vendor_name' ? vendor : description;
+        if (sampleDescription && !sourceText.includes(sampleDescription)) return false;
+        if (sampleAmount && amount !== sampleAmount && field === 'amount') return false;
+        if (op === 'equals') return sourceText === matchValue;
+        if (op === 'starts_with') return sourceText.startsWith(matchValue);
+        return sourceText.includes(matchValue);
+      });
+      return res.json({ ok: true, matches: matches.slice(0, 200), count: matches.length });
+    } catch (e) {
+      logError('POST /api/banking/rules/:id/test', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), matches: [], count: 0 });
+    }
+  });
+
+  app.post('/api/banking/rules/apply', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const ruleId = Number(req.body?.rule_id || 0);
+      if (!Number.isFinite(ruleId) || ruleId <= 0) return res.status(400).json({ ok: false, error: 'rule_id is required' });
+      const txnIds = Array.isArray(req.body?.txn_ids) ? req.body.txn_ids.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0) : [];
+      const { rows: ruleRows } = await dbQuery(
+        `SELECT id, match_field, match_operator, match_value, match_value_2,
+                action_type, category, vendor_id, vendor_name, qbo_account_id
+           FROM banking_rules
+          WHERE id = $1
+            AND active = true
+          LIMIT 1`,
+        [ruleId]
+      );
+      const rule = ruleRows?.[0] || null;
+      if (!rule) return res.status(404).json({ ok: false, error: 'Rule not found' });
+      const whereParts = [`LOWER(COALESCE(status, '')) = 'uncategorized'`];
+      const vals = [];
+      if (txnIds.length) {
+        vals.push(txnIds);
+        whereParts.push(`id = ANY($${vals.length}::bigint[])`);
+      }
+      const { rows: candidates } = await dbQuery(
+        `SELECT id, amount, description, vendor_name
+           FROM banking_transactions
+          WHERE ${whereParts.join(' AND ')}
+          ORDER BY txn_date ASC, id ASC`,
+        vals
+      );
+      let applied = 0;
+      let skipped = 0;
+      for (const txn of candidates || []) {
+        const field = String(rule?.match_field || 'description').toLowerCase();
+        const op = String(rule?.match_operator || 'contains').toLowerCase();
+        const matchValue = String(rule?.match_value || '').toLowerCase();
+        const matchValue2 = String(rule?.match_value_2 || '').toLowerCase();
+        const description = String(txn?.description || '').toLowerCase();
+        const vendor = String(txn?.vendor_name || '').toLowerCase();
+        const amount = Number(txn?.amount || 0);
+        let matched = false;
+        if (field === 'amount') matched = op === 'equals' ? amount === Number(matchValue) : false;
+        else if (field === 'amount_range') matched = amount >= Number(matchValue || 0) && amount <= Number(matchValue2 || 0);
+        else {
+          const sourceText = field === 'vendor_name' ? vendor : description;
+          if (op === 'equals') matched = sourceText === matchValue;
+          else if (op === 'starts_with') matched = sourceText.startsWith(matchValue);
+          else matched = sourceText.includes(matchValue);
+        }
+        if (!matched) {
+          skipped += 1;
+          continue;
+        }
+        const result = await categorizeBankingTransaction(req, Number(txn.id), {
+          action: String(rule?.action_type || 'expense').trim().toLowerCase(),
+          vendor_id: String(rule?.vendor_id || '').trim(),
+          vendor_name: String(rule?.vendor_name || txn?.vendor_name || '').trim(),
+          category: String(rule?.category || '').trim(),
+          memo: `Applied rule #${ruleId}`,
+          amount: Number(txn?.amount || 0),
+          qbo_account_id: String(rule?.qbo_account_id || '').trim(),
+        }, { auditAction: 'apply_rule_bulk' });
+        if (result.ok) applied += 1;
+        else skipped += 1;
+      }
+      return res.json({ ok: true, applied, skipped });
+    } catch (e) {
+      logError('POST /api/banking/rules/apply', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
