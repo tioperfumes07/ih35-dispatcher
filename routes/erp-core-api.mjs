@@ -165,7 +165,7 @@ async function fetchSamsaraVehicleStatsMap(token, rawRows, logError, scope = 'bo
 
   try {
     const payload = await samsaraGet('/fleet/vehicles/stats', token, {
-      types: 'gps,obdOdometerMeters,engineSeconds,engineStates,fuelPercents',
+      types: 'gps,obdOdometerMeters,engineStates,fuelPercents',
       vehicleIds: ids.join(',')
     });
     const { rows } = summarizeSamsaraVehicleStatsPayload(payload);
