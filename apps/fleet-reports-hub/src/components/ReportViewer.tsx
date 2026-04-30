@@ -42,6 +42,23 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
   const [qboSource, setQboSource] = useState('')
   const [qboGeneratedAt, setQboGeneratedAt] = useState('')
   const [qboRows, setQboRows] = useState<Array<{ type: string; depth: number; label: string; values: string[] }>>([])
+  const [apiFrom, setApiFrom] = useState('')
+  const [apiTo, setApiTo] = useState('')
+  const [apiAsOf, setApiAsOf] = useState('')
+  const [apiDriver, setApiDriver] = useState('')
+  const [apiUnit, setApiUnit] = useState('')
+  const [apiLoad, setApiLoad] = useState('')
+  const [apiAccount, setApiAccount] = useState('')
+  const [apiTxnType, setApiTxnType] = useState('')
+  const [apiVendor, setApiVendor] = useState('')
+  const [apiFactor, setApiFactor] = useState('')
+  const [apiQuarter] = useState(String(Math.floor(new Date().getMonth() / 3) + 1))
+  const [apiYear] = useState(String(new Date().getFullYear()))
+  const [apiAging] = useState('30')
+  const [apiLoading, setApiLoading] = useState(false)
+  const [apiErr, setApiErr] = useState('')
+  const [apiRows, setApiRows] = useState<Array<Record<string, any>>>([])
+  const [apiSource, setApiSource] = useState('')
   const [relayRows, setRelayRows] = useState<Array<any>>([])
   const [relayLoading, setRelayLoading] = useState(false)
 
@@ -49,6 +66,12 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
   const isEmbed = Boolean(report.embedToolUrl)
   const isQboMirror = Boolean(report.qboReportName)
   const isRelayReport = report.id === 'D6'
+  const apiEndpoint = useMemo(() => {
+    const hint = String(report.apiHint || '').trim()
+    const m = hint.match(/GET\s+(\S+)/i)
+    return m?.[1] || ''
+  }, [report.apiHint])
+  const isApiReport = Boolean(apiEndpoint) && !isQboMirror && !isRelayReport
 
   const { rows, total } = useMemo(
     () =>
@@ -74,7 +97,7 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
     [report.hasChart, sorted],
   )
 
-  const empty = !custom && !isEmbed && !isQboMirror && !isRelayReport && total === 0
+  const empty = !custom && !isEmbed && !isQboMirror && !isRelayReport && !isApiReport && total === 0
 
   useTableTabOrder(dataCol.tableRef, [sorted, empty])
 
@@ -137,6 +160,36 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
     setQboAsOf(to)
   }
 
+  const apiQuickRange = (key: 'this-month' | 'last-month' | 'this-quarter' | 'last-quarter' | 'this-year' | 'last-year') => {
+    const d = new Date()
+    let from = ''
+    let to = ''
+    if (key === 'this-month') {
+      from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
+    } else if (key === 'last-month') {
+      from = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10)
+    } else if (key === 'this-quarter') {
+      const q = Math.floor(d.getMonth() / 3)
+      from = new Date(d.getFullYear(), q * 3, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), q * 3 + 3, 0).toISOString().slice(0, 10)
+    } else if (key === 'last-quarter') {
+      const q = Math.floor(d.getMonth() / 3) - 1
+      from = new Date(d.getFullYear(), q * 3, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), q * 3 + 3, 0).toISOString().slice(0, 10)
+    } else if (key === 'this-year') {
+      from = new Date(d.getFullYear(), 0, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear(), 11, 31).toISOString().slice(0, 10)
+    } else {
+      from = new Date(d.getFullYear() - 1, 0, 1).toISOString().slice(0, 10)
+      to = new Date(d.getFullYear() - 1, 11, 31).toISOString().slice(0, 10)
+    }
+    setApiFrom(from)
+    setApiTo(to)
+    setApiAsOf(to)
+  }
+
   const runQboReport = async (format: 'json' | 'csv' = 'json') => {
     if (!report.qboReportName) return
     const p = new URLSearchParams()
@@ -189,6 +242,70 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
     void runQboReport('json')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [report.id])
+
+  const runApiReport = async (format: 'json' | 'csv' = 'json') => {
+    if (!apiEndpoint) return
+    const p = new URLSearchParams()
+    if (apiFrom) p.set('start_date', apiFrom)
+    if (apiTo) p.set('end_date', apiTo)
+    if (apiAsOf) p.set('as_of_date', apiAsOf)
+    if (apiDriver) p.set('driver_id', apiDriver)
+    if (apiUnit) p.set('unit_number', apiUnit)
+    if (apiLoad) p.set('load_number', apiLoad)
+    if (apiAccount) p.set('account_id', apiAccount)
+    if (apiTxnType) p.set('transaction_type', apiTxnType)
+    if (apiVendor) p.set('vendor_id', apiVendor)
+    if (apiFactor) p.set('factor_name', apiFactor)
+    if (apiQuarter) p.set('quarter', apiQuarter)
+    if (apiYear) p.set('year', apiYear)
+    if (apiAging) p.set('aging_period', apiAging)
+    if (format === 'csv') {
+      p.set('format', 'csv')
+      window.open(`${apiEndpoint}?${p.toString()}`, '_blank')
+      return
+    }
+    setApiLoading(true)
+    setApiErr('')
+    try {
+      const out = await fetch(`${apiEndpoint}?${p.toString()}`, {
+        headers: { Accept: 'application/json' },
+      }).then((r) => r.json())
+      const rows = Array.isArray(out?.rows)
+        ? out.rows
+        : Array.isArray(out?.transactions)
+          ? out.transactions
+          : Array.isArray(out?.accounts)
+            ? out.accounts
+            : []
+      setApiRows(rows)
+      setApiSource(String(out?.source || 'live'))
+    } catch (e: any) {
+      setApiErr(String(e?.message || e))
+      setApiRows([])
+      setApiSource('unavailable')
+    } finally {
+      setApiLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isApiReport) return
+    const d = new Date()
+    const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10)
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10)
+    setApiFrom(start)
+    setApiTo(end)
+    setApiAsOf(end)
+    setApiDriver('')
+    setApiUnit('')
+    setApiLoad('')
+    setApiAccount('')
+    setApiTxnType('')
+    setApiVendor('')
+    setApiFactor('')
+    void runApiReport('json')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report.id, isApiReport])
 
   useEffect(() => {
     if (!isRelayReport) return
@@ -353,6 +470,75 @@ export function ReportViewer({ report, filters, onClose, onApplyFilters }: Props
                           </tr>
                         )
                       })}
+                    </tbody>
+                  </table>
+                ) : null}
+              </section>
+            </>
+          ) : isApiReport ? (
+            <>
+              <section className="viewer__toolbar">
+                <div className="sort" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <label>
+                    <span className="muted">From</span>
+                    <input type="date" value={apiFrom} onChange={(e) => setApiFrom(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">To</span>
+                    <input type="date" value={apiTo} onChange={(e) => setApiTo(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">As of</span>
+                    <input type="date" value={apiAsOf} onChange={(e) => setApiAsOf(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">Driver</span>
+                    <input value={apiDriver} onChange={(e) => setApiDriver(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">Unit</span>
+                    <input value={apiUnit} onChange={(e) => setApiUnit(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="muted">Load</span>
+                    <input value={apiLoad} onChange={(e) => setApiLoad(e.target.value)} />
+                  </label>
+                </div>
+                <div className="exports">
+                  <button type="button" className="btn sm ghost" onClick={() => apiQuickRange('this-month')}>This Month</button>
+                  <button type="button" className="btn sm ghost" onClick={() => apiQuickRange('last-month')}>Last Month</button>
+                  <button type="button" className="btn sm ghost" onClick={() => apiQuickRange('this-quarter')}>This Quarter</button>
+                  <button type="button" className="btn sm ghost" onClick={() => apiQuickRange('last-quarter')}>Last Quarter</button>
+                  <button type="button" className="btn sm ghost" onClick={() => apiQuickRange('this-year')}>This Year</button>
+                  <button type="button" className="btn sm ghost" onClick={() => apiQuickRange('last-year')}>Last Year</button>
+                  <button type="button" className="btn sm ghost" onClick={() => void runApiReport('json')}>Run Report</button>
+                  <button type="button" className="btn sm ghost" onClick={() => void runApiReport('csv')}>Export CSV</button>
+                  <button type="button" className="btn sm ghost" onClick={() => window.print()}>Print</button>
+                </div>
+              </section>
+              <section className="table-wrap reports-integrity-table-scroll">
+                <p className="muted" style={{ marginBottom: 8 }}>
+                  Source: {apiSource || 'live'}
+                </p>
+                {apiLoading ? <p className="empty">Loading report...</p> : null}
+                {apiErr ? <p className="empty">{apiErr}</p> : null}
+                {!apiLoading && !apiErr ? (
+                  <table className="data-table fr-data-table reports-integrity-data-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        {(Object.keys(apiRows[0] || {})).map((k) => (
+                          <th key={k}>{k.replace(/_/g, ' ')}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(apiRows.length ? apiRows : [{ empty: 'No rows' }]).map((r, i) => (
+                        <tr key={`api-${i}`}>
+                          {Object.keys(apiRows[0] || r || {}).map((k) => (
+                            <td key={k}>{String((r as any)?.[k] ?? '')}</td>
+                          ))}
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 ) : null}

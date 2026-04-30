@@ -1,5 +1,6 @@
 export type ReportCategory =
   | 'overview'
+  | 'financial'
   | 'maintenance'
   | 'accounting'
   | 'compliance'

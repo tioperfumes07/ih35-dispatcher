@@ -107,6 +107,7 @@ const FEATURE_INDEX: FeatureIndexEntry[] = [
 
 const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
   'overview',
+  'financial',
   'maintenance',
   'accounting',
   'compliance',
@@ -119,6 +120,7 @@ const REPORT_TAB_QUERY_VALUES: ReportCategory[] = [
 const REPORT_TAB_SET = new Set<ReportCategory>(REPORT_TAB_QUERY_VALUES)
 const REPORTS_PAGE_TAB_IDS: ReportCategory[] = [
   'overview',
+  'financial',
   'maintenance',
   'accounting',
   'compliance',

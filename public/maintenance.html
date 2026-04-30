@@ -5589,8 +5589,171 @@
           #section-reports tr.rep-row-rt--other td:first-child {
             border-left: 3px solid #6b7385;
           }
+          #section-reports .wave7-reports-home {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            margin-bottom: 14px;
+          }
+          #section-reports .wave7-report-card {
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            background: var(--color-bg-card);
+            padding: 12px;
+          }
+          #section-reports .wave7-report-card h4 {
+            margin: 0 0 6px;
+            font-size: 14px;
+          }
+          #section-reports .wave7-report-list {
+            display: grid;
+            gap: 6px;
+          }
+          #section-reports .wave7-report-link {
+            width: 100%;
+            text-align: left;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: #fff;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 12px;
+          }
+          #section-reports .wave7-report-link:hover {
+            border-color: #9fbaf0;
+            background: #f7fbff;
+          }
+          #section-reports .wave7-controls {
+            display: grid;
+            gap: 8px;
+          }
+          #section-reports .wave7-controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: flex-end;
+          }
+          #section-reports .wave7-source-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--color-border);
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 11px;
+          }
+          #section-reports .wave7-source-pill[data-tone="green"] { color: #0a7a39; border-color: #9fdab9; background: #effaf3; }
+          #section-reports .wave7-source-pill[data-tone="yellow"] { color: #8a5a00; border-color: #e8cf93; background: #fff9ea; }
+          #section-reports .wave7-source-pill[data-tone="red"] { color: #a12622; border-color: #f2b6b4; background: #fff2f2; }
+          #section-reports .wave7-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+          }
+          #section-reports .wave7-report-table td.amount,
+          #section-reports .wave7-report-table th.amount {
+            text-align: right;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+          }
+          #section-reports .wave7-report-table td.neg { color: #b42318; }
+          #section-reports .wave7-report-table td.zero { color: #7a7a7a; }
+          #section-reports .wave7-report-table tr.total-row td {
+            border-top: 1px solid #d8dde7;
+            font-weight: 700;
+          }
+          #section-reports .wave7-report-table tr.summary-row td { font-weight: 700; }
+          @media print {
+            #section-reports .wave7-print-hide { display: none !important; }
+          }
         </style>
-        <div class="erp-reports-shell">
+        <div id="wave7ReportsRoot" class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title" style="margin:0">Reports</div>
+              <div class="mini-note">Financial reports mirror QuickBooks. TMS reports show operational data.</div>
+            </div>
+          </div>
+          <div class="panel-body" id="wave7ReportsHome">
+            <div class="wave7-reports-home">
+              <article class="wave7-report-card">
+                <h4>Financial Reports (QuickBooks)</h4>
+                <div class="wave7-report-list">
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('profit-loss')">📊 Profit &amp; Loss</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('profit-loss-detail')">📊 Profit &amp; Loss Detail</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('balance-sheet')">📋 Balance Sheet</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('trial-balance')">⚖️ Trial Balance</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('cash-flow')">💰 Cash Flow Statement</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('general-ledger')">📒 General Ledger</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('ar-aging')">👥 AR Aging Summary</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('ap-aging')">📦 AP Aging Summary</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('transaction-list')">📝 Transaction List</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('vendor-expenses')">🏢 Vendor Expenses</button>
+                </div>
+              </article>
+              <article class="wave7-report-card">
+                <h4>TMS Reports (Operational)</h4>
+                <div class="wave7-report-list">
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('tms-load-pnl')">🚛 Load P&amp;L</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('tms-driver-settlement')">👷 Driver Settlements</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('tms-fuel-ifta')">⛽ Fuel / IFTA</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('tms-factoring')">🏭 Factoring Reconciliation</button>
+                  <button type="button" class="wave7-report-link" onclick="wave7OpenReport('banking-by-account')">🏦 Banking by Account</button>
+                </div>
+              </article>
+            </div>
+          </div>
+          <div class="panel-body hidden" id="wave7ReportViewer">
+            <div class="wave7-print-hide" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <button type="button" class="btn btn--small" onclick="wave7BackToReports()">← Reports</button>
+              <span id="wave7SourcePill" class="wave7-source-pill" data-tone="yellow"><span class="wave7-dot"></span><span>Cached data</span></span>
+            </div>
+            <div class="wave7-controls wave7-print-hide">
+              <div class="wave7-controls-row">
+                <strong id="wave7ReportTitle" style="font-size:18px">Report</strong>
+              </div>
+              <div class="wave7-controls-row">
+                <label><span class="qb-l">From</span><input id="wave7From" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">To</span><input id="wave7To" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">As of</span><input id="wave7AsOf" class="qb-in" type="date" /></label>
+              </div>
+              <div class="wave7-controls-row">
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('this-month')">This Month</button>
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('last-month')">Last Month</button>
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('this-quarter')">This Quarter</button>
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('last-quarter')">Last Quarter</button>
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('this-year')">This Year</button>
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('last-year')">Last Year</button>
+                <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('custom')">Custom</button>
+              </div>
+              <div class="wave7-controls-row">
+                <span class="qb-l">Method</span>
+                <button type="button" id="wave7MethodCash" class="btn btn--small" onclick="wave7SetMethod('Cash')">Cash</button>
+                <button type="button" id="wave7MethodAccrual" class="btn btn--small" onclick="wave7SetMethod('Accrual')">Accrual</button>
+                <label id="wave7AgingWrap" class="hidden"><span class="qb-l">Aging</span><select id="wave7Aging" class="qb-in"><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="120">120 days</option></select></label>
+                <label id="wave7DriverWrap" class="hidden"><span class="qb-l">Driver</span><input id="wave7Driver" class="qb-in" placeholder="driver id" /></label>
+                <label id="wave7UnitWrap" class="hidden"><span class="qb-l">Unit</span><input id="wave7Unit" class="qb-in" placeholder="unit #" /></label>
+                <label id="wave7LoadWrap" class="hidden"><span class="qb-l">Load</span><input id="wave7Load" class="qb-in" placeholder="load #" /></label>
+                <label id="wave7AccountWrap" class="hidden"><span class="qb-l">Account</span><input id="wave7Account" class="qb-in" placeholder="account id" /></label>
+                <label id="wave7TxnTypeWrap" class="hidden"><span class="qb-l">Type</span><input id="wave7TxnType" class="qb-in" placeholder="transaction type" /></label>
+                <label id="wave7VendorWrap" class="hidden"><span class="qb-l">Vendor</span><input id="wave7Vendor" class="qb-in" placeholder="vendor id" /></label>
+                <label id="wave7QuarterWrap" class="hidden"><span class="qb-l">Quarter</span><select id="wave7Quarter" class="qb-in"><option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option></select></label>
+                <label id="wave7YearWrap" class="hidden"><span class="qb-l">Year</span><input id="wave7Year" class="qb-in" type="number" min="2000" step="1" /></label>
+                <label id="wave7FactorWrap" class="hidden"><span class="qb-l">Factor</span><input id="wave7Factor" class="qb-in" placeholder="factor name" /></label>
+              </div>
+              <div class="wave7-controls-row">
+                <button type="button" class="btn btn--small" onclick="wave7RunReport()">Run Report</button>
+                <button type="button" class="btn btn--small" onclick="wave7ExportCsv()">Export CSV</button>
+                <button type="button" class="btn btn--small" onclick="wave7ExportPdf()">Export PDF</button>
+                <button type="button" class="btn btn--small" onclick="window.print()">Print</button>
+              </div>
+            </div>
+            <div id="wave7Loading" class="mini-note" style="margin-top:10px">Fetching from QuickBooks...</div>
+            <div id="wave7RenderArea" style="overflow:auto;max-height:62vh;border:1px solid var(--color-border);border-radius:8px;margin-top:8px;padding:10px"></div>
+          </div>
+        </div>
+        <div class="erp-reports-shell hidden">
           <header class="erp-reports-toolbar" role="banner">
             <div class="erp-reports-toolbar__title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
               <span>Reports</span>
@@ -30103,6 +30266,252 @@
       window.open(href, '_blank');
     }
 
+    var wave7ReportState = {
+      selected: '',
+      method: 'Cash',
+      lastEndpoint: '',
+      lastParams: '',
+      lastRows: [],
+      lastTitle: '',
+      lastSource: '',
+    };
+    var wave7ReportCatalog = {
+      'profit-loss': { title: 'Profit & Loss', endpoint: '/api/reports/qbo/profit-loss', qbo: true, method: true, qboKind: 'range' },
+      'profit-loss-detail': { title: 'Profit & Loss Detail', endpoint: '/api/reports/qbo/profit-loss-detail', qbo: true, method: true, qboKind: 'range' },
+      'balance-sheet': { title: 'Balance Sheet', endpoint: '/api/reports/qbo/balance-sheet', qbo: true, method: true, qboKind: 'asof' },
+      'trial-balance': { title: 'Trial Balance', endpoint: '/api/reports/qbo/trial-balance', qbo: true, qboKind: 'range' },
+      'cash-flow': { title: 'Cash Flow Statement', endpoint: '/api/reports/qbo/cash-flow', qbo: true, method: true, qboKind: 'range' },
+      'general-ledger': { title: 'General Ledger', endpoint: '/api/reports/qbo/general-ledger', qbo: true, qboKind: 'range', account: true },
+      'ar-aging': { title: 'AR Aging Summary', endpoint: '/api/reports/qbo/ar-aging', qbo: true, qboKind: 'asof', aging: true },
+      'ap-aging': { title: 'AP Aging Summary', endpoint: '/api/reports/qbo/ap-aging', qbo: true, qboKind: 'asof', aging: true },
+      'transaction-list': { title: 'Transaction List', endpoint: '/api/reports/qbo/transaction-list', qbo: true, qboKind: 'range', txnType: true, vendor: true },
+      'vendor-expenses': { title: 'Vendor Expenses', endpoint: '/api/reports/qbo/vendor-expenses', qbo: true, qboKind: 'range', vendor: true },
+      'tms-load-pnl': { title: 'Load P&L', endpoint: '/api/reports/tms/load-pnl', driver: true, unit: true, load: true },
+      'tms-driver-settlement': { title: 'Driver Settlements', endpoint: '/api/reports/tms/driver-settlement', driver: true },
+      'tms-fuel-ifta': { title: 'Fuel / IFTA', endpoint: '/api/reports/tms/fuel-ifta', quarter: true, year: true, unit: true },
+      'tms-factoring': { title: 'Factoring Reconciliation', endpoint: '/api/reports/tms/factoring', factor: true, year: true },
+      'banking-by-account': { title: 'Banking by Account', endpoint: '/api/reports/banking/by-account', account: true },
+    };
+
+    function wave7FmtDate(d) { return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 10); }
+    function wave7SetSource(source, generatedAt) {
+      var pill = document.getElementById('wave7SourcePill');
+      if (!pill) return;
+      var label = 'Operational data';
+      var tone = 'green';
+      if (source === 'live') { label = 'Live from QuickBooks'; tone = 'green'; }
+      else if (source === 'cache') { label = 'Cached data from ' + (generatedAt || '--'); tone = 'yellow'; }
+      else if (source === 'cache_unavailable') { label = 'QuickBooks unavailable — cached'; tone = 'red'; }
+      else if (source === 'unavailable') { label = 'QuickBooks unavailable'; tone = 'red'; }
+      pill.setAttribute('data-tone', tone);
+      pill.innerHTML = '<span class="wave7-dot"></span><span>' + escapeHtml(label) + '</span>';
+      wave7ReportState.lastSource = source || '';
+    }
+    function wave7ToggleWrap(id, on) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('hidden', !on);
+    }
+    function wave7SetMethod(method) {
+      wave7ReportState.method = method === 'Accrual' ? 'Accrual' : 'Cash';
+      document.getElementById('wave7MethodCash')?.classList.toggle('btn--active', wave7ReportState.method === 'Cash');
+      document.getElementById('wave7MethodAccrual')?.classList.toggle('btn--active', wave7ReportState.method === 'Accrual');
+    }
+    function wave7SetQuickRange(mode) {
+      if (mode === 'custom') return;
+      var now = new Date();
+      var y = now.getFullYear();
+      var m = now.getMonth();
+      var q = Math.floor(m / 3);
+      var from = '';
+      var to = '';
+      if (mode === 'this-month') { from = wave7FmtDate(new Date(y, m, 1)); to = wave7FmtDate(new Date(y, m + 1, 0)); }
+      else if (mode === 'last-month') { from = wave7FmtDate(new Date(y, m - 1, 1)); to = wave7FmtDate(new Date(y, m, 0)); }
+      else if (mode === 'this-quarter') { from = wave7FmtDate(new Date(y, q * 3, 1)); to = wave7FmtDate(new Date(y, q * 3 + 3, 0)); }
+      else if (mode === 'last-quarter') { from = wave7FmtDate(new Date(y, (q - 1) * 3, 1)); to = wave7FmtDate(new Date(y, (q - 1) * 3 + 3, 0)); }
+      else if (mode === 'this-year') { from = wave7FmtDate(new Date(y, 0, 1)); to = wave7FmtDate(new Date(y, 11, 31)); }
+      else if (mode === 'last-year') { from = wave7FmtDate(new Date(y - 1, 0, 1)); to = wave7FmtDate(new Date(y - 1, 11, 31)); }
+      var fromEl = document.getElementById('wave7From');
+      var toEl = document.getElementById('wave7To');
+      var asOfEl = document.getElementById('wave7AsOf');
+      if (fromEl) fromEl.value = from;
+      if (toEl) toEl.value = to;
+      if (asOfEl) asOfEl.value = to;
+    }
+    function wave7BackToReports() {
+      document.getElementById('wave7ReportViewer')?.classList.add('hidden');
+      document.getElementById('wave7ReportsHome')?.classList.remove('hidden');
+    }
+    function wave7OpenReport(reportKey) {
+      wave7ReportState.selected = String(reportKey || '').trim();
+      var cfg = wave7ReportCatalog[wave7ReportState.selected];
+      if (!cfg) return;
+      document.getElementById('wave7ReportsHome')?.classList.add('hidden');
+      document.getElementById('wave7ReportViewer')?.classList.remove('hidden');
+      var titleEl = document.getElementById('wave7ReportTitle');
+      if (titleEl) titleEl.textContent = cfg.title;
+      wave7ReportState.lastTitle = cfg.title;
+      wave7SetMethod('Cash');
+      wave7ToggleWrap('wave7AgingWrap', Boolean(cfg.aging));
+      wave7ToggleWrap('wave7DriverWrap', Boolean(cfg.driver));
+      wave7ToggleWrap('wave7UnitWrap', Boolean(cfg.unit));
+      wave7ToggleWrap('wave7LoadWrap', Boolean(cfg.load));
+      wave7ToggleWrap('wave7AccountWrap', Boolean(cfg.account));
+      wave7ToggleWrap('wave7TxnTypeWrap', Boolean(cfg.txnType));
+      wave7ToggleWrap('wave7VendorWrap', Boolean(cfg.vendor));
+      wave7ToggleWrap('wave7QuarterWrap', Boolean(cfg.quarter));
+      wave7ToggleWrap('wave7YearWrap', Boolean(cfg.year));
+      wave7ToggleWrap('wave7FactorWrap', Boolean(cfg.factor));
+      document.getElementById('wave7MethodCash')?.classList.toggle('hidden', !cfg.method);
+      document.getElementById('wave7MethodAccrual')?.classList.toggle('hidden', !cfg.method);
+      wave7RunReport();
+    }
+    function wave7BuildParams(cfg, format) {
+      var p = new URLSearchParams();
+      var from = String(document.getElementById('wave7From')?.value || '').trim();
+      var to = String(document.getElementById('wave7To')?.value || '').trim();
+      var asOf = String(document.getElementById('wave7AsOf')?.value || '').trim();
+      if (cfg.qbo && cfg.qboKind === 'asof') {
+        if (asOf) p.set('as_of_date', asOf);
+      } else {
+        if (from) p.set('start_date', from);
+        if (to) p.set('end_date', to);
+      }
+      if (cfg.method) p.set('accounting_method', wave7ReportState.method);
+      if (cfg.aging) p.set('aging_period', String(document.getElementById('wave7Aging')?.value || '30'));
+      if (cfg.account) p.set('account_id', String(document.getElementById('wave7Account')?.value || '').trim());
+      if (cfg.txnType) p.set('transaction_type', String(document.getElementById('wave7TxnType')?.value || '').trim());
+      if (cfg.vendor) p.set('vendor_id', String(document.getElementById('wave7Vendor')?.value || '').trim());
+      if (cfg.driver) p.set('driver_id', String(document.getElementById('wave7Driver')?.value || '').trim());
+      if (cfg.unit) p.set('unit_number', String(document.getElementById('wave7Unit')?.value || '').trim());
+      if (cfg.load) p.set('load_number', String(document.getElementById('wave7Load')?.value || '').trim());
+      if (cfg.quarter) p.set('quarter', String(document.getElementById('wave7Quarter')?.value || '').trim());
+      if (cfg.year) p.set('year', String(document.getElementById('wave7Year')?.value || '').trim());
+      if (cfg.factor) p.set('factor_name', String(document.getElementById('wave7Factor')?.value || '').trim());
+      if (format === 'csv') p.set('format', 'csv');
+      return p;
+    }
+    function wave7AccountingAmountClass(v) {
+      var s = String(v == null ? '' : v).trim();
+      if (!s || s === '0' || s === '0.00' || s === '$0.00') return 'zero';
+      if (/^\(.*\)$/.test(s) || s.startsWith('-')) return 'neg';
+      return '';
+    }
+    function wave7RenderQboReport(json) {
+      var area = document.getElementById('wave7RenderArea');
+      if (!area) return;
+      var rows = flattenQboRows(json?.report || {});
+      if (!rows.length) {
+        area.innerHTML = '<div class="mini-note">No rows in this report.</div>';
+        return;
+      }
+      area.innerHTML = '<table class="table wave7-report-table" style="min-width:900px"><thead><tr><th>Account</th><th class="amount">Amount</th></tr></thead><tbody>' +
+        rows.slice(0, 3000).map(function (r) {
+          var amount = String(r?.values?.[r.values.length - 1] || '').trim();
+          var type = String(r?.type || '').toLowerCase();
+          var rowClass = (type.includes('total') ? 'total-row' : (type.includes('summary') ? 'summary-row' : ''));
+          var amountClass = wave7AccountingAmountClass(amount);
+          return '<tr class="' + rowClass + '">' +
+            '<td style="padding-left:' + (Number(r?.depth || 0) * 20) + 'px">' + escapeHtml(String(r?.label || '--')) + '</td>' +
+            '<td class="amount ' + amountClass + '">' + escapeHtml(amount || '$0.00') + '</td>' +
+          '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    }
+    function wave7RenderTableRows(rows) {
+      var area = document.getElementById('wave7RenderArea');
+      if (!area) return;
+      if (!Array.isArray(rows) || !rows.length) {
+        area.innerHTML = '<div class="mini-note">No rows found.</div>';
+        wave7ReportState.lastRows = [];
+        return;
+      }
+      var keys = Object.keys(rows[0] || {});
+      var numericKeys = new Set(keys.filter(function (k) { return rows.some(function (r) { return typeof r?.[k] === 'number'; }); }));
+      area.innerHTML = '<table class="table wave7-report-table" style="min-width:980px"><thead><tr>' +
+        keys.map(function (k) { return '<th class="' + (numericKeys.has(k) ? 'amount' : '') + '">' + escapeHtml(k.replace(/_/g, ' ')) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' +
+        rows.map(function (row) {
+          return '<tr>' + keys.map(function (k) {
+            var val = row?.[k];
+            var text = (val == null ? '' : String(val));
+            var cls = numericKeys.has(k) ? 'amount' : '';
+            if (numericKeys.has(k) && Number(val) < 0) cls += ' neg';
+            return '<td class="' + cls + '">' + escapeHtml(text) + '</td>';
+          }).join('') + '</tr>';
+        }).join('') +
+        '</tbody></table>';
+      wave7ReportState.lastRows = rows;
+    }
+    async function wave7RunReport() {
+      var cfg = wave7ReportCatalog[wave7ReportState.selected];
+      if (!cfg) return;
+      var loadingEl = document.getElementById('wave7Loading');
+      if (loadingEl) loadingEl.textContent = cfg.qbo ? 'Fetching from QuickBooks...' : 'Loading report...';
+      try {
+        var params = wave7BuildParams(cfg, 'json');
+        var url = cfg.endpoint + (params.toString() ? ('?' + params.toString()) : '');
+        var rsp = await fetch(url, { headers: { Accept: 'application/json' } });
+        var json = await rsp.json();
+        if (json?.ok === false && !json?.report && !Array.isArray(json?.rows)) {
+          wave7SetSource(json?.source || 'unavailable', json?.generated_at || json?.generatedAt || '');
+          document.getElementById('wave7RenderArea').innerHTML = '<div class="mini-note">' + escapeHtml(String(json?.error || 'Report unavailable')) + '</div>';
+          if (loadingEl) loadingEl.textContent = '';
+          return;
+        }
+        wave7ReportState.lastEndpoint = cfg.endpoint;
+        wave7ReportState.lastParams = params.toString();
+        wave7SetSource(json?.source || (cfg.qbo ? 'cache' : 'live'), json?.generated_at || json?.generatedAt || '');
+        if (cfg.qbo) wave7RenderQboReport(json);
+        else {
+          var rows = Array.isArray(json?.rows) ? json.rows
+            : Array.isArray(json?.transactions) ? json.transactions
+            : Array.isArray(json?.accounts) ? json.accounts
+            : [];
+          wave7RenderTableRows(rows);
+        }
+      } catch (e) {
+        document.getElementById('wave7RenderArea').innerHTML = '<div class="mini-note">Unable to run report: ' + escapeHtml(String(e?.message || e)) + '</div>';
+        wave7SetSource('unavailable', '');
+      } finally {
+        if (loadingEl) loadingEl.textContent = '';
+      }
+    }
+    function wave7ExportCsv() {
+      var cfg = wave7ReportCatalog[wave7ReportState.selected];
+      if (!cfg) return;
+      if (cfg.qbo) {
+        var params = wave7BuildParams(cfg, 'csv');
+        window.open(cfg.endpoint + '?' + params.toString(), '_blank');
+        return;
+      }
+      var rows = Array.isArray(wave7ReportState.lastRows) ? wave7ReportState.lastRows : [];
+      if (!rows.length) return;
+      var keys = Object.keys(rows[0] || {});
+      var esc = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+      var csv = [keys.join(',')].concat(rows.map(function (r) { return keys.map(function (k) { return esc(r[k]); }).join(','); })).join('\n');
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (wave7ReportState.lastTitle || 'report').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    }
+    function wave7ExportPdf() {
+      window.print();
+    }
+    function wave7InitReports() {
+      var now = new Date();
+      var yearEl = document.getElementById('wave7Year');
+      if (yearEl && !yearEl.value) yearEl.value = String(now.getFullYear());
+      var quarterEl = document.getElementById('wave7Quarter');
+      if (quarterEl && !quarterEl.value) quarterEl.value = String(Math.floor(now.getMonth() / 3) + 1);
+      wave7SetQuickRange('this-month');
+      wave7SetMethod('Cash');
+      wave7SetSource('cache', '');
+    }
+
     window.loadRelayFuelTransactions = loadRelayFuelTransactions;
     window.loadBankingAccounts = loadBankingAccounts;
     window.openBankingRegister = openBankingRegister;
@@ -30128,6 +30537,13 @@
     window.qboFinQuickRange = qboFinQuickRange;
     window.runQboFinancialReport = runQboFinancialReport;
     window.exportQboFinancialCsv = exportQboFinancialCsv;
+    window.wave7OpenReport = wave7OpenReport;
+    window.wave7BackToReports = wave7BackToReports;
+    window.wave7SetQuickRange = wave7SetQuickRange;
+    window.wave7SetMethod = wave7SetMethod;
+    window.wave7RunReport = wave7RunReport;
+    window.wave7ExportCsv = wave7ExportCsv;
+    window.wave7ExportPdf = wave7ExportPdf;
     var __bankingModal = document.getElementById('bankingAccountManagerModal');
     if (__bankingModal) __bankingModal.addEventListener('click', handleBankingModalBackdropClick);
     var __bankingImportModal = document.getElementById('bankingImportStatementModal');
@@ -30143,10 +30559,12 @@
         var n = String(name || '').trim().toLowerCase();
         if (n === 'fuel') loadRelayFuelTransactions(false);
         if (n === 'banking') loadBankingAccounts();
-        if (n === 'reports') runQboFinancialReport();
+        if (n === 'reports') wave7InitReports();
         return out;
       };
     }
+
+    wave7InitReports();
 
     if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
     syncApDocTitle();

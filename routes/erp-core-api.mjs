@@ -4847,37 +4847,74 @@ export function mountErpCoreApi(app, opts = {}) {
     ].join('\n');
   }
 
-  async function readCachedQboReport(cacheKey) {
+  function stableJsonStringify(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+      return JSON.stringify(obj == null ? {} : obj);
+    }
+    const out = {};
+    Object.keys(obj).sort().forEach((k) => {
+      out[k] = obj[k];
+    });
+    return JSON.stringify(out);
+  }
+
+  function reportParamsHash(params) {
+    return createHash('sha256').update(stableJsonStringify(params || {})).digest('hex');
+  }
+
+  async function readReportCache(reportKey, paramsHash) {
     if (!getPool()) return null;
-    await ensureIntegrationResilienceTables();
+    await ensureBankingTables();
     const { rows } = await dbQuery(
-      `SELECT full_data, last_synced_at
-         FROM qbo_catalog_cache
-        WHERE entity_type = 'qbo_report' AND qbo_id = $1
+      `SELECT payload_json, generated_at, expires_at
+         FROM report_cache
+        WHERE report_key = $1
+          AND params_hash = $2
+        ORDER BY generated_at DESC
         LIMIT 1`,
-      [cacheKey]
+      [reportKey, paramsHash]
     );
-    const row = rows?.[0];
+    const row = rows?.[0] || null;
     if (!row) return null;
-    const raw = row?.full_data && typeof row.full_data === 'object' ? row.full_data : {};
-    const syncedAt = String(row?.last_synced_at || '').trim() || null;
+    const payload = row?.payload_json && typeof row.payload_json === 'object' ? row.payload_json : {};
+    const generatedAt = String(row?.generated_at || payload?.generated_at || '').trim() || null;
+    const expiresAt = String(row?.expires_at || '').trim() || null;
+    const expiresMs = expiresAt ? Date.parse(expiresAt) : Number.NaN;
     return {
-      report: raw?.report || null,
-      generatedAt: String(raw?.generatedAt || syncedAt || '').trim() || null,
-      params: raw?.params || {},
-      syncedAt,
+      report: payload?.report || null,
+      params: payload?.params && typeof payload.params === 'object' ? payload.params : {},
+      generated_at: generatedAt,
+      source: String(payload?.source || 'cache'),
+      expires_at: expiresAt,
+      fresh: Number.isFinite(expiresMs) ? Date.now() <= expiresMs : false,
     };
   }
 
-  async function writeCachedQboReport(cacheKey, reportName, payload) {
+  async function writeReportCache({ reportKey, paramsHash, source = 'live', params = {}, report = null, generatedAt = null }) {
     if (!getPool()) return;
-    await ensureIntegrationResilienceTables();
+    await ensureBankingTables();
+    const generated = String(generatedAt || new Date().toISOString());
     await dbQuery(
-      `INSERT INTO qbo_catalog_cache (entity_type, qbo_id, name, full_data, last_synced_at)
-       VALUES ('qbo_report', $1, $2, $3::jsonb, now())
-       ON CONFLICT (entity_type, qbo_id)
-       DO UPDATE SET name = EXCLUDED.name, full_data = EXCLUDED.full_data, last_synced_at = now()`,
-      [cacheKey, reportName, JSON.stringify(payload || {})]
+      `INSERT INTO report_cache (report_key, params_hash, source, payload_json, generated_at, expires_at, created_at)
+       VALUES ($1, $2, $3, $4::jsonb, $5::timestamptz, ($5::timestamptz + interval '1 hour'), now())
+       ON CONFLICT (report_key, params_hash)
+       DO UPDATE SET
+         source = EXCLUDED.source,
+         payload_json = EXCLUDED.payload_json,
+         generated_at = EXCLUDED.generated_at,
+         expires_at = EXCLUDED.expires_at`,
+      [
+        reportKey,
+        paramsHash,
+        source,
+        JSON.stringify({
+          report,
+          params,
+          source,
+          generated_at: generated,
+        }),
+        generated,
+      ]
     );
   }
 
@@ -4890,24 +4927,21 @@ export function mountErpCoreApi(app, opts = {}) {
         acc[k] = params[k];
         return acc;
       }, {});
-    const cacheKey = `report:${reportName}:${JSON.stringify(cacheParams)}`;
-    const nowMs = Date.now();
-    const oneHourMs = 60 * 60 * 1000;
+    const reportKey = String(reportName || '').trim();
+    const paramsHash = reportParamsHash(cacheParams);
 
     let cached = null;
     try {
-      cached = await readCachedQboReport(cacheKey);
+      cached = await readReportCache(reportKey, paramsHash);
     } catch (_e) {
       cached = null;
     }
-    const cacheAgeMs = cached?.syncedAt ? nowMs - Date.parse(String(cached.syncedAt)) : Number.POSITIVE_INFINITY;
-    const freshCache = Number.isFinite(cacheAgeMs) && cacheAgeMs <= oneHourMs;
 
-    let source = 'cache';
+    let source = cached?.fresh ? 'cache' : '';
     let reportPayload = cached?.report || null;
-    let generatedAt = cached?.generatedAt || (cached?.syncedAt || null);
+    let generatedAt = cached?.generated_at || null;
 
-    if (!freshCache) {
+    if (!cached?.fresh) {
       try {
         const qbo = createQboApiClient();
         const query = new URLSearchParams();
@@ -4920,23 +4954,29 @@ export function mountErpCoreApi(app, opts = {}) {
         reportPayload = live;
         generatedAt = new Date().toISOString();
         source = 'live';
-        await writeCachedQboReport(cacheKey, reportName, {
+        await writeReportCache({
+          reportKey,
+          paramsHash,
+          source: 'live',
+          params: cacheParams,
           report: reportPayload,
           generatedAt,
-          params: cacheParams,
         });
       } catch (e) {
-        if (!cached?.report) {
-          return res.status(502).json({
+        if (!cached?.report || !cached?.generated_at) {
+          return res.json({
             ok: false,
-            error: e?.message || String(e),
+            error: 'QBO unavailable',
             report: null,
+            generated_at: null,
             generatedAt: null,
-            source: 'error',
+            source: 'unavailable',
             params: cacheParams,
           });
         }
-        source = 'cache';
+        source = 'cache_unavailable';
+        reportPayload = cached.report;
+        generatedAt = cached.generated_at;
       }
     }
 
@@ -4948,6 +4988,7 @@ export function mountErpCoreApi(app, opts = {}) {
     return res.json({
       ok: true,
       report: reportPayload,
+      generated_at: generatedAt,
       generatedAt,
       source,
       params: cacheParams,
@@ -4959,11 +5000,13 @@ export function mountErpCoreApi(app, opts = {}) {
       start_date: String(req.query?.start_date || '').trim(),
       end_date: String(req.query?.end_date || '').trim(),
       accounting_method: normalizeAccountingMethod(req.query?.accounting_method),
+      summarize_column_by: String(req.query?.summarize_column_by || '').trim(),
     })],
     ['profit-loss-detail', 'ProfitAndLossDetail', (req) => ({
       start_date: String(req.query?.start_date || '').trim(),
       end_date: String(req.query?.end_date || '').trim(),
       accounting_method: normalizeAccountingMethod(req.query?.accounting_method),
+      summarize_column_by: String(req.query?.summarize_column_by || '').trim(),
     })],
     ['balance-sheet', 'BalanceSheet', (req) => ({
       as_of_date: String(req.query?.as_of_date || '').trim(),
@@ -4975,9 +5018,11 @@ export function mountErpCoreApi(app, opts = {}) {
     })],
     ['ar-aging', 'AgedReceivables', (req) => ({
       as_of_date: String(req.query?.as_of_date || '').trim(),
+      aging_period: /^(30|60|90|120)$/.test(String(req.query?.aging_period || '').trim()) ? String(req.query?.aging_period).trim() : '',
     })],
     ['ap-aging', 'AgedPayables', (req) => ({
       as_of_date: String(req.query?.as_of_date || '').trim(),
+      aging_period: /^(30|60|90|120)$/.test(String(req.query?.aging_period || '').trim()) ? String(req.query?.aging_period).trim() : '',
     })],
     ['cash-flow', 'CashFlow', (req) => ({
       start_date: String(req.query?.start_date || '').trim(),
@@ -4992,12 +5037,13 @@ export function mountErpCoreApi(app, opts = {}) {
     ['transaction-list', 'TransactionList', (req) => ({
       start_date: String(req.query?.start_date || '').trim(),
       end_date: String(req.query?.end_date || '').trim(),
-      transaction_type: String(req.query?.type || '').trim(),
+      transaction_type: String(req.query?.transaction_type || req.query?.type || '').trim(),
       vendor: String(req.query?.vendor_id || '').trim(),
     })],
     ['vendor-expenses', 'VendorExpenses', (req) => ({
       start_date: String(req.query?.start_date || '').trim(),
       end_date: String(req.query?.end_date || '').trim(),
+      vendor: String(req.query?.vendor_id || '').trim(),
     })],
   ];
   QBO_REPORT_MIRROR.forEach(([slug, reportName, paramBuilder]) => {
@@ -7942,6 +7988,393 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/factoring/reports/reconciliation', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [], totals: {} });
+    }
+  });
+
+  app.get('/api/reports/tms/factoring', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, rows: [], totals: {}, params: {} });
+      await ensureBankingTables();
+      const factorName = String(req.query?.factor_name || '').trim().toLowerCase();
+      const year = String(req.query?.year || '').trim();
+      const month = String(req.query?.month || '').trim();
+      const where = [];
+      const values = [];
+      if (factorName) {
+        values.push(`%${factorName}%`);
+        where.push(`LOWER(COALESCE(factor_name, '')) LIKE $${values.length}`);
+      }
+      if (/^\d{4}$/.test(year)) {
+        values.push(`${year}-01-01`);
+        where.push(`COALESCE(deposit_date, created_at::date) >= $${values.length}::date`);
+        values.push(`${year}-12-31`);
+        where.push(`COALESCE(deposit_date, created_at::date) <= $${values.length}::date`);
+      }
+      if (/^\d{2}$/.test(month)) {
+        values.push(month);
+        where.push(`to_char(COALESCE(deposit_date, created_at::date), 'MM') = $${values.length}`);
+      }
+      const { rows } = await dbQuery(
+        `SELECT fa.id, fa.factor_name, fa.invoice_amount, fa.advance_amount, fa.fee_amount, fa.net_amount, fa.status, fa.deposit_date,
+                COALESCE(string_agg(fal.load_number, ', ' ORDER BY fal.load_number), '') AS load_numbers
+           FROM factoring_advances fa
+      LEFT JOIN factoring_advance_loads fal ON fal.factoring_advance_id = fa.id
+           ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       GROUP BY fa.id
+       ORDER BY fa.deposit_date DESC NULLS LAST, fa.id DESC`,
+        values
+      );
+      const mapped = (rows || []).map((r) => ({
+        factor_name: String(r?.factor_name || '--'),
+        load_numbers: String(r?.load_numbers || ''),
+        invoice_amount: Number(r?.invoice_amount || 0),
+        advance_amount: Number(r?.advance_amount || 0),
+        fee_amount: Number(r?.fee_amount || 0),
+        net_amount: Number(r?.net_amount || 0),
+        status: String(r?.status || 'pending'),
+        deposit_date: r?.deposit_date || null,
+      }));
+      const totals = mapped.reduce((acc, r) => {
+        acc.total_invoiced += Number(r.invoice_amount || 0);
+        acc.total_advanced += Number(r.advance_amount || 0);
+        acc.total_fees += Number(r.fee_amount || 0);
+        acc.total_net += Number(r.net_amount || 0);
+        if (String(r.status || '').toLowerCase() === 'pending') acc.pending_count += 1;
+        return acc;
+      }, { total_invoiced: 0, total_advanced: 0, total_fees: 0, total_net: 0, pending_count: 0 });
+      return res.json({ ok: true, rows: mapped, totals, params: { factor_name: factorName || '', year, month } });
+    } catch (e) {
+      logError('GET /api/reports/tms/factoring', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [], totals: {}, params: {} });
+    }
+  });
+
+  app.get('/api/reports/tms/load-pnl', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, rows: [], totals: {}, params: {} });
+      await ensureBankingTables();
+      await ensureFuelExpenseTables();
+      await ensureTransactionsTable();
+      const startDate = parseDateLike(req.query?.start_date || '') || '';
+      const endDate = parseDateLike(req.query?.end_date || '') || '';
+      const driverId = String(req.query?.driver_id || '').trim();
+      const unitNumber = String(req.query?.unit_number || '').trim();
+      const loadNumber = String(req.query?.load_number || '').trim();
+      const txWhere = ['COALESCE(NULLIF(TRIM(load_number), \'\'), NULL) IS NOT NULL'];
+      const txValues = [];
+      if (startDate) {
+        txValues.push(startDate);
+        txWhere.push(`created_at::date >= $${txValues.length}::date`);
+      }
+      if (endDate) {
+        txValues.push(endDate);
+        txWhere.push(`created_at::date <= $${txValues.length}::date`);
+      }
+      const txWhereSql = txWhere.length ? `WHERE ${txWhere.join(' AND ')}` : '';
+      const { rows: txRows } = await dbQuery(
+        `SELECT TRIM(load_number) AS load_number,
+                COALESCE(driver_id, '') AS driver_id,
+                COALESCE(driver_name, '') AS driver_name,
+                COALESCE(unit_number, '') AS unit_number,
+                COALESCE(transaction_type, '') AS transaction_type,
+                COALESCE(amount_actual, amount_estimated, 0) AS amount_value
+           FROM transactions
+           ${txWhereSql}`,
+        txValues
+      );
+      const fuelWhere = ['COALESCE(NULLIF(TRIM(load_number), \'\'), NULL) IS NOT NULL'];
+      const fuelValues = [];
+      if (startDate) {
+        fuelValues.push(startDate);
+        fuelWhere.push(`COALESCE(transaction_date, submitted_at::date) >= $${fuelValues.length}::date`);
+      }
+      if (endDate) {
+        fuelValues.push(endDate);
+        fuelWhere.push(`COALESCE(transaction_date, submitted_at::date) <= $${fuelValues.length}::date`);
+      }
+      const { rows: fuelRows } = await dbQuery(
+        `SELECT TRIM(load_number) AS load_number,
+                COALESCE(unit_number, '') AS unit_number,
+                COALESCE(total_amount, 0) AS total_amount
+           FROM fuel_expenses
+          WHERE ${fuelWhere.join(' AND ')}`,
+        fuelValues
+      );
+      const settlementWhere = ['COALESCE(NULLIF(TRIM(dsl.load_number), \'\'), NULL) IS NOT NULL'];
+      const settlementValues = [];
+      if (startDate) {
+        settlementValues.push(startDate);
+        settlementWhere.push(`COALESCE(ds.period_end, ds.period_start) >= $${settlementValues.length}::date`);
+      }
+      if (endDate) {
+        settlementValues.push(endDate);
+        settlementWhere.push(`COALESCE(ds.period_start, ds.period_end) <= $${settlementValues.length}::date`);
+      }
+      const { rows: settlementRows } = await dbQuery(
+        `SELECT TRIM(dsl.load_number) AS load_number,
+                COALESCE(ds.driver_id, '') AS driver_id,
+                COALESCE(ds.driver_name, '') AS driver_name,
+                COALESCE(dsl.gross_component, 0) AS driver_pay
+           FROM driver_settlement_loads dsl
+           JOIN driver_settlements ds ON ds.id = dsl.settlement_id
+          WHERE ${settlementWhere.join(' AND ')}`,
+        settlementValues
+      );
+
+      const byLoad = new Map();
+      const ensureLoad = (key) => {
+        const k = String(key || '').trim();
+        if (!k) return null;
+        if (!byLoad.has(k)) {
+          byLoad.set(k, {
+            load_number: k,
+            driver_id: '',
+            driver: '--',
+            unit: '--',
+            revenue: 0,
+            fuel_cost: 0,
+            driver_pay: 0,
+            repair_cost: 0,
+            toll_cost: 0,
+            lumper_cost: 0,
+            other_cost: 0,
+          });
+        }
+        return byLoad.get(k);
+      };
+
+      (txRows || []).forEach((r) => {
+        const row = ensureLoad(r?.load_number);
+        if (!row) return;
+        const txnType = String(r?.transaction_type || '').toLowerCase();
+        const amount = Number(r?.amount_value || 0);
+        if (!row.driver_id && String(r?.driver_id || '').trim()) row.driver_id = String(r.driver_id).trim();
+        if (row.driver === '--' && String(r?.driver_name || '').trim()) row.driver = String(r.driver_name).trim();
+        if (row.unit === '--' && String(r?.unit_number || '').trim()) row.unit = String(r.unit_number).trim();
+        if (txnType.includes('revenue') || txnType.includes('invoice') || txnType.includes('freight')) {
+          row.revenue += amount;
+        } else if (txnType.includes('repair') || txnType.includes('maintenance') || txnType.includes('work')) {
+          row.repair_cost += Math.abs(amount);
+        } else if (txnType.includes('toll')) {
+          row.toll_cost += Math.abs(amount);
+        } else if (txnType.includes('lumper')) {
+          row.lumper_cost += Math.abs(amount);
+        } else if (amount < 0) {
+          row.other_cost += Math.abs(amount);
+        }
+      });
+      (fuelRows || []).forEach((r) => {
+        const row = ensureLoad(r?.load_number);
+        if (!row) return;
+        row.fuel_cost += Number(r?.total_amount || 0);
+        if (row.unit === '--' && String(r?.unit_number || '').trim()) row.unit = String(r.unit_number).trim();
+      });
+      (settlementRows || []).forEach((r) => {
+        const row = ensureLoad(r?.load_number);
+        if (!row) return;
+        row.driver_pay += Number(r?.driver_pay || 0);
+        if (!row.driver_id && String(r?.driver_id || '').trim()) row.driver_id = String(r.driver_id).trim();
+        if (row.driver === '--' && String(r?.driver_name || '').trim()) row.driver = String(r.driver_name).trim();
+      });
+
+      const mapped = Array.from(byLoad.values())
+        .filter((r) => !driverId || String(r.driver_id || '').toLowerCase() === driverId.toLowerCase())
+        .filter((r) => !unitNumber || String(r.unit || '').toLowerCase() === unitNumber.toLowerCase())
+        .filter((r) => !loadNumber || String(r.load_number || '').toLowerCase() === loadNumber.toLowerCase())
+        .map((r) => {
+        const revenue = Number(r?.revenue || 0);
+        const fuelCost = Number(r?.fuel_cost || 0);
+        const driverPay = Number(r?.driver_pay || 0);
+        const repairCost = Number(r?.repair_cost || 0);
+        const tollCost = Number(r?.toll_cost || 0);
+        const lumperCost = Number(r?.lumper_cost || 0);
+        const otherCost = Number(r?.other_cost || 0);
+        const grossProfit = revenue - (fuelCost + driverPay + repairCost + tollCost + lumperCost + otherCost);
+        const marginPct = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+          return {
+            load_number: String(r?.load_number || ''),
+            driver: String(r?.driver || '--'),
+            unit: String(r?.unit || '--'),
+            revenue,
+            fuel_cost: fuelCost,
+            driver_pay: driverPay,
+            repair_cost: repairCost,
+            toll_cost: tollCost,
+            lumper_cost: lumperCost,
+            other_cost: otherCost,
+            gross_profit: grossProfit,
+            profit_margin_pct: Number.isFinite(marginPct) ? Math.round(marginPct * 100) / 100 : 0,
+          };
+        })
+        .sort((a, b) => String(b.load_number || '').localeCompare(String(a.load_number || '')));
+      const totals = mapped.reduce((acc, r) => {
+        acc.revenue += Number(r.revenue || 0);
+        acc.fuel_cost += Number(r.fuel_cost || 0);
+        acc.driver_pay += Number(r.driver_pay || 0);
+        acc.repair_cost += Number(r.repair_cost || 0);
+        acc.toll_cost += Number(r.toll_cost || 0);
+        acc.lumper_cost += Number(r.lumper_cost || 0);
+        acc.other_cost += Number(r.other_cost || 0);
+        acc.gross_profit += Number(r.gross_profit || 0);
+        return acc;
+      }, {
+        revenue: 0,
+        fuel_cost: 0,
+        driver_pay: 0,
+        repair_cost: 0,
+        toll_cost: 0,
+        lumper_cost: 0,
+        other_cost: 0,
+        gross_profit: 0,
+        profit_margin_pct: 0,
+      });
+      totals.profit_margin_pct = totals.revenue > 0 ? Math.round((totals.gross_profit / totals.revenue) * 10000) / 100 : 0;
+      return res.json({
+        ok: true,
+        rows: mapped,
+        totals,
+        params: { start_date: startDate, end_date: endDate, driver_id: driverId, unit_number: unitNumber, load_number: loadNumber },
+      });
+    } catch (e) {
+      logError('GET /api/reports/tms/load-pnl', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [], totals: {}, params: {} });
+    }
+  });
+
+  app.get('/api/reports/tms/fuel-ifta', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        return res.json({ ok: true, quarter: null, year: null, unit_number: String(req.query?.unit_number || '').trim(), rows: [], totals: { miles: 0, gallons: 0, tax: 0 } });
+      }
+      await ensureFuelExpenseTables();
+      const now = new Date();
+      const qIn = Number(req.query?.quarter || 0);
+      const yIn = Number(req.query?.year || 0);
+      const quarter = Number.isFinite(qIn) && qIn >= 1 && qIn <= 4 ? qIn : Math.floor(now.getUTCMonth() / 3) + 1;
+      const year = Number.isFinite(yIn) && yIn >= 2000 ? yIn : now.getUTCFullYear();
+      const unitNumber = String(req.query?.unit_number || '').trim();
+      const startMonth = (quarter - 1) * 3;
+      const start = new Date(Date.UTC(year, startMonth, 1));
+      const end = new Date(Date.UTC(year, startMonth + 3, 1));
+      const where = ['submitted_at >= $1', 'submitted_at < $2'];
+      const values = [start.toISOString(), end.toISOString()];
+      if (unitNumber) {
+        values.push(unitNumber);
+        where.push(`unit_number = $${values.length}`);
+      }
+      const { rows } = await dbQueryForRoute(
+        `SELECT
+            COALESCE(NULLIF(TRIM(state), ''), 'UNK') AS state,
+            SUM(COALESCE(miles_this_load, 0))::numeric AS miles,
+            SUM(COALESCE(gallons, 0))::numeric AS gallons
+          FROM fuel_expenses
+         WHERE ${where.join(' AND ')}
+         GROUP BY 1
+         ORDER BY 1 ASC`,
+        values
+      );
+      const taxRate = 0.24;
+      const mapped = (rows || []).map((r) => {
+        const miles = Number(r?.miles || 0);
+        const gallons = Number(r?.gallons || 0);
+        const mpg = gallons > 0 ? miles / gallons : 0;
+        const tax = gallons * taxRate;
+        return {
+          state: String(r?.state || 'UNK'),
+          miles,
+          gallons,
+          mpg: Number.isFinite(mpg) ? Math.round(mpg * 100) / 100 : 0,
+          tax: Number.isFinite(tax) ? Math.round(tax * 100) / 100 : 0,
+        };
+      });
+      const totals = mapped.reduce((acc, r) => {
+        acc.miles += Number(r.miles || 0);
+        acc.gallons += Number(r.gallons || 0);
+        acc.tax += Number(r.tax || 0);
+        return acc;
+      }, { miles: 0, gallons: 0, tax: 0 });
+      return res.json({ ok: true, quarter, year, unit_number: unitNumber || null, rows: mapped, totals });
+    } catch (e) {
+      logError('GET /api/reports/tms/fuel-ifta', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [], totals: { miles: 0, gallons: 0, tax: 0 } });
+    }
+  });
+
+  app.get('/api/reports/banking/by-account', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, accounts: [], transactions: [], totals: {} });
+      await ensureBankingTables();
+      const startDate = parseDateLike(req.query?.start_date || '') || '';
+      const endDate = parseDateLike(req.query?.end_date || '') || '';
+      const accountId = String(req.query?.account_id || '').trim();
+      const where = [];
+      const values = [];
+      if (startDate) {
+        values.push(startDate);
+        where.push(`txn_date >= $${values.length}::date`);
+      }
+      if (endDate) {
+        values.push(endDate);
+        where.push(`txn_date <= $${values.length}::date`);
+      }
+      if (accountId) {
+        values.push(accountId);
+        where.push(`account_id = $${values.length}`);
+      }
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const { rows: accountRows } = await dbQuery(
+        `SELECT account_id,
+                MAX(account_name) AS account_name,
+                COUNT(*)::int AS txn_count,
+                COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)::numeric AS deposits,
+                COALESCE(SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END), 0)::numeric AS withdrawals,
+                COALESCE(SUM(amount), 0)::numeric AS net
+           FROM banking_transactions
+           ${whereSql}
+          GROUP BY account_id
+          ORDER BY MAX(account_name) ASC`,
+        values
+      );
+      const { rows: txnRows } = await dbQuery(
+        `SELECT id, account_id, account_name, txn_date, description, amount, status, category, source, reconciled
+           FROM banking_transactions
+           ${whereSql}
+          ORDER BY txn_date DESC, id DESC
+          LIMIT 5000`,
+        values
+      );
+      const accounts = (accountRows || []).map((r) => ({
+        account_id: String(r?.account_id || ''),
+        account_name: String(r?.account_name || r?.account_id || ''),
+        txn_count: Number(r?.txn_count || 0),
+        deposits: Number(r?.deposits || 0),
+        withdrawals: Number(r?.withdrawals || 0),
+        net: Number(r?.net || 0),
+      }));
+      const transactions = (txnRows || []).map((r) => ({
+        id: Number(r?.id || 0),
+        account_id: String(r?.account_id || ''),
+        account_name: String(r?.account_name || r?.account_id || ''),
+        txn_date: String(r?.txn_date || '').slice(0, 10),
+        description: String(r?.description || ''),
+        amount: Number(r?.amount || 0),
+        status: String(r?.status || ''),
+        category: String(r?.category || ''),
+        source: String(r?.source || ''),
+        reconciled: Boolean(r?.reconciled),
+      }));
+      const totals = accounts.reduce((acc, r) => {
+        acc.accounts += 1;
+        acc.txn_count += Number(r.txn_count || 0);
+        acc.deposits += Number(r.deposits || 0);
+        acc.withdrawals += Number(r.withdrawals || 0);
+        acc.net += Number(r.net || 0);
+        return acc;
+      }, { accounts: 0, txn_count: 0, deposits: 0, withdrawals: 0, net: 0 });
+      return res.json({ ok: true, accounts, transactions, totals, params: { start_date: startDate, end_date: endDate, account_id: accountId } });
+    } catch (e) {
+      logError('GET /api/reports/banking/by-account', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), accounts: [], transactions: [], totals: {} });
     }
   });
 

@@ -10,6 +10,7 @@ type Props = {
 
 const CATEGORY_LABEL: Record<ReportCategory, string> = {
   overview: 'Overview',
+  financial: 'Financial',
   maintenance: 'Maintenance',
   accounting: 'Accounting',
   compliance: 'Compliance',
