@@ -5327,14 +5327,18 @@
                   <button type="button" class="banking-reg-filter-pills__active" data-bank-filter="all" onclick="bankingSetRegisterTypeFilter('all')">All</button>
                   <button type="button" data-bank-filter="deposits" onclick="bankingSetRegisterTypeFilter('deposits')">Deposits</button>
                   <button type="button" data-bank-filter="withdrawals" onclick="bankingSetRegisterTypeFilter('withdrawals')">Withdrawals</button>
+                  <button type="button" data-bank-filter="categorized" onclick="bankingSetRegisterTypeFilter('categorized')">Categorized</button>
                   <button type="button" data-bank-filter="uncategorized" onclick="bankingSetRegisterTypeFilter('uncategorized')">Uncategorized</button>
+                  <button type="button" data-bank-filter="excluded" onclick="bankingSetRegisterTypeFilter('excluded')">Excluded</button>
                   <button type="button" data-bank-filter="reconciled" onclick="bankingSetRegisterTypeFilter('reconciled')">Reconciled</button>
                 </div>
                 <select id="bankingFilterType" class="qb-in banking-reg-type-sel" aria-hidden="true" tabindex="-1" onchange="loadBankingRegisterPage(0)">
                   <option value="all">All</option>
                   <option value="deposits">Deposits</option>
                   <option value="withdrawals">Withdrawals</option>
+                  <option value="categorized">Categorized</option>
                   <option value="uncategorized">Uncategorized</option>
+                  <option value="excluded">Excluded</option>
                   <option value="reconciled">Reconciled</option>
                 </select>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
@@ -33896,9 +33900,14 @@
       if (importMonth && !importMonth.value) importMonth.value = month;
       try {
         await loadBankingSyncStatus();
-        var rsp = await fetch('/api/banking/accounts?' + new URLSearchParams({ month: month }), { headers: { Accept: 'application/json' } });
+        var rsp = await fetch('/api/banking/accounts/all?' + new URLSearchParams({ month: month }), { headers: { Accept: 'application/json' } });
         var json = await rsp.json();
         var rows = Array.isArray(json?.accounts) ? json.accounts : [];
+        rows = rows.filter(function (a) {
+          var t = String(a?.account_type || '').trim().toLowerCase();
+          return t === 'bank' || t === 'credit card' || t === 'creditcard';
+        });
+        bankingAllAccounts = rows.slice();
         bankingEligibleAccounts = rows;
         renderBankingAccountCards(rows);
       } catch (e) {
@@ -34223,11 +34232,17 @@
         var json = await rsp.json();
         var rows = Array.isArray(json?.transactions) ? json.transactions : [];
         var q = String(document.getElementById('bankingFilterSearch')?.value || '').trim().toLowerCase();
+        var uiType = String(document.getElementById('bankingFilterType')?.value || 'all').trim().toLowerCase();
         if (q) {
           rows = rows.filter(function (r) {
             var desc = String(r?.description || r?.memo || '').toLowerCase();
             var amt = String(Number(r?.amount || 0));
             return desc.includes(q) || amt.includes(q);
+          });
+        }
+        if (uiType === 'categorized' || uiType === 'excluded') {
+          rows = rows.filter(function (r) {
+            return String(r?.status || '').trim().toLowerCase() === uiType;
           });
         }
         if (!rows.length) {
