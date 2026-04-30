@@ -4803,56 +4803,178 @@ export function mountErpCoreApi(app, opts = {}) {
     });
   });
 
+  const BANKING_OCA_KEYWORDS = ['cash', 'checking', 'savings', 'prepay', 'escrow', 'reserves', 'factoring'];
+
+  function bankingEligibleByType(name, accountType) {
+    const nm = String(name || '').trim().toLowerCase();
+    const type = String(accountType || '').trim().toLowerCase();
+    if (type === 'bank' || type === 'credit card' || type === 'creditcard') return true;
+    if (type === 'other current asset' || type === 'othercurrentasset') {
+      return BANKING_OCA_KEYWORDS.some((k) => nm.includes(k));
+    }
+    return false;
+  }
+
+  function normalizeBakingTypeLabel(v) {
+    const t = String(v || '').trim().toLowerCase();
+    if (t === 'creditcard') return 'Credit Card';
+    if (t === 'credit card') return 'Credit Card';
+    if (t === 'othercurrentasset') return 'Other Current Asset';
+    if (t === 'other current asset') return 'Other Current Asset';
+    if (t === 'bank') return 'Bank';
+    return String(v || '').trim() || 'Bank';
+  }
+
+  async function fetchBankingEligibleAccounts(month = '') {
+    await ensureBankingTables();
+    const qboRows = (await dbQuery(
+      `SELECT qbo_id, name, full_data
+         FROM qbo_catalog_cache
+        WHERE entity_type = 'account'
+        ORDER BY name ASC
+        LIMIT 2000`
+    ))?.rows || [];
+    const prefsRows = (await dbQuery(
+      `SELECT account_id, visible, display_order, is_dip, color_tag, is_relay_account
+         FROM bank_account_preferences`
+    ))?.rows || [];
+    const prefById = new Map();
+    prefsRows.forEach((r) => prefById.set(String(r?.account_id || '').trim(), r));
+
+    const txMetaRows = (await dbQuery(
+      `SELECT account_id,
+              MAX(txn_date) AS last_txn_date,
+              COUNT(*) FILTER (WHERE status = 'uncategorized') AS uncategorized_count
+         FROM banking_transactions
+        GROUP BY account_id`
+    ))?.rows || [];
+    const txMetaById = new Map();
+    txMetaRows.forEach((r) => txMetaById.set(String(r?.account_id || '').trim(), r));
+
+    const balRows = month
+      ? ((await dbQuery(
+          `SELECT account_id, opening_balance, receipts, disbursements, ending_balance
+             FROM dip_bank_account_balances
+            WHERE month_key = $1`,
+          [month]
+        ))?.rows || [])
+      : [];
+    const balById = new Map();
+    balRows.forEach((r) => balById.set(String(r?.account_id || '').trim(), r));
+
+    const out = [];
+    for (const r of qboRows) {
+      const accountId = String(r?.qbo_id || '').trim();
+      if (!accountId) continue;
+      const full = r?.full_data && typeof r.full_data === 'object' ? r.full_data : {};
+      const name = String(r?.name || full?.Name || '').trim();
+      const typeRaw = String(full?.AccountType || full?.accountType || '').trim();
+      if (!bankingEligibleByType(name, typeRaw)) continue;
+      const pref = prefById.get(accountId) || null;
+      const txMeta = txMetaById.get(accountId) || null;
+      const bal = balById.get(accountId) || null;
+      const acctNum = String(full?.AcctNum || full?.acctNum || '').replace(/\D+/g, '');
+      const displayType = normalizeBakingTypeLabel(typeRaw);
+      const defaultVisible = String(displayType).toLowerCase() === 'bank';
+      out.push({
+        account_id: accountId,
+        account_name: name || accountId,
+        account_last4: acctNum ? acctNum.slice(-4) : '',
+        account_type: displayType,
+        visible: pref?.visible == null ? defaultVisible : Boolean(pref.visible),
+        display_order: Number.isFinite(Number(pref?.display_order)) ? Number(pref.display_order) : 0,
+        is_dip: pref?.is_dip == null ? true : Boolean(pref.is_dip),
+        color_tag: String(pref?.color_tag || '').trim() || null,
+        is_relay_account: pref?.is_relay_account == null ? false : Boolean(pref.is_relay_account),
+        opening_balance: Number(bal?.opening_balance || 0),
+        receipts: Number(bal?.receipts || 0),
+        disbursements: Number(bal?.disbursements || 0),
+        ending_balance: Number(bal?.ending_balance || 0),
+        balance: Number(bal?.ending_balance || 0),
+        last_transaction_date: txMeta?.last_txn_date || null,
+        uncategorized_count: Number(txMeta?.uncategorized_count || 0),
+      });
+    }
+    out.sort((a, b) => {
+      const d = (Number(a.display_order || 0) - Number(b.display_order || 0));
+      if (d !== 0) return d;
+      return String(a.account_name || '').localeCompare(String(b.account_name || ''));
+    });
+    return out;
+  }
+
   app.get('/api/banking/accounts', async (req, res) => {
     try {
-      await ensureBankingTables();
+      if (!getPoolForRoute()) return res.json({ ok: true, accounts: [], data: [], count: 0 });
       const month = String(req.query?.month || '').trim() || new Date().toISOString().slice(0, 7);
-      const qboRows = (await dbQuery(
-        `SELECT qbo_id, name, full_data
-           FROM qbo_catalog_cache
-          WHERE entity_type = 'account'
-          ORDER BY name ASC
-          LIMIT 1000`
-      ))?.rows || [];
-      const balRows = (await dbQuery(
-        `SELECT account_id, account_name, account_last4, account_type, month_key, opening_balance, receipts, disbursements, ending_balance
-           FROM dip_bank_account_balances
-          WHERE month_key = $1`,
-        [month]
-      ))?.rows || [];
-      const balById = new Map();
-      balRows.forEach((r) => balById.set(String(r.account_id || '').trim(), r));
-      const txRows = (await dbQuery(
-        `SELECT account_id, MAX(txn_date) AS last_txn_date
-           FROM banking_transactions
-          GROUP BY account_id`
-      ))?.rows || [];
-      const lastById = new Map();
-      txRows.forEach((r) => lastById.set(String(r.account_id || '').trim(), r?.last_txn_date || null));
-
-      const out = qboRows.map((r) => {
-        const accountId = String(r?.qbo_id || '').trim();
-        const full = r?.full_data && typeof r.full_data === 'object' ? r.full_data : {};
-        const acctNo = String(full?.AcctNum || full?.acctNum || '').replace(/\D+/g, '');
-        const mapped = balById.get(accountId);
-        return {
-          account_id: accountId,
-          account_name: String(r?.name || full?.Name || '').trim(),
-          account_last4: String(mapped?.account_last4 || acctNo.slice(-4) || '').trim(),
-          account_type: String(mapped?.account_type || full?.AccountType || '').trim() || 'Bank',
-          month,
-          opening_balance: Number(mapped?.opening_balance || 0),
-          receipts: Number(mapped?.receipts || 0),
-          disbursements: Number(mapped?.disbursements || 0),
-          ending_balance: Number(mapped?.ending_balance || 0),
-          balance: Number(mapped?.ending_balance || 0),
-          last_transaction_date: lastById.get(accountId) || null,
-        };
-      });
-      return res.json({ ok: true, data: out });
+      const all = await fetchBankingEligibleAccounts(month);
+      const visible = all.filter((a) => a.visible === true);
+      return res.json({ ok: true, accounts: visible, data: visible, count: visible.length });
     } catch (e) {
       logError('GET /api/banking/accounts', e);
-      return res.json({ ok: true, data: [] });
+      return res.json({ ok: true, accounts: [], data: [], count: 0 });
+    }
+  });
+
+  app.get('/api/banking/accounts/all', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, accounts: [], count: 0 });
+      const month = String(req.query?.month || '').trim() || new Date().toISOString().slice(0, 7);
+      const all = await fetchBankingEligibleAccounts(month);
+      return res.json({ ok: true, accounts: all, count: all.length });
+    } catch (e) {
+      logError('GET /api/banking/accounts/all', e);
+      return res.json({ ok: true, accounts: [], count: 0 });
+    }
+  });
+
+  app.post('/api/banking/accounts/visibility', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const rows = Array.isArray(req.body?.accounts) ? req.body.accounts : [];
+      let saved = 0;
+      for (const item of rows) {
+        const accountId = String(item?.account_id || '').trim();
+        if (!accountId) continue;
+        await dbQuery(
+          `INSERT INTO bank_account_preferences (
+             account_id, account_name, visible, display_order, is_dip, color_tag, is_relay_account, updated_at
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,now())
+           ON CONFLICT (account_id)
+           DO UPDATE SET
+             account_name = COALESCE(EXCLUDED.account_name, bank_account_preferences.account_name),
+             visible = EXCLUDED.visible,
+             display_order = EXCLUDED.display_order,
+             is_dip = EXCLUDED.is_dip,
+             color_tag = EXCLUDED.color_tag,
+             is_relay_account = EXCLUDED.is_relay_account,
+             updated_at = now()`,
+          [
+            accountId,
+            String(item?.account_name || '').trim() || null,
+            Boolean(item?.visible),
+            Number.isFinite(Number(item?.display_order)) ? Number(item.display_order) : 0,
+            item?.is_dip == null ? true : Boolean(item.is_dip),
+            String(item?.color_tag || '').trim() || null,
+            Boolean(item?.is_relay_account),
+          ]
+        );
+        saved += 1;
+      }
+      await writeAuditLog(req, {
+        action: 'upsert_visibility',
+        entity_type: 'bank_account_preferences',
+        entity_id: null,
+        before_state: null,
+        after_state: { saved, rows },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, saved });
+    } catch (e) {
+      logError('POST /api/banking/accounts/visibility', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -4926,11 +5048,124 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.get('/api/banking/transactions', async (req, res) => {
+  app.get('/api/banking/accounts/:accountId/register', async (req, res) => {
     try {
+      if (!getPoolForRoute()) return res.json({ ok: true, transactions: [], total: 0, page: 1, pages: 1, account: null });
+      await ensureBankingTables();
+      const accountId = String(req.params?.accountId || '').trim();
+      const from = String(req.query?.from || '').trim();
+      const to = String(req.query?.to || '').trim();
+      const status = String(req.query?.status || '').trim().toLowerCase();
+      const type = String(req.query?.type || '').trim().toLowerCase();
+      const limit = Math.max(1, Math.min(500, Number(req.query?.limit) || 50));
+      const offset = Math.max(0, Number(req.query?.offset) || 0);
+      if (!accountId) return res.status(400).json({ ok: false, error: 'accountId is required' });
+      const where = ['account_id = $1'];
+      const values = [accountId];
+      if (from) {
+        values.push(from);
+        where.push(`txn_date >= $${values.length}::date`);
+      }
+      if (to) {
+        values.push(to);
+        where.push(`txn_date <= $${values.length}::date`);
+      }
+      if (status && status !== 'all') {
+        values.push(status);
+        where.push(`LOWER(COALESCE(status, '')) = $${values.length}`);
+      }
+      if (type && type !== 'all') {
+        if (type === 'deposits') where.push('amount > 0');
+        else if (type === 'withdrawals') where.push('amount < 0');
+        else if (type === 'uncategorized') where.push(`LOWER(COALESCE(status, '')) = 'uncategorized'`);
+      }
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const totalSql = `SELECT COUNT(*)::int AS total FROM banking_transactions ${whereSql}`;
+      const { rows: totalRows } = await dbQuery(totalSql, values);
+      const total = Number(totalRows?.[0]?.total || 0);
+      const pages = Math.max(1, Math.ceil(total / limit));
+      const page = Math.floor(offset / limit) + 1;
+      const listValues = [...values, limit, offset];
+      const sql = `
+        SELECT id, qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, running_balance,
+               description, vendor_name, memo, cleared, reconciled, source, qbo_status, status, category, created_at, updated_at
+          FROM banking_transactions
+          ${whereSql}
+         ORDER BY txn_date ASC, id ASC
+         LIMIT $${listValues.length - 1} OFFSET $${listValues.length}`;
+      const { rows } = await dbQuery(sql, listValues);
+      return res.json({
+        ok: true,
+        transactions: rows || [],
+        total,
+        page,
+        pages,
+        account: { account_id: accountId },
+      });
+    } catch (e) {
+      logError('GET /api/banking/accounts/:accountId/register', e);
+      return res.json({ ok: true, transactions: [], total: 0, page: 1, pages: 1, account: null });
+    }
+  });
+
+  app.get('/api/banking/transactions/uncategorized', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, transactions: [], total: 0 });
       await ensureBankingTables();
       const accountId = String(req.query?.account_id || '').trim();
-      const month = String(req.query?.month || '').trim();
+      const limit = Math.max(1, Math.min(500, Number(req.query?.limit) || 50));
+      const offset = Math.max(0, Number(req.query?.offset) || 0);
+      const visibleRows = (await dbQuery(
+        `SELECT account_id FROM bank_account_preferences WHERE visible = true`
+      ))?.rows || [];
+      const visibleIds = visibleRows.map((r) => String(r?.account_id || '').trim()).filter(Boolean);
+      const where = [`LOWER(COALESCE(status, '')) = 'uncategorized'`];
+      const values = [];
+      const from = String(req.query?.from || '').trim();
+      const to = String(req.query?.to || '').trim();
+      if (accountId) {
+        values.push(accountId);
+        where.push(`account_id = $${values.length}`);
+      } else if (visibleIds.length) {
+        values.push(visibleIds);
+        where.push(`account_id = ANY($${values.length}::text[])`);
+      }
+      if (from) {
+        values.push(from);
+        where.push(`txn_date >= $${values.length}::date`);
+      }
+      if (to) {
+        values.push(to);
+        where.push(`txn_date <= $${values.length}::date`);
+      }
+      const whereSql = `WHERE ${where.join(' AND ')}`;
+      const { rows: totalRows } = await dbQuery(
+        `SELECT COUNT(*)::int AS total FROM banking_transactions ${whereSql}`,
+        values
+      );
+      const total = Number(totalRows?.[0]?.total || 0);
+      const listValues = [...values, limit, offset];
+      const rows = (await dbQuery(
+        `SELECT id, qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, running_balance,
+                description, vendor_name, memo, cleared, reconciled, source, qbo_status, status, category, created_at, updated_at
+           FROM banking_transactions
+           ${whereSql}
+          ORDER BY txn_date ASC, id ASC
+          LIMIT $${listValues.length - 1} OFFSET $${listValues.length}`,
+        listValues
+      ))?.rows || [];
+      return res.json({ ok: true, transactions: rows, total });
+    } catch (e) {
+      logError('GET /api/banking/transactions/uncategorized', e);
+      return res.json({ ok: true, transactions: [], total: 0 });
+    }
+  });
+
+  app.get('/api/banking/transactions', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, data: [] });
+      await ensureBankingTables();
+      const accountId = String(req.query?.account_id || '').trim();
       const from = String(req.query?.from || '').trim();
       const to = String(req.query?.to || '').trim();
       const where = [];
@@ -4939,24 +5174,17 @@ export function mountErpCoreApi(app, opts = {}) {
         values.push(accountId);
         where.push(`account_id = $${values.length}`);
       }
-      if (month) {
-        values.push(`${month}-01`);
+      if (from) {
+        values.push(from);
         where.push(`txn_date >= $${values.length}::date`);
-        values.push(`${month}-31`);
+      }
+      if (to) {
+        values.push(to);
         where.push(`txn_date <= $${values.length}::date`);
-      } else {
-        if (from) {
-          values.push(from);
-          where.push(`txn_date >= $${values.length}::date`);
-        }
-        if (to) {
-          values.push(to);
-          where.push(`txn_date <= $${values.length}::date`);
-        }
       }
       const sql = `
         SELECT id, qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, running_balance,
-               description, vendor_name, memo, cleared, reconciled, source, qbo_status, created_at, updated_at
+               description, vendor_name, memo, cleared, reconciled, source, qbo_status, status, category, created_at, updated_at
           FROM banking_transactions
           ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
          ORDER BY txn_date DESC, id DESC
@@ -5016,6 +5244,44 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({ ok: true, id: inserted?.id || null });
     } catch (e) {
       logError('POST /api/banking/transactions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/transactions/import', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      await ensureBankingTables();
+      const accountId = String(req.body?.account_id || '').trim();
+      const month = String(req.body?.month || '').trim();
+      const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+      const parsed = rows.length;
+      await dbQuery(
+        `INSERT INTO bank_import_batches (source_type, account_id, filename, rows_total, rows_inserted, rows_skipped, status, parser_notes, uploaded_by, uploaded_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())`,
+        [
+          String(req.body?.source_type || 'manual').trim() || 'manual',
+          accountId || null,
+          String(req.body?.filename || '').trim() || null,
+          parsed,
+          0,
+          0,
+          'preview',
+          'Wave 2 UI placeholder import endpoint',
+          maintActor(req),
+        ]
+      );
+      await writeAuditLog(req, {
+        action: 'import_preview',
+        entity_type: 'bank_import_batches',
+        entity_id: accountId || null,
+        before_state: null,
+        after_state: { account_id: accountId, month, parsed },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, data: { imported: 0, skipped: 0, parsed } });
+    } catch (e) {
+      logError('POST /api/banking/transactions/import', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
