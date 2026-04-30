@@ -81,6 +81,22 @@ export function createForm425cRouter({ logError = console.error } = {}) {
         ORDER BY name ASC
         LIMIT 3000`
     );
+    const { rows: txnRows } = await dbQuery(
+      `SELECT DISTINCT account_id, account_name
+         FROM banking_transactions
+        WHERE account_id IS NOT NULL
+          AND TRIM(account_id) <> ''
+        ORDER BY account_name ASC NULLS LAST
+        LIMIT 3000`
+    );
+    const { rows: dipRows } = await dbQuery(
+      `SELECT DISTINCT account_id, account_name, account_type
+         FROM dip_bank_account_balances
+        WHERE account_id IS NOT NULL
+          AND TRIM(account_id) <> ''
+        ORDER BY account_name ASC NULLS LAST
+        LIMIT 3000`
+    );
     const { rows: prefRows } = await dbQuery(
       `SELECT account_id, visible, is_dip
          FROM bank_account_preferences`
@@ -88,25 +104,36 @@ export function createForm425cRouter({ logError = console.error } = {}) {
     const prefById = new Map();
     (prefRows || []).forEach((r) => prefById.set(String(r?.account_id || '').trim(), r));
     const out = [];
+    const pushAccount = (accountIdRaw, accountNameRaw, accountTypeRaw = 'Bank', allowNonEligible = false) => {
+      const accountId = String(accountIdRaw || '').trim();
+      if (!accountId) return;
+      if (out.some((a) => String(a.account_id) === accountId)) return;
+      const accountName = String(accountNameRaw || '').trim() || accountId;
+      const accountType = String(accountTypeRaw || '').trim() || 'Bank';
+      if (!allowNonEligible && !bankingEligibleByType(accountName, accountType)) return;
+      const pref = prefById.get(accountId) || null;
+      const visible = pref?.visible == null ? true : Boolean(pref.visible);
+      const isDip = pref?.is_dip == null ? true : Boolean(pref.is_dip);
+      if (!visible || !isDip) return;
+      out.push({
+        account_id: accountId,
+        account_name: accountName,
+        account_type: accountType,
+        visible,
+        is_dip: isDip,
+      });
+    };
     for (const r of accRows || []) {
       const accountId = String(r?.qbo_id || '').trim();
       if (!accountId) continue;
       const full = r?.full_data && typeof r.full_data === 'object' ? r.full_data : {};
       const accountName = String(r?.name || full?.Name || '').trim() || accountId;
       const accountType = String(full?.AccountType || full?.accountType || '').trim();
-      if (!bankingEligibleByType(accountName, accountType)) continue;
-      const pref = prefById.get(accountId) || null;
-      const visible = pref?.visible == null ? String(accountType || '').toLowerCase() === 'bank' : Boolean(pref.visible);
-      const isDip = pref?.is_dip == null ? true : Boolean(pref.is_dip);
-      if (!visible || !isDip) continue;
-      out.push({
-        account_id: accountId,
-        account_name: accountName,
-        account_type: accountType || 'Bank',
-        visible,
-        is_dip: isDip,
-      });
+      pushAccount(accountId, accountName, accountType || 'Bank', false);
     }
+    (dipRows || []).forEach((r) => pushAccount(r?.account_id, r?.account_name, r?.account_type || 'Bank', true));
+    (txnRows || []).forEach((r) => pushAccount(r?.account_id, r?.account_name, 'Bank', true));
+    out.sort((a, b) => String(a.account_name || '').localeCompare(String(b.account_name || '')));
     return out;
   }
 
@@ -183,8 +210,27 @@ export function createForm425cRouter({ logError = console.error } = {}) {
     );
     const receipts = Number(sumRows?.[0]?.receipts || 0);
     const disbursements = Number(sumRows?.[0]?.disbursements || 0);
-    const opening = (openRows || []).reduce((s, r) => s + Number(r?.running_balance || 0), 0);
-    const ending = (endRows || []).reduce((s, r) => s + Number(r?.running_balance || 0), 0);
+    let opening = (openRows || []).reduce((s, r) => s + Number(r?.running_balance || 0), 0);
+    let ending = (endRows || []).reduce((s, r) => s + Number(r?.running_balance || 0), 0);
+    if (!(openRows || []).length || !(endRows || []).length) {
+      const { rows: balRows } = await dbQuery(
+        `SELECT month_key,
+                COALESCE(SUM(opening_balance), 0)::numeric AS opening_balance,
+                COALESCE(SUM(ending_balance), 0)::numeric AS ending_balance,
+                COALESCE(SUM(receipts), 0)::numeric AS receipts,
+                COALESCE(SUM(disbursements), 0)::numeric AS disbursements
+           FROM dip_bank_account_balances
+          WHERE account_id = ANY($1::text[])
+            AND month_key IN ($2, $3)
+          GROUP BY month_key`,
+        [accountList, bounds.month, bounds.prev_start_date.slice(0, 7)]
+      );
+      const byMonth = new Map((balRows || []).map((r) => [String(r?.month_key || ''), r]));
+      const cur = byMonth.get(bounds.month) || null;
+      const prev = byMonth.get(bounds.prev_start_date.slice(0, 7)) || null;
+      if (!(openRows || []).length && prev) opening = Number(prev?.ending_balance || prev?.opening_balance || opening || 0);
+      if (!(endRows || []).length && cur) ending = Number(cur?.ending_balance || ending || 0);
+    }
     const net = receipts - disbursements;
     return {
       ok: true,

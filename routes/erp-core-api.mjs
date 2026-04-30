@@ -4243,6 +4243,10 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS relay_transaction_id TEXT');
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS station_name TEXT');
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS state TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS qbo_doc_number TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS qbo_category_name TEXT');
+    await dbQuery("ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS qbo_sync_status TEXT DEFAULT 'synced'");
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS qbo_last_synced_at TIMESTAMPTZ');
     await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS account_name TEXT');
     await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS statement_month TEXT');
     await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS source TEXT');
@@ -4260,6 +4264,8 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_external_ref ON banking_transactions(external_ref)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_import_batch ON banking_transactions(import_batch_id)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_relay_ref ON banking_transactions(relay_transaction_id)');
+    await dbQuery('CREATE UNIQUE INDEX IF NOT EXISTS uq_banking_transactions_qbo_account ON banking_transactions(qbo_txn_id, account_id) WHERE qbo_txn_id IS NOT NULL');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_qbo_sync_status ON banking_transactions(qbo_sync_status, txn_date DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_import_batches_uploaded_at ON bank_import_batches(uploaded_at DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_rules_match ON banking_rules(match_field, match_operator, active)');
   }
@@ -5287,6 +5293,357 @@ export function mountErpCoreApi(app, opts = {}) {
     return out;
   }
 
+  const BANKING_QBO_SYNC_STATE = {
+    inProgress: false,
+    startedAt: null,
+    completedAt: null,
+    lastSync: null,
+    summary: null,
+    error: null,
+  };
+
+  function qboSyncDateIso(value, fallback = '') {
+    const s = String(value || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const d = new Date(s || Date.now());
+    if (!Number.isFinite(d.getTime())) return fallback;
+    return d.toISOString().slice(0, 10);
+  }
+
+  function qboSyncDefaultRange(fullSync = false) {
+    if (fullSync) return { from: '2025-01-01', to: '2026-12-31' };
+    const end = new Date();
+    const start = new Date(end.getTime());
+    start.setDate(start.getDate() - 30);
+    return {
+      from: start.toISOString().slice(0, 10),
+      to: end.toISOString().slice(0, 10),
+    };
+  }
+
+  function qboTxnDirectionFromAmount(amount) {
+    return Number(amount || 0) >= 0 ? 'credit' : 'debit';
+  }
+
+  function parseQboTxnCategory(raw = {}) {
+    const lines = Array.isArray(raw?.Line) ? raw.Line : [];
+    for (const line of lines) {
+      const acct = line?.AccountBasedExpenseLineDetail?.AccountRef
+        || line?.JournalEntryLineDetail?.AccountRef
+        || line?.DepositLineDetail?.AccountRef
+        || line?.SalesItemLineDetail?.ItemRef
+        || null;
+      const name = String(acct?.name || acct?.Name || '').trim();
+      if (name) return name;
+    }
+    return '';
+  }
+
+  function parseQboTxnVendor(raw = {}) {
+    const cand = [
+      raw?.EntityRef?.name,
+      raw?.VendorRef?.name,
+      raw?.CustomerRef?.name,
+      raw?.PayeeRef?.name,
+      raw?.MetaData?.CreateByRef?.name,
+      raw?.PrivateNote,
+    ];
+    for (const c of cand) {
+      const v = String(c || '').trim();
+      if (v) return v;
+    }
+    return '';
+  }
+
+  function normalizeQboTransaction(raw = {}, account = {}) {
+    const txnType = String(raw?.TxnType || raw?.type || raw?.DetailType || 'Transaction').trim() || 'Transaction';
+    let amount = Number(raw?.TotalAmt || raw?.Amount || 0);
+    if (!Number.isFinite(amount)) amount = parseMoneyLike(raw?.TotalAmt || raw?.Amount || 0);
+    const typeLower = txnType.toLowerCase();
+    const forceNegative = ['expense', 'purchase', 'check', 'billpayment', 'bill payment', 'transfer', 'journalentry'];
+    if (amount > 0 && forceNegative.some((x) => typeLower.includes(x))) amount = -Math.abs(amount);
+    if (amount === 0 && Number.isFinite(Number(raw?.Line?.[0]?.Amount))) amount = Number(raw.Line[0].Amount);
+    const categoryName = parseQboTxnCategory(raw);
+    const status = categoryName ? 'categorized' : 'uncategorized';
+    const qboStatus = categoryName ? 'synced' : 'pending';
+    const docNumber = String(raw?.DocNumber || raw?.PaymentRefNum || '').trim();
+    const txnId = String(raw?.Id || raw?.TxnId || '').trim();
+    const accountId = String(account?.Id || account?.id || '').trim();
+    const accountName = String(account?.Name || account?.name || accountId).trim();
+    const txnDate = qboSyncDateIso(raw?.TxnDate || raw?.MetaData?.CreateTime || Date.now(), new Date().toISOString().slice(0, 10));
+    const description = String(raw?.PrivateNote || raw?.Description || raw?.Name || '').trim() || `${txnType} ${docNumber || txnId}`.trim();
+    const memo = String(raw?.PrivateNote || raw?.Memo || '').trim();
+    const vendorName = parseQboTxnVendor(raw);
+    return {
+      qbo_txn_id: txnId,
+      account_id: accountId,
+      account_name: accountName,
+      txn_type: txnType,
+      txn_date: txnDate,
+      amount,
+      txn_direction: qboTxnDirectionFromAmount(amount),
+      description,
+      vendor_name: vendorName || null,
+      memo: memo || null,
+      status,
+      category: categoryName || null,
+      qbo_doc_number: docNumber || null,
+      qbo_status: qboStatus,
+      qbo_sync_status: qboStatus,
+      raw_payload_json: raw,
+    };
+  }
+
+  function parseQboReportTransactions(reportRows = [], account = {}) {
+    const out = [];
+    (Array.isArray(reportRows) ? reportRows : []).forEach((row, idx) => {
+      const vals = Array.isArray(row?.ColData) ? row.ColData : [];
+      const dateVal = String(vals?.[0]?.value || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) return;
+      const desc = String(vals?.[1]?.value || vals?.[2]?.value || 'Transaction').trim();
+      const amountRaw = vals.map((v) => v?.value).find((v) => /^-?\$?[\d,]+(\.\d{1,2})?$/.test(String(v || '').replace(/\s+/g, '')));
+      const amount = parseMoneyLike(amountRaw || 0);
+      if (!Number.isFinite(amount)) return;
+      const category = String(vals?.[3]?.value || vals?.[4]?.value || '').trim();
+      const memo = String(vals?.[5]?.value || '').trim();
+      const txnType = String(vals?.[2]?.value || 'Transaction').trim();
+      const txnId = String(vals?.[6]?.id || vals?.[6]?.value || '').trim() || `${account?.Id || account?.id || 'acct'}:report:${dateVal}:${idx}`;
+      out.push({
+        qbo_txn_id: txnId,
+        account_id: String(account?.Id || account?.id || '').trim(),
+        account_name: String(account?.Name || account?.name || '').trim() || String(account?.Id || '').trim(),
+        txn_type: txnType || 'Transaction',
+        txn_date: dateVal,
+        amount,
+        txn_direction: qboTxnDirectionFromAmount(amount),
+        description: desc || `${txnType || 'Transaction'} ${txnId}`,
+        vendor_name: null,
+        memo: memo || null,
+        status: category ? 'categorized' : 'uncategorized',
+        category: category || null,
+        qbo_doc_number: null,
+        qbo_status: category ? 'synced' : 'pending',
+        qbo_sync_status: category ? 'synced' : 'pending',
+        raw_payload_json: row,
+      });
+    });
+    return out;
+  }
+
+  async function fetchQboBankAndCardAccounts() {
+    const qbo = createQboApiClient();
+    const q = "SELECT * FROM Account WHERE AccountType IN ('Bank','Credit Card') AND Active = true MAXRESULTS 1000";
+    const data = await withTimeout(qbo.qboQuery(q), EXTERNAL_API_TIMEOUT_MS, 'QBO bank account query');
+    const rows = data?.QueryResponse?.Account || data?.Account || [];
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  async function fetchQboTransactionsForAccount(account = {}, from = '', to = '') {
+    const qbo = createQboApiClient();
+    const accountId = String(account?.Id || account?.id || '').trim();
+    if (!accountId) return [];
+    const collected = [];
+    let start = 1;
+    const max = 1000;
+    for (;;) {
+      const q = `SELECT * FROM Transaction WHERE AccountRef = '${accountId}' AND TxnDate >= '${from}' AND TxnDate <= '${to}' STARTPOSITION ${start} MAXRESULTS ${max}`;
+      let data = null;
+      try {
+        data = await withTimeout(qbo.qboQuery(q), EXTERNAL_API_TIMEOUT_MS, `QBO txn query ${accountId}`);
+      } catch (_e) {
+        data = null;
+      }
+      const rows = data?.QueryResponse?.Transaction || data?.Transaction || [];
+      const txns = Array.isArray(rows) ? rows : [];
+      txns.forEach((raw) => {
+        const norm = normalizeQboTransaction(raw, account);
+        if (norm.qbo_txn_id && norm.account_id) collected.push(norm);
+      });
+      if (txns.length < max) break;
+      start += max;
+      if (start > 50000) break;
+    }
+
+    if (collected.length) return collected;
+
+    try {
+      const params = new URLSearchParams({ start_date: from, end_date: to, account_id: accountId, account: accountId });
+      const report = await withTimeout(
+        qbo.qboGet(`/reports/TransactionList?${params.toString()}`),
+        EXTERNAL_API_TIMEOUT_MS,
+        `QBO transaction list ${accountId}`
+      );
+      const rows = report?.Rows?.Row || [];
+      return parseQboReportTransactions(rows, account);
+    } catch (_e) {
+      return [];
+    }
+  }
+
+  async function upsertBankingTransactionFromQbo(txn = {}, actor = 'system:qbo-sync') {
+    const sql = `INSERT INTO banking_transactions (
+      qbo_txn_id, account_id, account_name, txn_type, txn_date, amount, txn_direction,
+      description, vendor_name, memo, status, category, category_source, source, source_ref,
+      qbo_status, qbo_sync_status, qbo_doc_number, qbo_category_name, qbo_last_synced_at,
+      raw_payload_json, created_by, updated_by, updated_at
+    ) VALUES (
+      $1,$2,$3,$4,$5,$6,$7,
+      $8,$9,$10,$11,$12,'qbo','qbo',$13,
+      $14,$15,$16,$17,now(),
+      $18::jsonb,$19,$19,now()
+    )
+    ON CONFLICT (qbo_txn_id, account_id)
+    DO UPDATE SET
+      account_name = EXCLUDED.account_name,
+      txn_type = EXCLUDED.txn_type,
+      txn_date = EXCLUDED.txn_date,
+      amount = EXCLUDED.amount,
+      txn_direction = EXCLUDED.txn_direction,
+      description = EXCLUDED.description,
+      vendor_name = EXCLUDED.vendor_name,
+      memo = EXCLUDED.memo,
+      status = EXCLUDED.status,
+      category = EXCLUDED.category,
+      category_source = EXCLUDED.category_source,
+      source = EXCLUDED.source,
+      source_ref = EXCLUDED.source_ref,
+      qbo_status = EXCLUDED.qbo_status,
+      qbo_sync_status = EXCLUDED.qbo_sync_status,
+      qbo_doc_number = EXCLUDED.qbo_doc_number,
+      qbo_category_name = EXCLUDED.qbo_category_name,
+      qbo_last_synced_at = now(),
+      raw_payload_json = EXCLUDED.raw_payload_json,
+      updated_by = EXCLUDED.updated_by,
+      updated_at = now()
+    RETURNING id, (xmax = 0) AS inserted`;
+    const values = [
+      String(txn?.qbo_txn_id || '').trim() || null,
+      String(txn?.account_id || '').trim() || null,
+      String(txn?.account_name || '').trim() || null,
+      String(txn?.txn_type || '').trim() || 'Transaction',
+      String(txn?.txn_date || '').trim() || new Date().toISOString().slice(0, 10),
+      Number(txn?.amount || 0),
+      String(txn?.txn_direction || qboTxnDirectionFromAmount(txn?.amount || 0)).trim() || 'debit',
+      String(txn?.description || '').trim() || null,
+      String(txn?.vendor_name || '').trim() || null,
+      String(txn?.memo || '').trim() || null,
+      String(txn?.status || 'uncategorized').trim(),
+      String(txn?.category || '').trim() || null,
+      String(txn?.qbo_txn_id || '').trim() || null,
+      String(txn?.qbo_status || 'pending').trim(),
+      String(txn?.qbo_sync_status || txn?.qbo_status || 'pending').trim(),
+      String(txn?.qbo_doc_number || '').trim() || null,
+      String(txn?.category || txn?.qbo_category_name || '').trim() || null,
+      JSON.stringify(txn?.raw_payload_json || {}),
+      actor,
+    ];
+    const { rows } = await dbQuery(sql, values);
+    const row = rows?.[0] || null;
+    return { id: row?.id || null, inserted: Boolean(row?.inserted) };
+  }
+
+  async function upsertBankPreferenceFromQboAccount(account = {}) {
+    const id = String(account?.Id || account?.id || '').trim();
+    if (!id) return;
+    const name = String(account?.Name || account?.name || id).trim();
+    const type = normalizeBakingTypeLabel(account?.AccountType || account?.accountType || 'Bank');
+    await dbQuery(
+      `INSERT INTO bank_account_preferences (account_id, account_name, account_type, visible, is_dip, updated_at)
+       VALUES ($1,$2,$3,true,true,now())
+       ON CONFLICT (account_id)
+       DO UPDATE SET
+         account_name = EXCLUDED.account_name,
+         account_type = EXCLUDED.account_type,
+         updated_at = now()`,
+      [id, name, type]
+    );
+  }
+
+  async function updateBalanceSnapshotFromQboAccount(account = {}, month = '') {
+    const accountId = String(account?.Id || account?.id || '').trim();
+    if (!accountId || !month) return;
+    const balance = Number(account?.CurrentBalance || account?.currentBalance || 0);
+    const opening = Number(account?.OpeningBalance || 0);
+    const receipts = Math.max(0, balance - opening);
+    const disbursements = Math.max(0, opening - balance);
+    await dbQuery(
+      `INSERT INTO dip_bank_account_balances (
+        account_id, account_name, account_type, month_key,
+        opening_balance, receipts, disbursements, ending_balance, source, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'qbo',now())
+      ON CONFLICT (account_id, month_key)
+      DO UPDATE SET
+        account_name = EXCLUDED.account_name,
+        account_type = EXCLUDED.account_type,
+        opening_balance = EXCLUDED.opening_balance,
+        receipts = EXCLUDED.receipts,
+        disbursements = EXCLUDED.disbursements,
+        ending_balance = EXCLUDED.ending_balance,
+        source = 'qbo',
+        updated_at = now()`,
+      [
+        accountId,
+        String(account?.Name || accountId).trim(),
+        normalizeBakingTypeLabel(account?.AccountType || account?.accountType || 'Bank'),
+        month,
+        opening,
+        receipts,
+        disbursements,
+        balance,
+      ]
+    );
+  }
+
+  async function syncBankingTransactionsFromQbo({ accountIds = [], from = '', to = '', fullSync = false, actor = 'system:qbo-sync' } = {}) {
+    await ensureBankingTables();
+    const defaultRange = qboSyncDefaultRange(fullSync);
+    const fromDate = qboSyncDateIso(from, defaultRange.from) || defaultRange.from;
+    const toDate = qboSyncDateIso(to, defaultRange.to) || defaultRange.to;
+    const targetMonth = String(toDate || '').slice(0, 7);
+
+    const allAccounts = await fetchQboBankAndCardAccounts();
+    const picked = new Set((Array.isArray(accountIds) ? accountIds : []).map((x) => String(x || '').trim()).filter(Boolean));
+    const accounts = picked.size
+      ? allAccounts.filter((a) => picked.has(String(a?.Id || a?.id || '').trim()))
+      : allAccounts;
+
+    const summary = {
+      ok: true,
+      from: fromDate,
+      to: toDate,
+      full_sync: Boolean(fullSync),
+      accounts_synced: 0,
+      transactions_imported: 0,
+      transactions_updated: 0,
+      already_categorized: 0,
+      uncategorized: 0,
+      total_transactions: 0,
+    };
+
+    for (const account of accounts) {
+      await upsertBankPreferenceFromQboAccount(account);
+      await updateBalanceSnapshotFromQboAccount(account, targetMonth);
+      const txns = await fetchQboTransactionsForAccount(account, fromDate, toDate);
+      summary.accounts_synced += 1;
+      for (const txn of txns) {
+        if (!txn?.qbo_txn_id || !txn?.account_id) continue;
+        const up = await upsertBankingTransactionFromQbo(txn, actor);
+        summary.total_transactions += 1;
+        if (up.inserted) summary.transactions_imported += 1;
+        else summary.transactions_updated += 1;
+        if (String(txn?.status || '').toLowerCase() === 'categorized') summary.already_categorized += 1;
+        else summary.uncategorized += 1;
+      }
+    }
+
+    BANKING_QBO_SYNC_STATE.lastSync = new Date().toISOString();
+    BANKING_QBO_SYNC_STATE.completedAt = BANKING_QBO_SYNC_STATE.lastSync;
+    BANKING_QBO_SYNC_STATE.summary = summary;
+    BANKING_QBO_SYNC_STATE.error = null;
+
+    return summary;
+  }
+
   const BANKING_ACTION_TYPES = new Set(['expense', 'bill_payment', 'transfer', 'settlement', 'factoring', 'apply_bill']);
 
   function toEntityTypeForBankingAction(action = '') {
@@ -5365,6 +5722,8 @@ export function mountErpCoreApi(app, opts = {}) {
               category_source = 'manual',
               vendor_name = COALESCE($3, vendor_name),
               memo = COALESCE($4, memo),
+              qbo_status = 'pending',
+              qbo_sync_status = 'pending',
               updated_by = $5,
               updated_at = now()
         WHERE id = $1
@@ -5607,6 +5966,164 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/banking/accounts/all', e);
       return res.json({ ok: true, accounts: [], count: 0 });
+    }
+  });
+
+  app.post('/api/banking/sync-from-qbo', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      if (BANKING_QBO_SYNC_STATE.inProgress) {
+        return res.status(409).json({ ok: false, error: 'Sync already in progress', sync_in_progress: true });
+      }
+      const accountIds = Array.isArray(req.body?.account_ids) ? req.body.account_ids : [];
+      const fullSync = Boolean(req.body?.full_sync);
+      const from = String(req.body?.from || '').trim();
+      const to = String(req.body?.to || '').trim();
+      BANKING_QBO_SYNC_STATE.inProgress = true;
+      BANKING_QBO_SYNC_STATE.startedAt = new Date().toISOString();
+      BANKING_QBO_SYNC_STATE.error = null;
+      const summary = await syncBankingTransactionsFromQbo({
+        accountIds,
+        from,
+        to,
+        fullSync,
+        actor: maintActor(req) || 'system:qbo-sync',
+      });
+      return res.json({ ok: true, ...summary, sync_in_progress: false, last_sync: BANKING_QBO_SYNC_STATE.lastSync });
+    } catch (e) {
+      BANKING_QBO_SYNC_STATE.error = e?.message || String(e);
+      logError('POST /api/banking/sync-from-qbo', e);
+      return res.status(500).json({ ok: false, error: BANKING_QBO_SYNC_STATE.error || 'QBO sync failed' });
+    } finally {
+      BANKING_QBO_SYNC_STATE.inProgress = false;
+    }
+  });
+
+  app.get('/api/banking/sync-status', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        return res.json({
+          ok: true,
+          last_sync: BANKING_QBO_SYNC_STATE.lastSync,
+          accounts: 0,
+          total_transactions: 0,
+          uncategorized_count: 0,
+          sync_in_progress: Boolean(BANKING_QBO_SYNC_STATE.inProgress),
+        });
+      }
+      await ensureBankingTables();
+      const [{ rows: totalsRows }, { rows: accountsRows }] = await Promise.all([
+        dbQuery(`SELECT COUNT(*)::int AS total_transactions,
+                        COUNT(*) FILTER (WHERE status = 'uncategorized')::int AS uncategorized_count
+                   FROM banking_transactions`),
+        dbQuery(`SELECT COUNT(DISTINCT account_id)::int AS accounts FROM banking_transactions`),
+      ]);
+      const totals = totalsRows?.[0] || {};
+      const acc = accountsRows?.[0] || {};
+      return res.json({
+        ok: true,
+        last_sync: BANKING_QBO_SYNC_STATE.lastSync,
+        accounts: Number(acc?.accounts || 0),
+        total_transactions: Number(totals?.total_transactions || 0),
+        uncategorized_count: Number(totals?.uncategorized_count || 0),
+        sync_in_progress: Boolean(BANKING_QBO_SYNC_STATE.inProgress),
+        last_summary: BANKING_QBO_SYNC_STATE.summary || null,
+        error: BANKING_QBO_SYNC_STATE.error || null,
+      });
+    } catch (e) {
+      logError('GET /api/banking/sync-status', e);
+      return res.status(500).json({ ok: false, error: e?.message || 'Unable to read sync status' });
+    }
+  });
+
+  app.post('/api/banking/push-to-qbo', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const txnId = String(req.body?.txn_id || '').trim();
+      if (!txnId) return res.status(400).json({ ok: false, error: 'txn_id is required' });
+      const { rows } = await dbQuery('SELECT * FROM banking_transactions WHERE id = $1 LIMIT 1', [txnId]);
+      const txn = rows?.[0] || null;
+      if (!txn) return res.status(404).json({ ok: false, error: 'Transaction not found' });
+      if (String(txn?.status || '').toLowerCase() === 'uncategorized') {
+        return res.status(400).json({ ok: false, error: 'Transaction must be categorized first' });
+      }
+
+      const category = String(txn?.category || '').trim().toLowerCase();
+      let qboType = 'purchase';
+      if (category.includes('bill payment') || category.includes('bill_payment')) qboType = 'billpayment';
+      else if (category.includes('transfer')) qboType = 'transfer';
+      else if (Number(txn?.amount || 0) > 0 || category.includes('deposit')) qboType = 'deposit';
+
+      const qbo = createQboApiClient();
+      const amountAbs = Math.abs(Number(txn?.amount || 0));
+      const payload = {
+        TxnDate: qboSyncDateIso(txn?.txn_date, new Date().toISOString().slice(0, 10)),
+        PrivateNote: String(txn?.memo || txn?.description || '').trim() || undefined,
+      };
+      if (qboType === 'deposit') {
+        payload.TotalAmt = amountAbs;
+        payload.DepositToAccountRef = { value: String(txn?.account_id || '').trim() };
+      } else if (qboType === 'transfer') {
+        payload.Amount = amountAbs;
+        payload.FromAccountRef = { value: String(txn?.account_id || '').trim() };
+        payload.ToAccountRef = { value: String(req.body?.to_account_id || txn?.category || '').trim() };
+      } else if (qboType === 'billpayment') {
+        payload.TotalAmt = amountAbs;
+        payload.PayType = 'Check';
+        payload.CheckPayment = { BankAccountRef: { value: String(txn?.account_id || '').trim() } };
+      } else {
+        payload.TotalAmt = amountAbs;
+        payload.AccountRef = { value: String(txn?.account_id || '').trim() };
+      }
+
+      const posted = await withTimeout(qbo.qboPost(qboType, payload), EXTERNAL_API_TIMEOUT_MS, `QBO ${qboType} post`);
+      const newQboTxnId = String(
+        posted?.Id
+        || posted?.Purchase?.Id
+        || posted?.BillPayment?.Id
+        || posted?.Transfer?.Id
+        || posted?.Deposit?.Id
+        || txn?.qbo_txn_id
+        || ''
+      ).trim();
+
+      await dbQuery(
+        `UPDATE banking_transactions
+            SET qbo_txn_id = COALESCE(NULLIF($2,''), qbo_txn_id),
+                qbo_status = 'synced',
+                qbo_sync_status = 'synced',
+                qbo_sync_error = null,
+                qbo_last_synced_at = now(),
+                updated_by = $3,
+                updated_at = now()
+          WHERE id = $1`,
+        [txnId, newQboTxnId, maintActor(req)]
+      );
+
+      return res.json({ ok: true, qbo_txn_id: newQboTxnId || null, qbo_txn_type: qboType });
+    } catch (e) {
+      const txnId = String(req.body?.txn_id || '').trim();
+      if (txnId) {
+        try {
+          await dbQuery(
+            `UPDATE banking_transactions
+                SET qbo_status = 'error',
+                    qbo_sync_status = 'error',
+                    qbo_sync_error = $2,
+                    updated_by = $3,
+                    updated_at = now()
+              WHERE id = $1`,
+            [txnId, String(e?.message || e), maintActor(req)]
+          );
+        } catch (_err) {
+          // no-op
+        }
+      }
+      logError('POST /api/banking/push-to-qbo', e);
+      return res.status(500).json({ ok: false, error: e?.message || 'Unable to push transaction to QuickBooks' });
     }
   });
 

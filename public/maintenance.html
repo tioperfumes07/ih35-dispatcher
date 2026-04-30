@@ -5019,6 +5019,16 @@
             </div>
           </div>
           <div class="panel-body">
+            <div id="bankingQboSyncBanner" class="mini-note" style="margin:0 0 10px;padding:10px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div>
+                <div><strong id="bankingQboSyncLabel">Sync status loading...</strong></div>
+                <div id="bankingQboSyncCounts" class="mini-note" style="margin-top:4px">0 transactions | 0 uncategorized</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn btn--small" id="bankingSyncNowBtn" onclick="syncBankingFromQbo(false)">Sync Now</button>
+                <button type="button" class="btn btn--small" id="bankingSyncFullBtn" onclick="syncBankingFromQbo(true)">Sync Full History (2025-2026)</button>
+              </div>
+            </div>
             <div id="bankingAccountsGrid" class="banking-accounts-grid"></div>
           </div>
         </div>
@@ -5182,10 +5192,10 @@
                   <thead>
                     <tr>
                       <th><input id="bankingSelectAllRows" type="checkbox" onchange="bankingToggleAllRows(this.checked)" /></th>
-                      <th>Date</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th class="num">Balance</th><th>Status</th><th>Category</th><th>Action</th>
+                      <th>Date</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th class="num">Balance</th><th>Status</th><th>QBO Status</th><th>Category</th><th>Action</th>
                     </tr>
                   </thead>
-                  <tbody id="bankingRegisterBody"><tr><td colspan="9" class="muted">Choose an account card.</td></tr></tbody>
+                  <tbody id="bankingRegisterBody"><tr><td colspan="10" class="muted">Choose an account card.</td></tr></tbody>
                 </table>
               </div>
               <div id="bankingRegisterPagination" class="mini-note" style="margin-top:8px"></div>
@@ -5195,9 +5205,9 @@
               <div class="banking-register-wrap">
                 <table class="table" style="min-width:1280px">
                   <thead>
-                    <tr><th>Date</th><th>Account</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th>Status</th><th>Category</th><th>Action</th></tr>
+                    <tr><th>Date</th><th>Account</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th>Status</th><th>QBO Status</th><th>Category</th><th>Action</th></tr>
                   </thead>
-                  <tbody id="bankingQueueBody"><tr><td colspan="8" class="muted">Loading…</td></tr></tbody>
+                  <tbody id="bankingQueueBody"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
                 </table>
               </div>
               <div id="bankingQueuePagination" class="mini-note" style="margin-top:8px"></div>
@@ -29687,6 +29697,115 @@
     var bankingCurrentTab = 'register';
     var bankingPageSize = 50;
     var bankingPendingImportRows = [];
+    var bankingQboSyncMeta = {
+      last_sync: '',
+      total_transactions: 0,
+      uncategorized_count: 0,
+      sync_in_progress: false,
+      accounts: 0,
+      error: '',
+    };
+
+    function bankingTimeAgoLabel(iso) {
+      var d = new Date(String(iso || '').trim());
+      if (!Number.isFinite(d.getTime())) return 'never';
+      var diff = Math.max(0, Date.now() - d.getTime());
+      var mins = Math.round(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + ' min ago';
+      var hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + ' hr ago';
+      var days = Math.round(hrs / 24);
+      return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+    }
+
+    function bankingQboStatusLabel(txn) {
+      var raw = String(txn?.qbo_sync_status || txn?.qbo_status || '').toLowerCase();
+      if (raw === 'synced') return 'Synced';
+      if (raw === 'error' || raw === 'failed' || raw === 'dead') return 'Error';
+      return 'Pending';
+    }
+
+    function bankingRenderSyncBanner(meta) {
+      bankingQboSyncMeta = Object.assign({}, bankingQboSyncMeta, meta || {});
+      var label = document.getElementById('bankingQboSyncLabel');
+      var counts = document.getElementById('bankingQboSyncCounts');
+      var nowBtn = document.getElementById('bankingSyncNowBtn');
+      var fullBtn = document.getElementById('bankingSyncFullBtn');
+      var last = bankingQboSyncMeta.last_sync ? bankingTimeAgoLabel(bankingQboSyncMeta.last_sync) : 'never';
+      if (label) {
+        if (bankingQboSyncMeta.sync_in_progress) {
+          label.textContent = 'Syncing from QuickBooks...';
+        } else if (bankingQboSyncMeta.error) {
+          label.textContent = 'QuickBooks sync error: ' + String(bankingQboSyncMeta.error || 'unknown error');
+        } else {
+          label.textContent = 'Last synced from QuickBooks: ' + last;
+        }
+      }
+      if (counts) {
+        counts.textContent = Number(bankingQboSyncMeta.total_transactions || 0) + ' transactions | '
+          + Number(bankingQboSyncMeta.uncategorized_count || 0) + ' uncategorized';
+      }
+      if (nowBtn) nowBtn.disabled = Boolean(bankingQboSyncMeta.sync_in_progress);
+      if (fullBtn) fullBtn.disabled = Boolean(bankingQboSyncMeta.sync_in_progress);
+    }
+
+    async function loadBankingSyncStatus() {
+      try {
+        var rsp = await fetch('/api/banking/sync-status', { headers: { Accept: 'application/json' } });
+        var json = await rsp.json();
+        bankingRenderSyncBanner({
+          last_sync: String(json?.last_sync || ''),
+          total_transactions: Number(json?.total_transactions || 0),
+          uncategorized_count: Number(json?.uncategorized_count || 0),
+          sync_in_progress: Boolean(json?.sync_in_progress),
+          accounts: Number(json?.accounts || 0),
+          error: String(json?.error || ''),
+        });
+      } catch (e) {
+        bankingRenderSyncBanner({ error: String(e?.message || e), sync_in_progress: false });
+      }
+    }
+
+    async function syncBankingFromQbo(fullSync) {
+      var isFull = Boolean(fullSync);
+      if (isFull) {
+        var confirmed = window.confirm('This will import all 2025-2026 transactions from QuickBooks. Continue?');
+        if (!confirmed) return;
+      }
+      var now = new Date();
+      var to = now.toISOString().slice(0, 10);
+      var from = new Date(now.getTime());
+      from.setDate(from.getDate() - 30);
+      bankingRenderSyncBanner({ sync_in_progress: true, error: '' });
+      try {
+        var rsp = await fetch('/api/banking/sync-from-qbo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'x-ih35-role': 'accountant',
+          },
+          body: JSON.stringify({
+            from: from.toISOString().slice(0, 10),
+            to: to,
+            full_sync: isFull,
+          }),
+        });
+        var json = await rsp.json();
+        if (!rsp.ok || !json?.ok) {
+          throw new Error(String(json?.error || ('Sync failed (' + rsp.status + ')')));
+        }
+        toast('Synced ' + Number(json?.transactions_imported || 0) + ' transactions, '
+          + Number(json?.uncategorized || 0) + ' need categorization.');
+        await loadBankingSyncStatus();
+        await loadBankingAccounts();
+        if (bankingSelectedAccountId) await loadBankingRegisterPage(bankingRegisterOffset || 0);
+      } catch (e) {
+        bankingRenderSyncBanner({ sync_in_progress: false, error: String(e?.message || e) });
+        toast('QuickBooks sync failed: ' + String(e?.message || e), false);
+      }
+    }
 
     function bankingMonthValue() {
       var monthInput = document.getElementById('bankingMonth');
@@ -29737,6 +29856,7 @@
           '<div class="banking-account-balance' + (balance < 0 ? ' negative' : '') + '">Balance: ' + qboMoneyFmt(balance) + '</div>' +
           '<div class="mini-note">Uncategorized: <span class="banking-count-badge' + (unc > 0 ? ' warn' : '') + '">' + unc + ' items</span></div>' +
           '<div class="mini-note">Last txn: ' + escapeHtml(String(a?.last_transaction_date || '--')) + '</div>' +
+          '<div class="mini-note">Last synced: ' + escapeHtml(String(bankingQboSyncMeta?.last_sync ? bankingTimeAgoLabel(bankingQboSyncMeta.last_sync) : 'never')) + '</div>' +
           '<div><span class="btn btn--small">View Register</span></div>' +
         '</button>';
       }).join('');
@@ -29749,6 +29869,7 @@
       var importMonth = document.getElementById('bankImportMonth');
       if (importMonth && !importMonth.value) importMonth.value = month;
       try {
+        await loadBankingSyncStatus();
         var rsp = await fetch('/api/banking/accounts?' + new URLSearchParams({ month: month }), { headers: { Accept: 'application/json' } });
         var json = await rsp.json();
         var rows = Array.isArray(json?.accounts) ? json.accounts : [];
@@ -30052,7 +30173,7 @@
       if (!bankingSelectedAccountId) return;
       bankingRegisterOffset = Math.max(0, Number(offset) || 0);
       var body = document.getElementById('bankingRegisterBody');
-      if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Loading register…</td></tr>';
+      if (body) body.innerHTML = '<tr><td colspan="10" class="muted">Loading register…</td></tr>';
       bankingSelectedRows = new Set();
       bankingUpdateBulkBar();
       try {
@@ -30075,7 +30196,7 @@
           });
         }
         if (!rows.length) {
-          if (body) body.innerHTML = '<tr><td colspan="9" class="muted">No transactions found.</td></tr>';
+          if (body) body.innerHTML = '<tr><td colspan="10" class="muted">No transactions found.</td></tr>';
           bankingRenderPagination('bankingRegisterPagination', Number(json?.total || 0), bankingRegisterOffset, 'loadBankingRegisterPage');
           return;
         }
@@ -30093,6 +30214,7 @@
               '<td class="num banking-amt-negative">' + withdrawals + '</td>' +
               '<td class="num">' + (r?.running_balance == null ? '--' : qboMoneyFmt(r.running_balance)) + '</td>' +
               '<td>' + escapeHtml(String(r?.status || '--')) + '</td>' +
+              '<td>' + escapeHtml(bankingQboStatusLabel(r)) + '</td>' +
               '<td>' + escapeHtml(String(r?.category || '--')) + '</td>' +
               '<td>' + bankingActionMenuHtml(r) + '</td>' +
             '</tr>';
@@ -30100,14 +30222,14 @@
         }
         bankingRenderPagination('bankingRegisterPagination', Number(json?.total || 0), bankingRegisterOffset, 'loadBankingRegisterPage');
       } catch (e) {
-        if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Unable to load register: ' + String(e?.message || e) + '</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="10" class="muted">Unable to load register: ' + String(e?.message || e) + '</td></tr>';
       }
     }
 
     async function loadBankingUncategorizedQueue(offset) {
       bankingQueueOffset = Math.max(0, Number(offset) || 0);
       var body = document.getElementById('bankingQueueBody');
-      if (body) body.innerHTML = '<tr><td colspan="8" class="muted">Loading uncategorized queue…</td></tr>';
+      if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Loading uncategorized queue…</td></tr>';
       try {
         var params = new URLSearchParams({ limit: String(bankingPageSize), offset: String(bankingQueueOffset) });
         var rsp = await fetch('/api/banking/transactions/uncategorized?' + params.toString(), { headers: { Accept: 'application/json' } });
@@ -30117,7 +30239,7 @@
         var banner = document.getElementById('bankingQueueBanner');
         if (banner) banner.textContent = total + ' transactions need categorization';
         if (!rows.length) {
-          if (body) body.innerHTML = '<tr><td colspan="8" class="muted">No uncategorized transactions.</td></tr>';
+          if (body) body.innerHTML = '<tr><td colspan="9" class="muted">No uncategorized transactions.</td></tr>';
           bankingRenderPagination('bankingQueuePagination', total, bankingQueueOffset, 'loadBankingUncategorizedQueue');
           return;
         }
@@ -30133,6 +30255,7 @@
               '<td class="num banking-amt-positive">' + deposits + '</td>' +
               '<td class="num banking-amt-negative">' + withdrawals + '</td>' +
               '<td>' + escapeHtml(String(r?.status || '--')) + '</td>' +
+              '<td>' + escapeHtml(bankingQboStatusLabel(r)) + '</td>' +
               '<td>' + escapeHtml(String(r?.category || '--')) + '</td>' +
               '<td>' + bankingActionMenuHtml(r) + '</td>' +
             '</tr>';
@@ -30140,7 +30263,7 @@
         }
         bankingRenderPagination('bankingQueuePagination', total, bankingQueueOffset, 'loadBankingUncategorizedQueue');
       } catch (e) {
-        if (body) body.innerHTML = '<tr><td colspan="8" class="muted">Unable to load queue: ' + String(e?.message || e) + '</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Unable to load queue: ' + String(e?.message || e) + '</td></tr>';
       }
     }
 
@@ -30843,7 +30966,19 @@
             });
             var jsonSingle = await rspSingle.json();
             if (!rspSingle.ok || jsonSingle?.ok === false) throw new Error(jsonSingle?.error || 'Categorization failed');
-            bankToast('Transaction categorized.');
+            if (postQbo) {
+              var pushTxnId = String(jsonSingle?.transaction?.id || __drawerCtx.txnId || '').trim();
+              if (pushTxnId) {
+                var rspPush = await fetch('/api/banking/push-to-qbo', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                  body: JSON.stringify({ txn_id: pushTxnId }),
+                });
+                var jsonPush = await rspPush.json();
+                if (!rspPush.ok || jsonPush?.ok === false) throw new Error(jsonPush?.error || 'Push to QBO failed');
+              }
+            }
+            bankToast(postQbo ? 'Transaction categorized and pushed to QuickBooks.' : 'Transaction categorized.');
           }
           drawerClose();
           if (typeof window.loadBankingRegisterPage === 'function') window.loadBankingRegisterPage(window.bankingRegisterOffset || 0);

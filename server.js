@@ -414,8 +414,48 @@ async function start() {
   });
 
   const PORT = process.env.PORT || 3100;
+
+  function startBankingQboAutoSync() {
+    const intervalMs = 15 * 60 * 1000;
+    const baseUrl = `http://127.0.0.1:${PORT}`;
+    const runSync = async (fullSync = false) => {
+      const to = new Date();
+      const from = new Date(to.getTime());
+      from.setDate(from.getDate() - 30);
+      const payload = {
+        from: from.toISOString().slice(0, 10),
+        to: to.toISOString().slice(0, 10),
+        full_sync: Boolean(fullSync),
+      };
+      try {
+        const rsp = await fetch(`${baseUrl}/api/banking/sync-from-qbo`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'x-ih35-role': 'accountant',
+            'x-ih35-user': 'system:auto-sync',
+          },
+          body: JSON.stringify(payload),
+        });
+        const json = await rsp.json().catch(() => ({}));
+        console.log('[banking:qbo-auto-sync]', rsp.status, {
+          ok: Boolean(json?.ok),
+          accounts_synced: Number(json?.accounts_synced || 0),
+          transactions_imported: Number(json?.transactions_imported || 0),
+          uncategorized: Number(json?.uncategorized || 0),
+        });
+      } catch (err) {
+        console.error('[banking:qbo-auto-sync] failed', err?.message || err);
+      }
+    };
+    setTimeout(() => runSync(false), 30 * 1000);
+    setInterval(() => runSync(false), intervalMs);
+  }
+
   app.listen(PORT, () => {
     console.log(`IH35 TMS running on port ${PORT}`);
+    startBankingQboAutoSync();
   });
 }
 

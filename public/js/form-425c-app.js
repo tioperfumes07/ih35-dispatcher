@@ -446,6 +446,14 @@
       return d.toISOString().slice(0, 7);
     }
 
+    function monthLabel(ym) {
+      var m = String(ym || '').trim();
+      if (!/^\d{4}-\d{2}$/.test(m)) return m || 'selected month';
+      var d = new Date(m + '-01T00:00:00');
+      if (isNaN(d.getTime())) return m;
+      return d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    }
+
     function primePart7FromPriorMonth(companyId, month) {
       var prev = priorMonthIso(month);
       if (!prev) return false;
