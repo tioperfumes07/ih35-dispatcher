@@ -499,6 +499,28 @@
     var receiptMsg = recMsgState[0];
     var setReceiptMsg = recMsgState[1];
 
+    var bankImportOpenState = React.useState(false);
+    var bankImportOpen = bankImportOpenState[0];
+    var setBankImportOpen = bankImportOpenState[1];
+    var bankImportStepState = React.useState('select');
+    var bankImportStep = bankImportStepState[0];
+    var setBankImportStep = bankImportStepState[1];
+    var bankImportAccountsState = React.useState([]);
+    var bankImportAccounts = bankImportAccountsState[0];
+    var setBankImportAccounts = bankImportAccountsState[1];
+    var bankImportSelectedState = React.useState({});
+    var bankImportSelected = bankImportSelectedState[0];
+    var setBankImportSelected = bankImportSelectedState[1];
+    var bankImportPreviewState = React.useState(null);
+    var bankImportPreview = bankImportPreviewState[0];
+    var setBankImportPreview = bankImportPreviewState[1];
+    var bankImportBusyState = React.useState(false);
+    var bankImportBusy = bankImportBusyState[0];
+    var setBankImportBusy = bankImportBusyState[1];
+    var bankImportErrState = React.useState('');
+    var bankImportErr = bankImportErrState[0];
+    var setBankImportErr = bankImportErrState[1];
+
     var qbMsgState = React.useState('');
     var qbPasteMsg = qbMsgState[0];
     var setQbPasteMsg = qbMsgState[1];
@@ -1735,6 +1757,18 @@
         : [];
     var isPasteC = !lastQbo && !!lastPaste;
 
+    function closeBankingImportModal() {
+      setBankImportOpen(false);
+      setBankImportStep('select');
+      setBankImportPreview(null);
+      setBankImportErr('');
+      setBankImportBusy(false);
+    }
+
+    function selectedBankingAccountIds() {
+      return Object.keys(bankImportSelected).filter(function (id) { return !!bankImportSelected[id]; });
+    }
+
     async function importFromBanking() {
       try {
         var month = String(repMonth || '').trim();
@@ -1742,58 +1776,91 @@
           setReceiptMsg('Select the report month before importing from Banking.');
           return;
         }
-        var accRes = await fetch('/api/banking/accounts?' + new URLSearchParams({ month: month }), {
+        setBankImportBusy(true);
+        setBankImportErr('');
+        var accRes = await fetch('/api/form-425c/banking-summary/accounts', {
           headers: form425cAuthHeaders()
         });
         var accJson = await accRes.json();
-        var accounts = Array.isArray(accJson?.data) ? accJson.data : [];
+        var accounts = Array.isArray(accJson?.accounts) ? accJson.accounts : [];
         if (!accounts.length) {
           setReceiptMsg('No DIP bank accounts found. Add or sync Banking accounts first.');
+          setBankImportBusy(false);
           return;
         }
-        var options = accounts.map(function (a, i) {
-          return (i + 1) + '. ' + (a.account_name || 'Account') + ' • ' + (a.account_last4 || '----');
-        }).join('\n');
-        var pickRaw = window.prompt('Select Banking account number:\n' + options, '1');
-        var pickIx = Number(pickRaw || 1) - 1;
-        if (!Number.isInteger(pickIx) || pickIx < 0 || pickIx >= accounts.length) {
-          setReceiptMsg('Banking import cancelled.');
-          return;
-        }
-        var picked = accounts[pickIx];
-        var txRes = await fetch('/api/banking/transactions?' + new URLSearchParams({
-          account_id: String(picked.account_id || ''),
-          month: month
-        }), { headers: form425cAuthHeaders() });
-        var txJson = await txRes.json();
-        var tx = Array.isArray(txJson?.data) ? txJson.data : [];
-        var opening = toNumber(picked.opening_balance);
-        var receipts = toNumber(picked.receipts);
-        var disb = toNumber(picked.disbursements);
-        if (!receipts && !disb && tx.length) {
-          tx.forEach(function (r) {
-            var amt = toNumber(r?.amount);
-            if (amt >= 0) receipts += amt;
-            else disb += Math.abs(amt);
-          });
-        }
-        var line22 = Math.round((receipts - disb) * 100) / 100;
-        var line23 = Math.round((opening + line22) * 100) / 100;
-        setReport(function (r) {
-          return {
-            ...r,
-            line19: opening,
-            line20: receipts,
-            line21: disb,
-            line22: line22,
-            line23: line23
-          };
+        var selected = {};
+        accounts.forEach(function (a) {
+          selected[String(a.account_id || '')] = true;
         });
-        setReceiptMsg('Imported Banking values for lines 19–23 and Part 7 column B (rows 32–34).');
+        setBankImportAccounts(accounts);
+        setBankImportSelected(selected);
+        setBankImportStep('select');
+        setBankImportPreview(null);
+        setBankImportOpen(true);
       } catch (e) {
-        setReceiptMsg('Banking import failed: ' + String(e?.message || e));
+        setBankImportErr('Banking import failed: ' + String(e?.message || e));
+      } finally {
+        setBankImportBusy(false);
       }
     }
+
+    async function previewBankingImportSelection() {
+      var month = String(repMonth || '').trim();
+      var pickedIds = selectedBankingAccountIds();
+      if (!month) {
+        setBankImportErr('Select the report month first.');
+        return;
+      }
+      if (!pickedIds.length) {
+        setBankImportErr('Select at least one DIP account.');
+        return;
+      }
+      try {
+        setBankImportBusy(true);
+        setBankImportErr('');
+        var res = await fetch('/api/form-425c/import-banking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...form425cAuthHeaders() },
+          body: JSON.stringify({ month: month, account_ids: pickedIds, debtor_id: getActiveDebtorId() })
+        });
+        var json = await res.json();
+        if (!json?.ok) throw new Error(String(json?.error || 'Banking summary failed'));
+        setBankImportPreview(json);
+        setBankImportStep('preview');
+      } catch (e) {
+        setBankImportErr(String(e?.message || e));
+      } finally {
+        setBankImportBusy(false);
+      }
+    }
+
+    function applyBankingImportPreview() {
+      var p = bankImportPreview;
+      if (!p || !p.ok) return;
+      setReport(function (r) {
+        return {
+          ...r,
+          line19: String(p.line_19 == null ? '' : p.line_19),
+          line20: String(p.line_20 == null ? '' : p.line_20),
+          line21: String(p.line_21 == null ? '' : p.line_21),
+          line22: String(p.line_22 == null ? '' : p.line_22),
+          line23: String(p.line_23 == null ? '' : p.line_23),
+        };
+      });
+      closeBankingImportModal();
+      showToast('✅ Banking data imported for ' + String(repMonth || '').trim());
+    }
+
+    React.useEffect(function () {
+      if (!bankImportOpen) return;
+      function onEsc(e) {
+        if (e && e.key === 'Escape') closeBankingImportModal();
+      }
+      window.addEventListener('keydown', onEsc);
+      return function () {
+        window.removeEventListener('keydown', onEsc);
+      };
+    }, [bankImportOpen]);
 
     function renderReportPanel() {
       return h(
@@ -1815,7 +1882,7 @@
           h(
             'button',
             { type: 'button', className: 'btn secondary', onClick: importFromBanking },
-            'Import from Banking'
+            '📥 Import from Banking'
           ),
           h(
             'button',
@@ -1830,6 +1897,86 @@
           h('button', { type: 'button', className: 'btn secondary', onClick: printWithPackageNotes }, 'Print / Save as PDF')
         ),
         h('p', { className: 'f425-note no-print' }, receiptMsg),
+        bankImportOpen && h(
+          'div',
+          {
+            className: 'f425-modal-backdrop no-print',
+            style: { position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' },
+            onClick: function (e) {
+              if (e.target === e.currentTarget) closeBankingImportModal();
+            }
+          },
+          h(
+            'div',
+            { className: 'f425-modal', style: { background: '#fff', borderRadius: '10px', width: 'min(760px,100%)', maxHeight: '86vh', overflow: 'auto', padding: '14px', border: '1px solid #d9e1ee' } },
+            h('h3', { style: { margin: '0 0 10px' } }, 'Import Banking Data for ', monthLabel(repMonth)),
+            bankImportErr ? h('p', { className: 'f425-note', style: { color: '#b42318' } }, bankImportErr) : null,
+            bankImportStep === 'select' && h(
+              React.Fragment,
+              null,
+              h('p', { className: 'f425-note' }, 'Select DIP accounts to include:'),
+              h(
+                'div',
+                { style: { border: '1px solid #d7dee9', borderRadius: '8px', padding: '10px', maxHeight: '45vh', overflow: 'auto' } },
+                !bankImportAccounts.length
+                  ? h('div', { className: 'f425-note' }, 'No DIP accounts available.')
+                  : bankImportAccounts.map(function (a) {
+                      var aid = String(a.account_id || '');
+                      var checked = !!bankImportSelected[aid];
+                      return h(
+                        'label',
+                        { key: aid, style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0' } },
+                        h('input', {
+                          type: 'checkbox',
+                          checked: checked,
+                          onChange: function (e) {
+                            var on = !!e.target.checked;
+                            setBankImportSelected(function (s) { return { ...s, [aid]: on }; });
+                          }
+                        }),
+                        (a.account_name || aid) + ' (' + (a.account_type || 'Bank') + ')'
+                      );
+                    })
+              ),
+              h(
+                'div',
+                { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' } },
+                h('button', { type: 'button', className: 'btn secondary', onClick: closeBankingImportModal }, 'Cancel'),
+                h(
+                  'button',
+                  { type: 'button', className: 'btn primary', disabled: bankImportBusy, onClick: previewBankingImportSelection },
+                  bankImportBusy ? 'Loading…' : 'Import Selected Accounts →'
+                )
+              )
+            ),
+            bankImportStep === 'preview' && bankImportPreview && h(
+              React.Fragment,
+              null,
+              h('p', { className: 'f425-note' }, 'Preview for ', monthLabel(repMonth), ':'),
+              h(
+                'div',
+                { style: { border: '1px solid #d7dee9', borderRadius: '8px', padding: '10px', background: '#fbfdff' } },
+                h('div', null, 'Line 19 — Opening balance: ', h('strong', null, fmtAccounting(bankImportPreview.line_19))),
+                h('div', null, 'Line 20 — Total receipts: ', h('strong', null, fmtAccounting(bankImportPreview.line_20))),
+                h('div', null, 'Line 21 — Total disbursements: ', h('strong', null, fmtAccounting(bankImportPreview.line_21))),
+                h('div', null, 'Line 22 — Net cash flow: ', h('strong', null, fmtAccounting(bankImportPreview.line_22))),
+                h('div', null, 'Line 23 — Ending cash: ', h('strong', null, fmtAccounting(bankImportPreview.line_23))),
+                h(
+                  'div',
+                  { className: 'f425-note', style: { marginTop: '8px' } },
+                  'Source: ',
+                  (bankImportPreview.accounts_used || []).map(function (a) { return a.account_name; }).filter(Boolean).join(', ') || '—'
+                )
+              ),
+              h(
+                'div',
+                { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' } },
+                h('button', { type: 'button', className: 'btn secondary', onClick: function () { setBankImportStep('select'); } }, '← Back'),
+                h('button', { type: 'button', className: 'btn primary', onClick: applyBankingImportPreview }, 'Apply to Form')
+              )
+            )
+          )
+        ),
 
         h(
           'div',

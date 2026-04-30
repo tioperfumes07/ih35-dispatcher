@@ -32,6 +32,176 @@ const upload = multer({
 export function createForm425cRouter({ logError = console.error } = {}) {
   const router = Router();
 
+  const BANKING_OCA_KEYWORDS = ['cash', 'checking', 'savings', 'prepay', 'escrow', 'reserves', 'factoring'];
+
+  function monthBounds(month) {
+    const m = String(month || '').trim();
+    if (!/^\d{4}-\d{2}$/.test(m)) return null;
+    const start = `${m}-01`;
+    const [yy, mm] = m.split('-').map((v) => Number(v));
+    const d0 = new Date(Date.UTC(yy, mm - 1, 1));
+    const d1 = new Date(Date.UTC(yy, mm, 1));
+    const prev = new Date(Date.UTC(yy, mm - 2, 1));
+    const asIso = (d) => d.toISOString().slice(0, 10);
+    const end = asIso(new Date(d1.getTime() - 24 * 60 * 60 * 1000));
+    const prevEnd = asIso(new Date(d0.getTime() - 24 * 60 * 60 * 1000));
+    return {
+      month: m,
+      start_date: start,
+      end_date: end,
+      prev_start_date: asIso(prev),
+      prev_end_date: prevEnd,
+    };
+  }
+
+  function parseAccountIds(raw) {
+    if (Array.isArray(raw)) return raw.map((v) => String(v || '').trim()).filter(Boolean);
+    return String(raw || '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
+  function bankingEligibleByType(name, accountType) {
+    const nm = String(name || '').trim().toLowerCase();
+    const type = String(accountType || '').trim().toLowerCase();
+    if (type === 'bank' || type === 'credit card' || type === 'creditcard') return true;
+    if (type === 'other current asset' || type === 'othercurrentasset') {
+      return BANKING_OCA_KEYWORDS.some((k) => nm.includes(k));
+    }
+    return false;
+  }
+
+  async function listDipVisibleAccounts() {
+    if (!getPool()) return [];
+    const { rows: accRows } = await dbQuery(
+      `SELECT qbo_id, name, full_data
+         FROM qbo_catalog_cache
+        WHERE entity_type = 'account'
+        ORDER BY name ASC
+        LIMIT 3000`
+    );
+    const { rows: prefRows } = await dbQuery(
+      `SELECT account_id, visible, is_dip
+         FROM bank_account_preferences`
+    );
+    const prefById = new Map();
+    (prefRows || []).forEach((r) => prefById.set(String(r?.account_id || '').trim(), r));
+    const out = [];
+    for (const r of accRows || []) {
+      const accountId = String(r?.qbo_id || '').trim();
+      if (!accountId) continue;
+      const full = r?.full_data && typeof r.full_data === 'object' ? r.full_data : {};
+      const accountName = String(r?.name || full?.Name || '').trim() || accountId;
+      const accountType = String(full?.AccountType || full?.accountType || '').trim();
+      if (!bankingEligibleByType(accountName, accountType)) continue;
+      const pref = prefById.get(accountId) || null;
+      const visible = pref?.visible == null ? String(accountType || '').toLowerCase() === 'bank' : Boolean(pref.visible);
+      const isDip = pref?.is_dip == null ? true : Boolean(pref.is_dip);
+      if (!visible || !isDip) continue;
+      out.push({
+        account_id: accountId,
+        account_name: accountName,
+        account_type: accountType || 'Bank',
+        visible,
+        is_dip: isDip,
+      });
+    }
+    return out;
+  }
+
+  async function computeBankingSummary({ month, accountIds = [] }) {
+    const bounds = monthBounds(month);
+    if (!bounds) throw new Error('month must be YYYY-MM');
+    if (!getPool()) {
+      return {
+        ok: true,
+        month: bounds.month,
+        accounts_used: [],
+        line_19: 0,
+        line_20: 0,
+        line_21: 0,
+        line_22: 0,
+        line_23: 0,
+        source: 'banking_transactions',
+      };
+    }
+    const visibleDip = await listDipVisibleAccounts();
+    const visibleById = new Map(visibleDip.map((a) => [String(a.account_id), a]));
+    const picked = (accountIds || []).filter((id) => visibleById.has(String(id)));
+    const accountList = picked.length ? picked : visibleDip.map((a) => String(a.account_id));
+    if (!accountList.length) {
+      return {
+        ok: true,
+        month: bounds.month,
+        accounts_used: [],
+        line_19: 0,
+        line_20: 0,
+        line_21: 0,
+        line_22: 0,
+        line_23: 0,
+        source: 'banking_transactions',
+      };
+    }
+    const { rows: sumRows } = await dbQuery(
+      `SELECT
+          COALESCE(SUM(CASE WHEN bt.amount > 0 THEN bt.amount ELSE 0 END), 0)::numeric AS receipts,
+          COALESCE(SUM(CASE WHEN bt.amount < 0 THEN ABS(bt.amount) ELSE 0 END), 0)::numeric AS disbursements
+         FROM banking_transactions bt
+        WHERE bt.account_id = ANY($1::text[])
+          AND bt.txn_date >= $2::date
+          AND bt.txn_date <= $3::date`,
+      [accountList, bounds.start_date, bounds.end_date]
+    );
+    const { rows: openRows } = await dbQuery(
+      `SELECT account_id, running_balance
+         FROM (
+           SELECT bt.account_id,
+                  bt.running_balance,
+                  ROW_NUMBER() OVER (PARTITION BY bt.account_id ORDER BY bt.txn_date DESC, bt.id DESC) AS rn
+             FROM banking_transactions bt
+            WHERE bt.account_id = ANY($1::text[])
+              AND bt.txn_date <= $2::date
+              AND bt.running_balance IS NOT NULL
+         ) x
+        WHERE rn = 1`,
+      [accountList, bounds.prev_end_date]
+    );
+    const { rows: endRows } = await dbQuery(
+      `SELECT account_id, running_balance
+         FROM (
+           SELECT bt.account_id,
+                  bt.running_balance,
+                  ROW_NUMBER() OVER (PARTITION BY bt.account_id ORDER BY bt.txn_date DESC, bt.id DESC) AS rn
+             FROM banking_transactions bt
+            WHERE bt.account_id = ANY($1::text[])
+              AND bt.txn_date <= $2::date
+              AND bt.running_balance IS NOT NULL
+         ) x
+        WHERE rn = 1`,
+      [accountList, bounds.end_date]
+    );
+    const receipts = Number(sumRows?.[0]?.receipts || 0);
+    const disbursements = Number(sumRows?.[0]?.disbursements || 0);
+    const opening = (openRows || []).reduce((s, r) => s + Number(r?.running_balance || 0), 0);
+    const ending = (endRows || []).reduce((s, r) => s + Number(r?.running_balance || 0), 0);
+    const net = receipts - disbursements;
+    return {
+      ok: true,
+      month: bounds.month,
+      accounts_used: accountList.map((id) => ({
+        account_id: id,
+        account_name: String(visibleById.get(String(id))?.account_name || id),
+      })),
+      line_19: Math.round(opening * 100) / 100,
+      line_20: Math.round(receipts * 100) / 100,
+      line_21: Math.round(disbursements * 100) / 100,
+      line_22: Math.round(net * 100) / 100,
+      line_23: Math.round(ending * 100) / 100,
+      source: 'banking_transactions',
+    };
+  }
+
   function readActor(req) {
     const headerActor = String(req.headers['x-ih35-user'] || req.headers['x-user-email'] || '').trim();
     const roleHeader = String(req.headers['x-ih35-role'] || req.headers['x-user-role'] || req.headers['x-role'] || '').trim();
@@ -105,6 +275,42 @@ export function createForm425cRouter({ logError = console.error } = {}) {
     } catch (e) {
       logError(e);
       res.status(500).json({ error: String(e.message || e) });
+    }
+  });
+
+  router.get('/banking-summary/accounts', async (_req, res) => {
+    try {
+      const accounts = await listDipVisibleAccounts();
+      return res.json({ ok: true, accounts });
+    } catch (e) {
+      logError(e);
+      return res.status(500).json({ ok: false, error: String(e.message || e), accounts: [] });
+    }
+  });
+
+  router.get('/banking-summary', async (req, res) => {
+    try {
+      const month = String(req.query?.month || '').trim();
+      const accountIds = parseAccountIds(req.query?.account_ids);
+      const payload = await computeBankingSummary({ month, accountIds });
+      return res.json(payload);
+    } catch (e) {
+      logError(e);
+      return res.status(400).json({ ok: false, error: String(e.message || e) });
+    }
+  });
+
+  router.post('/import-banking', async (req, res) => {
+    try {
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const month = String(body.month || '').trim();
+      const debtorId = String(body.debtor_id || body.companyId || '').trim() || null;
+      const accountIds = parseAccountIds(body.account_ids);
+      const payload = await computeBankingSummary({ month, accountIds });
+      return res.json({ ...payload, debtor_id: debtorId });
+    } catch (e) {
+      logError(e);
+      return res.status(400).json({ ok: false, error: String(e.message || e) });
     }
   });
 

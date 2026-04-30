@@ -30,7 +30,8 @@ import { extractPdfText } from '../lib/pdf-text.mjs';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 const SAMSARA_HEALTH_CACHE_MS = 60 * 1000;
-const SAMSARA_HEALTH_TIMEOUT_MS = 5000;
+const SAMSARA_HEALTH_TIMEOUT_MS = 10000;
+const EXTERNAL_API_TIMEOUT_MS = 10000;
 const QBO_LIVE_REFRESH_MS = 60 * 1000;
 const samsaraHealthCache = {
   fetchedAt: 0,
@@ -67,6 +68,21 @@ const COMMON_PARTS_REFERENCE_SEEDS = [
 let fleetCatalogSeedState = { done: false, inFlight: null };
 let qboCatalogAutoSyncTimer = null;
 let qboSyncQueueRetryTimer = null;
+let cacheCleanupTimer = null;
+
+async function withTimeout(promise, timeoutMs = EXTERNAL_API_TIMEOUT_MS, label = 'external call') {
+  let timer = null;
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timeout after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 function summarizeSamsaraVehiclesPayload(payload) {
   const arr = Array.isArray(payload?.data)
@@ -852,11 +868,11 @@ function normalizeQboCatalogRow(entityType, row) {
 async function fetchLiveQboCatalogBundle() {
   const qbo = createQboApiClient();
   const [vendorResp, accountResp, itemResp, classResp, customerResp] = await Promise.all([
-    qbo.qboQuery('SELECT * FROM Vendor MAXRESULTS 1000'),
-    qbo.qboQuery('SELECT * FROM Account MAXRESULTS 1000'),
-    qbo.qboQuery('SELECT * FROM Item MAXRESULTS 1000'),
-    qbo.qboQuery('SELECT * FROM Class MAXRESULTS 1000'),
-    qbo.qboQuery('SELECT * FROM Customer MAXRESULTS 1000'),
+    withTimeout(qbo.qboQuery('SELECT * FROM Vendor MAXRESULTS 1000'), EXTERNAL_API_TIMEOUT_MS, 'QBO Vendor query'),
+    withTimeout(qbo.qboQuery('SELECT * FROM Account MAXRESULTS 1000'), EXTERNAL_API_TIMEOUT_MS, 'QBO Account query'),
+    withTimeout(qbo.qboQuery('SELECT * FROM Item MAXRESULTS 1000'), EXTERNAL_API_TIMEOUT_MS, 'QBO Item query'),
+    withTimeout(qbo.qboQuery('SELECT * FROM Class MAXRESULTS 1000'), EXTERNAL_API_TIMEOUT_MS, 'QBO Class query'),
+    withTimeout(qbo.qboQuery('SELECT * FROM Customer MAXRESULTS 1000'), EXTERNAL_API_TIMEOUT_MS, 'QBO Customer query'),
   ]);
   const vendors = Array.isArray(vendorResp?.QueryResponse?.Vendor) ? vendorResp.QueryResponse.Vendor : [];
   const accounts = Array.isArray(accountResp?.QueryResponse?.Account) ? accountResp.QueryResponse.Account : [];
@@ -1091,7 +1107,11 @@ async function retryQboSyncQueue(logError, opts = {}) {
         if (!posted?.ok) throw new Error(String(posted?.reason || 'QBO fuel sync failed'));
       } else if (payload?.qboEntity && payload?.qboPayload && typeof payload.qboPayload === 'object') {
         const qbo = createQboApiClient();
-        await qbo.qboPost(String(payload.qboEntity || '').trim().toLowerCase(), payload.qboPayload);
+        await withTimeout(
+          qbo.qboPost(String(payload.qboEntity || '').trim().toLowerCase(), payload.qboPayload),
+          EXTERNAL_API_TIMEOUT_MS,
+          'QBO post queue replay'
+        );
       } else {
         skipped += 1;
         await dbQuery(
@@ -1138,6 +1158,19 @@ async function retryQboSyncQueue(logError, opts = {}) {
     }
   }
   return { ok: true, synced, failed, skipped, dead };
+}
+
+async function normalizeQboPostQueueDeadLetters(maxRetries = 5) {
+  if (!getPool()) return 0;
+  await dbQuery(
+    `UPDATE qbo_post_queue
+        SET status = 'dead',
+            updated_at = now()
+      WHERE COALESCE(retry_count, 0) >= $1
+        AND status NOT IN ('dead','posted')`,
+    [Math.max(1, Number(maxRetries) || 5)]
+  );
+  return 0;
 }
 
 async function buildQboSyncAlertsPayload() {
@@ -1477,6 +1510,8 @@ export function mountErpCoreApi(app, opts = {}) {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`
     );
+    await dbQueryForRoute('CREATE INDEX IF NOT EXISTS idx_audit_log_created_at_desc ON audit_log(created_at DESC)');
+    await dbQueryForRoute('CREATE INDEX IF NOT EXISTS idx_audit_log_entity_ref ON audit_log(entity_type, entity_id)');
     return true;
   }
 
@@ -1545,6 +1580,13 @@ export function mountErpCoreApi(app, opts = {}) {
         logError('qbo queue retry interval', e);
       }
     }, 15 * 60 * 1000);
+  }
+
+  if (!cacheCleanupTimer) {
+    cleanupWave8Caches().catch((e) => logError('wave8 cache cleanup', e));
+    cacheCleanupTimer = setInterval(() => {
+      cleanupWave8Caches().catch((e) => logError('wave8 cache cleanup interval', e));
+    }, 60 * 60 * 1000);
   }
 
   app.get('/api/health', async (_req, res) => {
@@ -1835,6 +1877,8 @@ export function mountErpCoreApi(app, opts = {}) {
     try {
       if (!getPool()) return res.json({ ok: true, pending: 0, failed: 0, dead: 0, items: [] });
       await ensureIntegrationResilienceTables();
+      await ensureBankingTables();
+      await normalizeQboPostQueueDeadLetters(5);
       const { rows } = await dbQuery(
         `SELECT * FROM qbo_sync_queue
           WHERE status IN ('pending','failed','dead')
@@ -1852,6 +1896,33 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/qbo/sync-queue/dead', async (_req, res) => {
+    try {
+      if (!getPool()) return res.json({ ok: true, data: [] });
+      await ensureIntegrationResilienceTables();
+      await ensureBankingTables();
+      await normalizeQboPostQueueDeadLetters(5);
+      const { rows: syncRows } = await dbQuery(
+        `SELECT id, 'qbo_sync_queue'::text AS queue_name, transaction_type, transaction_id::text AS entity_id, status, error_message, retry_count, created_at
+           FROM qbo_sync_queue
+          WHERE status = 'dead'
+          ORDER BY created_at DESC, id DESC
+          LIMIT 500`
+      );
+      const { rows: postRows } = await dbQuery(
+        `SELECT id, 'qbo_post_queue'::text AS queue_name, entity_type AS transaction_type, entity_id, status, error_text AS error_message, COALESCE(retry_count,0) AS retry_count, created_at
+           FROM qbo_post_queue
+          WHERE status = 'dead'
+          ORDER BY created_at DESC, id DESC
+          LIMIT 500`
+      );
+      return res.json({ ok: true, data: [...(syncRows || []), ...(postRows || [])] });
+    } catch (e) {
+      logError('GET /api/qbo/sync-queue/dead', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), data: [] });
+    }
+  });
+
   app.post('/api/qbo/sync-queue/retry', async (_req, res) => {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set', synced: 0, failed: 0 });
@@ -1861,6 +1932,49 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('POST /api/qbo/sync-queue/retry', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e), synced: 0, failed: 0, skipped: 0, dead: 0 });
+    }
+  });
+
+  app.post('/api/qbo/sync-queue/:id/retry', async (req, res) => {
+    try {
+      if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureIntegrationResilienceTables();
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid id' });
+      const { rows: syncRows } = await dbQuery('SELECT id FROM qbo_sync_queue WHERE id = $1 LIMIT 1', [id]);
+      if (syncRows?.[0]?.id) {
+        await dbQuery(
+          `UPDATE qbo_sync_queue
+              SET status = 'pending',
+                  error_message = NULL,
+                  retry_count = 0,
+                  next_retry_at = NULL,
+                  last_attempt_at = now()
+            WHERE id = $1`,
+          [id]
+        );
+        return res.json({ ok: true, retried: true, queue_name: 'qbo_sync_queue', id });
+      }
+      const { rows: postRows } = await dbQuery('SELECT id FROM qbo_post_queue WHERE id = $1 LIMIT 1', [id]);
+      if (postRows?.[0]?.id) {
+        await dbQuery(
+          `UPDATE qbo_post_queue
+              SET status = 'queued',
+                  error_text = NULL,
+                  retry_count = 0,
+                  next_retry_at = NULL,
+                  last_attempt_at = now(),
+                  updated_at = now()
+            WHERE id = $1`,
+          [id]
+        );
+        return res.json({ ok: true, retried: true, queue_name: 'qbo_post_queue', id });
+      }
+      return res.status(404).json({ ok: false, error: 'Queue item not found' });
+    } catch (e) {
+      logError('POST /api/qbo/sync-queue/:id/retry', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -4111,9 +4225,12 @@ export function mountErpCoreApi(app, opts = {}) {
     );
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_account_date ON banking_transactions(account_id, txn_date DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_status ON banking_transactions(status)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_status_date ON banking_transactions(status, txn_date)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_account_status ON banking_transactions(account_id, status)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_source ON banking_transactions(source, txn_date DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_rules_active_priority ON banking_rules(active, priority)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_driver_settlements_driver_period ON driver_settlements(driver_id, period_start)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_driver_settlements_status_period_end ON driver_settlements(status, period_end)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_recon_sessions_account_month ON bank_reconciliation_sessions(account_id, statement_month)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_qbo_post_queue_status_created ON qbo_post_queue(status, created_at DESC)');
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS external_ref TEXT');
@@ -4137,6 +4254,9 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS qbo_account_id TEXT');
     await dbQuery('ALTER TABLE driver_settlements ADD COLUMN IF NOT EXISTS notes TEXT');
     await dbQuery('ALTER TABLE factoring_advances ADD COLUMN IF NOT EXISTS notes TEXT');
+    await dbQuery('ALTER TABLE qbo_post_queue ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0');
+    await dbQuery('ALTER TABLE qbo_post_queue ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ');
+    await dbQuery('ALTER TABLE qbo_post_queue ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMPTZ');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_external_ref ON banking_transactions(external_ref)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_import_batch ON banking_transactions(import_batch_id)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_relay_ref ON banking_transactions(relay_transaction_id)');
@@ -4159,6 +4279,21 @@ export function mountErpCoreApi(app, opts = {}) {
         settlement_status TEXT DEFAULT 'pending'
       )`
     );
+  }
+
+  async function cleanupWave8Caches() {
+    if (!getPoolForRoute()) return { ok: true, report_cache_deleted: 0, bank_import_deleted: 0 };
+    await ensureBankingTables();
+    const { rowCount: reportDeleted = 0 } = await dbQueryForRoute(
+      `DELETE FROM report_cache
+        WHERE COALESCE(generated_at, created_at) < now() - interval '24 hours'`
+    );
+    const { rowCount: importDeleted = 0 } = await dbQueryForRoute(
+      `DELETE FROM bank_import_batches
+        WHERE status = 'preview'
+          AND uploaded_at < now() - interval '7 days'`
+    );
+    return { ok: true, report_cache_deleted: Number(reportDeleted || 0), bank_import_deleted: Number(importDeleted || 0) };
   }
 
   function normalizeFuelTypeKey(v) {
@@ -4252,7 +4387,7 @@ export function mountErpCoreApi(app, opts = {}) {
         };
       }
 
-      const resp = await qbo.qboPost('purchase', payload);
+      const resp = await withTimeout(qbo.qboPost('purchase', payload), EXTERNAL_API_TIMEOUT_MS, 'QBO fuel purchase post');
       const txnId = String(resp?.Purchase?.Id || resp?.Purchase?.id || '').trim();
       if (!txnId) return { ok: false, reason: 'qbo_no_txn_id' };
 
@@ -4950,7 +5085,7 @@ export function mountErpCoreApi(app, opts = {}) {
           query.set(k, String(v));
         });
         const relPath = `reports/${reportName}${query.toString() ? `?${query.toString()}` : ''}`;
-        const live = await qbo.qboGet(relPath);
+        const live = await withTimeout(qbo.qboGet(relPath), EXTERNAL_API_TIMEOUT_MS, `QBO report ${reportName}`);
         reportPayload = live;
         generatedAt = new Date().toISOString();
         source = 'live';
@@ -5388,15 +5523,20 @@ export function mountErpCoreApi(app, opts = {}) {
     ];
     let lastError = '';
     for (const path of candidates) {
+      let timer = null;
       try {
+        const controller = new AbortController();
+        timer = setTimeout(() => controller.abort(), EXTERNAL_API_TIMEOUT_MS);
         const rsp = await fetch(`${base}${path}`, {
           method: 'GET',
+          signal: controller.signal,
           headers: {
             Accept: 'application/json',
             Authorization: `Bearer ${apiKey}`,
             'X-API-Key': apiKey,
           },
         });
+        if (timer) clearTimeout(timer);
         if (!rsp.ok) {
           lastError = `Relay response ${rsp.status} at ${path}`;
           continue;
@@ -5411,7 +5551,9 @@ export function mountErpCoreApi(app, opts = {}) {
               : [];
         return { ok: true, connected: true, rows, endpoint: path };
       } catch (e) {
-        lastError = e?.message || String(e);
+        lastError = e?.name === 'AbortError' ? `Relay request timeout at ${path}` : (e?.message || String(e));
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     }
     return { ok: false, connected: false, error: lastError || 'Relay API request failed', rows: [] };

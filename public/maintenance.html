@@ -3181,9 +3181,9 @@
             <div class="table-wrap erp-table-scroll" style="margin-top:8px;max-height:220px">
               <table style="font-size:12px">
                 <thead>
-                  <tr><th>Type</th><th>Description</th><th>Amount</th><th>Unit</th><th>Created</th><th>Status</th><th>Error</th></tr>
+                  <tr><th>Type</th><th>Description</th><th>Amount</th><th>Unit</th><th>Created</th><th>Status</th><th>Error</th><th>Action</th></tr>
                 </thead>
-                <tbody id="acctPendingQboSyncBody"><tr><td colspan="7" class="mini-note">Loading...</td></tr></tbody>
+                <tbody id="acctPendingQboSyncBody"><tr><td colspan="8" class="mini-note">Loading...</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -14118,7 +14118,7 @@
       }
       if (!body) return;
       if (!items.length) {
-        body.innerHTML = '<tr><td colspan="7" class="mini-note">No pending items</td></tr>';
+        body.innerHTML = '<tr><td colspan="8" class="mini-note">No pending items</td></tr>';
         return;
       }
       body.innerHTML = items.slice(0, 25).map((item) => {
@@ -14137,6 +14137,9 @@
           '<td>' + escapeHtml(created) + '</td>' +
           '<td>' + escapeHtml(String(item?.status || 'pending')) + '</td>' +
           '<td style="color:var(--color-semantic-error)">' + escapeHtml(String(item?.error_message || '—')) + '</td>' +
+          '<td>' + ((String(item?.status || '').toLowerCase() === 'dead' || String(item?.status || '').toLowerCase() === 'failed')
+            ? ('<button type="button" class="btn btn--small" onclick="retryQboQueueItem(' + Number(item?.id || 0) + ')">Retry</button>')
+            : '—') + '</td>' +
           '</tr>';
       }).join('');
     }
@@ -14149,6 +14152,22 @@
         } else {
           showErpToast(String(out?.error || 'Sync retry failed'), 'error');
         }
+      } catch (e) {
+        showErpToast(String(e?.message || e), 'error');
+      }
+      try {
+        const q = await j('/api/qbo/sync-queue');
+        renderQboSyncQueuePanel(q || {});
+      } catch (_) {}
+    }
+
+    async function retryQboQueueItem(id) {
+      const queueId = Number(id || 0);
+      if (!Number.isFinite(queueId) || queueId <= 0) return;
+      try {
+        const out = await j('/api/qbo/sync-queue/' + queueId + '/retry', { method: 'POST' });
+        if (out && out.ok) showErpToast('Queue item #' + queueId + ' moved to retry queue.', 'success');
+        else showErpToast(String(out?.error || 'Retry failed'), 'error');
       } catch (e) {
         showErpToast(String(e?.message || e), 'error');
       }

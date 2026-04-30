@@ -1,16 +1,32 @@
 const BASE_URL = 'https://api.samsara.com';
+const SAMSARA_TIMEOUT_MS = 10000;
 
 export async function samsaraGet(path, token, query = {}) {
   const url = new URL(BASE_URL + path);
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, value);
   }
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json'
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SAMSARA_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json'
+      }
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error(`Samsara request timed out after ${SAMSARA_TIMEOUT_MS}ms`);
+      timeoutError.status = 504;
+      throw timeoutError;
     }
-  });
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
   const data = await response.json();
   if (!response.ok) {
     const error = new Error(data?.message || `Samsara request failed: ${response.status}`);
