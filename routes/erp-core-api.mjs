@@ -5135,6 +5135,17 @@ export function mountErpCoreApi(app, opts = {}) {
     );
     const txn = txnRows?.[0] || null;
     if (!txn) return { ok: false, status: 404, error: 'Transaction not found' };
+    const lockCheck = await checkPeriodLockForAccountMonth(
+      String(txn?.account_id || '').trim(),
+      monthKeyFromDateLike(txn?.txn_date || '')
+    );
+    if (lockCheck?.locked) {
+      return {
+        ok: false,
+        status: 409,
+        error: `Period ${monthKeyFromDateLike(txn?.txn_date || '')} is locked for this account`,
+      };
+    }
 
     const before = txn;
     const targetId = String(payload?.target_id || '').trim() || `txn-${txnId}-${Date.now()}`;
@@ -5200,6 +5211,102 @@ export function mountErpCoreApi(app, opts = {}) {
       source_module: 'banking',
     });
     return { ok: true, transaction: updatedTxn, link, qbo_queued: qboQueued };
+  }
+
+  function monthKeyFromDateLike(v = '') {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    if (/^\d{4}-\d{2}$/.test(s)) return s;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s.slice(0, 7);
+    const dt = new Date(s);
+    if (!Number.isFinite(dt.getTime())) return '';
+    return dt.toISOString().slice(0, 7);
+  }
+
+  async function checkPeriodLockForAccountMonth(accountId = '', monthKey = '') {
+    if (!accountId || !monthKey) return { locked: false };
+    const periodKey = `${String(monthKey).trim()}:${String(accountId).trim()}`;
+    const { rows } = await dbQuery(
+      `SELECT id, status, lock_reason, period_key
+         FROM period_locks
+        WHERE module = 'banking_reconciliation'
+          AND period_key = $1
+          AND status = 'locked'
+        LIMIT 1`,
+      [periodKey]
+    );
+    const row = rows?.[0] || null;
+    if (!row) return { locked: false };
+    return { locked: true, lock: row };
+  }
+
+  async function computeReconciliationTotals(sessionId) {
+    const { rows } = await dbQuery(
+      `SELECT
+          COALESCE(SUM(CASE WHEN bri.cleared = true AND bt.amount > 0 THEN bt.amount ELSE 0 END), 0) AS cleared_deposits,
+          COALESCE(SUM(CASE WHEN bri.cleared = true AND bt.amount < 0 THEN ABS(bt.amount) ELSE 0 END), 0) AS cleared_withdrawals,
+          COALESCE(SUM(CASE WHEN bri.cleared = true THEN bt.amount ELSE 0 END), 0) AS cleared_total,
+          COUNT(*) FILTER (WHERE bri.cleared = false)::int AS uncleared_count,
+          COUNT(*)::int AS total_count,
+          COUNT(*) FILTER (WHERE bri.cleared = true)::int AS cleared_count
+        FROM bank_reconciliation_items bri
+        JOIN banking_transactions bt ON bt.id = bri.banking_txn_id
+       WHERE bri.reconciliation_session_id = $1`,
+      [sessionId]
+    );
+    const row = rows?.[0] || {};
+    const clearedDeposits = Number(row?.cleared_deposits || 0);
+    const clearedWithdrawals = Number(row?.cleared_withdrawals || 0);
+    const clearedTotal = Number(row?.cleared_total || 0);
+    return {
+      cleared_deposits: clearedDeposits,
+      cleared_withdrawals: clearedWithdrawals,
+      cleared_total: clearedTotal,
+      uncleared_count: Number(row?.uncleared_count || 0),
+      total_count: Number(row?.total_count || 0),
+      cleared_count: Number(row?.cleared_count || 0),
+    };
+  }
+
+  function csvEscape(v) {
+    return `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  }
+
+  function generateSimplePdf(lines = []) {
+    const esc = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+    const safeLines = (Array.isArray(lines) ? lines : []).slice(0, 160).map((l) => esc(l));
+    let y = 780;
+    const contentRows = ['BT', '/F1 10 Tf'];
+    safeLines.forEach((line) => {
+      contentRows.push(`1 0 0 1 40 ${y} Tm (${line}) Tj`);
+      y -= 14;
+      if (y < 40) y = 780;
+    });
+    contentRows.push('ET');
+    const stream = contentRows.join('\n');
+    const objects = [];
+    objects.push('1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj');
+    objects.push('2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj');
+    objects.push('3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj');
+    objects.push('4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj');
+    objects.push(`5 0 obj << /Length ${Buffer.byteLength(stream, 'utf8')} >> stream\n${stream}\nendstream endobj`);
+    const header = '%PDF-1.4\n';
+    let body = '';
+    const offsets = [0];
+    let cursor = Buffer.byteLength(header, 'utf8');
+    for (const obj of objects) {
+      offsets.push(cursor);
+      body += `${obj}\n`;
+      cursor += Buffer.byteLength(`${obj}\n`, 'utf8');
+    }
+    const xrefStart = cursor;
+    let xref = `xref\n0 ${objects.length + 1}\n`;
+    xref += '0000000000 65535 f \n';
+    for (let i = 1; i < offsets.length; i += 1) {
+      xref += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+    }
+    const trailer = `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+    return Buffer.from(header + body + xref + trailer, 'utf8');
   }
 
   app.get('/api/banking/accounts', async (req, res) => {
@@ -5504,6 +5611,10 @@ export function mountErpCoreApi(app, opts = {}) {
       const accountId = String(b.account_id || '').trim();
       if (!accountId) return res.status(400).json({ ok: false, error: 'account_id is required' });
       const txnDate = String(b.txn_date || '').trim() || new Date().toISOString().slice(0, 10);
+      const periodLock = await checkPeriodLockForAccountMonth(accountId, monthKeyFromDateLike(txnDate));
+      if (periodLock?.locked) {
+        return res.status(409).json({ ok: false, error: `Period ${monthKeyFromDateLike(txnDate)} is locked for this account` });
+      }
       const amount = Number(b.amount || 0);
       const source = String(b.source || 'manual').trim() || 'manual';
       const qboStatus = 'queued';
@@ -5715,6 +5826,13 @@ export function mountErpCoreApi(app, opts = {}) {
       const { rows: beforeRows } = await dbQuery('SELECT * FROM banking_transactions WHERE id = $1 LIMIT 1', [txnId]);
       const before = beforeRows?.[0] || null;
       if (!before) return res.status(404).json({ ok: false, error: 'Transaction not found' });
+      const lockCheck = await checkPeriodLockForAccountMonth(
+        String(before?.account_id || '').trim(),
+        monthKeyFromDateLike(before?.txn_date || '')
+      );
+      if (lockCheck?.locked) {
+        return res.status(409).json({ ok: false, error: `Period ${monthKeyFromDateLike(before?.txn_date || '')} is locked for this account` });
+      }
       await dbQuery('DELETE FROM bank_txn_links WHERE txn_id = $1', [txnId]);
       await dbQuery(
         `DELETE FROM qbo_post_queue
@@ -5892,6 +6010,12 @@ export function mountErpCoreApi(app, opts = {}) {
       const source = String(body.source || body.source_type || 'bank_import').trim() || 'bank_import';
       const actor = maintActor(req);
       if (!accountId) return res.status(400).json({ ok: false, error: 'account_id is required' });
+      if (statementMonth) {
+        const lockCheck = await checkPeriodLockForAccountMonth(accountId, statementMonth);
+        if (lockCheck?.locked) {
+          return res.status(409).json({ ok: false, error: `Period ${statementMonth} is locked for this account` });
+        }
+      }
       if (uploadError && !Array.isArray(body.rows)) {
         return res.status(400).json({ ok: false, error: uploadError?.message || 'Import upload failed' });
       }
@@ -6479,6 +6603,422 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({ ok: true, applied, skipped });
     } catch (e) {
       logError('POST /api/banking/rules/apply', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/reconciliation/sessions', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const accountId = String(b.account_id || '').trim();
+      const accountName = String(b.account_name || '').trim() || null;
+      const statementMonth = monthKeyFromDateLike(String(b.statement_month || '').trim());
+      const statementEndDate = parseDateLike(String(b.statement_end_date || '').trim());
+      const statementEndingBalance = Number(b.statement_ending_balance || 0);
+      if (!accountId || !statementMonth) {
+        return res.status(400).json({ ok: false, error: 'account_id and statement_month are required' });
+      }
+      const lockCheck = await checkPeriodLockForAccountMonth(accountId, statementMonth);
+      if (lockCheck?.locked) {
+        return res.status(409).json({ ok: false, error: `Period ${statementMonth} is locked for this account` });
+      }
+
+      const { rows: sessionRows } = await dbQuery(
+        `INSERT INTO bank_reconciliation_sessions (
+          account_id, statement_month, statement_end_date, statement_ending_balance,
+          cleared_total, difference, status, lock_reason_code, lock_reason_notes, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,0,$4,'open',NULL,$5,now(),now())
+        ON CONFLICT (account_id, statement_month)
+        DO UPDATE SET
+          statement_end_date = EXCLUDED.statement_end_date,
+          statement_ending_balance = EXCLUDED.statement_ending_balance,
+          status = 'open',
+          lock_reason_code = NULL,
+          lock_reason_notes = EXCLUDED.lock_reason_notes,
+          locked_by = NULL,
+          locked_at = NULL,
+          updated_at = now()
+        RETURNING *`,
+        [accountId, statementMonth, statementEndDate || null, statementEndingBalance, accountName]
+      );
+      const session = sessionRows?.[0] || null;
+      const sessionId = Number(session?.id || 0);
+      if (!sessionId) return res.status(500).json({ ok: false, error: 'Unable to create reconciliation session' });
+
+      const from = `${statementMonth}-01`;
+      const to = `${statementMonth}-31`;
+      const { rows: txnRows } = await dbQuery(
+        `SELECT id, reconciled
+           FROM banking_transactions
+          WHERE account_id = $1
+            AND txn_date >= $2::date
+            AND txn_date <= $3::date
+          ORDER BY txn_date ASC, id ASC`,
+        [accountId, from, to]
+      );
+      for (const tx of txnRows || []) {
+        await dbQuery(
+          `INSERT INTO bank_reconciliation_items (
+            reconciliation_session_id, banking_txn_id, cleared, cleared_at, created_at
+          ) VALUES ($1,$2,$3,$4,now())
+          ON CONFLICT (reconciliation_session_id, banking_txn_id)
+          DO UPDATE SET cleared = EXCLUDED.cleared, cleared_at = EXCLUDED.cleared_at`,
+          [sessionId, Number(tx?.id || 0), Boolean(tx?.reconciled), tx?.reconciled ? new Date().toISOString() : null]
+        );
+      }
+      const totals = await computeReconciliationTotals(sessionId);
+      const difference = Number(statementEndingBalance || 0) - Number(totals.cleared_total || 0);
+      await dbQuery(
+        `UPDATE bank_reconciliation_sessions
+            SET cleared_total = $2,
+                difference = $3,
+                updated_at = now()
+          WHERE id = $1`,
+        [sessionId, Number(totals.cleared_total || 0), difference]
+      );
+      const { rows: finalRows } = await dbQuery(
+        `SELECT *
+           FROM bank_reconciliation_sessions
+          WHERE id = $1
+          LIMIT 1`,
+        [sessionId]
+      );
+      const finalSession = {
+        ...(finalRows?.[0] || {}),
+        account_name: accountName || null,
+      };
+      await writeAuditLog(req, {
+        action: 'create_reconciliation_session',
+        entity_type: 'bank_reconciliation_sessions',
+        entity_id: String(sessionId),
+        before_state: null,
+        after_state: { session: finalSession, totals },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, session: finalSession });
+    } catch (e) {
+      logError('POST /api/banking/reconciliation/sessions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/banking/reconciliation/sessions', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, sessions: [], count: 0 });
+      await ensureBankingTables();
+      const accountId = String(req.query?.account_id || '').trim();
+      const year = String(req.query?.year || '').trim();
+      const where = [];
+      const values = [];
+      if (accountId) {
+        values.push(accountId);
+        where.push(`account_id = $${values.length}`);
+      }
+      if (year && /^\d{4}$/.test(year)) {
+        values.push(`${year}-`);
+        where.push(`statement_month LIKE $${values.length} || '%'`);
+      }
+      const { rows } = await dbQuery(
+        `SELECT id, account_id, lock_reason_notes AS account_name, statement_month, statement_end_date,
+                statement_ending_balance, cleared_total, difference, status, locked_by, locked_at, updated_at
+           FROM bank_reconciliation_sessions
+           ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+          ORDER BY statement_month DESC, id DESC`,
+        values
+      );
+      return res.json({ ok: true, sessions: rows || [], count: Number(rows?.length || 0) });
+    } catch (e) {
+      logError('GET /api/banking/reconciliation/sessions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), sessions: [], count: 0 });
+    }
+  });
+
+  app.get('/api/banking/reconciliation/sessions/:id', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid session id' });
+      const { rows: sessionRows } = await dbQuery(
+        `SELECT id, account_id, lock_reason_notes AS account_name, statement_month, statement_end_date,
+                statement_ending_balance, cleared_total, difference, status, lock_reason_code, lock_reason_notes,
+                locked_by, locked_at, created_at, updated_at
+           FROM bank_reconciliation_sessions
+          WHERE id = $1
+          LIMIT 1`,
+        [id]
+      );
+      const session = sessionRows?.[0] || null;
+      if (!session) return res.status(404).json({ ok: false, error: 'Session not found' });
+      const { rows: items } = await dbQuery(
+        `SELECT bri.id, bri.reconciliation_session_id, bri.banking_txn_id, bri.cleared, bri.cleared_at,
+                bt.txn_date, bt.description, bt.memo, bt.amount, bt.account_id, bt.account_name, bt.reconciled, bt.status, bt.category
+           FROM bank_reconciliation_items bri
+           JOIN banking_transactions bt ON bt.id = bri.banking_txn_id
+          WHERE bri.reconciliation_session_id = $1
+          ORDER BY bt.txn_date ASC, bt.id ASC`,
+        [id]
+      );
+      const totals = await computeReconciliationTotals(id);
+      const difference = Number(session?.statement_ending_balance || 0) - Number(totals?.cleared_total || 0);
+      await dbQuery(
+        `UPDATE bank_reconciliation_sessions
+            SET cleared_total = $2,
+                difference = $3,
+                updated_at = now()
+          WHERE id = $1`,
+        [id, Number(totals?.cleared_total || 0), difference]
+      );
+      return res.json({
+        ok: true,
+        session: { ...session, cleared_total: Number(totals?.cleared_total || 0), difference },
+        items: items || [],
+        totals: { ...totals, difference },
+      });
+    } catch (e) {
+      logError('GET /api/banking/reconciliation/sessions/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/reconciliation/sessions/:id/clear', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid session id' });
+      const itemIds = Array.isArray(req.body?.item_ids) ? req.body.item_ids.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0) : [];
+      const cleared = Boolean(req.body?.cleared);
+      if (!itemIds.length) return res.status(400).json({ ok: false, error: 'item_ids are required' });
+      const { rows: sessionRows } = await dbQuery('SELECT * FROM bank_reconciliation_sessions WHERE id = $1 LIMIT 1', [id]);
+      const session = sessionRows?.[0] || null;
+      if (!session) return res.status(404).json({ ok: false, error: 'Session not found' });
+      if (String(session?.status || '').toLowerCase() === 'locked') {
+        return res.status(409).json({ ok: false, error: 'Session is locked' });
+      }
+      await dbQuery(
+        `UPDATE bank_reconciliation_items
+            SET cleared = $2,
+                cleared_at = CASE WHEN $2 THEN now() ELSE NULL END
+          WHERE reconciliation_session_id = $1
+            AND id = ANY($3::bigint[])`,
+        [id, cleared, itemIds]
+      );
+      const totals = await computeReconciliationTotals(id);
+      const difference = Number(session?.statement_ending_balance || 0) - Number(totals?.cleared_total || 0);
+      await dbQuery(
+        `UPDATE bank_reconciliation_sessions
+            SET cleared_total = $2,
+                difference = $3,
+                updated_at = now()
+          WHERE id = $1`,
+        [id, Number(totals?.cleared_total || 0), difference]
+      );
+      return res.json({ ok: true, totals: { ...totals, difference } });
+    } catch (e) {
+      logError('POST /api/banking/reconciliation/sessions/:id/clear', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/reconciliation/sessions/:id/lock', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid session id' });
+      const { rows: sessionRows } = await dbQuery('SELECT * FROM bank_reconciliation_sessions WHERE id = $1 LIMIT 1', [id]);
+      const session = sessionRows?.[0] || null;
+      if (!session) return res.status(404).json({ ok: false, error: 'Session not found' });
+      const totals = await computeReconciliationTotals(id);
+      const difference = Number(session?.statement_ending_balance || 0) - Number(totals?.cleared_total || 0);
+      if (Math.round(difference * 100) !== 0) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Difference must be $0.00 to lock',
+          difference,
+        });
+      }
+      const actor = maintActor(req);
+      await dbQuery(
+        `UPDATE bank_reconciliation_sessions
+            SET status = 'locked',
+                cleared_total = $2,
+                difference = $3,
+                locked_by = $4,
+                locked_at = now(),
+                updated_at = now()
+          WHERE id = $1`,
+        [id, Number(totals?.cleared_total || 0), difference, actor]
+      );
+      await dbQuery(
+        `UPDATE banking_transactions bt
+            SET reconciled = true, updated_at = now(), updated_by = $2
+           FROM bank_reconciliation_items bri
+          WHERE bri.reconciliation_session_id = $1
+            AND bri.cleared = true
+            AND bt.id = bri.banking_txn_id`,
+        [id, actor]
+      );
+      const periodKey = `${String(session?.statement_month || '').trim()}:${String(session?.account_id || '').trim()}`;
+      await dbQuery(
+        `INSERT INTO period_locks (module, period_key, status, locked_by, lock_reason, created_at, updated_at)
+         VALUES ('banking_reconciliation', $1, 'locked', $2, $3, now(), now())
+         ON CONFLICT (module, period_key)
+         DO UPDATE SET status = 'locked', locked_by = EXCLUDED.locked_by, lock_reason = EXCLUDED.lock_reason, updated_at = now()`,
+        [periodKey, actor, String(session?.account_id || '').trim()]
+      );
+      const { rows: finalRows } = await dbQuery('SELECT * FROM bank_reconciliation_sessions WHERE id = $1 LIMIT 1', [id]);
+      const finalSession = finalRows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'lock_reconciliation',
+        entity_type: 'bank_reconciliation_sessions',
+        entity_id: String(id),
+        before_state: session,
+        after_state: { session: finalSession, totals: { ...totals, difference } },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, session: finalSession });
+    } catch (e) {
+      logError('POST /api/banking/reconciliation/sessions/:id/lock', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/reconciliation/sessions/:id/unlock', async (req, res) => {
+    try {
+      if (!requireAdminRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      const reason = String(req.body?.reason || '').trim();
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid session id' });
+      if (!reason) return res.status(400).json({ ok: false, error: 'reason is required' });
+      const { rows: beforeRows } = await dbQuery('SELECT * FROM bank_reconciliation_sessions WHERE id = $1 LIMIT 1', [id]);
+      const before = beforeRows?.[0] || null;
+      if (!before) return res.status(404).json({ ok: false, error: 'Session not found' });
+      await dbQuery(
+        `UPDATE bank_reconciliation_sessions
+            SET status = 'open',
+                lock_reason_code = 'manual_unlock',
+                lock_reason_notes = $2,
+                locked_by = NULL,
+                locked_at = NULL,
+                updated_at = now()
+          WHERE id = $1`,
+        [id, reason]
+      );
+      await dbQuery(
+        `UPDATE banking_transactions bt
+            SET reconciled = false, updated_at = now(), updated_by = $2
+           FROM bank_reconciliation_items bri
+          WHERE bri.reconciliation_session_id = $1
+            AND bt.id = bri.banking_txn_id`,
+        [id, maintActor(req)]
+      );
+      const periodKey = `${String(before?.statement_month || '').trim()}:${String(before?.account_id || '').trim()}`;
+      await dbQuery(
+        `DELETE FROM period_locks
+          WHERE module = 'banking_reconciliation'
+            AND period_key = $1`,
+        [periodKey]
+      );
+      const { rows: finalRows } = await dbQuery('SELECT * FROM bank_reconciliation_sessions WHERE id = $1 LIMIT 1', [id]);
+      const session = finalRows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'unlock_reconciliation',
+        entity_type: 'bank_reconciliation_sessions',
+        entity_id: String(id),
+        before_state: before,
+        after_state: { session, reason },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, session });
+    } catch (e) {
+      logError('POST /api/banking/reconciliation/sessions/:id/unlock', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/banking/reconciliation/sessions/:id/export', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid session id' });
+      const fmt = String(req.query?.format || 'pdf').trim().toLowerCase();
+      const { rows: sessionRows } = await dbQuery(
+        `SELECT id, account_id, lock_reason_notes AS account_name, statement_month, statement_end_date,
+                statement_ending_balance, status, locked_by, locked_at
+           FROM bank_reconciliation_sessions
+          WHERE id = $1
+          LIMIT 1`,
+        [id]
+      );
+      const session = sessionRows?.[0] || null;
+      if (!session) return res.status(404).json({ ok: false, error: 'Session not found' });
+      const { rows: items } = await dbQuery(
+        `SELECT bri.cleared, bt.txn_date, bt.description, bt.amount
+           FROM bank_reconciliation_items bri
+           JOIN banking_transactions bt ON bt.id = bri.banking_txn_id
+          WHERE bri.reconciliation_session_id = $1
+          ORDER BY bt.txn_date ASC, bt.id ASC`,
+        [id]
+      );
+      const totals = await computeReconciliationTotals(id);
+      const difference = Number(session?.statement_ending_balance || 0) - Number(totals?.cleared_total || 0);
+      const cleared = (items || []).filter((r) => r?.cleared);
+      const uncleared = (items || []).filter((r) => !r?.cleared);
+      if (fmt === 'csv') {
+        const lines = [
+          ['company', 'account', 'statement_period', 'statement_ending_balance', 'cleared_total', 'difference', 'reconciled_by', 'reconciled_at'].map(csvEscape).join(','),
+          [
+            'IH 35 Transportation LLC',
+            session?.account_name || session?.account_id || '',
+            session?.statement_month || '',
+            Number(session?.statement_ending_balance || 0),
+            Number(totals?.cleared_total || 0),
+            difference,
+            session?.locked_by || '',
+            session?.locked_at || '',
+          ].map(csvEscape).join(','),
+          '',
+          ['section', 'date', 'description', 'deposits', 'withdrawals'].map(csvEscape).join(','),
+          ...cleared.map((r) => ['cleared', String(r?.txn_date || '').slice(0, 10), String(r?.description || ''), Number(r?.amount || 0) > 0 ? Number(r.amount) : '', Number(r?.amount || 0) < 0 ? Math.abs(Number(r.amount)) : ''].map(csvEscape).join(',')),
+          ...uncleared.map((r) => ['uncleared', String(r?.txn_date || '').slice(0, 10), String(r?.description || ''), Number(r?.amount || 0) > 0 ? Number(r.amount) : '', Number(r?.amount || 0) < 0 ? Math.abs(Number(r.amount)) : ''].map(csvEscape).join(',')),
+        ];
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="reconciliation-${id}.csv"`);
+        return res.status(200).send(lines.join('\n'));
+      }
+      const reportLines = [
+        'IH 35 Transportation LLC',
+        `Account: ${session?.account_name || session?.account_id || '--'}`,
+        `Statement Period: ${session?.statement_month || '--'}`,
+        `Statement Ending Balance: ${Number(session?.statement_ending_balance || 0).toFixed(2)}`,
+        `Cleared Deposits: ${Number(totals?.cleared_deposits || 0).toFixed(2)}`,
+        `Cleared Withdrawals: ${Number(totals?.cleared_withdrawals || 0).toFixed(2)}`,
+        `Cleared Total: ${Number(totals?.cleared_total || 0).toFixed(2)}`,
+        `Difference: ${Number(difference || 0).toFixed(2)}`,
+        `Reconciled by: ${session?.locked_by || 'operator'} on ${String(session?.locked_at || new Date().toISOString()).slice(0, 19).replace('T', ' ')}`,
+        '',
+        'Cleared Transactions:',
+        ...cleared.map((r) => `✓ ${String(r?.txn_date || '').slice(0, 10)} | ${String(r?.description || '').slice(0, 68)} | ${Number(r?.amount || 0).toFixed(2)}`),
+        '',
+        'Uncleared Transactions:',
+        ...uncleared.map((r) => `• ${String(r?.txn_date || '').slice(0, 10)} | ${String(r?.description || '').slice(0, 68)} | ${Number(r?.amount || 0).toFixed(2)}`),
+      ];
+      const pdfBuffer = generateSimplePdf(reportLines);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="reconciliation-${id}.pdf"`);
+      return res.status(200).send(pdfBuffer);
+    } catch (e) {
+      logError('GET /api/banking/reconciliation/sessions/:id/export', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });

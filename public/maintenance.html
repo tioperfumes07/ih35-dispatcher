@@ -5026,7 +5026,10 @@
               <button type="button" class="btn btn--small" onclick="bankingBackToHome()">&#8592; DIP Accounts</button>
               <div class="panel-title" id="bankingRegisterTitle" style="margin:0">Transaction Register</div>
             </div>
-            <div class="mini-note" id="bankingRegisterBalance">Balance: $0.00</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="mini-note" id="bankingRegisterBalance">Balance: $0.00</div>
+              <button type="button" class="btn btn--small" onclick="openBankingReconciliationHome()">Reconcile</button>
+            </div>
           </div>
           <div class="panel-body">
             <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
@@ -5077,6 +5080,82 @@
                 </table>
               </div>
               <div id="bankingQueuePagination" class="mini-note" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingReconciliationView" class="panel banking-hidden" style="margin-top:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn btn--small" onclick="bankingBackToHomeFromReconcile()">&#8592; DIP Accounts</button>
+              <div class="panel-title" style="margin:0">Reconciliation Home</div>
+            </div>
+            <button type="button" class="btn btn--small" onclick="openBankingStartReconciliationModal()">Start New Reconciliation</button>
+          </div>
+          <div class="panel-body">
+            <div style="overflow:auto;max-height:320px;border:1px solid var(--color-border);border-radius:8px">
+              <table class="table" style="min-width:920px">
+                <thead><tr><th>Account</th><th>Last Reconciled</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="bankReconSessionsTableBody"><tr><td colspan="4" class="muted">Loading reconciliation sessions...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingReconciliationWorkspace" class="panel banking-hidden" style="margin-top:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn btn--small" onclick="backToReconciliationHome()">&#8592; Reconciliation Home</button>
+              <div>
+                <div class="panel-title" id="bankReconWorkspaceTitle" style="margin:0">Reconciling</div>
+                <div class="mini-note" id="bankReconWorkspacePeriod">Statement Period: --</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button id="bankReconLockBtn" type="button" class="btn btn--small" onclick="lockBankingReconciliationSession()" disabled title="Difference must be $0.00 to lock">Lock Month</button>
+              <button type="button" class="btn btn--small" onclick="exportBankingReconciliation('pdf')">Export PDF</button>
+              <button type="button" class="btn btn--small" onclick="exportBankingReconciliation('csv')">Export CSV</button>
+            </div>
+          </div>
+          <div class="panel-body" style="display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:12px;align-items:start">
+            <div class="panel" style="margin:0">
+              <div class="panel-body">
+                <div class="mini-note" id="bankReconLockMeta">--</div>
+                <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px">
+                  <span>Statement Ending Balance:</span><strong id="bankReconEndingBalance">$0.00</strong>
+                  <span>Cleared Deposits:</span><strong id="bankReconClearedDeposits">$0.00</strong>
+                  <span>Cleared Withdrawals:</span><strong id="bankReconClearedWithdrawals">($0.00)</strong>
+                  <span>Cleared Balance:</span><strong id="bankReconClearedTotal">$0.00</strong>
+                  <span>Difference:</span><strong id="bankReconDifference">$0.00</strong>
+                </div>
+                <div class="mini-note" id="bankReconProgress" style="margin-top:8px">0 of 0 transactions cleared</div>
+                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                  <button type="button" class="btn btn--small" onclick="unlockBankingReconciliationPrompt()">Unlock (Admin only)</button>
+                </div>
+              </div>
+            </div>
+            <div class="panel" style="margin:0">
+              <div class="panel-body">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                  <div>
+                    <button id="bankReconFilterUncleared" type="button" class="btn btn--small" onclick="setBankReconItemsFilter('uncleared')">Uncleared</button>
+                    <button id="bankReconFilterCleared" type="button" class="btn btn--small" onclick="setBankReconItemsFilter('cleared')">Cleared</button>
+                    <button id="bankReconFilterAll" type="button" class="btn btn--small" onclick="setBankReconItemsFilter('all')">All</button>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" class="btn btn--small" onclick="selectAllBankReconItems(true)">Select All</button>
+                    <button type="button" class="btn btn--small" onclick="selectAllBankReconItems(false)">Deselect All</button>
+                    <button type="button" class="btn btn--small" onclick="bulkToggleBankReconItems(true)">Mark Selected as Cleared</button>
+                    <button type="button" class="btn btn--small" onclick="bulkToggleBankReconItems(false)">Mark Selected as Uncleared</button>
+                  </div>
+                </div>
+                <div style="overflow:auto;max-height:420px;border:1px solid var(--color-border);border-radius:8px">
+                  <table class="table" style="min-width:880px">
+                    <thead><tr><th><input id="bankReconSelectAllCb" type="checkbox" onchange="toggleVisibleBankReconCheckboxes(this.checked)" /></th><th>Date</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th></tr></thead>
+                    <tbody id="bankReconItemsBody"><tr><td colspan="5" class="muted">Select a reconciliation session.</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -5302,6 +5381,53 @@
                 <thead><tr><th>Date</th><th>Account</th><th>File</th><th>Rows</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="bankingImportHistoryBody"><tr><td colspan="6" class="muted">Loading import history...</td></tr></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingStartReconModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Start reconciliation">
+          <div class="banking-modal" style="width:min(620px,100%)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Start New Reconciliation</div>
+              <button type="button" class="btn btn--small" onclick="closeBankingStartReconciliationModal()">Cancel</button>
+            </div>
+            <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+              <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Account</span><select id="bankReconStartAccount" class="qb-in"></select></label>
+              <label><span class="qb-l">Statement month</span><input id="bankReconStartMonth" class="qb-in" type="month" /></label>
+              <label><span class="qb-l">Statement end date</span><input id="bankReconStartEndDate" class="qb-in" type="date" /></label>
+              <label><span class="qb-l">Statement ending balance</span><input id="bankReconStartEndingBalance" class="qb-in" type="number" step="0.01" /></label>
+            </div>
+            <div class="banking-modal-footer">
+              <button type="button" class="btn btn--small" onclick="beginBankingReconciliationSession()">Begin Reconciliation</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingLockReconModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Lock reconciliation month">
+          <div class="banking-modal" style="width:min(580px,100%)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Lock Reconciliation Month</div>
+              <button type="button" class="btn btn--small" onclick="closeBankingLockReconModal()">Cancel</button>
+            </div>
+            <div class="mini-note" id="bankReconLockConfirmText" style="margin-top:10px">Lock this month?</div>
+            <div class="banking-modal-footer">
+              <button type="button" class="btn btn--small" onclick="closeBankingLockReconModal()">Cancel</button>
+              <button type="button" class="btn btn--small" onclick="confirmLockBankingReconciliation()">Lock Month ✓</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="bankingUnlockReconModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Unlock reconciliation month">
+          <div class="banking-modal" style="width:min(620px,100%)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="panel-title" style="margin:0">Unlock Reconciliation</div>
+              <button type="button" class="btn btn--small" onclick="closeBankingUnlockReconModal()">Cancel</button>
+            </div>
+            <div class="mini-note" style="margin-top:10px">Unlock this reconciliation? Reason is required.</div>
+            <label style="display:block;margin-top:8px"><span class="qb-l">Reason</span><textarea id="bankReconUnlockReason" class="qb-in" rows="3" style="width:100%"></textarea></label>
+            <div class="banking-modal-footer">
+              <button type="button" class="btn btn--small" onclick="closeBankingUnlockReconModal()">Cancel</button>
+              <button type="button" class="btn btn--small" onclick="confirmUnlockBankingReconciliation()">Unlock</button>
             </div>
           </div>
         </div>
@@ -30335,6 +30461,435 @@
       };
 
       document.getElementById('bankingCategorizeDrawerBackdrop')?.addEventListener('click', drawerClose);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var reconState = {
+        session: null,
+        items: [],
+        filter: 'uncleared',
+        selected: new Set(),
+      };
+
+      function el(id) { return document.getElementById(id); }
+      function toastMsg(msg, ok) {
+        if (typeof window.toast === 'function') window.toast(String(msg || ''), ok);
+        else console.log(msg);
+      }
+      function money(v) { return typeof window.qboMoneyFmt === 'function' ? window.qboMoneyFmt(v) : ('$' + Number(v || 0).toFixed(2)); }
+      function monthLabel(yyyyMm) {
+        var s = String(yyyyMm || '').trim();
+        if (!/^\d{4}-\d{2}$/.test(s)) return s || '--';
+        var dt = new Date(s + '-01T00:00:00');
+        return dt.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      }
+      function setReconWorkspaceVisible(on) {
+        el('bankingReconciliationWorkspace')?.classList.toggle('banking-hidden', !on);
+      }
+      function setReconHomeVisible(on) {
+        el('bankingReconciliationView')?.classList.toggle('banking-hidden', !on);
+      }
+      function setHomeVisible(on) {
+        el('bankingHomeView')?.classList.toggle('banking-hidden', !on);
+        el('bankingRegisterView')?.classList.toggle('banking-hidden', on);
+        if (!on) return;
+      }
+      function closeStartModal() { el('bankingStartReconModal')?.classList.remove('active'); }
+      function closeLockModal() { el('bankingLockReconModal')?.classList.remove('active'); }
+      function closeUnlockModal() { el('bankingUnlockReconModal')?.classList.remove('active'); }
+
+      function getFilteredItems() {
+        var f = String(reconState.filter || 'uncleared');
+        if (f === 'all') return reconState.items.slice();
+        if (f === 'cleared') return reconState.items.filter(function (x) { return Boolean(x?.cleared); });
+        return reconState.items.filter(function (x) { return !Boolean(x?.cleared); });
+      }
+
+      function recomputeReconTotalsLocal() {
+        var cleared = reconState.items.filter(function (x) { return Boolean(x?.cleared); });
+        var deposits = 0;
+        var withdrawals = 0;
+        var clearedTotal = 0;
+        cleared.forEach(function (x) {
+          var amount = Number(x?.amount || 0);
+          clearedTotal += amount;
+          if (amount > 0) deposits += amount;
+          if (amount < 0) withdrawals += Math.abs(amount);
+        });
+        var ending = Number(reconState.session?.statement_ending_balance || 0);
+        var diff = ending - clearedTotal;
+        var totals = {
+          cleared_deposits: deposits,
+          cleared_withdrawals: withdrawals,
+          cleared_total: clearedTotal,
+          difference: diff,
+          total_count: reconState.items.length,
+          cleared_count: cleared.length,
+          uncleared_count: Math.max(0, reconState.items.length - cleared.length),
+        };
+        renderReconTotals(totals);
+      }
+
+      function renderReconTotals(totals) {
+        el('bankReconEndingBalance').textContent = money(reconState.session?.statement_ending_balance || 0);
+        el('bankReconClearedDeposits').textContent = money(totals?.cleared_deposits || 0);
+        el('bankReconClearedWithdrawals').textContent = '(' + money(Math.abs(Number(totals?.cleared_withdrawals || 0))).replace('$', '$') + ')';
+        el('bankReconClearedTotal').textContent = money(totals?.cleared_total || 0);
+        el('bankReconDifference').textContent = money(totals?.difference || 0);
+        el('bankReconDifference').style.color = Math.round(Number(totals?.difference || 0) * 100) === 0 ? '#166534' : '#b42318';
+        el('bankReconProgress').textContent = (Number(totals?.cleared_count || 0)) + ' of ' + (Number(totals?.total_count || 0)) + ' transactions cleared';
+        var locked = String(reconState.session?.status || '').toLowerCase() === 'locked';
+        var lockBtn = el('bankReconLockBtn');
+        if (lockBtn) {
+          var canLock = !locked && Math.round(Number(totals?.difference || 0) * 100) === 0;
+          lockBtn.disabled = !canLock;
+          lockBtn.style.background = canLock ? '#166534' : '';
+          lockBtn.style.color = canLock ? '#fff' : '';
+          lockBtn.title = canLock ? 'Lock this month' : 'Difference must be $0.00 to lock';
+        }
+      }
+
+      function renderReconItemsTable() {
+        var body = el('bankReconItemsBody');
+        if (!body) return;
+        var filtered = getFilteredItems();
+        var locked = String(reconState.session?.status || '').toLowerCase() === 'locked';
+        if (!filtered.length) {
+          body.innerHTML = '<tr><td colspan="5" class="muted">No transactions for this filter.</td></tr>';
+          return;
+        }
+        body.innerHTML = filtered.map(function (item) {
+          var amount = Number(item?.amount || 0);
+          var checked = reconState.selected.has(String(item?.id || '')) ? ' checked' : '';
+          var cbDisabled = locked ? ' disabled' : '';
+          return '<tr style=\"' + (item?.cleared ? 'background:#f3f4f6;' : '') + '\">' +
+            '<td><input type=\"checkbox\" class=\"bank-recon-item-cb\" data-item-id=\"' + escapeHtml(String(item?.id || '')) + '\"' + checked + cbDisabled + ' onchange=\"toggleBankReconItemSelection(' + JSON.stringify(String(item?.id || '')) + ', this.checked)\" /></td>' +
+            '<td>' + escapeHtml(String(item?.txn_date || '').slice(0, 10) || '--') + '</td>' +
+            '<td>' + escapeHtml(String(item?.description || item?.memo || '--')) + '</td>' +
+            '<td class=\"num\">' + (amount > 0 ? money(amount) : '--') + '</td>' +
+            '<td class=\"num\">' + (amount < 0 ? money(Math.abs(amount)) : '--') + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      function updateReconLockMeta() {
+        var meta = el('bankReconLockMeta');
+        if (!meta) return;
+        if (String(reconState.session?.status || '').toLowerCase() !== 'locked') {
+          meta.textContent = 'Open reconciliation session.';
+          return;
+        }
+        var who = String(reconState.session?.locked_by || 'operator');
+        var when = String(reconState.session?.locked_at || '').slice(0, 19).replace('T', ' ');
+        meta.textContent = '🔒 Locked on ' + (when || '--') + ' by ' + who;
+      }
+
+      async function loadReconciliationSession(sessionId) {
+        var id = Number(sessionId || 0);
+        if (!id) return;
+        try {
+          var rsp = await fetch('/api/banking/reconciliation/sessions/' + encodeURIComponent(id), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Failed to load session');
+          reconState.session = json?.session || null;
+          reconState.items = Array.isArray(json?.items) ? json.items : [];
+          reconState.selected = new Set();
+          el('bankReconWorkspaceTitle').textContent = 'Reconciling: ' + String(reconState.session?.account_name || reconState.session?.account_id || '--');
+          el('bankReconWorkspacePeriod').textContent = 'Statement Period: ' + monthLabel(reconState.session?.statement_month || '--');
+          updateReconLockMeta();
+          renderReconItemsTable();
+          renderReconTotals(json?.totals || {});
+          setReconHomeVisible(false);
+          setReconWorkspaceVisible(true);
+          setHomeVisible(false);
+        } catch (e) {
+          toastMsg('Unable to load reconciliation session: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function loadReconciliationHome() {
+        var body = el('bankReconSessionsTableBody');
+        if (body) body.innerHTML = '<tr><td colspan=\"4\" class=\"muted\">Loading reconciliation sessions...</td></tr>';
+        try {
+          var year = new Date().getFullYear();
+          var [sessRsp, acctRsp] = await Promise.all([
+            fetch('/api/banking/reconciliation/sessions?year=' + year, { headers: { Accept: 'application/json' } }),
+            fetch('/api/banking/accounts/all?month=' + new Date().toISOString().slice(0, 7), { headers: { Accept: 'application/json' } }),
+          ]);
+          var sessJson = await sessRsp.json();
+          var acctJson = await acctRsp.json();
+          var sessions = Array.isArray(sessJson?.sessions) ? sessJson.sessions : [];
+          var accounts = Array.isArray(acctJson?.accounts) ? acctJson.accounts : [];
+          var latestByAccount = new Map();
+          sessions.forEach(function (s) {
+            var key = String(s?.account_id || '').trim();
+            if (!key) return;
+            var curr = latestByAccount.get(key);
+            if (!curr || String(s?.statement_month || '') > String(curr?.statement_month || '')) latestByAccount.set(key, s);
+          });
+          var rows = accounts.map(function (a) {
+            var sid = String(a?.account_id || '');
+            var latest = latestByAccount.get(sid) || null;
+            if (!latest) {
+              return {
+                account_id: sid,
+                account_name: a?.account_name || sid,
+                statement_month: '--',
+                status: 'never',
+                session_id: null,
+              };
+            }
+            return {
+              account_id: sid,
+              account_name: a?.account_name || latest?.account_name || sid,
+              statement_month: latest?.statement_month || '--',
+              status: String(latest?.status || 'open').toLowerCase(),
+              session_id: Number(latest?.id || 0) || null,
+            };
+          });
+          if (!rows.length) {
+            body.innerHTML = '<tr><td colspan=\"4\" class=\"muted\">No eligible accounts.</td></tr>';
+          } else {
+            body.innerHTML = rows.map(function (r) {
+              var statusText = r.status === 'locked' ? '✅ Locked' : (r.status === 'open' ? '⚠️ Open' : '🔴 Never');
+              var action = r.session_id
+                ? ('<button type=\"button\" class=\"btn btn--small\" onclick=\"openBankReconSession(' + Number(r.session_id) + ')\">' + (r.status === 'locked' ? 'View' : 'Continue') + '</button>')
+                : ('<button type=\"button\" class=\"btn btn--small\" onclick=\"openBankingStartReconciliationModal(' + JSON.stringify(r.account_id) + ')\">Start</button>');
+              return '<tr>' +
+                '<td>' + escapeHtml(String(r.account_name || '--')) + '</td>' +
+                '<td>' + escapeHtml(monthLabel(r.statement_month || '--')) + '</td>' +
+                '<td>' + statusText + '</td>' +
+                '<td>' + action + '</td>' +
+              '</tr>';
+            }).join('');
+          }
+          fillReconStartAccountSelector(accounts);
+        } catch (e) {
+          if (body) body.innerHTML = '<tr><td colspan=\"4\" class=\"muted\">Unable to load sessions: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      function fillReconStartAccountSelector(accounts) {
+        var sel = el('bankReconStartAccount');
+        if (!sel) return;
+        sel.innerHTML = (accounts || []).map(function (a) {
+          return '<option value=\"' + escapeHtml(String(a?.account_id || '')) + '\">' + escapeHtml(String(a?.account_name || a?.account_id || '--')) + '</option>';
+        }).join('');
+      }
+
+      async function beginSession() {
+        var accountId = String(el('bankReconStartAccount')?.value || '').trim();
+        var accountName = String(el('bankReconStartAccount')?.selectedOptions?.[0]?.textContent || '').trim();
+        var statementMonth = String(el('bankReconStartMonth')?.value || '').trim();
+        var endDate = String(el('bankReconStartEndDate')?.value || '').trim();
+        var ending = Number(el('bankReconStartEndingBalance')?.value || 0);
+        if (!accountId || !statementMonth) {
+          toastMsg('Account and statement month are required.', false);
+          return;
+        }
+        try {
+          var rsp = await fetch('/api/banking/reconciliation/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              account_id: accountId,
+              account_name: accountName,
+              statement_month: statementMonth,
+              statement_end_date: endDate || (statementMonth + '-28'),
+              statement_ending_balance: ending,
+            }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to create session');
+          closeStartModal();
+          await loadReconciliationSession(json?.session?.id);
+        } catch (e) {
+          toastMsg('Unable to create session: ' + String(e?.message || e), false);
+        }
+      }
+
+      function openStartModal(prefAccountId) {
+        var month = new Date().toISOString().slice(0, 7);
+        if (!el('bankReconStartMonth').value) el('bankReconStartMonth').value = month;
+        if (!el('bankReconStartEndDate').value) el('bankReconStartEndDate').value = month + '-28';
+        if (prefAccountId) el('bankReconStartAccount').value = String(prefAccountId);
+        el('bankingStartReconModal')?.classList.add('active');
+      }
+
+      function openLockModal() {
+        if (!reconState.session) return;
+        var txt = 'Lock ' + monthLabel(reconState.session?.statement_month) + ' for ' + String(reconState.session?.account_name || reconState.session?.account_id || '--') + '?\nThis will mark all cleared transactions as reconciled and prevent future edits. Only an Administrator can unlock this month.';
+        el('bankReconLockConfirmText').textContent = txt;
+        el('bankingLockReconModal')?.classList.add('active');
+      }
+
+      async function lockSessionNow() {
+        if (!reconState.session?.id) return;
+        try {
+          var rsp = await fetch('/api/banking/reconciliation/sessions/' + encodeURIComponent(reconState.session.id) + '/lock', {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to lock');
+          closeLockModal();
+          await loadReconciliationSession(reconState.session.id);
+          toastMsg('Reconciliation month locked.');
+        } catch (e) {
+          toastMsg('Unable to lock: ' + String(e?.message || e), false);
+        }
+      }
+
+      function unlockPrompt() {
+        if (!reconState.session?.id) return;
+        el('bankReconUnlockReason').value = '';
+        el('bankingUnlockReconModal')?.classList.add('active');
+      }
+
+      async function unlockSessionNow() {
+        if (!reconState.session?.id) return;
+        var reason = String(el('bankReconUnlockReason')?.value || '').trim();
+        if (!reason) {
+          toastMsg('Unlock reason is required.', false);
+          return;
+        }
+        try {
+          var rsp = await fetch('/api/banking/reconciliation/sessions/' + encodeURIComponent(reconState.session.id) + '/unlock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ reason: reason }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to unlock');
+          closeUnlockModal();
+          await loadReconciliationSession(reconState.session.id);
+          toastMsg('Reconciliation month unlocked.');
+        } catch (e) {
+          toastMsg('Unable to unlock: ' + String(e?.message || e), false);
+        }
+      }
+
+      function toggleItemSelection(itemId, checked) {
+        var key = String(itemId || '').trim();
+        if (!key) return;
+        if (checked) reconState.selected.add(key);
+        else reconState.selected.delete(key);
+      }
+
+      function toggleVisibleCbs(checked) {
+        document.querySelectorAll('#bankReconItemsBody .bank-recon-item-cb').forEach(function (cb) {
+          if (cb.disabled) return;
+          cb.checked = Boolean(checked);
+          var id = String(cb.getAttribute('data-item-id') || '');
+          if (checked) reconState.selected.add(id);
+          else reconState.selected.delete(id);
+        });
+      }
+
+      function selectAllItems(checked) {
+        reconState.selected = new Set();
+        if (checked) {
+          getFilteredItems().forEach(function (x) {
+            if (!x?.cleared || reconState.filter !== 'cleared') reconState.selected.add(String(x?.id || ''));
+          });
+        }
+        renderReconItemsTable();
+      }
+
+      async function bulkToggleItems(cleared) {
+        if (!reconState.session?.id) return;
+        var ids = Array.from(reconState.selected).map(function (x) { return Number(x); }).filter(function (n) { return Number.isFinite(n) && n > 0; });
+        if (!ids.length) {
+          toastMsg('Select at least one transaction first.', false);
+          return;
+        }
+        try {
+          // Instant UI update first
+          var idSet = new Set(ids.map(function (n) { return String(n); }));
+          reconState.items = reconState.items.map(function (item) {
+            if (idSet.has(String(item?.id || ''))) return { ...item, cleared: Boolean(cleared) };
+            return item;
+          });
+          recomputeReconTotalsLocal();
+          renderReconItemsTable();
+          var rsp = await fetch('/api/banking/reconciliation/sessions/' + encodeURIComponent(reconState.session.id) + '/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ item_ids: ids, cleared: Boolean(cleared) }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to update cleared state');
+          renderReconTotals(json?.totals || {});
+        } catch (e) {
+          toastMsg('Unable to update reconciliation items: ' + String(e?.message || e), false);
+          await loadReconciliationSession(reconState.session.id);
+        }
+      }
+
+      function setFilter(next) {
+        reconState.filter = String(next || 'uncleared');
+        ['Uncleared', 'Cleared', 'All'].forEach(function (k) {
+          var id = 'bankReconFilter' + k;
+          var key = k.toLowerCase();
+          var btn = el(id);
+          if (btn) btn.disabled = key === reconState.filter;
+        });
+        renderReconItemsTable();
+      }
+
+      function exportSession(fmt) {
+        if (!reconState.session?.id) return;
+        window.open('/api/banking/reconciliation/sessions/' + encodeURIComponent(reconState.session.id) + '/export?format=' + encodeURIComponent(String(fmt || 'pdf')), '_blank');
+      }
+
+      function openReconHome() {
+        setHomeVisible(false);
+        setReconWorkspaceVisible(false);
+        setReconHomeVisible(true);
+        loadReconciliationHome();
+      }
+      function backToHomeFromRecon() {
+        setReconWorkspaceVisible(false);
+        setReconHomeVisible(false);
+        setHomeVisible(true);
+      }
+      function backToReconHome() {
+        setReconWorkspaceVisible(false);
+        setReconHomeVisible(true);
+        loadReconciliationHome();
+      }
+
+      window.openBankingReconciliationHome = openReconHome;
+      window.bankingBackToHomeFromReconcile = backToHomeFromRecon;
+      window.backToReconciliationHome = backToReconHome;
+      window.openBankingStartReconciliationModal = openStartModal;
+      window.closeBankingStartReconciliationModal = closeStartModal;
+      window.beginBankingReconciliationSession = beginSession;
+      window.openBankReconSession = loadReconciliationSession;
+      window.toggleBankReconItemSelection = toggleItemSelection;
+      window.toggleVisibleBankReconCheckboxes = toggleVisibleCbs;
+      window.selectAllBankReconItems = selectAllItems;
+      window.bulkToggleBankReconItems = bulkToggleItems;
+      window.setBankReconItemsFilter = setFilter;
+      window.lockBankingReconciliationSession = openLockModal;
+      window.closeBankingLockReconModal = closeLockModal;
+      window.confirmLockBankingReconciliation = lockSessionNow;
+      window.unlockBankingReconciliationPrompt = unlockPrompt;
+      window.closeBankingUnlockReconModal = closeUnlockModal;
+      window.confirmUnlockBankingReconciliation = unlockSessionNow;
+      window.exportBankingReconciliation = exportSession;
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        closeStartModal();
+        closeLockModal();
+        closeUnlockModal();
+      });
+      el('bankingStartReconModal')?.addEventListener('click', function (e) { if (e.target?.id === 'bankingStartReconModal') closeStartModal(); });
+      el('bankingLockReconModal')?.addEventListener('click', function (e) { if (e.target?.id === 'bankingLockReconModal') closeLockModal(); });
+      el('bankingUnlockReconModal')?.addEventListener('click', function (e) { if (e.target?.id === 'bankingUnlockReconModal') closeUnlockModal(); });
     })();
   </script>
 
