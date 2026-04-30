@@ -4120,6 +4120,12 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS import_batch_id BIGINT');
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS raw_payload_json JSONB');
     await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS source_file TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS driver_id TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS unit_number TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS gallons NUMERIC(14,3)');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS relay_transaction_id TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS station_name TEXT');
+    await dbQuery('ALTER TABLE banking_transactions ADD COLUMN IF NOT EXISTS state TEXT');
     await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS account_name TEXT');
     await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS statement_month TEXT');
     await dbQuery('ALTER TABLE bank_import_batches ADD COLUMN IF NOT EXISTS source TEXT');
@@ -4129,8 +4135,11 @@ export function mountErpCoreApi(app, opts = {}) {
     await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS match_value_2 TEXT');
     await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS vendor_name TEXT');
     await dbQuery('ALTER TABLE banking_rules ADD COLUMN IF NOT EXISTS qbo_account_id TEXT');
+    await dbQuery('ALTER TABLE driver_settlements ADD COLUMN IF NOT EXISTS notes TEXT');
+    await dbQuery('ALTER TABLE factoring_advances ADD COLUMN IF NOT EXISTS notes TEXT');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_external_ref ON banking_transactions(external_ref)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_import_batch ON banking_transactions(import_batch_id)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_relay_ref ON banking_transactions(relay_transaction_id)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_import_batches_uploaded_at ON bank_import_batches(uploaded_at DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_rules_match ON banking_rules(match_field, match_operator, active)');
   }
@@ -5307,6 +5316,85 @@ export function mountErpCoreApi(app, opts = {}) {
     }
     const trailer = `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
     return Buffer.from(header + body + xref + trailer, 'utf8');
+  }
+
+  function parseLoadNumbers(input) {
+    if (Array.isArray(input)) {
+      return input.map((v) => String(v || '').trim()).filter(Boolean);
+    }
+    return String(input || '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
+  async function fetchRelayTransactionsFromApi() {
+    const apiKey = String(process.env.RELAY_API_KEY || '').trim();
+    const baseRaw = String(process.env.RELAY_API_BASE || '').trim() || 'https://api.relayfi.com';
+    const base = baseRaw.replace(/\/+$/, '');
+    if (!apiKey) {
+      return { ok: false, connected: false, error: 'RELAY_API_KEY is not set', rows: [] };
+    }
+    const candidates = [
+      '/v1/transactions',
+      '/transactions',
+      '/api/v1/transactions',
+    ];
+    let lastError = '';
+    for (const path of candidates) {
+      try {
+        const rsp = await fetch(`${base}${path}`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'X-API-Key': apiKey,
+          },
+        });
+        if (!rsp.ok) {
+          lastError = `Relay response ${rsp.status} at ${path}`;
+          continue;
+        }
+        const json = await rsp.json();
+        const rows = Array.isArray(json?.transactions)
+          ? json.transactions
+          : Array.isArray(json?.data)
+            ? json.data
+            : Array.isArray(json)
+              ? json
+              : [];
+        return { ok: true, connected: true, rows, endpoint: path };
+      } catch (e) {
+        lastError = e?.message || String(e);
+      }
+    }
+    return { ok: false, connected: false, error: lastError || 'Relay API request failed', rows: [] };
+  }
+
+  function normalizeRelayTxn(raw = {}) {
+    const id = String(raw?.id || raw?.transaction_id || raw?.transactionId || raw?.relay_transaction_id || '').trim();
+    const date = parseDateLike(raw?.date || raw?.transaction_date || raw?.posted_at || raw?.created_at || '') || new Date().toISOString().slice(0, 10);
+    const description = String(raw?.description || raw?.merchant || raw?.merchant_name || raw?.memo || '').trim();
+    const gallons = Number(raw?.gallons || raw?.qty || raw?.quantity || 0);
+    const amount = Number.isFinite(Number(raw?.amount)) ? Number(raw.amount) : parseMoneyLike(raw?.amount || raw?.total || raw?.total_amount || 0);
+    const driverIntegrationId = String(raw?.driver_id || raw?.driver_integration_id || raw?.integration_id || '').trim();
+    const driverName = String(raw?.driver_name || raw?.driver || '').trim();
+    const unit = String(raw?.unit || raw?.unit_number || raw?.truck || '').trim();
+    const station = String(raw?.station || raw?.station_name || raw?.merchant || '').trim();
+    const state = String(raw?.state || raw?.region || '').trim();
+    return {
+      relay_transaction_id: id || null,
+      txn_date: date,
+      description,
+      amount,
+      gallons: Number.isFinite(gallons) ? gallons : 0,
+      driver_integration_id: driverIntegrationId || null,
+      driver_name: driverName || null,
+      unit_number: unit || null,
+      station_name: station || null,
+      state: state || null,
+      raw,
+    };
   }
 
   app.get('/api/banking/accounts', async (req, res) => {
@@ -7020,6 +7108,840 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/banking/reconciliation/sessions/:id/export', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/integrations/relay/status', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        return res.json({
+          ok: true,
+          connected: false,
+          last_sync: null,
+          api_key_set: Boolean(String(process.env.RELAY_API_KEY || '').trim()),
+          account_id: String(process.env.RELAY_QBO_ACCOUNT_ID || '').trim() || null,
+          pending_import: 0,
+          total_imported: 0,
+        });
+      }
+      await ensureBankingTables();
+      const { rows } = await dbQuery(
+        `SELECT
+            MAX(created_at) AS last_sync,
+            COUNT(*) FILTER (WHERE LOWER(COALESCE(status, '')) = 'uncategorized')::int AS pending_import,
+            COUNT(*)::int AS total_imported
+           FROM banking_transactions
+          WHERE LOWER(COALESCE(source, '')) = 'relay'`
+      );
+      const relayRow = rows?.[0] || {};
+      const { rows: prefRows } = await dbQuery(
+        `SELECT account_id
+           FROM bank_account_preferences
+          WHERE is_relay_account = true
+          ORDER BY display_order ASC, id ASC
+          LIMIT 1`
+      );
+      const accountId = String(prefRows?.[0]?.account_id || process.env.RELAY_QBO_ACCOUNT_ID || '').trim() || null;
+      return res.json({
+        ok: true,
+        connected: Boolean(String(process.env.RELAY_API_KEY || '').trim()),
+        last_sync: relayRow?.last_sync || null,
+        api_key_set: Boolean(String(process.env.RELAY_API_KEY || '').trim()),
+        account_id: accountId,
+        pending_import: Number(relayRow?.pending_import || 0),
+        total_imported: Number(relayRow?.total_imported || 0),
+      });
+    } catch (e) {
+      logError('GET /api/integrations/relay/status', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/integrations/relay/sync', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const relayFetch = await fetchRelayTransactionsFromApi();
+      if (!relayFetch.ok) {
+        return res.status(502).json({ ok: false, imported: 0, skipped: 0, errors: [relayFetch.error || 'Relay API unavailable'] });
+      }
+
+      const { rows: prefRows } = await dbQuery(
+        `SELECT account_id, account_name
+           FROM bank_account_preferences
+          WHERE is_relay_account = true
+          ORDER BY display_order ASC, id ASC
+          LIMIT 1`
+      );
+      const relayAccountId = String(prefRows?.[0]?.account_id || process.env.RELAY_QBO_ACCOUNT_ID || 'relay_qbo_account').trim();
+      const relayAccountName = String(prefRows?.[0]?.account_name || 'Relay Fuel Account').trim();
+
+      let profileRows = [];
+      try {
+        const out = await dbQuery(
+          `SELECT id, full_name, integration_id, unit_number
+             FROM driver_profiles`
+        );
+        profileRows = out?.rows || [];
+      } catch (_e) {
+        profileRows = [];
+      }
+      const byIntegration = new Map();
+      profileRows.forEach((r) => {
+        const key = String(r?.integration_id || '').trim();
+        if (key) byIntegration.set(key, r);
+      });
+
+      let imported = 0;
+      let skipped = 0;
+      const errors = [];
+      for (const rawTxn of relayFetch.rows || []) {
+        try {
+          const txn = normalizeRelayTxn(rawTxn);
+          const relayRef = String(txn?.relay_transaction_id || '').trim();
+          const { rows: dupRows } = await dbQuery(
+            `SELECT id
+               FROM banking_transactions
+              WHERE relay_transaction_id = $1
+                 OR external_ref = $1
+              LIMIT 1`,
+            [relayRef || `relay:${txn.txn_date}:${txn.amount}:${txn.description}`]
+          );
+          if (dupRows?.length) {
+            skipped += 1;
+            continue;
+          }
+          const prof = txn.driver_integration_id ? byIntegration.get(String(txn.driver_integration_id)) : null;
+          const driverId = String(prof?.id || '').trim() || null;
+          const driverName = String(txn.driver_name || prof?.full_name || '').trim() || null;
+          const unit = String(txn.unit_number || prof?.unit_number || '').trim() || null;
+          const externalRef = relayRef || buildTxnIdempotency(relayAccountId, txn.txn_date, txn.amount, txn.description, 'relay');
+          const idem = buildTxnIdempotency(relayAccountId, txn.txn_date, txn.amount, txn.description, externalRef);
+          await dbQuery(
+            `INSERT INTO banking_transactions (
+              idempotency_key, account_id, account_name, txn_type, txn_date, amount, running_balance,
+              description, vendor_name, memo, status, source, source_ref, external_ref,
+              relay_transaction_id, driver_id, unit_number, gallons, station_name, state, raw_payload_json,
+              qbo_status, created_by, updated_by, updated_at
+            ) VALUES (
+              $1,$2,$3,'relay',$4,$5,NULL,$6,$7,$8,'uncategorized','relay',$9,$9,$9,$10,$11,$12,$13,$14,$15::jsonb,'queued',$16,$16,now()
+            )`,
+            [
+              idem,
+              relayAccountId,
+              relayAccountName,
+              txn.txn_date,
+              Number(txn.amount || 0),
+              String(txn.description || '').trim() || 'Relay transaction',
+              String(txn.station_name || '').trim() || null,
+              String(txn.description || '').trim() || null,
+              externalRef,
+              driverId,
+              unit,
+              Number(txn.gallons || 0),
+              String(txn.station_name || '').trim() || null,
+              String(txn.state || '').trim() || null,
+              JSON.stringify(txn.raw || {}),
+              maintActor(req),
+            ]
+          );
+          imported += 1;
+        } catch (inner) {
+          errors.push(inner?.message || String(inner));
+        }
+      }
+      await writeAuditLog(req, {
+        action: 'relay_sync',
+        entity_type: 'banking_transactions',
+        entity_id: relayAccountId,
+        before_state: null,
+        after_state: { imported, skipped, errors_count: errors.length, endpoint: relayFetch.endpoint || null },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, imported, skipped, errors });
+    } catch (e) {
+      logError('POST /api/integrations/relay/sync', e);
+      return res.status(500).json({ ok: false, imported: 0, skipped: 0, errors: [e?.message || String(e)] });
+    }
+  });
+
+  app.post('/api/integrations/relay/import-csv', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      await runBankImportUpload(req, res);
+      const file = req.file || null;
+      if (!file) return res.status(400).json({ ok: false, error: 'file is required (multipart field name: file)' });
+      const content = String(file.buffer?.toString('utf8') || '');
+      const lines = content.split(/\r?\n/).filter((l) => String(l || '').trim());
+      if (!lines.length) return res.status(400).json({ ok: false, error: 'CSV is empty' });
+      const headers = parseCsvLine(lines[0]).map(normalizeHeaderKey);
+      const idx = (names) => {
+        for (const n of names) {
+          const i = headers.indexOf(n);
+          if (i >= 0) return i;
+        }
+        return -1;
+      };
+      const iDate = idx(['date', 'transaction_date', 'posted_date']);
+      const iDesc = idx(['description', 'memo', 'merchant', 'station', 'vendor']);
+      const iAmount = idx(['amount', 'total', 'total_amount']);
+      const iDriver = idx(['driver', 'driver_name']);
+      const iDriverInt = idx(['driver_id', 'driver_integration_id', 'integration_id']);
+      const iUnit = idx(['unit', 'unit_number', 'truck']);
+      const iGallons = idx(['gallons', 'qty', 'quantity']);
+      const iState = idx(['state']);
+      const iStation = idx(['station', 'station_name', 'merchant']);
+      const iRelayRef = idx(['relay_transaction_id', 'transaction_id', 'id', 'reference']);
+      const rows = [];
+      for (let i = 1; i < lines.length; i += 1) {
+        const cols = parseCsvLine(lines[i]);
+        rows.push(normalizeRelayTxn({
+          id: iRelayRef >= 0 ? cols[iRelayRef] : '',
+          date: iDate >= 0 ? cols[iDate] : '',
+          description: iDesc >= 0 ? cols[iDesc] : '',
+          amount: iAmount >= 0 ? cols[iAmount] : '',
+          driver_name: iDriver >= 0 ? cols[iDriver] : '',
+          driver_integration_id: iDriverInt >= 0 ? cols[iDriverInt] : '',
+          unit_number: iUnit >= 0 ? cols[iUnit] : '',
+          gallons: iGallons >= 0 ? cols[iGallons] : '',
+          state: iState >= 0 ? cols[iState] : '',
+          station_name: iStation >= 0 ? cols[iStation] : '',
+        }));
+      }
+
+      // Reuse sync logic by pretending Relay API rows.
+      const mockReq = { ...req };
+      const relayFetch = { ok: true, rows, endpoint: 'csv_import' };
+      const { rows: prefRows } = await dbQuery(
+        `SELECT account_id, account_name
+           FROM bank_account_preferences
+          WHERE is_relay_account = true
+          ORDER BY display_order ASC, id ASC
+          LIMIT 1`
+      );
+      const relayAccountId = String(prefRows?.[0]?.account_id || process.env.RELAY_QBO_ACCOUNT_ID || 'relay_qbo_account').trim();
+      const relayAccountName = String(prefRows?.[0]?.account_name || 'Relay Fuel Account').trim();
+      let imported = 0;
+      let skipped = 0;
+      for (const txn of relayFetch.rows || []) {
+        const relayRef = String(txn?.relay_transaction_id || '').trim();
+        const { rows: dupRows } = await dbQuery(
+          `SELECT id
+             FROM banking_transactions
+            WHERE relay_transaction_id = $1
+               OR external_ref = $1
+            LIMIT 1`,
+          [relayRef || `relaycsv:${txn.txn_date}:${txn.amount}:${txn.description}`]
+        );
+        if (dupRows?.length) {
+          skipped += 1;
+          continue;
+        }
+        const externalRef = relayRef || buildTxnIdempotency(relayAccountId, txn.txn_date, txn.amount, txn.description, 'relay_csv');
+        const idem = buildTxnIdempotency(relayAccountId, txn.txn_date, txn.amount, txn.description, externalRef);
+        await dbQuery(
+          `INSERT INTO banking_transactions (
+            idempotency_key, account_id, account_name, txn_type, txn_date, amount, running_balance,
+            description, vendor_name, memo, status, source, source_ref, external_ref,
+            relay_transaction_id, driver_id, unit_number, gallons, station_name, state, raw_payload_json,
+            qbo_status, created_by, updated_by, updated_at
+          ) VALUES (
+            $1,$2,$3,'relay',$4,$5,NULL,$6,$7,$8,'uncategorized','relay',$9,$9,$9,NULL,$10,$11,$12,$13,$14::jsonb,'queued',$15,$15,now()
+          )`,
+          [
+            idem,
+            relayAccountId,
+            relayAccountName,
+            txn.txn_date,
+            Number(txn.amount || 0),
+            String(txn.description || '').trim() || 'Relay CSV transaction',
+            String(txn.station_name || '').trim() || null,
+            String(txn.description || '').trim() || null,
+            externalRef,
+            String(txn.unit_number || '').trim() || null,
+            Number(txn.gallons || 0),
+            String(txn.station_name || '').trim() || null,
+            String(txn.state || '').trim() || null,
+            JSON.stringify(txn.raw || {}),
+            maintActor(mockReq),
+          ]
+        );
+        imported += 1;
+      }
+      await writeAuditLog(req, {
+        action: 'relay_import_csv',
+        entity_type: 'banking_transactions',
+        entity_id: relayAccountId,
+        before_state: null,
+        after_state: { imported, skipped, filename: file?.originalname || null },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, imported, skipped });
+    } catch (e) {
+      logError('POST /api/integrations/relay/import-csv', e);
+      return res.status(500).json({ ok: false, imported: 0, skipped: 0, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/settlements', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, settlements: [], total: 0 });
+      await ensureBankingTables();
+      const driverId = String(req.query?.driver_id || '').trim();
+      const periodStart = parseDateLike(req.query?.period_start || '');
+      const periodEnd = parseDateLike(req.query?.period_end || '');
+      const status = String(req.query?.status || '').trim().toLowerCase();
+      const limit = Math.max(1, Math.min(500, Number(req.query?.limit) || 50));
+      const offset = Math.max(0, Number(req.query?.offset) || 0);
+      const where = [];
+      const values = [];
+      if (driverId) {
+        values.push(driverId);
+        where.push(`driver_id = $${values.length}`);
+      }
+      if (periodStart) {
+        values.push(periodStart);
+        where.push(`period_start >= $${values.length}::date`);
+      }
+      if (periodEnd) {
+        values.push(periodEnd);
+        where.push(`period_end <= $${values.length}::date`);
+      }
+      if (status) {
+        values.push(status);
+        where.push(`LOWER(COALESCE(status, '')) = $${values.length}`);
+      }
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const { rows: countRows } = await dbQuery(`SELECT COUNT(*)::int AS total FROM driver_settlements ${whereSql}`, values);
+      const total = Number(countRows?.[0]?.total || 0);
+      const listValues = [...values, limit, offset];
+      const { rows } = await dbQuery(
+        `SELECT *
+           FROM driver_settlements
+           ${whereSql}
+          ORDER BY period_start DESC, id DESC
+          LIMIT $${listValues.length - 1} OFFSET $${listValues.length}`,
+        listValues
+      );
+      return res.json({ ok: true, settlements: rows || [], total });
+    } catch (e) {
+      logError('GET /api/settlements', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), settlements: [], total: 0 });
+    }
+  });
+
+  app.post('/api/settlements', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const loads = parseLoadNumbers(b.load_numbers);
+      const gross = Number(b.gross_pay || 0);
+      const fuelDed = Number(b.fuel_deduction || 0);
+      const advDed = Number(b.advance_deduction || 0);
+      const otherDed = Number(b.other_deductions || 0);
+      const netPay = Number.isFinite(Number(b.net_pay)) ? Number(b.net_pay) : (gross - fuelDed - advDed - otherDed);
+      const { rows } = await dbQuery(
+        `INSERT INTO driver_settlements (
+          driver_id, driver_name, period_start, period_end, gross_pay, fuel_deduction,
+          advance_deduction, other_deductions, net_pay, status, notes, created_by, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'unpaid',$10,$11,now(),now())
+        RETURNING *`,
+        [
+          String(b.driver_id || '').trim() || null,
+          String(b.driver_name || '').trim() || null,
+          parseDateLike(b.period_start || '') || null,
+          parseDateLike(b.period_end || '') || null,
+          gross,
+          fuelDed,
+          advDed,
+          otherDed,
+          netPay,
+          String(b.notes || '').trim() || null,
+          maintActor(req),
+        ]
+      );
+      const settlement = rows?.[0] || null;
+      const settlementId = Number(settlement?.id || 0);
+      for (const loadNo of loads) {
+        await dbQuery(
+          `INSERT INTO driver_settlement_loads (settlement_id, load_number, gross_component, created_at)
+           VALUES ($1,$2,NULL,now())`,
+          [settlementId, loadNo]
+        );
+      }
+      await writeAuditLog(req, {
+        action: 'create_settlement',
+        entity_type: 'driver_settlements',
+        entity_id: String(settlementId),
+        before_state: null,
+        after_state: { settlement, loads },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, settlement: { ...settlement, load_numbers: loads } });
+    } catch (e) {
+      logError('POST /api/settlements', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/settlements/:id', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid settlement id' });
+      const { rows: settlementRows } = await dbQuery('SELECT * FROM driver_settlements WHERE id = $1 LIMIT 1', [id]);
+      const settlement = settlementRows?.[0] || null;
+      if (!settlement) return res.status(404).json({ ok: false, error: 'Settlement not found' });
+      const { rows: loads } = await dbQuery('SELECT * FROM driver_settlement_loads WHERE settlement_id = $1 ORDER BY id ASC', [id]);
+      const { rows: bankTxns } = await dbQuery(
+        `SELECT bt.*
+           FROM bank_txn_links l
+           JOIN banking_transactions bt ON bt.id = l.txn_id
+          WHERE l.entity_type = 'driver_settlement'
+            AND l.entity_id = $1
+          ORDER BY l.created_at DESC`,
+        [String(id)]
+      );
+      return res.json({ ok: true, settlement, loads: loads || [], bank_txns: bankTxns || [] });
+    } catch (e) {
+      logError('GET /api/settlements/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/settlements/:id', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid settlement id' });
+      const { rows: beforeRows } = await dbQuery('SELECT * FROM driver_settlements WHERE id = $1 LIMIT 1', [id]);
+      const before = beforeRows?.[0] || null;
+      if (!before) return res.status(404).json({ ok: false, error: 'Settlement not found' });
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const gross = b.gross_pay == null ? Number(before.gross_pay || 0) : Number(b.gross_pay || 0);
+      const fuelDed = b.fuel_deduction == null ? Number(before.fuel_deduction || 0) : Number(b.fuel_deduction || 0);
+      const advDed = b.advance_deduction == null ? Number(before.advance_deduction || 0) : Number(b.advance_deduction || 0);
+      const otherDed = b.other_deductions == null ? Number(before.other_deductions || 0) : Number(b.other_deductions || 0);
+      const netPay = gross - fuelDed - advDed - otherDed;
+      const { rows } = await dbQuery(
+        `UPDATE driver_settlements
+            SET gross_pay = $2,
+                fuel_deduction = $3,
+                advance_deduction = $4,
+                other_deductions = $5,
+                net_pay = $6,
+                status = COALESCE($7, status),
+                notes = COALESCE($8, notes),
+                updated_at = now()
+          WHERE id = $1
+        RETURNING *`,
+        [id, gross, fuelDed, advDed, otherDed, netPay, b.status == null ? null : String(b.status || '').trim(), b.notes == null ? null : String(b.notes || '').trim()]
+      );
+      const settlement = rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'update_settlement',
+        entity_type: 'driver_settlements',
+        entity_id: String(id),
+        before_state: before,
+        after_state: settlement,
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, settlement });
+    } catch (e) {
+      logError('PUT /api/settlements/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/settlements/:id/link-bank-txn', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      const txnId = Number(req.body?.txn_id || 0);
+      if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'id and txn_id are required' });
+      const { rows: settlementRows } = await dbQuery('SELECT * FROM driver_settlements WHERE id = $1 LIMIT 1', [id]);
+      const settlement = settlementRows?.[0] || null;
+      if (!settlement) return res.status(404).json({ ok: false, error: 'Settlement not found' });
+      const { rows: txnRows } = await dbQuery('SELECT * FROM banking_transactions WHERE id = $1 LIMIT 1', [txnId]);
+      const txn = txnRows?.[0] || null;
+      if (!txn) return res.status(404).json({ ok: false, error: 'Bank transaction not found' });
+      const linkedAmount = Number(req.body?.amount || txn?.amount || 0);
+      await dbQuery(
+        `INSERT INTO bank_txn_links (txn_id, entity_type, entity_id, amount, link_role, created_by)
+         VALUES ($1,'driver_settlement',$2,$3,'payment',$4)`,
+        [txnId, String(id), linkedAmount, maintActor(req)]
+      );
+      const status = linkedAmount >= Number(settlement?.net_pay || 0) ? 'paid' : 'partial';
+      const { rows } = await dbQuery(
+        `UPDATE driver_settlements
+            SET bank_txn_id = $2,
+                status = $3,
+                updated_at = now()
+          WHERE id = $1
+        RETURNING *`,
+        [id, txnId, status]
+      );
+      return res.json({ ok: true, settlement: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/settlements/:id/link-bank-txn', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/settlements/:id/recalculate', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid settlement id' });
+      const { rows: rowsIn } = await dbQuery('SELECT * FROM driver_settlements WHERE id = $1 LIMIT 1', [id]);
+      const item = rowsIn?.[0] || null;
+      if (!item) return res.status(404).json({ ok: false, error: 'Settlement not found' });
+      const netPay = Number(item?.gross_pay || 0) - Number(item?.fuel_deduction || 0) - Number(item?.advance_deduction || 0) - Number(item?.other_deductions || 0);
+      const { rows } = await dbQuery(
+        `UPDATE driver_settlements
+            SET net_pay = $2,
+                updated_at = now()
+          WHERE id = $1
+        RETURNING *`,
+        [id, netPay]
+      );
+      return res.json({ ok: true, settlement: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/settlements/:id/recalculate', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/settlements/:id/export', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid settlement id' });
+      const { rows: settlementRows } = await dbQuery('SELECT * FROM driver_settlements WHERE id = $1 LIMIT 1', [id]);
+      const s = settlementRows?.[0] || null;
+      if (!s) return res.status(404).json({ ok: false, error: 'Settlement not found' });
+      const { rows: loads } = await dbQuery('SELECT load_number FROM driver_settlement_loads WHERE settlement_id = $1 ORDER BY id ASC', [id]);
+      const lines = [
+        'IH 35 Transportation LLC',
+        `Driver: ${String(s?.driver_name || s?.driver_id || '--')}`,
+        `Period: ${String(s?.period_start || '').slice(0, 10)} - ${String(s?.period_end || '').slice(0, 10)}`,
+        `Load Numbers: ${(loads || []).map((r) => r?.load_number).filter(Boolean).join(', ') || '--'}`,
+        `Gross Pay: ${Number(s?.gross_pay || 0).toFixed(2)}`,
+        `Fuel Deduction: (${Number(s?.fuel_deduction || 0).toFixed(2)})`,
+        `Advance Deduction: (${Number(s?.advance_deduction || 0).toFixed(2)})`,
+        `Other Deductions: (${Number(s?.other_deductions || 0).toFixed(2)})`,
+        `Net Pay: ${Number(s?.net_pay || 0).toFixed(2)}`,
+        `Status: ${String(s?.status || 'unpaid').toUpperCase()}`,
+      ];
+      const pdf = generateSimplePdf(lines);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="settlement-${id}.pdf"`);
+      return res.status(200).send(pdf);
+    } catch (e) {
+      logError('GET /api/settlements/:id/export', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/reports/tms/driver-settlement', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, rows: [], totals: {} });
+      await ensureBankingTables();
+      const driverId = String(req.query?.driver_id || '').trim();
+      const year = String(req.query?.year || '').trim();
+      const periodStart = parseDateLike(req.query?.period_start || '');
+      const periodEnd = parseDateLike(req.query?.period_end || '');
+      const where = [];
+      const values = [];
+      if (driverId) {
+        values.push(driverId);
+        where.push(`driver_id = $${values.length}`);
+      }
+      if (year && /^\d{4}$/.test(year)) {
+        values.push(`${year}-01-01`);
+        where.push(`period_start >= $${values.length}::date`);
+        values.push(`${year}-12-31`);
+        where.push(`period_end <= $${values.length}::date`);
+      }
+      if (periodStart) {
+        values.push(periodStart);
+        where.push(`period_start >= $${values.length}::date`);
+      }
+      if (periodEnd) {
+        values.push(periodEnd);
+        where.push(`period_end <= $${values.length}::date`);
+      }
+      const { rows } = await dbQuery(
+        `SELECT driver_id, driver_name, period_start, period_end, gross_pay,
+                (fuel_deduction + advance_deduction + other_deductions) AS deductions,
+                net_pay, status
+           FROM driver_settlements
+           ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+          ORDER BY period_start DESC, id DESC`,
+        values
+      );
+      const mapped = (rows || []).map((r) => ({
+        driver: String(r?.driver_name || r?.driver_id || '--'),
+        periods: `${String(r?.period_start || '').slice(0, 10)} - ${String(r?.period_end || '').slice(0, 10)}`,
+        gross: Number(r?.gross_pay || 0),
+        deductions: Number(r?.deductions || 0),
+        net: Number(r?.net_pay || 0),
+        status: String(r?.status || 'unpaid'),
+        balance_owed: String(r?.status || '').toLowerCase() === 'paid' ? 0 : Number(r?.net_pay || 0),
+      }));
+      const totals = mapped.reduce((acc, r) => {
+        acc.gross += Number(r.gross || 0);
+        acc.deductions += Number(r.deductions || 0);
+        acc.net += Number(r.net || 0);
+        acc.balance_owed += Number(r.balance_owed || 0);
+        return acc;
+      }, { gross: 0, deductions: 0, net: 0, balance_owed: 0 });
+      return res.json({ ok: true, rows: mapped, totals });
+    } catch (e) {
+      logError('GET /api/reports/tms/driver-settlement', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [], totals: {} });
+    }
+  });
+
+  app.get('/api/factoring/advances', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, advances: [], total: 0 });
+      await ensureBankingTables();
+      const factorName = String(req.query?.factor_name || '').trim().toLowerCase();
+      const status = String(req.query?.status || '').trim().toLowerCase();
+      const limit = Math.max(1, Math.min(500, Number(req.query?.limit) || 50));
+      const offset = Math.max(0, Number(req.query?.offset) || 0);
+      const where = [];
+      const values = [];
+      if (factorName) {
+        values.push(`%${factorName}%`);
+        where.push(`LOWER(COALESCE(factor_name, '')) LIKE $${values.length}`);
+      }
+      if (status) {
+        values.push(status);
+        where.push(`LOWER(COALESCE(status, '')) = $${values.length}`);
+      }
+      const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+      const { rows: countRows } = await dbQuery(`SELECT COUNT(*)::int AS total FROM factoring_advances ${whereSql}`, values);
+      const total = Number(countRows?.[0]?.total || 0);
+      const listValues = [...values, limit, offset];
+      const { rows } = await dbQuery(
+        `SELECT *
+           FROM factoring_advances
+           ${whereSql}
+          ORDER BY deposit_date DESC NULLS LAST, id DESC
+          LIMIT $${listValues.length - 1} OFFSET $${listValues.length}`,
+        listValues
+      );
+      return res.json({ ok: true, advances: rows || [], total });
+    } catch (e) {
+      logError('GET /api/factoring/advances', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), advances: [], total: 0 });
+    }
+  });
+
+  app.post('/api/factoring/advances', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const loads = parseLoadNumbers(b.load_numbers);
+      const invoice = Number(b.invoice_amount || 0);
+      const advance = Number(b.advance_amount || 0);
+      const fee = Number.isFinite(Number(b.fee_amount)) ? Number(b.fee_amount) : (invoice - advance);
+      const net = Number.isFinite(Number(b.net_amount)) ? Number(b.net_amount) : (advance - fee);
+      const { rows } = await dbQuery(
+        `INSERT INTO factoring_advances (
+          factor_name, invoice_amount, advance_amount, fee_amount, net_amount, deposit_date, status, notes, created_by, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,'pending',$7,$8,now(),now())
+        RETURNING *`,
+        [
+          String(b.factor_name || '').trim() || 'Unknown Factor',
+          invoice,
+          advance,
+          fee,
+          net,
+          parseDateLike(b.deposit_date || '') || null,
+          String(b.notes || '').trim() || null,
+          maintActor(req),
+        ]
+      );
+      const advanceRow = rows?.[0] || null;
+      const advanceId = Number(advanceRow?.id || 0);
+      for (const loadNo of loads) {
+        await dbQuery(
+          `INSERT INTO factoring_advance_loads (factoring_advance_id, load_number, invoice_number, created_at)
+           VALUES ($1,$2,NULL,now())`,
+          [advanceId, loadNo]
+        );
+      }
+      return res.json({ ok: true, advance: { ...advanceRow, load_numbers: loads } });
+    } catch (e) {
+      logError('POST /api/factoring/advances', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/factoring/advances/:id', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid advance id' });
+      const { rows: advRows } = await dbQuery('SELECT * FROM factoring_advances WHERE id = $1 LIMIT 1', [id]);
+      const advance = advRows?.[0] || null;
+      if (!advance) return res.status(404).json({ ok: false, error: 'Advance not found' });
+      const { rows: loads } = await dbQuery('SELECT * FROM factoring_advance_loads WHERE factoring_advance_id = $1 ORDER BY id ASC', [id]);
+      const { rows: bankRows } = await dbQuery(
+        `SELECT bt.*
+           FROM bank_txn_links l
+           JOIN banking_transactions bt ON bt.id = l.txn_id
+          WHERE l.entity_type = 'factoring_advance'
+            AND l.entity_id = $1
+          ORDER BY l.created_at DESC
+          LIMIT 1`,
+        [String(id)]
+      );
+      return res.json({ ok: true, advance, loads: loads || [], bank_txn: bankRows?.[0] || null });
+    } catch (e) {
+      logError('GET /api/factoring/advances/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/factoring/advances/:id/link-bank-txn', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      const txnId = Number(req.body?.txn_id || 0);
+      if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'id and txn_id are required' });
+      await dbQuery(
+        `INSERT INTO bank_txn_links (txn_id, entity_type, entity_id, amount, link_role, created_by)
+         VALUES ($1,'factoring_advance',$2,NULL,'deposit',$3)`,
+        [txnId, String(id), maintActor(req)]
+      );
+      const { rows } = await dbQuery(
+        `UPDATE factoring_advances
+            SET bank_txn_id = $2,
+                status = 'received',
+                updated_at = now()
+          WHERE id = $1
+        RETURNING *`,
+        [id, txnId]
+      );
+      return res.json({ ok: true, advance: rows?.[0] || null });
+    } catch (e) {
+      logError('POST /api/factoring/advances/:id/link-bank-txn', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/factoring/advances/:id/reconcile', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const id = Number(req.params?.id || 0);
+      if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false, error: 'Invalid advance id' });
+      const { rows: beforeRows } = await dbQuery('SELECT * FROM factoring_advances WHERE id = $1 LIMIT 1', [id]);
+      const before = beforeRows?.[0] || null;
+      if (!before) return res.status(404).json({ ok: false, error: 'Advance not found' });
+      if (!before?.bank_txn_id) return res.status(400).json({ ok: false, error: 'Bank transaction link is required before reconcile' });
+      const { rows } = await dbQuery(
+        `UPDATE factoring_advances
+            SET status = 'reconciled',
+                updated_at = now()
+          WHERE id = $1
+        RETURNING *`,
+        [id]
+      );
+      const advance = rows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'reconcile_factoring_advance',
+        entity_type: 'factoring_advances',
+        entity_id: String(id),
+        before_state: before,
+        after_state: advance,
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, advance });
+    } catch (e) {
+      logError('POST /api/factoring/advances/:id/reconcile', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/factoring/reports/reconciliation', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, rows: [], totals: {} });
+      await ensureBankingTables();
+      const factorName = String(req.query?.factor_name || '').trim().toLowerCase();
+      const year = String(req.query?.year || '').trim();
+      const month = String(req.query?.month || '').trim();
+      const where = [];
+      const values = [];
+      if (factorName) {
+        values.push(`%${factorName}%`);
+        where.push(`LOWER(COALESCE(factor_name, '')) LIKE $${values.length}`);
+      }
+      if (/^\d{4}$/.test(year)) {
+        values.push(`${year}-01-01`);
+        where.push(`COALESCE(deposit_date, created_at::date) >= $${values.length}::date`);
+        values.push(`${year}-12-31`);
+        where.push(`COALESCE(deposit_date, created_at::date) <= $${values.length}::date`);
+      }
+      if (/^\d{2}$/.test(month)) {
+        values.push(month);
+        where.push(`to_char(COALESCE(deposit_date, created_at::date), 'MM') = $${values.length}`);
+      }
+      const { rows } = await dbQuery(
+        `SELECT fa.id, fa.factor_name, fa.invoice_amount, fa.advance_amount, fa.fee_amount, fa.net_amount, fa.status, fa.deposit_date,
+                COALESCE(string_agg(fal.load_number, ', ' ORDER BY fal.load_number), '') AS load_numbers
+           FROM factoring_advances fa
+      LEFT JOIN factoring_advance_loads fal ON fal.factoring_advance_id = fa.id
+           ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       GROUP BY fa.id
+       ORDER BY fa.deposit_date DESC NULLS LAST, fa.id DESC`,
+        values
+      );
+      const mapped = (rows || []).map((r) => ({
+        factor_name: String(r?.factor_name || '--'),
+        load_numbers: String(r?.load_numbers || ''),
+        invoice_amount: Number(r?.invoice_amount || 0),
+        advance_amount: Number(r?.advance_amount || 0),
+        fee_amount: Number(r?.fee_amount || 0),
+        net_amount: Number(r?.net_amount || 0),
+        status: String(r?.status || 'pending'),
+        deposit_date: r?.deposit_date || null,
+      }));
+      const totals = mapped.reduce((acc, r) => {
+        acc.total_invoiced += Number(r.invoice_amount || 0);
+        acc.total_advanced += Number(r.advance_amount || 0);
+        acc.total_fees += Number(r.fee_amount || 0);
+        acc.total_net += Number(r.net_amount || 0);
+        if (String(r.status || '').toLowerCase() === 'pending') acc.pending_count += 1;
+        return acc;
+      }, { total_invoiced: 0, total_advanced: 0, total_fees: 0, total_net: 0, pending_count: 0 });
+      return res.json({ ok: true, rows: mapped, totals });
+    } catch (e) {
+      logError('GET /api/factoring/reports/reconciliation', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), rows: [], totals: {} });
     }
   });
 

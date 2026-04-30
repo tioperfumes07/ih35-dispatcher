@@ -5010,6 +5010,9 @@
               <button type="button" class="btn btn--small" onclick="openBankingImportModal()">Import Statement</button>
               <button type="button" class="btn btn--small" onclick="openBankingRulesEngine()">Rules Engine</button>
               <button type="button" class="btn btn--small" onclick="openBankingImportHistory()">Import History</button>
+              <button type="button" class="btn btn--small" onclick="openRelayWorkspace()">Relay</button>
+              <button type="button" class="btn btn--small" onclick="openSettlementsWorkspace()">Driver Settlements</button>
+              <button type="button" class="btn btn--small" onclick="openFactoringWorkspace()">Factoring</button>
               <button type="button" class="btn btn--small" onclick="openBankingAccountManager()">Manage Accounts</button>
               <button type="button" class="btn btn--small" onclick="loadBankingAccounts()">Refresh</button>
               <input id="bankingMonth" class="qb-in" type="month" style="max-width:170px" />
@@ -5017,6 +5020,124 @@
           </div>
           <div class="panel-body">
             <div id="bankingAccountsGrid" class="banking-accounts-grid"></div>
+          </div>
+        </div>
+
+        <div id="bankingWave6Workspace" class="panel banking-hidden" style="margin-top:12px">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn btn--small" onclick="closeWave6Workspace()">&#8592; DIP Accounts</button>
+              <div class="panel-title" id="wave6WorkspaceTitle" style="margin:0">Wave 6 Workspace</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn btn--small" onclick="openRelayWorkspace()">Relay</button>
+              <button type="button" class="btn btn--small" onclick="openSettlementsWorkspace()">Settlements</button>
+              <button type="button" class="btn btn--small" onclick="openFactoringWorkspace()">Factoring</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="wave6RelayPanel" class="banking-hidden">
+              <div class="mini-note" id="relayStatusBanner" style="padding:8px;border:1px solid #facc15;background:#fefce8;border-radius:8px;margin-bottom:8px">Relay status loading...</div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">From</span><input id="relayFilterFrom" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">To</span><input id="relayFilterTo" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">Driver</span><input id="relayFilterDriver" class="qb-in" /></label>
+                <label><span class="qb-l">Unit</span><input id="relayFilterUnit" class="qb-in" /></label>
+                <label><span class="qb-l">State</span><input id="relayFilterState" class="qb-in" /></label>
+                <button type="button" class="btn btn--small" onclick="refreshRelayTransactions()">Refresh</button>
+                <button type="button" class="btn btn--small" onclick="syncRelayTransactionsNow()">Sync Now</button>
+                <label style="display:flex;align-items:flex-end;gap:6px"><span class="qb-l">Import CSV</span><input id="relayCsvInput" class="qb-in" type="file" accept=".csv,text/csv" /></label>
+                <button type="button" class="btn btn--small" onclick="importRelayCsvNow()">Import CSV</button>
+              </div>
+              <div style="overflow:auto;max-height:380px;border:1px solid var(--color-border);border-radius:8px">
+                <table class="table" style="min-width:1100px">
+                  <thead><tr><th>Date</th><th>Driver</th><th>Unit</th><th class="num">Gallons</th><th class="num">Amount</th><th>Station</th><th>State</th><th>QBO Status</th><th>Source</th></tr></thead>
+                  <tbody id="relayTransactionsBody"><tr><td colspan="9" class="muted">Loading Relay transactions...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="wave6SettlementsPanel" class="banking-hidden">
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">Driver</span><input id="settlementFilterDriver" class="qb-in" /></label>
+                <label><span class="qb-l">Status</span><select id="settlementFilterStatus" class="qb-in"><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="paid">Paid</option></select></label>
+                <button type="button" class="btn btn--small" onclick="loadSettlements()">Refresh</button>
+                <button type="button" class="btn btn--small" onclick="openSettlementCreateForm()">+ New Settlement</button>
+              </div>
+              <div class="mini-note" id="settlementKpis" style="margin-bottom:8px">KPIs loading...</div>
+              <div style="overflow:auto;max-height:260px;border:1px solid var(--color-border);border-radius:8px">
+                <table class="table" style="min-width:1100px">
+                  <thead><tr><th>Driver</th><th>Period</th><th class="num">Gross</th><th class="num">Fuel Ded</th><th class="num">Advances</th><th class="num">Net</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody id="settlementsTableBody"><tr><td colspan="8" class="muted">Loading settlements...</td></tr></tbody>
+                </table>
+              </div>
+              <div id="settlementEditor" class="banking-form-panel banking-hidden" style="margin-top:8px">
+                <div class="mini-note"><strong>Create Settlement</strong></div>
+                <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                  <label><span class="qb-l">Driver</span><input id="settlementDriverName" class="qb-in" list="driverList" /></label>
+                  <label><span class="qb-l">Driver ID</span><input id="settlementDriverId" class="qb-in" /></label>
+                  <label><span class="qb-l">From</span><input id="settlementFrom" class="qb-in" type="date" /></label>
+                  <label><span class="qb-l">To</span><input id="settlementTo" class="qb-in" type="date" /></label>
+                  <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers (comma)</span><input id="settlementLoads" class="qb-in" /></label>
+                  <label><span class="qb-l">Gross Pay</span><input id="settlementGross" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()" /></label>
+                  <label><span class="qb-l">Fuel Deduction</span><input id="settlementFuelDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()" /></label>
+                  <label><span class="qb-l">Advance Deduction</span><input id="settlementAdvanceDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()" /></label>
+                  <label><span class="qb-l">Other Deductions</span><input id="settlementOtherDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()" /></label>
+                  <label><span class="qb-l">Net Pay</span><input id="settlementNetPay" class="qb-in" readonly /></label>
+                  <label style="min-width:280px;flex:1 1 280px"><span class="qb-l">Notes</span><textarea id="settlementNotes" class="qb-in" rows="2" style="width:100%"></textarea></label>
+                </div>
+                <div class="banking-modal-footer">
+                  <button type="button" class="btn btn--small" onclick="saveSettlement(false)">Save Settlement</button>
+                  <button type="button" class="btn btn--small" onclick="saveSettlement(true)">Save &amp; Export PDF</button>
+                </div>
+              </div>
+              <div id="settlementDetailBox" class="banking-form-panel banking-hidden" style="margin-top:8px"></div>
+            </div>
+
+            <div id="wave6FactoringPanel" class="banking-hidden">
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">Factor</span><input id="factoringFilterFactor" class="qb-in" /></label>
+                <label><span class="qb-l">Status</span><select id="factoringFilterStatus" class="qb-in"><option value="">All</option><option value="pending">Pending</option><option value="received">Received</option><option value="reconciled">Reconciled</option></select></label>
+                <button type="button" class="btn btn--small" onclick="loadFactoringAdvances()">Refresh</button>
+                <button type="button" class="btn btn--small" onclick="openFactoringCreateForm()">+ New Advance</button>
+              </div>
+              <div style="overflow:auto;max-height:260px;border:1px solid var(--color-border);border-radius:8px">
+                <table class="table" style="min-width:1100px">
+                  <thead><tr><th>Factor</th><th>Loads</th><th class="num">Invoice</th><th class="num">Advance</th><th class="num">Fee</th><th class="num">Net</th><th>Deposit Date</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody id="factoringTableBody"><tr><td colspan="9" class="muted">Loading advances...</td></tr></tbody>
+                </table>
+              </div>
+              <div id="factoringEditor" class="banking-form-panel banking-hidden" style="margin-top:8px">
+                <div class="mini-note"><strong>Create Factoring Advance</strong></div>
+                <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                  <label><span class="qb-l">Factor name</span><input id="factoringFactorName" class="qb-in" value="Faro" /></label>
+                  <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers</span><input id="factoringLoads" class="qb-in" /></label>
+                  <label><span class="qb-l">Invoice</span><input id="factoringInvoice" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()" /></label>
+                  <label><span class="qb-l">Advance</span><input id="factoringAdvance" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()" /></label>
+                  <label><span class="qb-l">Fee</span><input id="factoringFee" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()" /></label>
+                  <label><span class="qb-l">Net</span><input id="factoringNet" class="qb-in" readonly /></label>
+                  <label><span class="qb-l">Deposit date</span><input id="factoringDepositDate" class="qb-in" type="date" /></label>
+                  <label style="min-width:260px;flex:1 1 260px"><span class="qb-l">Notes</span><textarea id="factoringNotes" class="qb-in" rows="2" style="width:100%"></textarea></label>
+                </div>
+                <div class="banking-modal-footer"><button type="button" class="btn btn--small" onclick="saveFactoringAdvance()">Save Advance</button></div>
+              </div>
+              <div class="banking-form-panel" style="margin-top:8px">
+                <div class="mini-note"><strong>Factoring Reconciliation Report</strong></div>
+                <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                  <label><span class="qb-l">Factor</span><input id="factReportFactor" class="qb-in" /></label>
+                  <label><span class="qb-l">Year</span><input id="factReportYear" class="qb-in" type="number" /></label>
+                  <label><span class="qb-l">Month</span><input id="factReportMonth" class="qb-in" type="number" min="1" max="12" /></label>
+                  <button type="button" class="btn btn--small" onclick="loadFactoringReport()">Run</button>
+                </div>
+                <div id="factoringReportTotals" class="mini-note" style="margin-top:8px">Totals: --</div>
+                <div style="overflow:auto;max-height:220px;border:1px solid var(--color-border);border-radius:8px;margin-top:8px">
+                  <table class="table" style="min-width:980px">
+                    <thead><tr><th>Factor</th><th>Loads</th><th class="num">Invoice</th><th class="num">Advance</th><th class="num">Fee</th><th class="num">Net</th><th>Status</th><th>Deposit Date</th></tr></thead>
+                    <tbody id="factoringReportBody"><tr><td colspan="8" class="muted">Run report.</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -30461,6 +30582,537 @@
       };
 
       document.getElementById('bankingCategorizeDrawerBackdrop')?.addEventListener('click', drawerClose);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var wave6 = {
+        relayRows: [],
+        settlements: [],
+        factoring: [],
+      };
+
+      function el(id) { return document.getElementById(id); }
+      function notify(msg, ok) {
+        if (typeof window.toast === 'function') window.toast(String(msg || ''), ok);
+        else console.log(msg);
+      }
+      function money(v) { return typeof window.qboMoneyFmt === 'function' ? window.qboMoneyFmt(v) : ('$' + Number(v || 0).toFixed(2)); }
+      function setMainBankingMode(mode) {
+        el('bankingHomeView')?.classList.toggle('banking-hidden', mode !== 'home');
+        el('bankingRegisterView')?.classList.toggle('banking-hidden', mode !== 'register');
+        el('bankingReconciliationView')?.classList.toggle('banking-hidden', mode !== 'reconHome');
+        el('bankingReconciliationWorkspace')?.classList.toggle('banking-hidden', mode !== 'reconWorkspace');
+        el('bankingWave6Workspace')?.classList.toggle('banking-hidden', mode !== 'wave6');
+      }
+      function setWave6Panel(name) {
+        el('wave6RelayPanel')?.classList.add('banking-hidden');
+        el('wave6SettlementsPanel')?.classList.add('banking-hidden');
+        el('wave6FactoringPanel')?.classList.add('banking-hidden');
+        if (name === 'relay') {
+          el('wave6RelayPanel')?.classList.remove('banking-hidden');
+          el('wave6WorkspaceTitle').textContent = 'Relay Fuel Card Transactions';
+        } else if (name === 'settlements') {
+          el('wave6SettlementsPanel')?.classList.remove('banking-hidden');
+          el('wave6WorkspaceTitle').textContent = 'Driver Settlements';
+        } else if (name === 'factoring') {
+          el('wave6FactoringPanel')?.classList.remove('banking-hidden');
+          el('wave6WorkspaceTitle').textContent = 'Factoring';
+        }
+      }
+
+      async function loadRelayStatus() {
+        var banner = el('relayStatusBanner');
+        if (banner) banner.textContent = 'Loading Relay status...';
+        try {
+          var rsp = await fetch('/api/integrations/relay/status', { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Relay status unavailable');
+          var connected = json?.connected ? 'connected' : 'permissions pending from AM';
+          if (banner) {
+            banner.innerHTML =
+              '🟡 Relay staging — ' + connected +
+              '<br/>Last sync: ' + (json?.last_sync ? String(json.last_sync).slice(0, 19).replace('T', ' ') : '--') +
+              ' | pending import: ' + Number(json?.pending_import || 0) +
+              ' | total imported: ' + Number(json?.total_imported || 0);
+          }
+        } catch (e) {
+          if (banner) banner.textContent = 'Relay status unavailable: ' + String(e?.message || e);
+        }
+      }
+
+      function renderRelayRows() {
+        var body = el('relayTransactionsBody');
+        if (!body) return;
+        var from = String(el('relayFilterFrom')?.value || '').trim();
+        var to = String(el('relayFilterTo')?.value || '').trim();
+        var dQ = String(el('relayFilterDriver')?.value || '').trim().toLowerCase();
+        var uQ = String(el('relayFilterUnit')?.value || '').trim().toLowerCase();
+        var sQ = String(el('relayFilterState')?.value || '').trim().toLowerCase();
+        var rows = wave6.relayRows.slice();
+        if (from) rows = rows.filter(function (r) { return String(r?.txn_date || '').slice(0, 10) >= from; });
+        if (to) rows = rows.filter(function (r) { return String(r?.txn_date || '').slice(0, 10) <= to; });
+        if (dQ) rows = rows.filter(function (r) { return String(r?.description || r?.vendor_name || '').toLowerCase().includes(dQ); });
+        if (uQ) rows = rows.filter(function (r) { return String(r?.unit_number || '').toLowerCase().includes(uQ); });
+        if (sQ) rows = rows.filter(function (r) { return String(r?.state || '').toLowerCase().includes(sQ); });
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="9" class="muted">No Relay transactions.</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.slice(0, 1000).map(function (r) {
+          var src = String(r?.source || '').toLowerCase() === 'relay'
+            ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#16a34a22;color:#166534;font-weight:700;font-size:11px">Relay</span>'
+            : '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#2563eb22;color:#1d4ed8;font-weight:700;font-size:11px">Manual</span>';
+          return '<tr>' +
+            '<td>' + escapeHtml(String(r?.txn_date || '').slice(0, 10) || '--') + '</td>' +
+            '<td>' + escapeHtml(String(r?.description || r?.vendor_name || '--')) + '</td>' +
+            '<td>' + escapeHtml(String(r?.unit_number || '--')) + '</td>' +
+            '<td class="num">' + (r?.gallons == null ? '--' : Number(r.gallons).toFixed(2)) + '</td>' +
+            '<td class="num">' + money(r?.amount || 0) + '</td>' +
+            '<td>' + escapeHtml(String(r?.station_name || '--')) + '</td>' +
+            '<td>' + escapeHtml(String(r?.state || '--')) + '</td>' +
+            '<td>' + escapeHtml(String(r?.qbo_status || '--')) + '</td>' +
+            '<td>' + src + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      async function refreshRelayTransactions() {
+        var body = el('relayTransactionsBody');
+        if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Loading Relay transactions...</td></tr>';
+        try {
+          var rsp = await fetch('/api/banking/transactions?limit=2000', { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          var rows = Array.isArray(json?.data) ? json.data : [];
+          wave6.relayRows = rows.filter(function (r) { return String(r?.source || '').toLowerCase() === 'relay'; });
+          renderRelayRows();
+          loadRelayStatus();
+        } catch (e) {
+          if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Relay transactions unavailable: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      async function syncRelayNow() {
+        try {
+          var rsp = await fetch('/api/integrations/relay/sync', { method: 'POST', headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || (Array.isArray(json?.errors) ? json.errors.join('; ') : 'Relay sync failed'));
+          notify('Relay sync complete: imported ' + Number(json?.imported || 0) + ', skipped ' + Number(json?.skipped || 0));
+          await refreshRelayTransactions();
+        } catch (e) {
+          notify('Relay sync failed: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function importRelayCsv() {
+        var file = el('relayCsvInput')?.files?.[0] || null;
+        if (!file) { notify('Choose a Relay CSV file first.', false); return; }
+        try {
+          var fd = new FormData();
+          fd.append('file', file);
+          var rsp = await fetch('/api/integrations/relay/import-csv', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Relay CSV import failed');
+          notify('Relay CSV import complete: imported ' + Number(json?.imported || 0) + ', skipped ' + Number(json?.skipped || 0));
+          await refreshRelayTransactions();
+        } catch (e) {
+          notify('Relay CSV import failed: ' + String(e?.message || e), false);
+        }
+      }
+
+      function recalcSettlementNetDraft() {
+        var gross = Number(el('settlementGross')?.value || 0);
+        var fuel = Number(el('settlementFuelDed')?.value || 0);
+        var adv = Number(el('settlementAdvanceDed')?.value || 0);
+        var other = Number(el('settlementOtherDed')?.value || 0);
+        var net = gross - fuel - adv - other;
+        if (el('settlementNetPay')) el('settlementNetPay').value = Number(net || 0).toFixed(2);
+      }
+
+      function computeSettlementKpis(rows) {
+        var nowMonth = new Date().toISOString().slice(0, 7);
+        var totals = rows.reduce(function (acc, r) {
+          var net = Number(r?.net_pay || 0);
+          if (String(r?.status || '').toLowerCase() !== 'paid') acc.unpaid += net;
+          if (String(r?.period_start || '').slice(0, 7) === nowMonth) acc.thisPeriod += net;
+          acc.avgTotal += net;
+          acc.count += 1;
+          if (String(r?.status || '').toLowerCase() !== 'paid') acc.drivers.add(String(r?.driver_name || r?.driver_id || '--'));
+          return acc;
+        }, { unpaid: 0, thisPeriod: 0, avgTotal: 0, count: 0, drivers: new Set() });
+        return {
+          unpaid: totals.unpaid,
+          thisPeriod: totals.thisPeriod,
+          driversWithBalance: totals.drivers.size,
+          avgSettlement: totals.count ? (totals.avgTotal / totals.count) : 0,
+        };
+      }
+
+      function renderSettlementsTable() {
+        var body = el('settlementsTableBody');
+        if (!body) return;
+        var driverQ = String(el('settlementFilterDriver')?.value || '').trim().toLowerCase();
+        var statusQ = String(el('settlementFilterStatus')?.value || '').trim().toLowerCase();
+        var rows = wave6.settlements.slice();
+        if (driverQ) rows = rows.filter(function (r) { return String(r?.driver_name || r?.driver_id || '').toLowerCase().includes(driverQ); });
+        if (statusQ) rows = rows.filter(function (r) { return String(r?.status || '').toLowerCase() === statusQ; });
+        var k = computeSettlementKpis(rows);
+        el('settlementKpis').textContent =
+          'Total Unpaid: ' + money(k.unpaid) +
+          ' | Total This Period: ' + money(k.thisPeriod) +
+          ' | Drivers with Balance: ' + k.driversWithBalance +
+          ' | Avg Settlement: ' + money(k.avgSettlement);
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="8" class="muted">No settlements found.</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.map(function (r) {
+          return '<tr>' +
+            '<td>' + escapeHtml(String(r?.driver_name || r?.driver_id || '--')) + '</td>' +
+            '<td>' + escapeHtml(String(r?.period_start || '').slice(0, 10) + ' - ' + String(r?.period_end || '').slice(0, 10)) + '</td>' +
+            '<td class="num">' + money(r?.gross_pay || 0) + '</td>' +
+            '<td class="num">' + money(r?.fuel_deduction || 0) + '</td>' +
+            '<td class="num">' + money(r?.advance_deduction || 0) + '</td>' +
+            '<td class="num">' + money(r?.net_pay || 0) + '</td>' +
+            '<td>' + escapeHtml(String(r?.status || '--')) + '</td>' +
+            '<td><button type="button" class="btn btn--small" onclick="viewSettlementDetail(' + Number(r?.id || 0) + ')">View</button> <button type="button" class="btn btn--small" onclick="linkSettlementBankPayment(' + Number(r?.id || 0) + ')">Link Bank Payment</button></td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      async function loadSettlements() {
+        var body = el('settlementsTableBody');
+        if (body) body.innerHTML = '<tr><td colspan="8" class="muted">Loading settlements...</td></tr>';
+        try {
+          var params = new URLSearchParams();
+          var status = String(el('settlementFilterStatus')?.value || '').trim();
+          if (status) params.set('status', status);
+          var rsp = await fetch('/api/settlements?' + params.toString(), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Settlements unavailable');
+          wave6.settlements = Array.isArray(json?.settlements) ? json.settlements : [];
+          renderSettlementsTable();
+        } catch (e) {
+          if (body) body.innerHTML = '<tr><td colspan="8" class="muted">Unable to load settlements: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      function openSettlementCreateForm() {
+        el('settlementEditor')?.classList.remove('banking-hidden');
+        el('settlementDetailBox')?.classList.add('banking-hidden');
+      }
+
+      async function saveSettlement(exportPdf) {
+        var payload = {
+          driver_id: String(el('settlementDriverId')?.value || '').trim(),
+          driver_name: String(el('settlementDriverName')?.value || '').trim(),
+          period_start: String(el('settlementFrom')?.value || '').trim(),
+          period_end: String(el('settlementTo')?.value || '').trim(),
+          load_numbers: String(el('settlementLoads')?.value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean),
+          gross_pay: Number(el('settlementGross')?.value || 0),
+          fuel_deduction: Number(el('settlementFuelDed')?.value || 0),
+          advance_deduction: Number(el('settlementAdvanceDed')?.value || 0),
+          other_deductions: Number(el('settlementOtherDed')?.value || 0),
+          net_pay: Number(el('settlementNetPay')?.value || 0),
+          notes: String(el('settlementNotes')?.value || '').trim(),
+        };
+        try {
+          var rsp = await fetch('/api/settlements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Create settlement failed');
+          notify('Settlement created.');
+          el('settlementEditor')?.classList.add('banking-hidden');
+          await loadSettlements();
+          if (exportPdf) window.open('/api/settlements/' + encodeURIComponent(json?.settlement?.id) + '/export?format=pdf', '_blank');
+        } catch (e) {
+          notify('Unable to save settlement: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function viewSettlementDetail(id) {
+        try {
+          var rsp = await fetch('/api/settlements/' + encodeURIComponent(id), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Settlement detail unavailable');
+          var s = json?.settlement || {};
+          var loads = Array.isArray(json?.loads) ? json.loads.map(function (l) { return l?.load_number; }).filter(Boolean) : [];
+          var bankTxn = (Array.isArray(json?.bank_txns) ? json.bank_txns : [])[0] || null;
+          var outstanding = String(s?.status || '').toLowerCase() === 'paid' ? 0 : Number(s?.net_pay || 0);
+          el('settlementDetailBox').classList.remove('banking-hidden');
+          el('settlementDetailBox').innerHTML =
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<div class="mini-note"><strong>' + escapeHtml(String(s?.driver_name || s?.driver_id || '--')) + '</strong> | ' + escapeHtml(String(s?.period_start || '').slice(0, 10) + ' - ' + String(s?.period_end || '').slice(0, 10)) + ' | Status: <strong>' + escapeHtml(String(s?.status || '--').toUpperCase()) + '</strong></div>' +
+            '<div><button type="button" class="btn btn--small" onclick="window.open(\\'/api/settlements/' + Number(id) + '/export?format=pdf\\',\\'_blank\\')">Export Pay Stub PDF</button></div>' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px">' +
+              '<span>Gross Pay:</span><strong>' + money(s?.gross_pay || 0) + '</strong>' +
+              '<span>Fuel Deduction:</span><strong>(' + money(Math.abs(Number(s?.fuel_deduction || 0))).replace('$', '$') + ')</strong>' +
+              '<span>Advance Deduction:</span><strong>(' + money(Math.abs(Number(s?.advance_deduction || 0))).replace('$', '$') + ')</strong>' +
+              '<span>Other Deductions:</span><strong>(' + money(Math.abs(Number(s?.other_deductions || 0))).replace('$', '$') + ')</strong>' +
+              '<span>Net Pay:</span><strong>' + money(s?.net_pay || 0) + '</strong>' +
+            '</div>' +
+            '<div class="mini-note" style="margin-top:8px">Load Numbers: ' + (loads.length ? loads.map(function (l) { return '[' + escapeHtml(l) + ']'; }).join(' ') : '--') + '</div>' +
+            '<div class="mini-note" style="margin-top:8px">' +
+              (bankTxn
+                ? ('✅ Paid — Bank transaction linked: ' + String(bankTxn?.txn_date || '').slice(0, 10) + ' | ' + money(bankTxn?.amount || 0) + ' | ' + escapeHtml(String(bankTxn?.account_name || bankTxn?.account_id || '--')))
+                : ('● ' + escapeHtml(String(s?.status || 'unpaid')) + ' — ' + money(outstanding) + ' outstanding')) +
+            '</div>';
+        } catch (e) {
+          notify('Unable to load settlement detail: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function linkSettlementBankPayment(id) {
+        var txnIdRaw = window.prompt('Enter bank transaction ID to link:');
+        if (!txnIdRaw) return;
+        var txnId = Number(txnIdRaw);
+        if (!Number.isFinite(txnId) || txnId <= 0) {
+          notify('Invalid transaction ID.', false);
+          return;
+        }
+        try {
+          var rsp = await fetch('/api/settlements/' + encodeURIComponent(id) + '/link-bank-txn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ txn_id: txnId }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to link bank payment');
+          notify('Settlement payment linked. Status: ' + String(json?.settlement?.status || '--'));
+          await loadSettlements();
+          viewSettlementDetail(id);
+        } catch (e) {
+          notify('Unable to link settlement payment: ' + String(e?.message || e), false);
+        }
+      }
+
+      function recalcFactoringDraft() {
+        var invoice = Number(el('factoringInvoice')?.value || 0);
+        var advance = Number(el('factoringAdvance')?.value || 0);
+        var feeInput = el('factoringFee');
+        var fee = Number(feeInput?.value || (invoice - advance) || 0);
+        if (feeInput && !String(feeInput.value || '').trim()) feeInput.value = Number(invoice - advance).toFixed(2);
+        var net = advance - fee;
+        if (el('factoringNet')) el('factoringNet').value = Number(net || 0).toFixed(2);
+      }
+
+      function renderFactoringTable() {
+        var body = el('factoringTableBody');
+        if (!body) return;
+        var factorQ = String(el('factoringFilterFactor')?.value || '').trim().toLowerCase();
+        var statusQ = String(el('factoringFilterStatus')?.value || '').trim().toLowerCase();
+        var rows = wave6.factoring.slice();
+        if (factorQ) rows = rows.filter(function (r) { return String(r?.factor_name || '').toLowerCase().includes(factorQ); });
+        if (statusQ) rows = rows.filter(function (r) { return String(r?.status || '').toLowerCase() === statusQ; });
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="9" class="muted">No factoring advances.</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.map(function (r) {
+          var loads = Array.isArray(r?.loads) ? r.loads.map(function (l) { return l?.load_number; }).filter(Boolean).join(', ') : '';
+          return '<tr>' +
+            '<td>' + escapeHtml(String(r?.factor_name || '--')) + '</td>' +
+            '<td>' + escapeHtml(loads || '--') + '</td>' +
+            '<td class="num">' + money(r?.invoice_amount || 0) + '</td>' +
+            '<td class="num">' + money(r?.advance_amount || 0) + '</td>' +
+            '<td class="num">' + money(r?.fee_amount || 0) + '</td>' +
+            '<td class="num">' + money(r?.net_amount || 0) + '</td>' +
+            '<td>' + escapeHtml(String(r?.deposit_date || '').slice(0, 10) || '--') + '</td>' +
+            '<td>' + escapeHtml(String(r?.status || '--')) + '</td>' +
+            '<td><button type="button" class="btn btn--small" onclick="viewFactoringAdvance(' + Number(r?.id || 0) + ')">View</button> <button type="button" class="btn btn--small" onclick="linkFactoringBankDeposit(' + Number(r?.id || 0) + ')">Link Bank Deposit</button> <button type="button" class="btn btn--small" onclick="markFactoringReconciled(' + Number(r?.id || 0) + ')">Mark Reconciled</button></td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      async function loadFactoringAdvances() {
+        var body = el('factoringTableBody');
+        if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Loading advances...</td></tr>';
+        try {
+          var params = new URLSearchParams();
+          var factor = String(el('factoringFilterFactor')?.value || '').trim();
+          var status = String(el('factoringFilterStatus')?.value || '').trim();
+          if (factor) params.set('factor_name', factor);
+          if (status) params.set('status', status);
+          var rsp = await fetch('/api/factoring/advances?' + params.toString(), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Factoring unavailable');
+          wave6.factoring = Array.isArray(json?.advances) ? json.advances : [];
+          renderFactoringTable();
+        } catch (e) {
+          if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Unable to load factoring advances: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      function openFactoringCreateForm() {
+        el('factoringEditor')?.classList.remove('banking-hidden');
+      }
+
+      async function saveFactoringAdvance() {
+        var payload = {
+          factor_name: String(el('factoringFactorName')?.value || '').trim() || 'Faro',
+          load_numbers: String(el('factoringLoads')?.value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean),
+          invoice_amount: Number(el('factoringInvoice')?.value || 0),
+          advance_amount: Number(el('factoringAdvance')?.value || 0),
+          fee_amount: Number(el('factoringFee')?.value || 0),
+          net_amount: Number(el('factoringNet')?.value || 0),
+          deposit_date: String(el('factoringDepositDate')?.value || '').trim(),
+          notes: String(el('factoringNotes')?.value || '').trim(),
+        };
+        try {
+          var rsp = await fetch('/api/factoring/advances', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Create factoring advance failed');
+          notify('Factoring advance created.');
+          el('factoringEditor')?.classList.add('banking-hidden');
+          await loadFactoringAdvances();
+        } catch (e) {
+          notify('Unable to create factoring advance: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function viewFactoringAdvance(id) {
+        try {
+          var rsp = await fetch('/api/factoring/advances/' + encodeURIComponent(id), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Advance detail unavailable');
+          var a = json?.advance || {};
+          var loads = Array.isArray(json?.loads) ? json.loads.map(function (x) { return x?.load_number; }).filter(Boolean).join(', ') : '--';
+          var linked = json?.bank_txn ? (String(json.bank_txn?.txn_date || '').slice(0, 10) + ' | ' + money(json.bank_txn?.amount || 0)) : 'Not linked';
+          notify('Advance #' + id + ': ' + String(a?.factor_name || '--') + ' | Loads: ' + loads + ' | Bank: ' + linked);
+        } catch (e) {
+          notify('Unable to view factoring advance: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function linkFactoringBankDeposit(id) {
+        var txnIdRaw = window.prompt('Enter bank transaction ID to link deposit:');
+        if (!txnIdRaw) return;
+        var txnId = Number(txnIdRaw);
+        if (!Number.isFinite(txnId) || txnId <= 0) { notify('Invalid transaction ID.', false); return; }
+        try {
+          var rsp = await fetch('/api/factoring/advances/' + encodeURIComponent(id) + '/link-bank-txn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ txn_id: txnId }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to link bank deposit');
+          notify('Factoring advance linked to bank deposit.');
+          loadFactoringAdvances();
+        } catch (e) {
+          notify('Unable to link factoring deposit: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function markFactoringReconciled(id) {
+        try {
+          var rsp = await fetch('/api/factoring/advances/' + encodeURIComponent(id) + '/reconcile', {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Unable to mark reconciled');
+          notify('Factoring advance marked reconciled.');
+          loadFactoringAdvances();
+        } catch (e) {
+          notify('Unable to mark factoring advance reconciled: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function loadFactoringReport() {
+        var body = el('factoringReportBody');
+        if (body) body.innerHTML = '<tr><td colspan="8" class="muted">Loading report...</td></tr>';
+        try {
+          var params = new URLSearchParams();
+          var factor = String(el('factReportFactor')?.value || '').trim();
+          var year = String(el('factReportYear')?.value || '').trim();
+          var month = String(el('factReportMonth')?.value || '').trim();
+          if (factor) params.set('factor_name', factor);
+          if (year) params.set('year', year);
+          if (month) params.set('month', String(Number(month)).padStart(2, '0'));
+          var rsp = await fetch('/api/factoring/reports/reconciliation?' + params.toString(), { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Report unavailable');
+          var rows = Array.isArray(json?.rows) ? json.rows : [];
+          if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="8" class="muted">No report rows.</td></tr>';
+          } else {
+            body.innerHTML = rows.map(function (r) {
+              return '<tr>' +
+                '<td>' + escapeHtml(String(r?.factor_name || '--')) + '</td>' +
+                '<td>' + escapeHtml(String(r?.load_numbers || '--')) + '</td>' +
+                '<td class="num">' + money(r?.invoice_amount || 0) + '</td>' +
+                '<td class="num">' + money(r?.advance_amount || 0) + '</td>' +
+                '<td class="num">' + money(r?.fee_amount || 0) + '</td>' +
+                '<td class="num">' + money(r?.net_amount || 0) + '</td>' +
+                '<td>' + escapeHtml(String(r?.status || '--')) + '</td>' +
+                '<td>' + escapeHtml(String(r?.deposit_date || '').slice(0, 10) || '--') + '</td>' +
+              '</tr>';
+            }).join('');
+          }
+          var t = json?.totals || {};
+          el('factoringReportTotals').textContent =
+            'Total Invoiced: ' + money(t?.total_invoiced || 0) +
+            ' | Total Advanced: ' + money(t?.total_advanced || 0) +
+            ' | Total Fees: ' + money(t?.total_fees || 0) +
+            ' | Total Net: ' + money(t?.total_net || 0) +
+            ' | Pending: ' + Number(t?.pending_count || 0);
+        } catch (e) {
+          if (body) body.innerHTML = '<tr><td colspan="8" class="muted">Unable to run report: ' + String(e?.message || e) + '</td></tr>';
+        }
+      }
+
+      function openRelayWorkspace() {
+        setMainBankingMode('wave6');
+        setWave6Panel('relay');
+        loadRelayStatus();
+        refreshRelayTransactions();
+      }
+      function openSettlementsWorkspace() {
+        setMainBankingMode('wave6');
+        setWave6Panel('settlements');
+        loadSettlements();
+      }
+      function openFactoringWorkspace() {
+        setMainBankingMode('wave6');
+        setWave6Panel('factoring');
+        loadFactoringAdvances();
+        loadFactoringReport();
+      }
+      function closeWave6Workspace() {
+        setMainBankingMode('home');
+      }
+
+      window.openRelayWorkspace = openRelayWorkspace;
+      window.openSettlementsWorkspace = openSettlementsWorkspace;
+      window.openFactoringWorkspace = openFactoringWorkspace;
+      window.closeWave6Workspace = closeWave6Workspace;
+      window.refreshRelayTransactions = refreshRelayTransactions;
+      window.syncRelayTransactionsNow = syncRelayNow;
+      window.importRelayCsvNow = importRelayCsv;
+      window.loadSettlements = loadSettlements;
+      window.openSettlementCreateForm = openSettlementCreateForm;
+      window.recalcSettlementNetDraft = recalcSettlementNetDraft;
+      window.saveSettlement = saveSettlement;
+      window.viewSettlementDetail = viewSettlementDetail;
+      window.linkSettlementBankPayment = linkSettlementBankPayment;
+      window.loadFactoringAdvances = loadFactoringAdvances;
+      window.openFactoringCreateForm = openFactoringCreateForm;
+      window.recalcFactoringDraft = recalcFactoringDraft;
+      window.saveFactoringAdvance = saveFactoringAdvance;
+      window.viewFactoringAdvance = viewFactoringAdvance;
+      window.linkFactoringBankDeposit = linkFactoringBankDeposit;
+      window.markFactoringReconciled = markFactoringReconciled;
+      window.loadFactoringReport = loadFactoringReport;
     })();
   </script>
 
