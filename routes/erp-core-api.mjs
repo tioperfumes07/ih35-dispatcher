@@ -3933,12 +3933,28 @@ export function mountErpCoreApi(app, opts = {}) {
         UNIQUE (module, period_key)
       )`
     );
+    await dbQuery(
+      `CREATE TABLE IF NOT EXISTS qbo_post_queue (
+        id BIGSERIAL PRIMARY KEY,
+        txn_id BIGINT REFERENCES banking_transactions(id) ON DELETE CASCADE,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT,
+        payload_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+        status TEXT NOT NULL DEFAULT 'queued',
+        posted_at TIMESTAMPTZ,
+        error_text TEXT,
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_account_date ON banking_transactions(account_id, txn_date DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_status ON banking_transactions(status)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_transactions_source ON banking_transactions(source, txn_date DESC)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_banking_rules_active_priority ON banking_rules(active, priority)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_driver_settlements_driver_period ON driver_settlements(driver_id, period_start)');
     await dbQuery('CREATE INDEX IF NOT EXISTS idx_bank_recon_sessions_account_month ON bank_reconciliation_sessions(account_id, statement_month)');
+    await dbQuery('CREATE INDEX IF NOT EXISTS idx_qbo_post_queue_status_created ON qbo_post_queue(status, created_at DESC)');
   }
 
   async function ensureLoadExpenseLinksTable() {
@@ -4903,6 +4919,111 @@ export function mountErpCoreApi(app, opts = {}) {
     return out;
   }
 
+  const BANKING_ACTION_TYPES = new Set(['expense', 'bill_payment', 'transfer', 'settlement', 'factoring', 'apply_bill']);
+
+  function toEntityTypeForBankingAction(action = '') {
+    const key = String(action || '').trim().toLowerCase();
+    if (key === 'expense') return 'expense';
+    if (key === 'bill_payment') return 'bill_payment';
+    if (key === 'transfer') return 'transfer';
+    if (key === 'settlement') return 'driver_settlement';
+    if (key === 'factoring') return 'factoring_advance';
+    if (key === 'apply_bill') return 'bill';
+    return 'transaction';
+  }
+
+  async function enqueueBankingQboPost({ txnId, entityType, entityId, payload, actor }) {
+    const { rows } = await dbQuery(
+      `INSERT INTO qbo_post_queue (txn_id, entity_type, entity_id, payload_json, status, created_by, updated_at)
+       VALUES ($1,$2,$3,$4::jsonb,'queued',$5,now())
+       RETURNING id, txn_id, entity_type, entity_id, status, created_at`,
+      [txnId, entityType, entityId || null, JSON.stringify(payload || {}), actor || null]
+    );
+    return rows?.[0] || null;
+  }
+
+  async function categorizeBankingTransaction(req, txnId, payload = {}, options = {}) {
+    const actor = maintActor(req);
+    const action = String(payload?.action || '').trim().toLowerCase();
+    if (!BANKING_ACTION_TYPES.has(action)) {
+      return { ok: false, status: 400, error: 'Unsupported action type' };
+    }
+    const { rows: txnRows } = await dbQuery(
+      `SELECT *
+         FROM banking_transactions
+        WHERE id = $1
+        LIMIT 1`,
+      [txnId]
+    );
+    const txn = txnRows?.[0] || null;
+    if (!txn) return { ok: false, status: 404, error: 'Transaction not found' };
+
+    const before = txn;
+    const targetId = String(payload?.target_id || '').trim() || `txn-${txnId}-${Date.now()}`;
+    const entityType = toEntityTypeForBankingAction(action);
+    const category = String(payload?.category || action).trim() || action;
+    const amount = Number.isFinite(Number(payload?.amount)) ? Number(payload.amount) : Number(txn?.amount || 0);
+    const qboPayload = {
+      action,
+      txn_id: txnId,
+      account_id: txn?.account_id || null,
+      account_name: txn?.account_name || null,
+      amount,
+      vendor_id: String(payload?.vendor_id || '').trim() || null,
+      vendor_name: String(payload?.vendor_name || txn?.vendor_name || '').trim() || null,
+      category,
+      memo: String(payload?.memo || txn?.memo || '').trim() || null,
+      target_id: String(payload?.target_id || '').trim() || null,
+      qbo_account_id: String(payload?.qbo_account_id || '').trim() || null,
+      qbo_class_id: String(payload?.qbo_class_id || '').trim() || null,
+      split_index: Number.isFinite(Number(options?.splitIndex)) ? Number(options.splitIndex) : null,
+    };
+
+    const { rows: afterTxnRows } = await dbQuery(
+      `UPDATE banking_transactions
+          SET status = 'categorized',
+              category = $2,
+              category_source = 'manual',
+              vendor_name = COALESCE($3, vendor_name),
+              memo = COALESCE($4, memo),
+              updated_by = $5,
+              updated_at = now()
+        WHERE id = $1
+      RETURNING *`,
+      [txnId, category, qboPayload.vendor_name, qboPayload.memo, actor]
+    );
+    const updatedTxn = afterTxnRows?.[0] || txn;
+
+    const { rows: linkRows } = await dbQuery(
+      `INSERT INTO bank_txn_links (txn_id, entity_type, entity_id, amount, link_role, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING id, txn_id, entity_type, entity_id, amount, link_role, created_by, created_at`,
+      [txnId, entityType, targetId, amount, String(options?.linkRole || 'primary').trim() || 'primary', actor]
+    );
+    const link = linkRows?.[0] || null;
+    const qboQueued = await enqueueBankingQboPost({
+      txnId,
+      entityType,
+      entityId: targetId,
+      payload: qboPayload,
+      actor,
+    });
+
+    await writeAuditLog(req, {
+      action: options?.auditAction || 'categorize',
+      entity_type: 'banking_transactions',
+      entity_id: String(txnId),
+      before_state: before,
+      after_state: {
+        transaction: updatedTxn,
+        link,
+        qbo_queued: qboQueued,
+      },
+      source_module: 'banking',
+    });
+    return { ok: true, transaction: updatedTxn, link, qbo_queued: qboQueued };
+  }
+
   app.get('/api/banking/accounts', async (req, res) => {
     try {
       if (!getPoolForRoute()) return res.json({ ok: true, accounts: [], data: [], count: 0 });
@@ -5244,6 +5365,330 @@ export function mountErpCoreApi(app, opts = {}) {
       return res.json({ ok: true, id: inserted?.id || null });
     } catch (e) {
       logError('POST /api/banking/transactions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/transactions/:txnId/categorize', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const txnId = Number(req.params?.txnId || 0);
+      if (!Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'Invalid transaction id' });
+      const result = await categorizeBankingTransaction(req, txnId, req.body || {});
+      if (!result.ok) return res.status(result.status || 400).json({ ok: false, error: result.error || 'Unable to categorize transaction' });
+      return res.json({
+        ok: true,
+        transaction: result.transaction,
+        link: result.link,
+        qbo_queued: result.qbo_queued,
+      });
+    } catch (e) {
+      logError('POST /api/banking/transactions/:txnId/categorize', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/transactions/bulk-categorize', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const ids = Array.isArray(req.body?.txn_ids) ? req.body.txn_ids : [];
+      const action = String(req.body?.action || '').trim().toLowerCase();
+      const shared = req.body?.shared_fields && typeof req.body.shared_fields === 'object' ? req.body.shared_fields : {};
+      const processed = [];
+      const failed = [];
+      const qboQueued = [];
+      for (const rawId of ids) {
+        const txnId = Number(rawId);
+        if (!Number.isFinite(txnId) || txnId <= 0) {
+          failed.push({ txn_id: rawId, error: 'Invalid transaction id' });
+          continue;
+        }
+        try {
+          const payload = { ...(shared || {}), action };
+          const result = await categorizeBankingTransaction(req, txnId, payload, { auditAction: 'bulk_categorize' });
+          if (!result.ok) {
+            failed.push({ txn_id: rawId, error: result.error || 'Unable to categorize transaction' });
+            continue;
+          }
+          processed.push({ txn_id: txnId, link_id: result?.link?.id || null });
+          if (result?.qbo_queued?.id) qboQueued.push(result.qbo_queued.id);
+        } catch (innerError) {
+          failed.push({ txn_id: rawId, error: innerError?.message || String(innerError) });
+        }
+      }
+      await writeAuditLog(req, {
+        action: 'bulk_categorize',
+        entity_type: 'banking_transactions',
+        entity_id: null,
+        before_state: null,
+        after_state: { txn_ids: ids, action, processed, failed },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, processed, failed, qbo_queued: qboQueued });
+    } catch (e) {
+      logError('POST /api/banking/transactions/bulk-categorize', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/transactions/:txnId/split', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const txnId = Number(req.params?.txnId || 0);
+      if (!Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'Invalid transaction id' });
+      const splits = Array.isArray(req.body?.splits) ? req.body.splits : [];
+      if (!splits.length) return res.status(400).json({ ok: false, error: 'splits are required' });
+      const { rows: txnRows } = await dbQuery(
+        `SELECT *
+           FROM banking_transactions
+          WHERE id = $1
+          LIMIT 1`,
+        [txnId]
+      );
+      const txn = txnRows?.[0] || null;
+      if (!txn) return res.status(404).json({ ok: false, error: 'Transaction not found' });
+      const original = Number(txn?.amount || 0);
+      const splitTotal = splits.reduce((sum, s) => sum + Number(s?.amount || 0), 0);
+      const cents = (n) => Math.round(Number(n || 0) * 100);
+      const matchDirect = cents(splitTotal) === cents(original);
+      const matchAbs = cents(Math.abs(splitTotal)) === cents(Math.abs(original));
+      if (!matchDirect && !matchAbs) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Split total must equal original transaction amount',
+          original_amount: original,
+          split_total: splitTotal,
+        });
+      }
+
+      const before = txn;
+      const outSplits = [];
+      const qboQueued = [];
+      for (let i = 0; i < splits.length; i += 1) {
+        const s = splits[i] || {};
+        const payload = {
+          action: 'expense',
+          amount: Number(s?.amount || 0),
+          category: String(s?.category || 'split').trim(),
+          vendor_name: String(s?.vendor_name || txn?.vendor_name || '').trim(),
+          memo: String(s?.memo || txn?.memo || '').trim(),
+          qbo_account_id: String(s?.qbo_account_id || '').trim(),
+          qbo_class_id: null,
+          target_id: `split-${txnId}-${i + 1}`,
+        };
+        const result = await categorizeBankingTransaction(req, txnId, payload, {
+          auditAction: 'split_line',
+          splitIndex: i + 1,
+          linkRole: `split:${i + 1}`,
+        });
+        if (result.ok) {
+          outSplits.push({
+            index: i + 1,
+            amount: Number(payload.amount || 0),
+            category: payload.category,
+            vendor_name: payload.vendor_name,
+            memo: payload.memo,
+            link_id: result?.link?.id || null,
+          });
+          if (result?.qbo_queued?.id) qboQueued.push(result.qbo_queued.id);
+        }
+      }
+
+      await dbQuery(
+        `UPDATE banking_transactions
+            SET status = 'categorized',
+                category = 'split',
+                category_source = 'manual',
+                updated_by = $2,
+                updated_at = now()
+          WHERE id = $1`,
+        [txnId, maintActor(req)]
+      );
+      const { rows: updatedRows } = await dbQuery('SELECT * FROM banking_transactions WHERE id = $1 LIMIT 1', [txnId]);
+      await writeAuditLog(req, {
+        action: 'split',
+        entity_type: 'banking_transactions',
+        entity_id: String(txnId),
+        before_state: before,
+        after_state: { transaction: updatedRows?.[0] || null, splits: outSplits, qbo_queued: qboQueued },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, splits: outSplits, qbo_queued: qboQueued });
+    } catch (e) {
+      logError('POST /api/banking/transactions/:txnId/split', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/banking/transactions/:txnId/undo', async (req, res) => {
+    try {
+      if (!requireAdminRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const txnId = Number(req.params?.txnId || 0);
+      if (!Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'Invalid transaction id' });
+      const reason = String(req.body?.reason || req.query?.reason || 'Manual undo').trim();
+      const { rows: beforeRows } = await dbQuery('SELECT * FROM banking_transactions WHERE id = $1 LIMIT 1', [txnId]);
+      const before = beforeRows?.[0] || null;
+      if (!before) return res.status(404).json({ ok: false, error: 'Transaction not found' });
+      await dbQuery('DELETE FROM bank_txn_links WHERE txn_id = $1', [txnId]);
+      await dbQuery(
+        `DELETE FROM qbo_post_queue
+          WHERE txn_id = $1
+            AND LOWER(COALESCE(status, 'queued')) IN ('queued', 'draft', 'pending')`,
+        [txnId]
+      );
+      const { rows: afterRows } = await dbQuery(
+        `UPDATE banking_transactions
+            SET status = 'uncategorized',
+                category = NULL,
+                category_source = NULL,
+                updated_by = $2,
+                updated_at = now()
+          WHERE id = $1
+      RETURNING *`,
+        [txnId, maintActor(req)]
+      );
+      const transaction = afterRows?.[0] || null;
+      await writeAuditLog(req, {
+        action: 'undo_categorization',
+        entity_type: 'banking_transactions',
+        entity_id: String(txnId),
+        before_state: before,
+        after_state: { transaction, reason },
+        source_module: 'banking',
+      });
+      return res.json({ ok: true, transaction });
+    } catch (e) {
+      logError('POST /api/banking/transactions/:txnId/undo', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/banking/transactions/:txnId/suggestions', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) return res.json({ ok: true, suggestions: [] });
+      await ensureBankingTables();
+      const txnId = Number(req.params?.txnId || 0);
+      if (!Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'Invalid transaction id' });
+      const { rows: currentRows } = await dbQuery(
+        `SELECT id, amount, description, vendor_name, account_id
+           FROM banking_transactions
+          WHERE id = $1
+          LIMIT 1`,
+        [txnId]
+      );
+      const current = currentRows?.[0] || null;
+      if (!current) return res.status(404).json({ ok: false, error: 'Transaction not found' });
+      const suggestions = [];
+      const pushSuggestion = (row, confidence, reason) => {
+        suggestions.push({
+          action: String(row?.action || row?.action_type || 'expense'),
+          vendor_name: String(row?.vendor_name || '').trim() || null,
+          category: String(row?.category || '').trim() || null,
+          qbo_account_id: String(row?.qbo_account_id || '').trim() || null,
+          confidence,
+          reason,
+        });
+      };
+
+      const { rows: ruleRows } = await dbQuery(
+        `SELECT action_type, category, vendor_id, match_value
+           FROM banking_rules
+          WHERE active = true
+            AND (
+              $1 ILIKE '%' || match_value || '%'
+              OR $2 ILIKE '%' || match_value || '%'
+            )
+          ORDER BY priority ASC, id ASC
+          LIMIT 3`,
+        [String(current?.description || ''), String(current?.vendor_name || '')]
+      );
+      ruleRows.forEach((r) => {
+        pushSuggestion({
+          action_type: r?.action_type || 'expense',
+          vendor_name: current?.vendor_name || '',
+          category: r?.category || '',
+          qbo_account_id: r?.vendor_id || '',
+        }, 1.0, `Rule match: ${String(r?.match_value || '').trim()}`);
+      });
+
+      const { rows: historicalRows } = await dbQuery(
+        `SELECT status, amount, description, vendor_name, category, source_ref,
+                source_ref AS qbo_account_id
+           FROM banking_transactions
+          WHERE id <> $1
+            AND LOWER(COALESCE(status, '')) = 'categorized'
+          ORDER BY updated_at DESC, id DESC
+          LIMIT 300`,
+        [txnId]
+      );
+      for (const row of historicalRows) {
+        const rowVendor = String(row?.vendor_name || '').trim().toLowerCase();
+        const curVendor = String(current?.vendor_name || '').trim().toLowerCase();
+        const rowDesc = String(row?.description || '').trim().toLowerCase();
+        const curDesc = String(current?.description || '').trim().toLowerCase();
+        const sameVendor = rowVendor && curVendor && rowVendor === curVendor;
+        const sameAmount = Number(row?.amount || 0) === Number(current?.amount || 0);
+        if (sameVendor && sameAmount) pushSuggestion(row, 0.95, 'Same amount + vendor');
+        else if (sameVendor) pushSuggestion(row, 0.9, 'Exact vendor match');
+        else if (rowDesc && curDesc && (rowDesc.includes(curDesc.slice(0, 8)) || curDesc.includes(rowDesc.slice(0, 8)))) {
+          pushSuggestion(row, 0.7, 'Similar description');
+        }
+        if (suggestions.length >= 12) break;
+      }
+      const unique = [];
+      const seen = new Set();
+      for (const s of suggestions) {
+        const key = [s.action, s.vendor_name, s.category, s.qbo_account_id, s.reason].join('|').toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(s);
+      }
+      unique.sort((a, b) => Number(b.confidence || 0) - Number(a.confidence || 0));
+      return res.json({ ok: true, suggestions: unique.slice(0, 3) });
+    } catch (e) {
+      logError('GET /api/banking/transactions/:txnId/suggestions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), suggestions: [] });
+    }
+  });
+
+  app.post('/api/banking/transactions/:txnId/apply-rule', async (req, res) => {
+    try {
+      if (!requireBankingWriteRole(req, res)) return;
+      if (!getPoolForRoute()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
+      await ensureBankingTables();
+      const txnId = Number(req.params?.txnId || 0);
+      const ruleId = Number(req.body?.rule_id || 0);
+      if (!Number.isFinite(txnId) || txnId <= 0) return res.status(400).json({ ok: false, error: 'Invalid transaction id' });
+      if (!Number.isFinite(ruleId) || ruleId <= 0) return res.status(400).json({ ok: false, error: 'rule_id is required' });
+      const { rows: ruleRows } = await dbQuery(
+        `SELECT id, action_type, category, vendor_id
+           FROM banking_rules
+          WHERE id = $1
+            AND active = true
+          LIMIT 1`,
+        [ruleId]
+      );
+      const rule = ruleRows?.[0] || null;
+      if (!rule) return res.status(404).json({ ok: false, error: 'Rule not found' });
+      const payload = {
+        action: String(rule?.action_type || 'expense').trim().toLowerCase(),
+        category: String(rule?.category || '').trim(),
+        qbo_account_id: String(rule?.vendor_id || '').trim(),
+        memo: `Applied banking rule #${ruleId}`,
+      };
+      const result = await categorizeBankingTransaction(req, txnId, payload, { auditAction: 'apply_rule' });
+      if (!result.ok) return res.status(result.status || 400).json({ ok: false, error: result.error || 'Unable to apply rule' });
+      return res.json({ ok: true, applied: { rule_id: ruleId }, transaction: result.transaction });
+    } catch (e) {
+      logError('POST /api/banking/transactions/:txnId/apply-rule', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });

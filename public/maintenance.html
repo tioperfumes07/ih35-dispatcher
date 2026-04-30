@@ -4891,6 +4891,71 @@
             color: #b42318;
             font-weight: 600;
           }
+          #section-banking .banking-rule-banner {
+            margin: 0 0 8px;
+            padding: 8px;
+            border: 1px solid #facc15;
+            background: #fefce8;
+            border-radius: 8px;
+          }
+          #section-banking .banking-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.34);
+            z-index: 10045;
+            display: none;
+          }
+          #section-banking .banking-drawer-backdrop.active {
+            display: block;
+          }
+          #section-banking .banking-drawer {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: min(560px, 94vw);
+            height: 100vh;
+            background: #fff;
+            border-left: 1px solid #e5e7eb;
+            box-shadow: -12px 0 30px rgba(17, 24, 39, 0.16);
+            z-index: 10046;
+            transform: translateX(100%);
+            transition: transform .18s ease;
+            display: flex;
+            flex-direction: column;
+          }
+          #section-banking .banking-drawer.active {
+            transform: translateX(0);
+          }
+          #section-banking .banking-drawer-head {
+            padding: 14px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+          }
+          #section-banking .banking-drawer-body {
+            padding: 14px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          #section-banking .banking-action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+          #section-banking .banking-action-grid .btn {
+            min-height: 48px;
+            text-align: left;
+          }
+          #section-banking .banking-form-panel {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8fafc;
+          }
           #section-banking .banking-modal-backdrop {
             position: fixed;
             inset: 0;
@@ -4985,6 +5050,7 @@
               <div id="bankingBulkBar" class="mini-note banking-hidden"></div>
             </div>
             <div id="bankingRegisterPanel">
+              <div id="bankingRuleBanner" class="mini-note banking-rule-banner banking-hidden"></div>
               <div class="banking-register-wrap">
                 <table class="table" style="min-width:1280px">
                   <thead>
@@ -5012,6 +5078,120 @@
             </div>
           </div>
         </div>
+
+        <div id="bankingCategorizeDrawerBackdrop" class="banking-drawer-backdrop"></div>
+        <aside id="bankingCategorizeDrawer" class="banking-drawer" aria-label="Categorize transaction drawer">
+          <div class="banking-drawer-head">
+            <div>
+              <div class="panel-title" style="margin:0">Categorize Transaction</div>
+              <div id="bankingDrawerTxnSummary" class="mini-note">Select a transaction.</div>
+            </div>
+            <button type="button" class="btn btn--small" onclick="closeBankingCategorizeDrawer()">Close</button>
+          </div>
+          <div class="banking-drawer-body">
+            <div id="bankingDrawerSuggestions" class="mini-note"></div>
+            <div class="banking-action-grid">
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('expense')">&#128179; Create Expense</button>
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('apply_bill')">&#128196; Apply to Bill</button>
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('bill_payment')">&#128176; Bill Payment</button>
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('transfer')">&#8596; Transfer</button>
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('settlement')">&#128119; Driver Settlement</button>
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('split')">&#9986; Split</button>
+              <button type="button" class="btn btn--small" onclick="bankingSelectDrawerAction('factoring')">&#127981; Factoring Advance</button>
+            </div>
+
+            <div id="bankingDrawerBulkInfo" class="mini-note banking-hidden"></div>
+
+            <div id="bankingDrawerExpenseForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Create Expense</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Vendor</span><input id="bankingDrawerVendor" class="qb-in" list="qboVendorList" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Category / QBO Account</span><input id="bankingDrawerCategory" class="qb-in" list="qboAccountList" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">QBO Class</span><input id="bankingDrawerClass" class="qb-in" list="qboClassList" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Memo</span><input id="bankingDrawerMemo" class="qb-in" /></label>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Save &amp; Post to QBO</button>
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(false)">Save Draft</button>
+              </div>
+            </div>
+
+            <div id="bankingDrawerApplyBillForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Apply to Bill</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label style="min-width:240px;flex:1 1 240px"><span class="qb-l">Search bills</span><input id="bankingDrawerBillSearch" class="qb-in" placeholder="Vendor / amount / date" oninput="searchBankingBills()" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Selected bill</span><select id="bankingDrawerBillTarget" class="qb-in"></select></label>
+              </div>
+              <div id="bankingDrawerBillDetail" class="mini-note" style="margin-top:8px"></div>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Apply Payment</button>
+              </div>
+            </div>
+
+            <div id="bankingDrawerBillPaymentForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Bill Payment</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Vendor</span><input id="bankingDrawerBillVendor" class="qb-in" list="qboVendorList" /></label>
+                <label><span class="qb-l">Bill reference #</span><input id="bankingDrawerBillRef" class="qb-in" /></label>
+                <label><span class="qb-l">Amount</span><input id="bankingDrawerBillAmount" class="qb-in" type="number" step="0.01" /></label>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Post Payment</button>
+              </div>
+            </div>
+
+            <div id="bankingDrawerTransferForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Transfer</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">From account</span><input id="bankingDrawerFromAccount" class="qb-in" readonly /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">To account</span><select id="bankingDrawerToAccount" class="qb-in"></select></label>
+                <label><span class="qb-l">Date</span><input id="bankingDrawerTransferDate" class="qb-in" type="date" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Memo</span><input id="bankingDrawerTransferMemo" class="qb-in" /></label>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Post Transfer</button>
+              </div>
+            </div>
+
+            <div id="bankingDrawerSettlementForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Driver Settlement</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Driver</span><input id="bankingDrawerDriver" class="qb-in" list="driverList" /></label>
+                <label><span class="qb-l">Period start</span><input id="bankingDrawerSettleStart" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">Period end</span><input id="bankingDrawerSettleEnd" class="qb-in" type="date" /></label>
+                <label><span class="qb-l">Type</span><select id="bankingDrawerSettleType" class="qb-in"><option value="advance">Advance</option><option value="final">Final Payment</option><option value="partial">Partial</option></select></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Link settlement</span><input id="bankingDrawerSettlementTarget" class="qb-in" placeholder="Existing settlement id" /></label>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Apply</button>
+              </div>
+            </div>
+
+            <div id="bankingDrawerSplitForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Split Transaction</strong> — original: <span id="bankingSplitOriginalAmount">$0.00</span></div>
+              <div id="bankingSplitLines" style="margin-top:8px"></div>
+              <div class="mini-note" id="bankingSplitRunningTotal" style="margin-top:8px"></div>
+              <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="addBankingSplitLine()">+ Add line</button>
+                <button type="button" class="btn btn--small" onclick="submitBankingSplit()">Save Splits</button>
+              </div>
+            </div>
+
+            <div id="bankingDrawerFactoringForm" class="banking-form-panel banking-hidden">
+              <div class="mini-note"><strong>Factoring Advance</strong></div>
+              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label><span class="qb-l">Factor name</span><input id="bankingDrawerFactorName" class="qb-in" value="Faro" /></label>
+                <label><span class="qb-l">Invoice amount</span><input id="bankingDrawerInvoiceAmount" class="qb-in" type="number" step="0.01" /></label>
+                <label><span class="qb-l">Advance amount</span><input id="bankingDrawerAdvanceAmount" class="qb-in" type="number" step="0.01" /></label>
+                <label><span class="qb-l">Fee amount</span><input id="bankingDrawerFeeAmount" class="qb-in" type="number" step="0.01" /></label>
+                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers</span><input id="bankingDrawerLoadNumbers" class="qb-in" placeholder="L-1001,L-1002" /></label>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Save Advance</button>
+              </div>
+            </div>
+          </div>
+        </aside>
 
         <div id="bankingAccountManagerModal" class="banking-modal-backdrop" role="dialog" aria-modal="true" aria-label="Manage visible banking accounts">
           <div class="banking-modal">
@@ -29491,6 +29671,7 @@
       if (e && e.key !== 'Escape') return;
       closeBankingAccountManager();
       closeBankingImportModal();
+      if (typeof closeBankingCategorizeDrawer === 'function') closeBankingCategorizeDrawer();
     }
 
     function qboFinQuickRange(mode) {
@@ -29649,6 +29830,435 @@
   <script src="/js/erp-use-column-resize.js"></script>
   <script src="/js/erp-qbo-dedupe.js"></script>
   <script src="/js/erp-name-management.js"></script>
+
+  <script>
+    (function () {
+      var __bankRowMap = new Map();
+      var __bankQueueMap = new Map();
+      var __drawerCtx = { mode: 'single', action: 'expense', txnId: null, txnIds: [] };
+      var __suggestions = [];
+      var __splitCounter = 0;
+
+      function bankToast(msg, ok) {
+        if (typeof window.toast === 'function') window.toast(String(msg || ''), ok);
+        else console.log(msg);
+      }
+
+      function drawerEl(id) { return document.getElementById(id); }
+      function drawerOpen() {
+        drawerEl('bankingCategorizeDrawer')?.classList.add('active');
+        drawerEl('bankingCategorizeDrawerBackdrop')?.classList.add('active');
+      }
+      function drawerClose() {
+        drawerEl('bankingCategorizeDrawer')?.classList.remove('active');
+        drawerEl('bankingCategorizeDrawerBackdrop')?.classList.remove('active');
+        __drawerCtx = { mode: 'single', action: 'expense', txnId: null, txnIds: [] };
+      }
+
+      function showDrawerForm(action) {
+        __drawerCtx.action = String(action || 'expense').trim().toLowerCase();
+        var map = ['Expense', 'ApplyBill', 'BillPayment', 'Transfer', 'Settlement', 'Split', 'Factoring'];
+        map.forEach(function (k) { drawerEl('bankingDrawer' + k + 'Form')?.classList.add('banking-hidden'); });
+        var lookup = {
+          expense: 'Expense',
+          apply_bill: 'ApplyBill',
+          bill_payment: 'BillPayment',
+          transfer: 'Transfer',
+          settlement: 'Settlement',
+          split: 'Split',
+          factoring: 'Factoring',
+        };
+        drawerEl('bankingDrawer' + (lookup[__drawerCtx.action] || 'Expense') + 'Form')?.classList.remove('banking-hidden');
+      }
+
+      function rowById(id) {
+        var key = String(id || '').trim();
+        return __bankRowMap.get(key) || __bankQueueMap.get(key) || null;
+      }
+
+      async function fetchSuggestions(txnId) {
+        var host = drawerEl('bankingDrawerSuggestions');
+        if (host) host.textContent = 'Loading suggestions...';
+        try {
+          var rsp = await fetch('/api/banking/transactions/' + encodeURIComponent(txnId) + '/suggestions', { headers: { Accept: 'application/json' } });
+          var json = await rsp.json();
+          __suggestions = Array.isArray(json?.suggestions) ? json.suggestions : [];
+          if (!host) return;
+          if (!__suggestions.length) { host.textContent = 'No suggestions found.'; return; }
+          host.innerHTML = '💡 Similar to previous transactions:<br/>' + __suggestions.map(function (s, i) {
+            return '<button type="button" class="btn btn--small" style="margin:4px 4px 0 0" onclick="applyBankingSuggestion(' + i + ')">' +
+              'Apply: ' + escapeHtml(String(s?.category || s?.action || '--')) + ' - ' + escapeHtml(String(s?.vendor_name || '--')) + ' (' + Math.round(Number(s?.confidence || 0) * 100) + '%)</button>';
+          }).join('');
+        } catch (e) {
+          if (host) host.textContent = 'Suggestions unavailable: ' + String(e?.message || e);
+        }
+      }
+
+      function setSummary(row, bulkCount) {
+        var summary = drawerEl('bankingDrawerTxnSummary');
+        var bulk = drawerEl('bankingDrawerBulkInfo');
+        if (bulkCount) {
+          if (summary) summary.textContent = 'Applying to ' + bulkCount + ' selected transactions.';
+          if (bulk) { bulk.classList.remove('banking-hidden'); bulk.textContent = 'Applying shared fields to ' + bulkCount + ' rows.'; }
+          drawerEl('bankingDrawerSuggestions').textContent = '';
+          return;
+        }
+        if (summary) summary.textContent = 'Date: ' + String(row?.txn_date || '').slice(0, 10) + ' | Amount: ' + qboMoneyFmt(row?.amount || 0) + ' | Description: ' + String(row?.description || row?.memo || '--');
+        if (bulk) { bulk.classList.add('banking-hidden'); bulk.textContent = ''; }
+      }
+
+      function seedFields(row) {
+        drawerEl('bankingDrawerVendor').value = String(row?.vendor_name || '');
+        drawerEl('bankingDrawerCategory').value = String(row?.category || '');
+        drawerEl('bankingDrawerMemo').value = String(row?.memo || row?.description || '');
+        drawerEl('bankingDrawerBillAmount').value = String(Math.abs(Number(row?.amount || 0)));
+        drawerEl('bankingDrawerBillVendor').value = String(row?.vendor_name || '');
+        drawerEl('bankingDrawerTransferDate').value = String(row?.txn_date || '').slice(0, 10);
+        drawerEl('bankingSplitOriginalAmount').textContent = qboMoneyFmt(Math.abs(Number(row?.amount || 0)));
+        drawerEl('bankingDrawerAdvanceAmount').value = String(Math.abs(Number(row?.amount || 0)));
+        if (!drawerEl('bankingDrawerInvoiceAmount').value) drawerEl('bankingDrawerInvoiceAmount').value = String(Math.abs(Number(row?.amount || 0)));
+        recomputeFactoringFee();
+        renderSplitLines([{ amount: Math.abs(Number(row?.amount || 0)), vendor_name: row?.vendor_name || '', category: row?.category || '', memo: row?.memo || '' }]);
+      }
+
+      function renderSplitLines(lines) {
+        var host = drawerEl('bankingSplitLines');
+        if (!host) return;
+        __splitCounter = 0;
+        host.innerHTML = '';
+        (lines || []).forEach(function (ln) { addSplitLine(ln); });
+        updateSplitTotal();
+      }
+
+      function addSplitLine(prefill) {
+        var host = drawerEl('bankingSplitLines');
+        if (!host) return;
+        __splitCounter += 1;
+        var id = 'bankSplitLine' + __splitCounter;
+        var p = prefill || {};
+        host.insertAdjacentHTML('beforeend',
+          '<div id="' + id + '" class="mr-filter-bar erp-ops-filter-bar" style="margin-top:6px;align-items:flex-end;flex-wrap:wrap">' +
+          '<label style="min-width:140px;flex:1 1 140px"><span class="qb-l">Vendor</span><input class="qb-in bank-split-vendor" list="qboVendorList" value="' + escapeHtml(String(p.vendor_name || '')) + '" /></label>' +
+          '<label style="min-width:140px;flex:1 1 140px"><span class="qb-l">Category</span><input class="qb-in bank-split-category" list="qboAccountList" value="' + escapeHtml(String(p.category || '')) + '" /></label>' +
+          '<label><span class="qb-l">Amount</span><input class="qb-in bank-split-amount" type="number" step="0.01" value="' + escapeHtml(String(p.amount == null ? '' : p.amount)) + '" oninput="updateBankingSplitTotal()" /></label>' +
+          '<label style="min-width:140px;flex:1 1 140px"><span class="qb-l">Memo</span><input class="qb-in bank-split-memo" value="' + escapeHtml(String(p.memo || '')) + '" /></label>' +
+          '<button type="button" class="btn btn--small" onclick="removeBankingSplitLine(' + JSON.stringify(id) + ')">Remove</button>' +
+          '</div>');
+        updateSplitTotal();
+      }
+
+      function removeSplitLine(id) {
+        var el = document.getElementById(String(id || ''));
+        if (el) el.remove();
+        updateSplitTotal();
+      }
+
+      function updateSplitTotal() {
+        var total = 0;
+        document.querySelectorAll('#bankingSplitLines .bank-split-amount').forEach(function (el) { total += Number(el.value || 0); });
+        var original = Math.abs(Number(rowById(__drawerCtx.txnId)?.amount || 0));
+        var host = drawerEl('bankingSplitRunningTotal');
+        if (host) host.textContent = 'Running total: ' + qboMoneyFmt(total) + ' / original: ' + qboMoneyFmt(original) + (Math.round(total * 100) === Math.round(original * 100) ? ' (matched)' : ' (must match)');
+      }
+
+      async function searchBills() {
+        var q = String(drawerEl('bankingDrawerBillSearch')?.value || '').trim().toLowerCase();
+        var sel = drawerEl('bankingDrawerBillTarget');
+        var detail = drawerEl('bankingDrawerBillDetail');
+        if (!sel) return;
+        var rows = [];
+        var paths = ['/api/accounting/ap/open-bills', '/api/accounting/open-bills', '/api/ap/bills/open'];
+        for (var i = 0; i < paths.length; i += 1) {
+          try {
+            var rsp = await fetch(paths[i], { headers: { Accept: 'application/json' } });
+            if (!rsp.ok) continue;
+            var json = await rsp.json();
+            rows = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.rows) ? json.rows : (Array.isArray(json?.bills) ? json.bills : []));
+            if (rows.length) break;
+          } catch (_e) {}
+        }
+        if (q) rows = rows.filter(function (r) {
+          var text = [r?.vendor_name, r?.vendor, r?.id, r?.bill_number, r?.ref_number, r?.amount_due, r?.amount].join(' ').toLowerCase();
+          return text.includes(q);
+        });
+        if (!rows.length) {
+          sel.innerHTML = '<option value="">No open bills found</option>';
+          if (detail) detail.textContent = 'No matching unpaid bills.';
+          return;
+        }
+        sel.innerHTML = rows.slice(0, 100).map(function (r) {
+          var id = String(r?.id || r?.bill_id || r?.txn_id || '');
+          var label = String(r?.vendor_name || r?.vendor || '--') + ' | #' + String(r?.bill_number || r?.ref_number || id || '--') + ' | ' + qboMoneyFmt(r?.amount_due || r?.amount || 0);
+          return '<option value=\"' + escapeHtml(id) + '\">' + escapeHtml(label) + '</option>';
+        }).join('');
+        if (detail) detail.textContent = 'Select a bill and click Apply Payment.';
+      }
+
+      function getPayload() {
+        var action = String(__drawerCtx.action || 'expense').trim().toLowerCase();
+        var row = rowById(__drawerCtx.txnId) || {};
+        var payload = {
+          action: action,
+          vendor_name: String(drawerEl('bankingDrawerVendor')?.value || row?.vendor_name || '').trim(),
+          category: String(drawerEl('bankingDrawerCategory')?.value || row?.category || '').trim(),
+          memo: String(drawerEl('bankingDrawerMemo')?.value || row?.memo || row?.description || '').trim(),
+          amount: Number(row?.amount || 0),
+          qbo_account_id: String(drawerEl('bankingDrawerCategory')?.value || '').trim(),
+          qbo_class_id: String(drawerEl('bankingDrawerClass')?.value || '').trim(),
+        };
+        if (action === 'apply_bill') payload.target_id = String(drawerEl('bankingDrawerBillTarget')?.value || '').trim();
+        if (action === 'bill_payment') {
+          payload.vendor_name = String(drawerEl('bankingDrawerBillVendor')?.value || '').trim();
+          payload.target_id = String(drawerEl('bankingDrawerBillRef')?.value || '').trim();
+          payload.amount = Number(drawerEl('bankingDrawerBillAmount')?.value || row?.amount || 0);
+        }
+        if (action === 'transfer') {
+          payload.target_id = String(drawerEl('bankingDrawerToAccount')?.value || '').trim();
+          payload.memo = String(drawerEl('bankingDrawerTransferMemo')?.value || '').trim();
+        }
+        if (action === 'settlement') {
+          payload.target_id = String(drawerEl('bankingDrawerSettlementTarget')?.value || '').trim();
+          payload.vendor_name = String(drawerEl('bankingDrawerDriver')?.value || '').trim();
+          payload.memo = 'type=' + String(drawerEl('bankingDrawerSettleType')?.value || '') + ' period=' + String(drawerEl('bankingDrawerSettleStart')?.value || '') + '...' + String(drawerEl('bankingDrawerSettleEnd')?.value || '');
+        }
+        if (action === 'factoring') {
+          payload.vendor_name = String(drawerEl('bankingDrawerFactorName')?.value || '').trim();
+          payload.amount = Number(drawerEl('bankingDrawerAdvanceAmount')?.value || row?.amount || 0);
+          payload.memo = 'invoice=' + String(drawerEl('bankingDrawerInvoiceAmount')?.value || '') + ', fee=' + String(drawerEl('bankingDrawerFeeAmount')?.value || '') + ', loads=' + String(drawerEl('bankingDrawerLoadNumbers')?.value || '');
+        }
+        return payload;
+      }
+
+      async function submitCategorize(postQbo) {
+        var payload = getPayload();
+        payload.memo = (payload.memo ? payload.memo + ' | ' : '') + (postQbo ? 'post_to_qbo=true' : 'post_to_qbo=false');
+        try {
+          if (__drawerCtx.mode === 'bulk') {
+            var rsp = await fetch('/api/banking/transactions/bulk-categorize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify({
+                txn_ids: __drawerCtx.txnIds || [],
+                action: payload.action,
+                shared_fields: {
+                  vendor_name: payload.vendor_name,
+                  category: payload.category,
+                  memo: payload.memo,
+                  qbo_account_id: payload.qbo_account_id,
+                },
+              }),
+            });
+            var json = await rsp.json();
+            if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Bulk categorize failed');
+            bankToast('Bulk categorize processed ' + (json?.processed?.length || 0) + ' rows.');
+          } else if (payload.action === 'split') {
+            var splits = [];
+            document.querySelectorAll('#bankingSplitLines > div').forEach(function (r) {
+              splits.push({
+                vendor_name: String(r.querySelector('.bank-split-vendor')?.value || '').trim(),
+                category: String(r.querySelector('.bank-split-category')?.value || '').trim(),
+                amount: Number(r.querySelector('.bank-split-amount')?.value || 0),
+                memo: String(r.querySelector('.bank-split-memo')?.value || '').trim(),
+                qbo_account_id: String(r.querySelector('.bank-split-category')?.value || '').trim(),
+              });
+            });
+            var original = Math.abs(Number(rowById(__drawerCtx.txnId)?.amount || 0));
+            var total = splits.reduce(function (sum, s) { return sum + Number(s.amount || 0); }, 0);
+            if (Math.round(total * 100) !== Math.round(original * 100)) throw new Error('Split total must equal original amount');
+            var rspSplit = await fetch('/api/banking/transactions/' + encodeURIComponent(__drawerCtx.txnId) + '/split', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify({ splits: splits }),
+            });
+            var jsonSplit = await rspSplit.json();
+            if (!rspSplit.ok || jsonSplit?.ok === false) throw new Error(jsonSplit?.error || 'Split failed');
+            bankToast('Split saved with ' + (jsonSplit?.splits?.length || 0) + ' lines.');
+          } else {
+            var rspSingle = await fetch('/api/banking/transactions/' + encodeURIComponent(__drawerCtx.txnId) + '/categorize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            var jsonSingle = await rspSingle.json();
+            if (!rspSingle.ok || jsonSingle?.ok === false) throw new Error(jsonSingle?.error || 'Categorization failed');
+            bankToast('Transaction categorized.');
+          }
+          drawerClose();
+          if (typeof window.loadBankingRegisterPage === 'function') window.loadBankingRegisterPage(window.bankingRegisterOffset || 0);
+          if (typeof window.loadBankingUncategorizedQueue === 'function') window.loadBankingUncategorizedQueue(window.bankingQueueOffset || 0);
+        } catch (e) {
+          bankToast('Categorization failed: ' + String(e?.message || e), false);
+        }
+      }
+
+      async function undoCategorize(txnId) {
+        if (!window.confirm('Undo categorization for this transaction?')) return;
+        try {
+          var rsp = await fetch('/api/banking/transactions/' + encodeURIComponent(txnId) + '/undo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ reason: 'Undo from register' }),
+          });
+          var json = await rsp.json();
+          if (!rsp.ok || json?.ok === false) throw new Error(json?.error || 'Undo failed');
+          bankToast('Categorization undone.');
+          if (typeof window.loadBankingRegisterPage === 'function') window.loadBankingRegisterPage(window.bankingRegisterOffset || 0);
+          if (typeof window.loadBankingUncategorizedQueue === 'function') window.loadBankingUncategorizedQueue(window.bankingQueueOffset || 0);
+        } catch (e) {
+          bankToast('Undo failed: ' + String(e?.message || e), false);
+        }
+      }
+
+      function actionMenuHtml(txn) {
+        var status = String(txn?.status || '').toLowerCase();
+        if (status !== 'uncategorized') {
+          return '<span>' + escapeHtml(String(txn?.category || 'categorized')) + '</span> <a href=\"#\" onclick=\"event.preventDefault();bankingUndoCategorize(' + JSON.stringify(String(txn?.id || '')) + ')\">Undo</a>';
+        }
+        return '<button type=\"button\" class=\"btn btn--small\" onclick=\"openBankingCategorizeDrawerForTxn(' + JSON.stringify(String(txn?.id || '')) + ')\">Categorize ▼</button>';
+      }
+
+      function renderRuleBanner(rows) {
+        var host = drawerEl('bankingRuleBanner');
+        if (!host) return;
+        var grouped = new Map();
+        (rows || []).forEach(function (r) {
+          var vendor = String(r?.vendor_name || '').trim().toUpperCase() || 'UNKNOWN';
+          var desc = String(r?.description || '').trim().toUpperCase().slice(0, 28);
+          var key = vendor + '|' + desc;
+          var item = grouped.get(key) || { vendor: vendor, desc: desc, count: 0 };
+          item.count += 1;
+          grouped.set(key, item);
+        });
+        var top = null;
+        grouped.forEach(function (v) { if (!top || v.count > top.count) top = v; });
+        if (!top || top.count < 5) {
+          host.classList.add('banking-hidden');
+          host.textContent = '';
+          return;
+        }
+        host.classList.remove('banking-hidden');
+        host.innerHTML = '💡 We found ' + top.count + ' transactions from <strong>' + escapeHtml(top.vendor) + '</strong> previously categorized similarly. Apply rule to all? ' +
+          '<button type=\"button\" class=\"btn btn--small\" onclick=\"applyBankingRuleBannerAll(' + JSON.stringify(top.vendor) + ', ' + JSON.stringify(top.desc) + ')\">Apply All</button> ' +
+          '<button type=\"button\" class=\"btn btn--small\" onclick=\"createBankingRuleFromBanner(' + JSON.stringify(top.vendor) + ', ' + JSON.stringify(top.desc) + ')\">Create Rule</button> ' +
+          '<button type=\"button\" class=\"btn btn--small\" onclick=\"dismissBankingRuleBanner()\">Dismiss</button>';
+      }
+
+      async function applyRuleBannerAll(vendor, desc) {
+        try {
+          var ids = [];
+          __bankQueueMap.forEach(function (r, id) {
+            var v = String(r?.vendor_name || '').trim().toUpperCase();
+            var d = String(r?.description || '').trim().toUpperCase().slice(0, 28);
+            if (v === String(vendor || '') && d === String(desc || '')) ids.push(String(id));
+          });
+          if (!ids.length) return;
+          await fetch('/api/banking/transactions/bulk-categorize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ txn_ids: ids, action: 'expense', shared_fields: { vendor_name: vendor, category: 'Fuel Expense', memo: 'Rule banner apply' } }),
+          });
+          bankToast('Rule applied to ' + ids.length + ' transactions.');
+          dismissRuleBanner();
+          if (typeof window.loadBankingUncategorizedQueue === 'function') window.loadBankingUncategorizedQueue(window.bankingQueueOffset || 0);
+          if (typeof window.loadBankingRegisterPage === 'function') window.loadBankingRegisterPage(window.bankingRegisterOffset || 0);
+        } catch (e) {
+          bankToast('Unable to apply rule banner: ' + String(e?.message || e), false);
+        }
+      }
+
+      function dismissRuleBanner() {
+        var host = drawerEl('bankingRuleBanner');
+        if (host) { host.classList.add('banking-hidden'); host.textContent = ''; }
+      }
+
+      function recomputeFactoringFee() {
+        var invoice = Number(drawerEl('bankingDrawerInvoiceAmount')?.value || 0);
+        var advance = Number(drawerEl('bankingDrawerAdvanceAmount')?.value || 0);
+        var fee = invoice - advance;
+        if (drawerEl('bankingDrawerFeeAmount')) drawerEl('bankingDrawerFeeAmount').value = String(Number.isFinite(fee) ? fee.toFixed(2) : '0.00');
+      }
+
+      document.getElementById('bankingDrawerInvoiceAmount')?.addEventListener('input', recomputeFactoringFee);
+      document.getElementById('bankingDrawerAdvanceAmount')?.addEventListener('input', recomputeFactoringFee);
+
+      var __origLoadRegister = window.loadBankingRegisterPage;
+      window.loadBankingRegisterPage = async function (offset) {
+        await __origLoadRegister(offset);
+        __bankRowMap = new Map();
+        document.querySelectorAll('#bankingRegisterBody tr').forEach(function (tr) {
+          var cb = tr.querySelector('.banking-row-cb');
+          if (!cb) return;
+          var id = String(cb.getAttribute('data-id') || '').trim();
+          var existing = window.bankingRegisterRowMap && window.bankingRegisterRowMap.get ? window.bankingRegisterRowMap.get(id) : null;
+          if (id && existing) __bankRowMap.set(id, existing);
+        });
+        renderRuleBanner(Array.from(__bankRowMap.values()).filter(function (r) { return String(r?.status || '').toLowerCase() === 'uncategorized'; }));
+      };
+
+      var __origLoadQueue = window.loadBankingUncategorizedQueue;
+      window.loadBankingUncategorizedQueue = async function (offset) {
+        await __origLoadQueue(offset);
+        __bankQueueMap = new Map();
+        if (window.bankingQueueRowMap && window.bankingQueueRowMap.forEach) {
+          window.bankingQueueRowMap.forEach(function (v, k) { __bankQueueMap.set(String(k), v); });
+        }
+        renderRuleBanner(Array.from(__bankQueueMap.values()));
+      };
+
+      window.openBankingCategorizeDrawerForTxn = function (txnId) {
+        var row = rowById(txnId);
+        if (!row && window.bankingRegisterRowMap?.get) row = window.bankingRegisterRowMap.get(String(txnId));
+        if (!row && window.bankingQueueRowMap?.get) row = window.bankingQueueRowMap.get(String(txnId));
+        if (!row) { bankToast('Transaction details not found.', false); return; }
+        __drawerCtx = { mode: 'single', action: 'expense', txnId: String(txnId), txnIds: [] };
+        setSummary(row, 0);
+        seedFields(row);
+        showDrawerForm('expense');
+        drawerOpen();
+        fetchSuggestions(String(txnId));
+      };
+      window.openBankingCategorizeDrawerBulk = function (ids) {
+        var arr = Array.isArray(ids) ? ids : [];
+        if (!arr.length) return;
+        __drawerCtx = { mode: 'bulk', action: 'expense', txnId: null, txnIds: arr.map(function (x) { return String(x); }) };
+        setSummary(null, __drawerCtx.txnIds.length);
+        showDrawerForm('expense');
+        drawerOpen();
+      };
+      window.closeBankingCategorizeDrawer = drawerClose;
+      window.bankingSelectDrawerAction = showDrawerForm;
+      window.submitBankingCategorizeAction = submitCategorize;
+      window.submitBankingSplit = function () { __drawerCtx.action = 'split'; return submitCategorize(true); };
+      window.searchBankingBills = searchBills;
+      window.bankingUndoCategorize = undoCategorize;
+      window.applyBankingSuggestion = function (idx) {
+        var s = __suggestions[Number(idx)] || null;
+        if (!s) return;
+        drawerEl('bankingDrawerVendor').value = String(s?.vendor_name || '');
+        drawerEl('bankingDrawerCategory').value = String(s?.category || '');
+        showDrawerForm(String(s?.action || 'expense').trim().toLowerCase());
+      };
+      window.applyBankingRuleBannerAll = applyRuleBannerAll;
+      window.createBankingRuleFromBanner = function (vendor, desc) { bankToast('Create Rule helper for ' + vendor + ' (' + desc + ').'); };
+      window.dismissBankingRuleBanner = dismissRuleBanner;
+      window.addBankingSplitLine = function () { addSplitLine({}); };
+      window.removeBankingSplitLine = removeSplitLine;
+      window.updateBankingSplitTotal = updateSplitTotal;
+
+      bankingActionMenuHtml = actionMenuHtml;
+      window.bankingActionMenuHtml = actionMenuHtml;
+      var _oldBulk = window.bankingBulkAction;
+      window.bankingBulkAction = function (mode) {
+        if (String(mode || '') === 'categorize') {
+          var ids = Array.from(window.bankingSelectedRows || []);
+          return window.openBankingCategorizeDrawerBulk(ids);
+        }
+        if (typeof _oldBulk === 'function') return _oldBulk(mode);
+      };
+
+      document.getElementById('bankingCategorizeDrawerBackdrop')?.addEventListener('click', drawerClose);
+    })();
+  </script>
 
   <script>
     (function () {
