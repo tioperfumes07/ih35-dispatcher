@@ -4780,96 +4780,142 @@
 
       <section id="section-banking" class="section">
         <style>
-          #section-banking .banking-accounts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
-            align-items: stretch;
-          }
           #section-banking .banking-home-actions {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
           }
-          #section-banking .banking-account-card {
-            width: 100%;
+          /* QuickBooks-style: one horizontal scroll row of account tiles */
+          #section-banking .banking-accounts-tile-row {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 16px;
+            margin: 0 -4px 8px;
+            align-items: stretch;
+            scrollbar-gutter: stable;
+          }
+          #section-banking .banking-account-tile {
+            flex-shrink: 0;
+            width: 200px;
+            height: 90px;
+            box-sizing: border-box;
             text-align: left;
             cursor: pointer;
-            padding: 16px;
+            padding: 12px 16px;
             border: 1px solid #e5e7eb;
-            border-radius: 10px;
+            border-radius: 8px;
+            border-bottom: 3px solid transparent;
             background: #fff;
             display: flex;
             flex-direction: column;
-            gap: 9px;
+            justify-content: flex-start;
+            gap: 2px;
             overflow: hidden;
-            transition: box-shadow .15s ease, border-color .15s ease;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+            font: inherit;
+            color: inherit;
           }
-          #section-banking .banking-account-card:hover {
-            border-color: #dbe3ef;
-            box-shadow: 0 4px 14px rgba(17, 24, 39, 0.08);
+          #section-banking .banking-account-tile:hover {
+            box-shadow: 0 4px 14px rgba(17, 24, 39, 0.12);
           }
-          #section-banking .banking-account-name {
+          #section-banking .banking-account-tile--active {
+            border-bottom-color: #1b4f8a;
+            background: #f0f7ff;
+          }
+          #section-banking .banking-account-tile--add {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
             font-size: 14px;
+            color: #1b4f8a;
+            background: #fafafa;
+          }
+          #section-banking .banking-account-tile--add:hover {
+            background: #f0f7ff;
+          }
+          #section-banking .banking-account-tile--drag {
+            opacity: 0.85;
+          }
+          #section-banking .banking-account-tile-name {
+            font-weight: 700;
+            font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            display: block;
           }
-          #section-banking .banking-account-type {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 999px;
+          #section-banking .banking-account-tile-type {
             font-size: 11px;
-            font-weight: 600;
-            background: #1557a01a;
-            color: #1557a0;
-            max-width: 100%;
+            color: #6b7280;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
           }
-          #section-banking .banking-badges-row {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-          }
-          #section-banking .banking-pill {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 999px;
-            font-size: 11px;
+          #section-banking .banking-account-tile-balance {
+            font-size: 18px;
             font-weight: 700;
+            color: #1b4f8a;
+            line-height: 1.15;
+            margin-top: auto;
           }
-          #section-banking .banking-pill--dip {
-            background: #dbeafe;
-            color: #1d4ed8;
-          }
-          #section-banking .banking-pill--relay {
-            background: #ede9fe;
-            color: #6d28d9;
-          }
-          #section-banking .banking-account-balance {
-            font-size: 24px;
-            font-weight: 700;
-            line-height: 1.2;
-            color: #166534;
-          }
-          #section-banking .banking-account-balance.negative {
+          #section-banking .banking-account-tile-balance.negative {
             color: #b42318;
           }
-          #section-banking .banking-count-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 999px;
+          #section-banking .banking-account-tile-uncat {
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 600;
+            color: #6b7280;
           }
-          #section-banking .banking-count-badge.warn {
+          #section-banking .banking-account-tile-uncat-badge {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 1px 6px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
             background: #fff7ed;
             color: #c2410c;
+          }
+          #section-banking .banking-register-inline {
+            margin-top: 0;
+            border-top: 1px solid var(--color-border, #e5e7eb);
+            padding-top: 12px;
+          }
+          #section-banking .banking-register-head {
+            align-items: flex-start;
+          }
+          #section-banking .banking-reg-filter-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin: 0 0 10px;
+          }
+          #section-banking .banking-reg-filter-pills button {
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+          }
+          #section-banking .banking-reg-filter-pills button.banking-reg-filter-pills__active {
+            border-color: #1b4f8a;
+            background: #f0f7ff;
+            color: #1b4f8a;
+          }
+          #section-banking .banking-reg-type-sel {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
           }
           #section-banking .banking-register-wrap {
             border: 1px solid var(--color-border);
@@ -5029,7 +5075,79 @@
                 <button type="button" class="btn btn--small" id="bankingSyncFullBtn" onclick="syncBankingFromQbo(true)">Sync Full History (2025-2026)</button>
               </div>
             </div>
-            <div id="bankingAccountsGrid" class="banking-accounts-grid"></div>
+            <div id="bankingAccountsTileRow" class="banking-accounts-tile-row" aria-label="Bank accounts"></div>
+
+            <div id="bankingRegisterView" class="panel banking-register-inline banking-hidden">
+              <div class="panel-head banking-register-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-width:0">
+                  <button type="button" class="btn btn--small" onclick="bankingBackToHome()">&#8592; DIP Accounts</button>
+                  <div class="panel-title" id="bankingRegisterHeadline" style="margin:0;min-width:0;max-width:min(720px,100%)">Select an account above</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="btn btn--small" onclick="openBankingImportModal()">Import Statement</button>
+                  <button type="button" class="btn btn--small" id="bankingRegSyncQboBtn" onclick="syncBankingFromQbo(false)">Sync from QBO</button>
+                  <button type="button" class="btn btn--small" onclick="bankingExportRegisterCsv()">Export</button>
+                  <button type="button" class="btn btn--small" onclick="openBankingReconciliationHome()">Reconcile</button>
+                </div>
+              </div>
+              <div class="panel-body" style="padding-top:0">
+                <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
+                  <label><span class="qb-l">From</span><input id="bankingFilterFrom" class="qb-in" type="date" /></label>
+                  <label><span class="qb-l">To</span><input id="bankingFilterTo" class="qb-in" type="date" /></label>
+                  <button type="button" class="btn btn--small" onclick="bankingQuickRange('this-month')">This Month</button>
+                  <button type="button" class="btn btn--small" onclick="bankingQuickRange('last-month')">Last Month</button>
+                  <input id="bankingFilterSearch" class="qb-in" placeholder="Search description/amount" oninput="loadBankingRegisterPage(0)" />
+                </div>
+                <div class="banking-reg-filter-pills" id="bankingRegFilterPills" aria-label="Transaction type">
+                  <button type="button" class="banking-reg-filter-pills__active" data-bank-filter="all" onclick="bankingSetRegisterTypeFilter('all')">All</button>
+                  <button type="button" data-bank-filter="deposits" onclick="bankingSetRegisterTypeFilter('deposits')">Deposits</button>
+                  <button type="button" data-bank-filter="withdrawals" onclick="bankingSetRegisterTypeFilter('withdrawals')">Withdrawals</button>
+                  <button type="button" data-bank-filter="uncategorized" onclick="bankingSetRegisterTypeFilter('uncategorized')">Uncategorized</button>
+                  <button type="button" data-bank-filter="reconciled" onclick="bankingSetRegisterTypeFilter('reconciled')">Reconciled</button>
+                </div>
+                <select id="bankingFilterType" class="qb-in banking-reg-type-sel" aria-hidden="true" tabindex="-1" onchange="loadBankingRegisterPage(0)">
+                  <option value="all">All</option>
+                  <option value="deposits">Deposits</option>
+                  <option value="withdrawals">Withdrawals</option>
+                  <option value="uncategorized">Uncategorized</option>
+                  <option value="reconciled">Reconciled</option>
+                </select>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                  <div>
+                    <button id="bankingRegTabBtn" type="button" class="btn btn--small" onclick="setBankingRegisterTab('register')">Register</button>
+                    <button id="bankingQueueTabBtn" type="button" class="btn btn--small" onclick="setBankingRegisterTab('queue')">Uncategorized Queue</button>
+                  </div>
+                  <div id="bankingBulkBar" class="mini-note banking-hidden"></div>
+                </div>
+                <div id="bankingRegisterPanel">
+                  <div id="bankingRuleBanner" class="mini-note banking-rule-banner banking-hidden"></div>
+                  <div class="banking-register-wrap">
+                    <table class="table" style="min-width:1280px">
+                      <thead>
+                        <tr>
+                          <th><input id="bankingSelectAllRows" type="checkbox" onchange="bankingToggleAllRows(this.checked)" /></th>
+                          <th>Date</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th class="num">Balance</th><th>Status</th><th>QBO Status</th><th>Category</th><th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="bankingRegisterBody"><tr><td colspan="10" class="muted">Choose an account tile above.</td></tr></tbody>
+                    </table>
+                  </div>
+                  <div id="bankingRegisterPagination" class="mini-note" style="margin-top:8px"></div>
+                </div>
+                <div id="bankingQueuePanel" class="banking-hidden">
+                  <div id="bankingQueueBanner" class="mini-note" style="margin:0 0 8px;padding:8px;border:1px solid #f59e0b44;background:#fff7ed;border-radius:8px"></div>
+                  <div class="banking-register-wrap">
+                    <table class="table" style="min-width:1280px">
+                      <thead>
+                        <tr><th>Date</th><th>Account</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th>Status</th><th>QBO Status</th><th>Category</th><th>Action</th></tr>
+                      </thead>
+                      <tbody id="bankingQueueBody"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
+                    </table>
+                  </div>
+                  <div id="bankingQueuePagination" class="mini-note" style="margin-top:8px"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -5147,70 +5265,6 @@
                   </table>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="bankingRegisterView" class="panel banking-hidden" style="margin-top:12px">
-          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <button type="button" class="btn btn--small" onclick="bankingBackToHome()">&#8592; DIP Accounts</button>
-              <div class="panel-title" id="bankingRegisterTitle" style="margin:0">Transaction Register</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <div class="mini-note" id="bankingRegisterBalance">Balance: $0.00</div>
-              <button type="button" class="btn btn--small" onclick="openBankingReconciliationHome()">Reconcile</button>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
-              <label><span class="qb-l">From</span><input id="bankingFilterFrom" class="qb-in" type="date" /></label>
-              <label><span class="qb-l">To</span><input id="bankingFilterTo" class="qb-in" type="date" /></label>
-              <button type="button" class="btn btn--small" onclick="bankingQuickRange('this-month')">This Month</button>
-              <button type="button" class="btn btn--small" onclick="bankingQuickRange('last-month')">Last Month</button>
-              <select id="bankingFilterType" class="qb-in" onchange="loadBankingRegisterPage(0)">
-                <option value="all">All</option>
-                <option value="deposits">Deposits</option>
-                <option value="withdrawals">Withdrawals</option>
-                <option value="uncategorized">Uncategorized</option>
-              </select>
-              <input id="bankingFilterSearch" class="qb-in" placeholder="Search description/amount" oninput="loadBankingRegisterPage(0)" />
-              <button type="button" class="btn btn--small" onclick="bankingExportRegisterCsv()">Export CSV</button>
-              <button type="button" class="btn btn--small" onclick="window.print()">Export PDF</button>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-              <div>
-                <button id="bankingRegTabBtn" type="button" class="btn btn--small" onclick="setBankingRegisterTab('register')">Register</button>
-                <button id="bankingQueueTabBtn" type="button" class="btn btn--small" onclick="setBankingRegisterTab('queue')">Uncategorized Queue</button>
-              </div>
-              <div id="bankingBulkBar" class="mini-note banking-hidden"></div>
-            </div>
-            <div id="bankingRegisterPanel">
-              <div id="bankingRuleBanner" class="mini-note banking-rule-banner banking-hidden"></div>
-              <div class="banking-register-wrap">
-                <table class="table" style="min-width:1280px">
-                  <thead>
-                    <tr>
-                      <th><input id="bankingSelectAllRows" type="checkbox" onchange="bankingToggleAllRows(this.checked)" /></th>
-                      <th>Date</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th class="num">Balance</th><th>Status</th><th>QBO Status</th><th>Category</th><th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bankingRegisterBody"><tr><td colspan="10" class="muted">Choose an account card.</td></tr></tbody>
-                </table>
-              </div>
-              <div id="bankingRegisterPagination" class="mini-note" style="margin-top:8px"></div>
-            </div>
-            <div id="bankingQueuePanel" class="banking-hidden">
-              <div id="bankingQueueBanner" class="mini-note" style="margin:0 0 8px;padding:8px;border:1px solid #f59e0b44;background:#fff7ed;border-radius:8px"></div>
-              <div class="banking-register-wrap">
-                <table class="table" style="min-width:1280px">
-                  <thead>
-                    <tr><th>Date</th><th>Account</th><th>Description</th><th class="num">Deposits</th><th class="num">Withdrawals</th><th>Status</th><th>QBO Status</th><th>Category</th><th>Action</th></tr>
-                  </thead>
-                  <tbody id="bankingQueueBody"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
-                </table>
-              </div>
-              <div id="bankingQueuePagination" class="mini-note" style="margin-top:8px"></div>
             </div>
           </div>
         </div>
@@ -10935,6 +10989,23 @@
             '<button type="button" class="erp-sb-link sidebar-child-item" onclick="openNameMgmtTool()">Rename vendors &amp; drivers →</button>'
           ) +
           erpSbGroup('name-mgmt', 'admin', 'Lists &amp; catalogs', false, erpSbAdminBody(admOpts));
+        return;
+      }
+      if (name === 'banking') {
+        inner.innerHTML = erpSbGroup(
+          'banking',
+          'nav',
+          'Banking',
+          true,
+          '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavDipHome()">DIP Accounts (home)</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavUncategorized()">Uncategorized Queue</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavRules()">Rules</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavReconciliation()">Reconciliation</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavRelay()">Relay Transactions</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavSettlements()">Driver Settlements</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavFactoring()">Factoring</button>' +
+            '<button type="button" class="erp-sb-link sidebar-child-item" onclick="bankingSidebarNavImportHistory()">Import History</button>',
+        );
         return;
       }
       if (name === 'erp') {
@@ -29835,37 +29906,176 @@
       if (modal) modal.classList.remove('active');
     }
 
+    function bankingRefreshTileActive() {
+      var row = document.getElementById('bankingAccountsTileRow');
+      if (!row) return;
+      var sel = String(bankingSelectedAccountId || '').trim();
+      row.querySelectorAll('.banking-account-tile[data-account-id]').forEach(function (tile) {
+        var id = String(tile.getAttribute('data-account-id') || '');
+        tile.classList.toggle('banking-account-tile--active', Boolean(sel && id === sel));
+      });
+    }
+
+    function bankingBindTileDragOnce() {
+      var row = document.getElementById('bankingAccountsTileRow');
+      if (!row || row.dataset.bankingTileDrag === '1') return;
+      row.dataset.bankingTileDrag = '1';
+      row.addEventListener('dragstart', function (e) {
+        var t = e.target && e.target.closest ? e.target.closest('.banking-account-tile[data-account-id]') : null;
+        if (!t) return;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(t.getAttribute('data-account-id') || ''));
+        t.classList.add('banking-account-tile--drag');
+      });
+      row.addEventListener('dragend', function () {
+        row.querySelectorAll('.banking-account-tile--drag').forEach(function (n) {
+          n.classList.remove('banking-account-tile--drag');
+        });
+      });
+      row.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+      row.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var fromId = String(e.dataTransfer.getData('text/plain') || '').trim();
+        var toEl = e.target && e.target.closest ? e.target.closest('.banking-account-tile[data-account-id]') : null;
+        if (!fromId || !toEl) return;
+        var toId = String(toEl.getAttribute('data-account-id') || '');
+        if (!toId || fromId === toId) return;
+        var tiles = Array.prototype.slice.call(row.querySelectorAll('.banking-account-tile[data-account-id]'));
+        var fromEl = tiles.find(function (x) {
+          return String(x.getAttribute('data-account-id') || '') === fromId;
+        });
+        if (!fromEl) return;
+        var rect = toEl.getBoundingClientRect();
+        var before = e.clientX < rect.left + rect.width / 2;
+        row.insertBefore(fromEl, before ? toEl : toEl.nextSibling);
+        void bankingPersistOrderFromTiles();
+      });
+    }
+
+    async function bankingPersistOrderFromTiles() {
+      var row = document.getElementById('bankingAccountsTileRow');
+      if (!row) return;
+      var orderedIds = Array.prototype.map
+        .call(row.querySelectorAll('.banking-account-tile[data-account-id]'), function (t) {
+          return String(t.getAttribute('data-account-id') || '').trim();
+        })
+        .filter(Boolean);
+      if (!orderedIds.length) return;
+      try {
+        await fetchAllBankingAccounts();
+        var visSet = new Set(orderedIds);
+        var payload = [];
+        var i = 0;
+        orderedIds.forEach(function (id) {
+          var base = bankingAllAccounts.find(function (a) {
+            return String(a?.account_id || '') === id;
+          });
+          if (!base) return;
+          payload.push({
+            account_id: id,
+            account_name: String(base?.account_name || '').trim(),
+            visible: Boolean(base?.visible),
+            display_order: i++,
+            is_dip: Boolean(base?.is_dip),
+            color_tag: String(base?.color_tag || 'other').trim(),
+            is_relay_account: Boolean(base?.is_relay_account),
+          });
+        });
+        bankingAllAccounts.forEach(function (a) {
+          var id = String(a?.account_id || '').trim();
+          if (!id || visSet.has(id)) return;
+          payload.push({
+            account_id: id,
+            account_name: String(a?.account_name || '').trim(),
+            visible: Boolean(a?.visible),
+            display_order: i++,
+            is_dip: Boolean(a?.is_dip),
+            color_tag: String(a?.color_tag || 'other').trim(),
+            is_relay_account: Boolean(a?.is_relay_account),
+          });
+        });
+        await fetch('/api/banking/accounts/visibility', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ accounts: payload }),
+        });
+        await loadBankingAccounts();
+      } catch (err) {
+        toast('Unable to save tile order: ' + String(err?.message || err), false);
+      }
+    }
+
     function renderBankingAccountCards(rows) {
-      var grid = document.getElementById('bankingAccountsGrid');
-      if (!grid) return;
+      var row = document.getElementById('bankingAccountsTileRow');
+      if (!row) return;
       if (!rows.length) {
-        grid.innerHTML = '<div class="mini-note">No eligible visible accounts yet. Use Manage Accounts.</div>';
+        row.innerHTML = '<div class="mini-note" style="flex:1 1 auto">No eligible visible accounts yet. Use + Add Account.</div>';
+        bankingBindTileDragOnce();
+        bankingRefreshTileActive();
         return;
       }
-      grid.innerHTML = rows.map(function (a) {
-        var id = String(a?.account_id || '');
-        var balance = Number(a?.balance || a?.ending_balance || 0);
-        var unc = Number(a?.uncategorized_count || 0);
-        var dips = [];
-        if (a?.is_dip) dips.push('<span class="banking-pill banking-pill--dip">DIP</span>');
-        if (a?.is_relay_account) dips.push('<span class="banking-pill banking-pill--relay">Relay</span>');
-        return '<button type="button" class="banking-account-card" onclick="openBankingRegister(' + JSON.stringify(id) + ')">' +
-          '<span class="banking-account-name" title="' + escapeHtml(a?.account_name || 'Account') + '">&#127974; ' + escapeHtml(a?.account_name || 'Account') + '</span>' +
-          '<span class="banking-account-type">' + escapeHtml(normalizeBankingType(a?.account_type || 'Bank')) + (a?.color_tag ? (' · ' + escapeHtml(String(a.color_tag))) : '') + '</span>' +
-          '<div class="banking-badges-row">' + dips.join('') + '</div>' +
-          '<div class="banking-account-balance' + (balance < 0 ? ' negative' : '') + '">Balance: ' + qboMoneyFmt(balance) + '</div>' +
-          '<div class="mini-note">Uncategorized: <span class="banking-count-badge' + (unc > 0 ? ' warn' : '') + '">' + unc + ' items</span></div>' +
-          '<div class="mini-note">Last txn: ' + escapeHtml(String(a?.last_transaction_date || '--')) + '</div>' +
-          '<div class="mini-note">Last synced: ' + escapeHtml(String(bankingQboSyncMeta?.last_sync ? bankingTimeAgoLabel(bankingQboSyncMeta.last_sync) : 'never')) + '</div>' +
-          '<div><span class="btn btn--small">View Register</span></div>' +
-        '</button>';
-      }).join('');
+      row.innerHTML =
+        rows
+          .map(function (a) {
+            var id = String(a?.account_id || '');
+            var balance = Number(a?.balance || a?.ending_balance || 0);
+            var unc = Number(a?.uncategorized_count || 0);
+            var uncatHtml =
+              unc > 0
+                ? '<span class="banking-account-tile-uncat"><span class="banking-account-tile-uncat-badge">' +
+                  unc +
+                  '</span> uncategorized</span>'
+                : '<span class="banking-account-tile-uncat">0 uncategorized</span>';
+            return (
+              '<button type="button" class="banking-account-tile" draggable="true" data-account-id="' +
+              escapeHtml(id) +
+              '" title="' +
+              escapeHtml(a?.account_name || 'Account') +
+              '" onclick="openBankingRegister(' +
+              JSON.stringify(id) +
+              ')">' +
+              '<span class="banking-account-tile-name">' +
+              escapeHtml(a?.account_name || 'Account') +
+              '</span>' +
+              '<span class="banking-account-tile-type">' +
+              escapeHtml(normalizeBankingType(a?.account_type || 'Bank')) +
+              '</span>' +
+              '<span class="banking-account-tile-balance' +
+              (balance < 0 ? ' negative' : '') +
+              '">' +
+              qboMoneyFmt(balance) +
+              '</span>' +
+              uncatHtml +
+              '</button>'
+            );
+          })
+          .join('') +
+        '<button type="button" class="banking-account-tile banking-account-tile--add" draggable="false" onclick="openBankingAccountManager()">+ Add Account</button>';
+      bankingBindTileDragOnce();
+      bankingRefreshTileActive();
+    }
+
+    function bankingSetRegisterTypeFilter(val, opts) {
+      var v = String(val || 'all').trim().toLowerCase();
+      var sel = document.getElementById('bankingFilterType');
+      if (sel) sel.value = v;
+      var pills = document.getElementById('bankingRegFilterPills');
+      if (pills) {
+        pills.querySelectorAll('button[data-bank-filter]').forEach(function (b) {
+          var on = String(b.getAttribute('data-bank-filter') || '') === v;
+          b.classList.toggle('banking-reg-filter-pills__active', on);
+        });
+      }
+      if (!opts || !opts.skipLoad) loadBankingRegisterPage(0);
     }
 
     async function loadBankingAccounts() {
       var month = bankingMonthValue();
-      var grid = document.getElementById('bankingAccountsGrid');
-      if (grid) grid.innerHTML = '<div class="mini-note">Loading accounts…</div>';
+      var row = document.getElementById('bankingAccountsTileRow');
+      if (row) row.innerHTML = '<div class="mini-note" style="flex:1 1 auto">Loading accounts…</div>';
       var importMonth = document.getElementById('bankImportMonth');
       if (importMonth && !importMonth.value) importMonth.value = month;
       try {
@@ -29876,7 +30086,7 @@
         bankingEligibleAccounts = rows;
         renderBankingAccountCards(rows);
       } catch (e) {
-        if (grid) grid.innerHTML = '<div class="mini-note">Unable to load banking accounts: ' + String(e?.message || e) + '</div>';
+        if (row) row.innerHTML = '<div class="mini-note" style="flex:1 1 auto">Unable to load banking accounts: ' + String(e?.message || e) + '</div>';
       }
     }
 
@@ -30038,15 +30248,21 @@
     }
 
     function bankingSetHomeVisible(showHome) {
-      var home = document.getElementById('bankingHomeView');
+      if (typeof window.__bankingSetMainMode === 'function') {
+        window.__bankingSetMainMode(showHome ? 'home' : 'register');
+        return;
+      }
       var reg = document.getElementById('bankingRegisterView');
-      if (home) home.classList.toggle('banking-hidden', !showHome);
-      if (reg) reg.classList.toggle('banking-hidden', showHome);
+      if (reg) reg.classList.toggle('banking-hidden', Boolean(showHome));
     }
 
     function bankingBackToHome() {
+      bankingSelectedAccountId = '';
       bankingSetHomeVisible(true);
       bankingSelectedRows = new Set();
+      var hl = document.getElementById('bankingRegisterHeadline');
+      if (hl) hl.textContent = 'Select an account above';
+      bankingRefreshTileActive();
     }
 
     function bankingQuickRange(mode) {
@@ -30153,18 +30369,21 @@
     async function openBankingRegister(accountId) {
       bankingSelectedAccountId = String(accountId || '').trim();
       bankingSetHomeVisible(false);
-      var selected = bankingEligibleAccounts.find(function (a) { return String(a?.account_id || '') === bankingSelectedAccountId; })
-        || bankingAllAccounts.find(function (a) { return String(a?.account_id || '') === bankingSelectedAccountId; })
+      var selected = bankingEligibleAccounts.find(function (a) {
+        return String(a?.account_id || '') === bankingSelectedAccountId;
+      })
+        || bankingAllAccounts.find(function (a) {
+          return String(a?.account_id || '') === bankingSelectedAccountId;
+        })
         || null;
-      var title = document.getElementById('bankingRegisterTitle');
-      if (title) title.textContent = (selected?.account_name || bankingSelectedAccountId) + ' Register';
-      var bal = document.getElementById('bankingRegisterBalance');
-      if (bal) bal.textContent = 'Balance: ' + qboMoneyFmt(Number(selected?.balance || selected?.ending_balance || 0));
-      var monthRange = bankingRangeForMonth(bankingMonthValue());
-      var fromEl = document.getElementById('bankingFilterFrom');
-      var toEl = document.getElementById('bankingFilterTo');
-      if (fromEl && !fromEl.value) fromEl.value = monthRange.from;
-      if (toEl && !toEl.value) toEl.value = monthRange.to;
+      var nm = selected?.account_name || bankingSelectedAccountId || 'Account';
+      var balNum = Number(selected?.balance || selected?.ending_balance || 0);
+      var balStr = typeof qboMoneyFmt === 'function' ? qboMoneyFmt(balNum) : '$' + balNum.toFixed(2);
+      var hl = document.getElementById('bankingRegisterHeadline');
+      if (hl) hl.textContent = nm + ' — ' + balStr;
+      bankingQuickRange('this-month');
+      bankingSetRegisterTypeFilter('all', { skipLoad: true });
+      bankingRefreshTileActive();
       setBankingRegisterTab('register');
       await loadBankingRegisterPage(0);
     }
@@ -30654,6 +30873,49 @@
       wave7SetSource('cache', '');
     }
 
+    function bankingSidebarOpenSection() {
+      var btn = document.querySelector('.nav-btn[data-section="banking"], #erpSectionGhostNav .nav-btn[data-section="banking"]');
+      if (typeof openSection === 'function') openSection('banking', btn || null);
+    }
+    function bankingSidebarNavDipHome() {
+      bankingSidebarOpenSection();
+      bankingSelectedAccountId = '';
+      if (typeof window.__bankingSetMainMode === 'function') window.__bankingSetMainMode('home');
+      var hl = document.getElementById('bankingRegisterHeadline');
+      if (hl) hl.textContent = 'Select an account above';
+      bankingRefreshTileActive();
+      if (typeof loadBankingAccounts === 'function') void loadBankingAccounts();
+    }
+    function bankingSidebarNavUncategorized() {
+      bankingSidebarOpenSection();
+      if (typeof window.__bankingSetMainMode === 'function') window.__bankingSetMainMode('register');
+      if (typeof setBankingRegisterTab === 'function') setBankingRegisterTab('queue');
+    }
+    function bankingSidebarNavRules() {
+      bankingSidebarNavDipHome();
+      if (typeof openBankingRulesEngine === 'function') openBankingRulesEngine();
+    }
+    function bankingSidebarNavReconciliation() {
+      bankingSidebarOpenSection();
+      if (typeof openBankingReconciliationHome === 'function') openBankingReconciliationHome();
+    }
+    function bankingSidebarNavRelay() {
+      bankingSidebarOpenSection();
+      if (typeof openRelayWorkspace === 'function') openRelayWorkspace();
+    }
+    function bankingSidebarNavSettlements() {
+      bankingSidebarOpenSection();
+      if (typeof openSettlementsWorkspace === 'function') openSettlementsWorkspace();
+    }
+    function bankingSidebarNavFactoring() {
+      bankingSidebarOpenSection();
+      if (typeof openFactoringWorkspace === 'function') openFactoringWorkspace();
+    }
+    function bankingSidebarNavImportHistory() {
+      bankingSidebarNavDipHome();
+      if (typeof openBankingImportHistory === 'function') openBankingImportHistory();
+    }
+
     window.loadRelayFuelTransactions = loadRelayFuelTransactions;
     window.loadBankingAccounts = loadBankingAccounts;
     window.openBankingRegister = openBankingRegister;
@@ -30676,6 +30938,15 @@
     window.bankingUploadAndParse = bankingUploadAndParse;
     window.bankingConfirmImport = bankingConfirmImport;
     window.bankingExportRegisterCsv = bankingExportRegisterCsv;
+    window.bankingSetRegisterTypeFilter = bankingSetRegisterTypeFilter;
+    window.bankingSidebarNavDipHome = bankingSidebarNavDipHome;
+    window.bankingSidebarNavUncategorized = bankingSidebarNavUncategorized;
+    window.bankingSidebarNavRules = bankingSidebarNavRules;
+    window.bankingSidebarNavReconciliation = bankingSidebarNavReconciliation;
+    window.bankingSidebarNavRelay = bankingSidebarNavRelay;
+    window.bankingSidebarNavSettlements = bankingSidebarNavSettlements;
+    window.bankingSidebarNavFactoring = bankingSidebarNavFactoring;
+    window.bankingSidebarNavImportHistory = bankingSidebarNavImportHistory;
     window.qboFinQuickRange = qboFinQuickRange;
     window.runQboFinancialReport = runQboFinancialReport;
     window.exportQboFinancialCsv = exportQboFinancialCsv;
@@ -31172,12 +31443,29 @@
       }
       function money(v) { return typeof window.qboMoneyFmt === 'function' ? window.qboMoneyFmt(v) : ('$' + Number(v || 0).toFixed(2)); }
       function setMainBankingMode(mode) {
-        el('bankingHomeView')?.classList.toggle('banking-hidden', mode !== 'home');
-        el('bankingRegisterView')?.classList.toggle('banking-hidden', mode !== 'register');
-        el('bankingReconciliationView')?.classList.toggle('banking-hidden', mode !== 'reconHome');
-        el('bankingReconciliationWorkspace')?.classList.toggle('banking-hidden', mode !== 'reconWorkspace');
-        el('bankingWave6Workspace')?.classList.toggle('banking-hidden', mode !== 'wave6');
+        var home = el('bankingHomeView');
+        var reg = el('bankingRegisterView');
+        var reconH = el('bankingReconciliationView');
+        var reconW = el('bankingReconciliationWorkspace');
+        var wave = el('bankingWave6Workspace');
+        [home, reg, reconH, reconW, wave].forEach(function (node) {
+          if (node) node.classList.add('banking-hidden');
+        });
+        if (mode === 'home') {
+          home?.classList.remove('banking-hidden');
+          reg?.classList.add('banking-hidden');
+        } else if (mode === 'register') {
+          home?.classList.remove('banking-hidden');
+          reg?.classList.remove('banking-hidden');
+        } else if (mode === 'reconHome') {
+          reconH?.classList.remove('banking-hidden');
+        } else if (mode === 'reconWorkspace') {
+          reconW?.classList.remove('banking-hidden');
+        } else if (mode === 'wave6') {
+          wave?.classList.remove('banking-hidden');
+        }
       }
+      window.__bankingSetMainMode = setMainBankingMode;
       function setWave6Panel(name) {
         el('wave6RelayPanel')?.classList.add('banking-hidden');
         el('wave6SettlementsPanel')?.classList.add('banking-hidden');
@@ -31716,9 +32004,17 @@
         el('bankingReconciliationView')?.classList.toggle('banking-hidden', !on);
       }
       function setHomeVisible(on) {
-        el('bankingHomeView')?.classList.toggle('banking-hidden', !on);
-        el('bankingRegisterView')?.classList.toggle('banking-hidden', on);
-        if (!on) return;
+        if (on) {
+          if (typeof window.__bankingSetMainMode === 'function') window.__bankingSetMainMode('home');
+          else {
+            el('bankingHomeView')?.classList.remove('banking-hidden');
+            el('bankingRegisterView')?.classList.add('banking-hidden');
+          }
+        } else {
+          el('bankingHomeView')?.classList.add('banking-hidden');
+          el('bankingRegisterView')?.classList.add('banking-hidden');
+          el('bankingWave6Workspace')?.classList.add('banking-hidden');
+        }
       }
       function closeStartModal() { el('bankingStartReconModal')?.classList.remove('active'); }
       function closeLockModal() { el('bankingLockReconModal')?.classList.remove('active'); }

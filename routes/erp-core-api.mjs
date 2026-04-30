@@ -6321,6 +6321,7 @@ export function mountErpCoreApi(app, opts = {}) {
         if (type === 'deposits') where.push('amount > 0');
         else if (type === 'withdrawals') where.push('amount < 0');
         else if (type === 'uncategorized') where.push(`LOWER(COALESCE(status, '')) = 'uncategorized'`);
+        else if (type === 'reconciled') where.push('COALESCE(reconciled, false) = true');
       }
       const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
       const totalSql = `SELECT COUNT(*)::int AS total FROM banking_transactions ${whereSql}`;
