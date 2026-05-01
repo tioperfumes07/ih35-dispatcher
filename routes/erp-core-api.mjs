@@ -1771,6 +1771,8 @@ export function mountErpCoreApi(app, opts = {}) {
       hasSamsaraToken: Boolean(token),
       hasQboConfig: qbo.configured,
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
+      hasRelayKey: !!process.env.RELAY_API_KEY,
+      relayStatus: process.env.RELAY_API_KEY ? 'connected' : 'missing_key',
       samsaraVehicles,
       samsaraStatsRows,
       samsaraError,
