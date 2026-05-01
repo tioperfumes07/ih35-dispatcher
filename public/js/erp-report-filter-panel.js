@@ -177,8 +177,8 @@
         ? `<div style="grid-column:1/-1">
         <label class="qb-l">Date range</label>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <span class="mini-note">From</span><input type="date" class="qb-in erp-rfp-start" value="${ymd(start)}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
-          <span class="mini-note">To</span><input type="date" class="qb-in erp-rfp-end" value="${ymd(end)}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <span class="mini-note">From</span><input type="date" class="qb-in erp-rfp-start" value="${ymd(start)}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
+          <span class="mini-note">To</span><input type="date" class="qb-in erp-rfp-end" value="${ymd(end)}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
         </div>
         <div class="erp-rfp-quick" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
           ${['Today', 'This week', 'This month', 'Last month', 'Last 3 months', 'Last 6 months', 'Last year', 'Year to date', 'All time', 'Custom']
@@ -195,12 +195,12 @@
       show.has('units')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Unit / vehicle</div>
-        <label><input type="radio" name="${id}_um" class="erp-rfp-unitm" value="all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All units</label>
-        <label style="margin-left:10px"><input type="radio" name="${id}_um" class="erp-rfp-unitm" value="pick" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Select specific units</label>
+        <label><input type="radio" name="${id}_um" class="erp-rfp-unitm" value="all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All units</label>
+        <label style="margin-left:10px"><input type="radio" name="${id}_um" class="erp-rfp-unitm" value="pick" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Select specific units</label>
         <div class="erp-rfp-units-wrap hidden" style="margin-top:6px">
-          <input type="text" class="qb-in erp-rfp-unit-search" placeholder="Search units…" style="max-width:260px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" />
+          <input type="text" class="qb-in erp-rfp-unit-search" placeholder="Search units…" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           <div class="erp-rfp-unit-list mini-note" style="max-height:140px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
-          <div style="margin-top:6px"><label><input type="checkbox" class="erp-rfp-unit-all" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Select all</label>
+          <div style="margin-top:6px"><label><input type="checkbox" class="erp-rfp-unit-all" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Select all</label>
           <button type="button" class="btn btn--sm erp-rfp-unit-clear" style="margin-left:8px;font-size:11px">Clear all</button>
           <span class="erp-rfp-unit-count mini-note" style="margin-left:8px"></span></div>
         </div>
@@ -211,10 +211,10 @@
       show.has('recordTypes')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Record type</div>
-        <label style="margin-right:10px"><input type="checkbox" class="erp-rfp-rt-all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All</label>
+        <label style="margin-right:10px"><input type="checkbox" class="erp-rfp-rt-all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All</label>
         <div class="erp-rfp-rt" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
           ${RECORD_TYPES.map(
-            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-rt-cb" value="${t.id}" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${t.label}</label>`
+            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-rt-cb" value="${t.id}" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${t.label}</label>`
           ).join('')}
         </div>
       </div>`
@@ -224,10 +224,10 @@
       show.has('locationCategories')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Service location</div>
-        <label style="display:block;margin-bottom:6px;font-size:12px"><input type="checkbox" class="erp-rfp-lc-all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All locations (categories)</label>
+        <label style="display:block;margin-bottom:6px;font-size:12px"><input type="checkbox" class="erp-rfp-lc-all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All locations (categories)</label>
         <div class="erp-rfp-lc-grid" style="display:flex;flex-wrap:wrap;gap:6px">
           ${LOC_CATS.map(
-            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-lc-cb" value="${t.id}" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${t.label}</label>`
+            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-lc-cb" value="${t.id}" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${t.label}</label>`
           ).join('')}
         </div>
       </div>`
@@ -237,7 +237,7 @@
       show.has('locationNames')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Specific location names</div>
-        <input type="text" class="qb-in erp-rfp-locnm-search" placeholder="Search locations…" style="max-width:280px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" />
+        <input type="text" class="qb-in erp-rfp-locnm-search" placeholder="Search locations…" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
         <div class="erp-rfp-locnm-list mini-note" style="max-height:120px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
         <div style="margin-top:6px"><button type="button" class="btn btn--sm erp-rfp-locnm-clear" style="font-size:11px">Clear locations</button>
         <span class="erp-rfp-locnm-count mini-note" style="margin-left:8px"></span></div>
@@ -250,7 +250,7 @@
         <div class="qb-l">Fleet type</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${FLEET_TYPES.map(
-            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-ft-cb" value="${t.id}" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${t.label}</label>`
+            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-ft-cb" value="${t.id}" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${t.label}</label>`
           ).join('')}
         </div>
       </div>`
@@ -262,7 +262,7 @@
         <div class="qb-l">Vehicle make</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${MAKE_OPTS.map(
-            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-mk-cb" value="${t.id}" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${t.label}</label>`
+            t => `<label style="font-size:12px"><input type="checkbox" class="erp-rfp-mk-cb" value="${t.id}" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${t.label}</label>`
           ).join('')}
         </div>
       </div>`
@@ -272,10 +272,10 @@
       show.has('vendors')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Vendor</div>
-        <label><input type="radio" name="${id}_vm" class="erp-rfp-vendm" value="all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All vendors</label>
-        <label style="margin-left:10px"><input type="radio" name="${id}_vm" class="erp-rfp-vendm" value="pick" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Select specific vendors</label>
+        <label><input type="radio" name="${id}_vm" class="erp-rfp-vendm" value="all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All vendors</label>
+        <label style="margin-left:10px"><input type="radio" name="${id}_vm" class="erp-rfp-vendm" value="pick" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Select specific vendors</label>
         <div class="erp-rfp-vendor-wrap hidden" style="margin-top:6px">
-        <input type="text" class="qb-in erp-rfp-vendor-search" placeholder="Search vendors…" style="max-width:280px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" />
+        <input type="text" class="qb-in erp-rfp-vendor-search" placeholder="Search vendors…" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
         <div class="erp-rfp-vendor-list mini-note" style="max-height:120px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
         <div style="margin-top:6px"><button type="button" class="btn btn--sm erp-rfp-vendor-clear" style="font-size:11px">Clear vendors</button>
         <span class="erp-rfp-vendor-count mini-note" style="margin-left:8px"></span></div>
@@ -287,10 +287,10 @@
       show.has('drivers')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Driver</div>
-        <label><input type="radio" name="${id}_dm" class="erp-rfp-drivm" value="all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All drivers</label>
-        <label style="margin-left:10px"><input type="radio" name="${id}_dm" class="erp-rfp-drivm" value="pick" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Select specific drivers</label>
+        <label><input type="radio" name="${id}_dm" class="erp-rfp-drivm" value="all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All drivers</label>
+        <label style="margin-left:10px"><input type="radio" name="${id}_dm" class="erp-rfp-drivm" value="pick" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Select specific drivers</label>
         <div class="erp-rfp-driver-wrap hidden" style="margin-top:6px">
-        <input type="text" class="qb-in erp-rfp-driver-search" placeholder="Search drivers…" style="max-width:280px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" />
+        <input type="text" class="qb-in erp-rfp-driver-search" placeholder="Search drivers…" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
         <div class="erp-rfp-driver-list mini-note" style="max-height:120px;overflow:auto;margin-top:6px;border:1px solid #eee;padding:6px;border-radius:6px"></div>
         <div style="margin-top:6px"><button type="button" class="btn btn--sm erp-rfp-driver-clear" style="font-size:11px">Clear drivers</button>
         <span class="erp-rfp-driver-count mini-note" style="margin-left:8px"></span></div>
@@ -302,13 +302,13 @@
       show.has('serviceTypesPick')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">Service type</div>
-        <label><input type="radio" name="${id}_sm" class="erp-rfp-svcm" value="all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All service types</label>
-        <label style="margin-left:10px"><input type="radio" name="${id}_sm" class="erp-rfp-svcm" value="pick" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Select specific types</label>
+        <label><input type="radio" name="${id}_sm" class="erp-rfp-svcm" value="all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All service types</label>
+        <label style="margin-left:10px"><input type="radio" name="${id}_sm" class="erp-rfp-svcm" value="pick" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Select specific types</label>
         <div class="erp-rfp-svc-wrap hidden" style="margin-top:8px">
         <div style="margin-bottom:6px"><button type="button" class="btn btn--sm erp-rfp-svc-alltop" style="font-size:11px">Select all</button>
         <button type="button" class="btn btn--sm erp-rfp-svc-clear" style="margin-left:6px;font-size:11px">Clear service types</button>
         <span class="erp-rfp-svc-count mini-note" style="margin-left:8px"></span></div>
-        <input type="text" class="qb-in erp-rfp-svc-search" placeholder="Search across groups…" style="max-width:280px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" />
+        <input type="text" class="qb-in erp-rfp-svc-search" placeholder="Search across groups…" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
         ${svcGroupedHtml}
         </div>
       </div>`
@@ -320,19 +320,19 @@
         <div class="qb-l">Accident filters</div>
         <div class="mini-note" style="margin-bottom:4px">Fault</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-af-cb" value="at_fault" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> At fault</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-af-cb" value="not_at_fault" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Not at fault</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-af-cb" value="unknown" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Unknown</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-af-cb" value="at_fault" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> At fault</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-af-cb" value="not_at_fault" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Not at fault</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-af-cb" value="unknown" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Unknown</label>
         </div>
         <div class="mini-note" style="margin:8px 0 4px">DOT reportable</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-dot-cb" value="y" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Yes</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-dot-cb" value="n" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> No</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-dot-cb" value="y" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Yes</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-dot-cb" value="n" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> No</label>
         </div>
         <div class="mini-note" style="margin:8px 0 4px">Insurance claim</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-ins-cb" value="has" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Has claim</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-ins-cb" value="no" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> No claim</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-ins-cb" value="has" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Has claim</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-ins-cb" value="no" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> No claim</label>
         </div>
       </div>`
         : ''
@@ -341,7 +341,7 @@
       show.has('defectsOnly')
         ? `<div>
         <label class="qb-l" style="display:block">Issues</label>
-        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-defonly" value="1" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Records with defects / issues found</label>
+        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-defonly" value="1" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Records with defects / issues found</label>
       </div>`
         : ''
     }
@@ -349,7 +349,7 @@
       show.has('groupBy')
         ? `<div>
         <div class="qb-l">Group results by</div>
-        <select class="qb-in erp-rfp-groupby" style="max-width:100%;height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <select class="qb-in erp-rfp-groupby" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
           ${(opts.groupByOptions || [])
             .map(o => `<option value="${o.value}">${o.label}</option>`)
             .join('')}
@@ -361,7 +361,7 @@
       show.has('sortBy')
         ? `<div>
         <div class="qb-l">Sort by</div>
-        <select class="qb-in erp-rfp-sortby" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <select class="qb-in erp-rfp-sortby" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
           <option value="date">Date</option>
           <option value="unit">Unit</option>
           <option value="cost">Cost</option>
@@ -369,7 +369,7 @@
           <option value="location">Location</option>
           <option value="vendor">Vendor</option>
         </select>
-        <select class="qb-in erp-rfp-sortdir" style="margin-top:4px;height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <select class="qb-in erp-rfp-sortdir" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
           <option value="desc">Newest / Z→A / high → low</option>
           <option value="asc">Oldest / A→Z / low → high</option>
         </select>
@@ -381,9 +381,9 @@
         ? `<div>
         <div class="qb-l">Cost range</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <input type="number" class="qb-in erp-rfp-cmin" placeholder="Min $" style="max-width:110px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" step="0.01" />
+          <input type="number" class="qb-in erp-rfp-cmin" placeholder="Min $" step="0.01" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           <span>—</span>
-          <input type="number" class="qb-in erp-rfp-cmax" placeholder="Max $" style="max-width:110px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" step="0.01" />
+          <input type="number" class="qb-in erp-rfp-cmax" placeholder="Max $" step="0.01" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
         </div>
       </div>`
         : ''
@@ -392,13 +392,13 @@
       show.has('pmStatusPick')
         ? `<div style="grid-column:1/-1">
         <div class="qb-l">PM status (row color)</div>
-        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-all" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> All statuses</label>
+        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-all" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> All statuses</label>
         <div class="erp-rfp-pmst" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="red" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Overdue</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="amber" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Due soon</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="blue" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Upcoming</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="green" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> OK</label>
-          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="gray" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> No PM / unknown miles</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="red" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Overdue</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="amber" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Due soon</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="blue" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Upcoming</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="green" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> OK</label>
+          <label style="font-size:12px"><input type="checkbox" class="erp-rfp-pmst-cb" value="gray" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> No PM / unknown miles</label>
         </div>
       </div>`
         : ''
@@ -406,9 +406,9 @@
     ${
       show.has('showOverduePm')
         ? `<div>
-        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-overdue" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Show only overdue (PM)</label>
+        <label style="font-size:12px"><input type="checkbox" class="erp-rfp-overdue" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Show only overdue (PM)</label>
         <div style="margin-top:6px"><span class="mini-note">Due within (miles)</span>
-        <input type="number" class="qb-in erp-rfp-duemiles" placeholder="e.g. 500" style="max-width:100px;margin-left:6px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" /></div>
+        <input type="number" class="qb-in erp-rfp-duemiles" placeholder="e.g. 500" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/></div>
       </div>`
         : ''
     }
@@ -639,7 +639,7 @@
             list.innerHTML = rows
               .map(
                 u =>
-                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-unit-cb" value="${String(u.unit).replace(/"/g, '&quot;')}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${String(u.label || u.unit)}</label>`
+                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-unit-cb" value="${String(u.unit).replace(/"/g, '&quot;')}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${String(u.label || u.unit)}</label>`
               )
               .join('');
             list.querySelectorAll('.erp-rfp-unit-cb').forEach(cb => {
@@ -706,7 +706,7 @@
             list.innerHTML = rows
               .map(
                 v =>
-                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-${esc}-cb" value="${String(v).replace(/"/g, '&quot;')}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${String(v)}</label>`
+                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-${esc}-cb" value="${String(v).replace(/"/g, '&quot;')}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${String(v)}</label>`
               )
               .join('');
             list.querySelectorAll(`.erp-rfp-${esc}-cb`).forEach(cb => {
@@ -777,7 +777,7 @@
               hostList.innerHTML = rows
                 .map(
                   v =>
-                    `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-svc-cb" value="${String(v).replace(/"/g, '&quot;')}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${String(v)}</label>`
+                    `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-svc-cb" value="${String(v).replace(/"/g, '&quot;')}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${String(v)}</label>`
                 )
                 .join('');
               hostList.querySelectorAll('.erp-rfp-svc-cb').forEach(cb => {
@@ -859,7 +859,7 @@
             list.innerHTML = rows
               .map(
                 v =>
-                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-locnm-cb" value="${String(v).replace(/"/g, '&quot;')}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> ${String(v)}</label>`
+                  `<label style="display:block;font-size:12px;margin:2px 0"><input type="checkbox" class="erp-rfp-locnm-cb" value="${String(v).replace(/"/g, '&quot;')}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> ${String(v)}</label>`
               )
               .join('');
             list.querySelectorAll('.erp-rfp-locnm-cb').forEach(cb => {

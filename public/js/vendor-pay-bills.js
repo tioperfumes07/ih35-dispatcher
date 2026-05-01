@@ -70,25 +70,25 @@
   <div class="vbp-sec1">
     <label class="vbp-vendor-label" for="vbpVendorSearchInput">Select vendor to pay</label>
     <div class="vbp-vendor-wrap">
-      <input id="vbpVendorSearchInput" class="vbp-vendor-search" type="text" autocomplete="off" placeholder="Search vendors…" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+      <input id="vbpVendorSearchInput" class="vbp-vendor-search" type="text" autocomplete="off" placeholder="Search vendors…" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
       <div id="vbpVendorDropdown" class="vbp-vendor-dd hidden" role="listbox"></div>
     </div>
-    <input type="hidden" id="vbpVendorQboId" />
+    <input type="hidden" id="vbpVendorQboId" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
     <div id="vbpVendorInfoBar" class="vbp-vendor-info hidden"></div>
     <div class="vbp-pay-card">
       <div class="vbp-pay-row">
         <div class="vbp-field vbp-field--grow">
           <span class="qb-l">Pay from account</span>
-          <select id="vbpPayAccount" class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select>
+          <select id="vbpPayAccount" class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></select>
           <div id="vbpPayAccountBal" class="vbp-acct-bal"></div>
         </div>
         <div class="vbp-field vbp-field--fixed">
           <span class="qb-l">Payment date</span>
-          <input id="vbpPayDate" class="qb-in" type="date" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <input id="vbpPayDate" class="qb-in" type="date" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
         </div>
         <div class="vbp-field vbp-field--fixed">
           <span class="qb-l">Payment method</span>
-          <select id="vbpPayMethod" class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <select id="vbpPayMethod" class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
             <option>Check</option>
             <option>ACH</option>
             <option>Wire</option>
@@ -99,11 +99,11 @@
         </div>
         <div id="vbpCheckWrap" class="vbp-field vbp-field--fixed">
           <span class="qb-l">Check # (if check)</span>
-          <input id="vbpCheckNum" class="qb-in" placeholder="Optional" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <input id="vbpCheckNum" class="qb-in" placeholder="Optional" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
         </div>
         <div class="vbp-field vbp-field--grow">
           <span class="qb-l">Memo</span>
-          <input id="vbpMemo" class="qb-in" placeholder="Applied to all payments in this batch" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <input id="vbpMemo" class="qb-in" placeholder="Applied to all payments in this batch" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@
       <table class="vbp-table vbp-open-table">
         <thead>
           <tr>
-            <th class="vbp-th-check"><input type="checkbox" id="vbpSelectAll" title="Select all" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></th>
+            <th class="vbp-th-check"><input type="checkbox" id="vbpSelectAll" title="Select all" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></th>
             <th class="vbp-th-doc">Bill #</th>
             <th>Bill date</th>
             <th>Due date</th>
@@ -160,8 +160,8 @@
     <div class="vbp-sec-head vbp-sec-head--hist">
       <span id="vbpHistTitle" class="vbp-sec-title">Payment history</span>
       <div class="vbp-hist-controls">
-        <label class="mini-note">From <input id="vbpHistFrom" class="qb-in" type="date" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>
-        <label class="mini-note">To <input id="vbpHistTo" class="qb-in" type="date" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>
+        <label class="mini-note">From <input id="vbpHistFrom" class="qb-in" type="date" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></label>
+        <label class="mini-note">To <input id="vbpHistTo" class="qb-in" type="date" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></label>
         <button type="button" class="qb-btn-add" id="vbpHistReload">Apply range</button>
         <div class="vbp-export-wrap">
           <button type="button" class="btn" id="vbpExportBtn">Export ▾</button>
@@ -418,7 +418,7 @@
     let html = '';
     for (const c of credits) {
       html += `<tr class="vbp-credit-row" data-credit-id="${escapeHtml(String(c.id))}">
-        <td><input type="checkbox" class="vbp-credit-chk" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>
+        <td><input type="checkbox" class="vbp-credit-chk" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></td>
         <td colspan="2"><span class="vbp-credit-tag">Credit</span> ${escapeHtml(String(c.docNumber || c.id))}</td>
         <td>${escapeHtml(String(c.txnDate || '').slice(0, 10))}</td>
         <td class="mini-note">Vendor credit (informational — apply in QuickBooks)</td>
@@ -442,7 +442,7 @@
       html += `<tr class="vbp-bill-row${overdueRow}" data-bill-id="${escapeHtml(id)}" data-open="${open}" data-doc="${escapeHtml(
         String(b.docNumber || '')
       )}">
-        <td><input type="checkbox" class="vbp-row-chk" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>
+        <td><input type="checkbox" class="vbp-row-chk" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></td>
         <td><button type="button" class="vbp-linkbtn vbp-bill-open" data-bill="${escapeHtml(id)}">${escapeHtml(
         String(b.docNumber || '—')
       )}</button>${b.recurringSeries ? '<div><span class="vbp-series-tag">Series</span></div>' : ''}${
@@ -455,7 +455,7 @@
         <td class="num ${paid > 0.01 ? 'vbp-paid' : ''}">${paid > 0.01 ? money(paid) : '—'}</td>
         <td class="num"><strong>${money(open)}</strong></td>
         <td class="num vbp-credit-col">${credAvail}</td>
-        <td class="num"><input type="number" class="vbp-pay-inp qb-in" step="0.01" min="0" disabled data-max="${open}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>
+        <td class="num"><input type="number" class="vbp-pay-inp qb-in" step="0.01" min="0" disabled data-max="${open}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></td>
       </tr>`;
     }
     tb.innerHTML = html || '<tr><td colspan="10" class="mini-note">No open bills.</td></tr>';

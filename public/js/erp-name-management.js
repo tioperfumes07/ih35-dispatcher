@@ -197,7 +197,7 @@
       .join('');
     host.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-        <input type="search" class="nm-search" placeholder="Search…" value="${esc(state.search)}" data-nm-search / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <input type="search" class="nm-search" placeholder="Search…" value="${esc(state.search)}" data-nm-search style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
         <button type="button" class="btn btn--small" data-nm-refresh>Refresh all lists</button>
       </div>
       <div class="nm-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
@@ -319,7 +319,7 @@
       state.kind === 'driver' && !row.samsaraId
         ? `<div style="margin-top:12px;padding:12px;border:1px solid #e0e3e8;border-radius:8px">
             <div style="font-weight:600;margin-bottom:6px">Link to Samsara driver</div>
-            <select id="nmLinkSam" class="qb-in" style="max-width:100%;width:100%;height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></select>
+            <select id="nmLinkSam" class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></select>
             <button type="button" class="btn" style="margin-top:8px" id="nmLinkBtn">Save link</button>
           </div>`
         : '';
@@ -331,31 +331,31 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:720px">
           <div style="grid-column:1/-1">
             <label class="qb-l">Street address</label>
-            <input class="qb-in" id="nmAddrStreet" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrStreet" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
           <div>
             <label class="qb-l">City</label>
-            <input class="qb-in" id="nmAddrCity" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrCity" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
           <div>
             <label class="qb-l">State</label>
-            <input class="qb-in" id="nmAddrState" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrState" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
           <div>
             <label class="qb-l">ZIP</label>
-            <input class="qb-in" id="nmAddrZip" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrZip" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
           <div>
             <label class="qb-l">Country</label>
-            <input class="qb-in" id="nmAddrCountry" placeholder="USA" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrCountry" placeholder="USA" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
           <div>
             <label class="qb-l">Phone</label>
-            <input class="qb-in" id="nmAddrPhone" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrPhone" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
           <div style="grid-column:1/-1">
             <label class="qb-l">Email</label>
-            <input class="qb-in" id="nmAddrEmail" autocomplete="off" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
+            <input class="qb-in" id="nmAddrEmail" autocomplete="off" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
           </div>
         </div>
         <button type="button" class="btn btn--small" style="margin-top:12px" id="nmAddrSaveBtn">Save address</button>
@@ -386,16 +386,16 @@
       <div style="background:#fff;border:1px solid #e0e3e8;border-radius:8px;padding:16px;margin-bottom:14px">
         <div style="font-weight:600;margin-bottom:8px">Set the official name</div>
         <label class="qb-l">Official / canonical name</label>
-        <input id="nmCanonInput" class="qb-in" style="height:17px;font-size:9px;padding:0 5px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" value="${esc(qboN || row.primaryName || '')}" placeholder="Enter the correct official name" />
+        <input id="nmCanonInput" class="qb-in" value="${esc(qboN || row.primaryName || '')}" placeholder="Enter the correct official name" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
           ${qboN ? `<button type="button" class="btn btn--small btn--ghost" data-pick="qbo">Use QBO: ${esc(qboN)}</button>` : ''}
           ${state.kind === 'driver' && samN ? `<button type="button" class="btn btn--small btn--ghost" data-pick="sam">Use Samsara: ${esc(samN)}</button>` : ''}
           ${erpN ? `<button type="button" class="btn btn--small btn--ghost" data-pick="erp">Use ERP: ${esc(erpN)}</button>` : ''}
         </div>
         <div class="form-stack" style="margin:10px 0">
-          <label><input type="checkbox" id="nmUpQbo" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Update QuickBooks</label>
-          ${state.kind === 'driver' && row.samsaraId ? `<label><input type="checkbox" id="nmUpSam" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Update Samsara</label>` : ''}
-          <label><input type="checkbox" id="nmUpErp" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Update ERP JSON + driver row</label>
+          <label><input type="checkbox" id="nmUpQbo" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Update QuickBooks</label>
+          ${state.kind === 'driver' && row.samsaraId ? `<label><input type="checkbox" id="nmUpSam" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Update Samsara</label>` : ''}
+          <label><input type="checkbox" id="nmUpErp" checked style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> Update ERP JSON + driver row</label>
         </div>
         <div id="nmPreview" style="background:#f8f9fa;border-radius:6px;padding:10px 12px;font-size:11px;margin-bottom:10px">Preview updates as you type.</div>
         <button type="button" class="btn" style="width:100%;height:36px;background:#1b5e20;color:#fff;border:none;border-radius:6px" id="nmApplyBtn">Apply rename…</button>
@@ -522,7 +522,7 @@
           ${nmChrome}
         </div>
         <p class="mini-note">Record: <strong>${esc(row.primaryName)}</strong><br/>New name: <strong>${esc(nn)}</strong></p>
-        <label style="display:block;margin:12px 0;font-size:13px"><input type="checkbox" id="nmConfirmAck" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> I confirm this rename should be applied across the selected systems.</label>
+        <label style="display:block;margin:12px 0;font-size:13px"><input type="checkbox" id="nmConfirmAck" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"> I confirm this rename should be applied across the selected systems.</label>
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
           <button type="button" class="btn btn--ghost" data-cancel>Cancel</button>
           <button type="button" class="btn" style="background:#1b5e20;color:#fff" id="nmDoRename" disabled>Apply rename</button>
@@ -701,13 +701,13 @@
       .map((r, i) => {
         const id = t === 'driver' ? r.erpId : r.qboId;
         const sug = r.primaryName || r.qboName || '';
-        return `<tr data-i="${i}"><td><input type="checkbox" class="nm-bulk-cb" data-id="${esc(id)}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>
+        return `<tr data-i="${i}"><td><input type="checkbox" class="nm-bulk-cb" data-id="${esc(id)}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></td>
           <td>${esc(r.primaryName)}</td><td>${esc(t)}</td>
           <td>${esc(r.qboName)}</td>
           <td>${t === 'driver' ? esc(r.samsaraName || '—') : '—'}</td>
           <td>${esc(r.erpName || r.erpNameSample || '')}</td>
           <td>${esc(sug)}</td>
-          <td><input class="qb-in nm-bulk-name" style="min-width:140px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" value="${esc(sug)}" /></td></tr>`;
+          <td><input class="qb-in nm-bulk-name" value="${esc(sug)}" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/></td></tr>`;
       })
       .join('');
     backdrop.innerHTML = `
@@ -718,7 +718,7 @@
         </div>
         <p class="mini-note">Up to 50 renames per request. Each row still requires confirmation in the API batch (checkboxes below).</p>
         <table class="erp-dedupe-table" style="font-size:11px"><thead>
-          <tr><th><input type="checkbox" id="nmBulkAll" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></th><th>Record</th><th>Type</th><th>QBO</th><th>Samsara</th><th>ERP</th><th>Suggested</th><th>New name</th></tr>
+          <tr><th><input type="checkbox" id="nmBulkAll" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></th><th>Record</th><th>Type</th><th>QBO</th><th>Samsara</th><th>ERP</th><th>Suggested</th><th>New name</th></tr>
         </thead><tbody>${rows || '<tr><td colspan="8">No mismatches.</td></tr>'}</tbody></table>
         <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:10px">
           <button type="button" class="btn btn--ghost" data-close>Close</button>
@@ -774,7 +774,7 @@
           <p class="mini-note">This calls live QuickBooks, Samsara (drivers), and ERP for <strong>${renames.length}</strong> record(s).</p>
           <ul style="margin:8px 0;padding-left:18px;font-size:13px;max-height:200px;overflow:auto">${preview}</ul>
           ${more}
-          <label style="display:block;margin:14px 0;font-size:13px"><input type="checkbox" id="nmBulkAckFinal" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <label style="display:block;margin:14px 0;font-size:13px"><input type="checkbox" id="nmBulkAckFinal" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
             I confirm these renames should be applied.</label>
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
             <button type="button" class="btn btn--ghost" data-cancel-bulk>Back</button>
@@ -818,15 +818,15 @@
           ${nmChrome}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px;font-size:13px">
-          <label>Type<br/><select id="nmHistType" class="qb-in" style="min-width:120px;height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+          <label>Type<br/><select id="nmHistType" class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%">
             <option value="">All</option>
             <option value="vendor">vendor</option>
             <option value="driver">driver</option>
             <option value="customer">customer</option>
           </select></label>
-          <label>Renamed by contains<br/><input id="nmHistBy" class="qb-in" placeholder="email or name" style="width:100%;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" /></label>
-          <label>From<br/><input id="nmHistStart" type="date" class="qb-in" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>
-          <label>To<br/><input id="nmHistEnd" type="date" class="qb-in" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>
+          <label>Renamed by contains<br/><input id="nmHistBy" class="qb-in" placeholder="email or name" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"/></label>
+          <label>From<br/><input id="nmHistStart" type="date" class="qb-in" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></label>
+          <label>To<br/><input id="nmHistEnd" type="date" class="qb-in" style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%"></label>
           <button type="button" class="btn btn--small" id="nmHistApply">Apply filters</button>
           <button type="button" class="btn btn--small btn--ghost" id="nmHistDl">Download Excel</button>
         </div>
