@@ -99,7 +99,7 @@
   </style>
 <link rel="stylesheet" href="/src/design-tokens.css"/>
 </head>
-<body class="erp-app erp-maintenance ih-sidebar-peek-active" data-erp-uniform-controls="1">
+<body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="erpDedicatedFormModal" class="erp-dedicated-form-modal hidden" aria-hidden="true">
     <div class="erp-dedicated-form-modal__backdrop" data-erp-ded-close="1"></div>
@@ -801,7 +801,7 @@
       <button type="button" class="nav-btn" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');" tabindex="-1" aria-hidden="true"></button>
     </div>
 
-    <aside class="erp-module-sidebar erp-filter-panel ih-sidebar-peek" aria-label="Lists and shortcuts for the open area">
+    <aside class="erp-module-sidebar erp-filter-panel" aria-label="Lists and shortcuts for the open area">
       <div class="erp-module-sidebar__head">
         <div id="erpModuleBrandTitle" class="erp-module-sidebar__brand-title">Maintenance</div>
         <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide lists column">«</button>
@@ -5894,41 +5894,6 @@
           #section-reports .wave7-report-table tr.summary-row td { font-weight: 700; }
           @media print {
             #section-reports .wave7-print-hide { display: none !important; }
-          }
-          /* === IH35 Hover-Peek Sidebar (Prompt #4) === */
-          .ih-sidebar-peek {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: var(--ih-sidebar-strip, 2px);
-            background: var(--ih-navy, #1a1f36);
-            z-index: 100;
-            overflow: hidden;
-            transition: width 150ms ease-out;
-            will-change: width;
-          }
-          .ih-sidebar-peek:hover,
-          .ih-sidebar-peek:focus-within {
-            width: var(--ih-sidebar-width, 72px);
-          }
-          .ih-sidebar-peek > * {
-            opacity: 0;
-            transition: opacity 100ms ease-out 50ms;
-            pointer-events: none;
-          }
-          .ih-sidebar-peek:hover > *,
-          .ih-sidebar-peek:focus-within > * {
-            opacity: 1;
-            pointer-events: auto;
-          }
-          body.ih-sidebar-peek-active {
-            padding-left: var(--ih-sidebar-strip, 2px);
-          }
-          body.ih-sidebar-peek-active main,
-          body.ih-sidebar-peek-active .ih-main,
-          body.ih-sidebar-peek-active #main {
-            margin-left: 0;
           }
         </style>
         <div id="wave7ReportsRoot" class="panel">
