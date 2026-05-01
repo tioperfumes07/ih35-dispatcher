@@ -5338,23 +5338,13 @@
           </div>
           <div class="panel-body">
             <div id="wave6RelayPanel" class="banking-hidden">
-              <div class="mini-note" id="relayStatusBanner" style="padding:8px;border:1px solid #facc15;background:#fefce8;border-radius:8px;margin-bottom:8px">Relay status loading...</div>
-              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
-                <label class="field-label"><span class="qb-l">From</span><input id="relayFilterFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label class="field-label"><span class="qb-l">To</span><input id="relayFilterTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label class="field-label"><span class="qb-l">Driver</span><input id="relayFilterDriver" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label class="field-label"><span class="qb-l">Unit</span><input id="relayFilterUnit" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label class="field-label"><span class="qb-l">State</span><input id="relayFilterState" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <button type="button" class="btn btn--small" onclick="refreshRelayTransactions()">Refresh</button>
-                <button type="button" class="btn btn--small" onclick="syncRelayTransactionsNow()">Sync Now</button>
-                <label class="field-label" style="display:flex;align-items:flex-end;gap:6px"><span class="qb-l">Import CSV</span><input id="relayCsvInput" class="qb-in" type="file" accept=".csv,text/csv"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <button type="button" class="btn btn--small" onclick="importRelayCsvNow()">Import CSV</button>
-              </div>
-              <div style="overflow:auto;max-height:380px;border:1px solid var(--color-border);border-radius:8px">
-                <table class="table" style="min-width:1100px">
-                  <thead><tr><th>Date</th><th>Driver</th><th>Unit</th><th class="num">Gallons</th><th class="num">Amount</th><th>Station</th><th>State</th><th>QBO Status</th><th>Source</th></tr></thead>
-                  <tbody id="relayTransactionsBody"><tr><td colspan="9" class="muted">Loading Relay transactions...</td></tr></tbody>
-                </table>
+              <div id="relayTransactionsPanel">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                  <h3 style="font-size:15px;font-weight:600">⛽ Relay Fuel Transactions</h3>
+                  <button onclick="loadRelayTransactions()" style="background:#1B4F8A;color:white;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer">Refresh</button>
+                </div>
+                <div id="relayTxnSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"></div>
+                <div id="relayTxnTableWrap"></div>
               </div>
             </div>
 
@@ -35237,6 +35227,7 @@
         if (name === 'relay') {
           el('wave6RelayPanel')?.classList.remove('banking-hidden');
           el('wave6WorkspaceTitle').textContent = 'Relay Fuel Card Transactions';
+          if (typeof loadRelayTransactions === 'function') loadRelayTransactions();
         } else if (name === 'settlements') {
           el('wave6SettlementsPanel')?.classList.remove('banking-hidden');
           el('wave6WorkspaceTitle').textContent = 'Driver Settlements';
@@ -35266,55 +35257,81 @@
         }
       }
 
-      function renderRelayRows() {
-        var body = el('relayTransactionsBody');
-        if (!body) return;
-        var from = String(el('relayFilterFrom')?.value || '').trim();
-        var to = String(el('relayFilterTo')?.value || '').trim();
-        var dQ = String(el('relayFilterDriver')?.value || '').trim().toLowerCase();
-        var uQ = String(el('relayFilterUnit')?.value || '').trim().toLowerCase();
-        var sQ = String(el('relayFilterState')?.value || '').trim().toLowerCase();
-        var rows = wave6.relayRows.slice();
-        if (from) rows = rows.filter(function (r) { return String(r?.txn_date || '').slice(0, 10) >= from; });
-        if (to) rows = rows.filter(function (r) { return String(r?.txn_date || '').slice(0, 10) <= to; });
-        if (dQ) rows = rows.filter(function (r) { return String(r?.description || r?.vendor_name || '').toLowerCase().includes(dQ); });
-        if (uQ) rows = rows.filter(function (r) { return String(r?.unit_number || '').toLowerCase().includes(uQ); });
-        if (sQ) rows = rows.filter(function (r) { return String(r?.state || '').toLowerCase().includes(sQ); });
-        if (!rows.length) {
-          body.innerHTML = '<tr><td colspan="9" class="muted">No Relay transactions.</td></tr>';
-          return;
+      async function loadRelayTransactions() {
+        var wrap = document.getElementById('relayTxnTableWrap');
+        var summary = document.getElementById('relayTxnSummary');
+        if (!wrap) return;
+        wrap.innerHTML = '<p style="color:#6B7280;font-size:13px">Loading...</p>';
+
+        try {
+          var r = await fetch('/api/relay/transactions');
+          var d = await r.json();
+          var txns = Array.isArray(d?.transactions) ? d.transactions : [];
+
+          var totalPaid = txns.reduce(function (s, t) { return s + (Number(t?.amount) || 0); }, 0);
+          var totalSaved = txns.reduce(function (s, t) { return s + (Number(t?.savings) || 0); }, 0);
+          var count = txns.length;
+
+          if (summary) {
+            summary.innerHTML =
+              '<div style="background:#F3F4F6;border-radius:8px;padding:12px;text-align:center">' +
+                '<div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Transactions</div>' +
+                '<div style="font-size:22px;font-weight:500">' + count + '</div>' +
+              '</div>' +
+              '<div style="background:#F3F4F6;border-radius:8px;padding:12px;text-align:center">' +
+                '<div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Total Paid</div>' +
+                '<div style="font-size:22px;font-weight:500;color:#1B4F8A">$' + totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</div>' +
+              '</div>' +
+              '<div style="background:#DCFCE7;border-radius:8px;padding:12px;text-align:center">' +
+                '<div style="font-size:11px;color:#14532D;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Total Saved</div>' +
+                '<div style="font-size:22px;font-weight:500;color:#16A34A">$' + totalSaved.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</div>' +
+              '</div>';
+          }
+
+          if (!txns.length) {
+            wrap.innerHTML = '<p style="color:#6B7280;font-size:13px;padding:20px;text-align:center">No transactions found</p>';
+            return;
+          }
+
+          wrap.innerHTML =
+            '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+              '<thead>' +
+                '<tr style="background:#F3F4F6">' +
+                  '<th style="text-align:left;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Date</th>' +
+                  '<th style="text-align:left;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Driver</th>' +
+                  '<th style="text-align:left;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Fuel Code</th>' +
+                  '<th style="text-align:right;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Amount Paid</th>' +
+                  '<th style="text-align:right;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Retail Price</th>' +
+                  '<th style="text-align:right;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Savings</th>' +
+                  '<th style="text-align:center;padding:8px 10px;font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid #E5E7EB">Direct Bill</th>' +
+                '</tr>' +
+              '</thead>' +
+              '<tbody>' +
+                txns.map(function (t) {
+                  var date = t?.date ? new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+                  var driver = String(t?.driver_name || '').trim() || '—';
+                  var paid = '$' + (Number(t?.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  var retail = '$' + (Number(t?.retail_price) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  var saved = '$' + (Number(t?.savings) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return '<tr style="border-bottom:0.5px solid #E5E7EB">' +
+                    '<td style="padding:8px 10px;color:#1F2937">' + escapeHtml(String(date)) + '</td>' +
+                    '<td style="padding:8px 10px;color:#1F2937">' + escapeHtml(driver) + '</td>' +
+                    '<td style="padding:8px 10px;font-family:monospace;color:#1F2937">' + escapeHtml(String(t?.fuel_code || '—')) + '</td>' +
+                    '<td style="padding:8px 10px;text-align:right;font-weight:500;color:#1B4F8A">' + paid + '</td>' +
+                    '<td style="padding:8px 10px;text-align:right;color:#6B7280">' + retail + '</td>' +
+                    '<td style="padding:8px 10px;text-align:right;color:#16A34A;font-weight:500">' + saved + '</td>' +
+                    '<td style="padding:8px 10px;text-align:center">' + (t?.is_direct_bill ? '✅' : '—') + '</td>' +
+                  '</tr>';
+                }).join('') +
+              '</tbody>' +
+            '</table>';
+        } catch(e) {
+          wrap.innerHTML = '<p style="color:#DC2626;font-size:13px;padding:20px">Error loading Relay transactions: ' + escapeHtml(String(e?.message || e)) + '</p>';
         }
-        body.innerHTML = rows.slice(0, 1000).map(function (r) {
-          var src = String(r?.source || '').toLowerCase() === 'relay'
-            ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#16a34a22;color:#166534;font-weight:700;font-size:11px">Relay</span>'
-            : '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#2563eb22;color:#1d4ed8;font-weight:700;font-size:11px">Manual</span>';
-          return '<tr>' +
-            '<td>' + escapeHtml(String(r?.txn_date || '').slice(0, 10) || '--') + '</td>' +
-            '<td>' + escapeHtml(String(r?.description || r?.vendor_name || '--')) + '</td>' +
-            '<td>' + escapeHtml(String(r?.unit_number || '--')) + '</td>' +
-            '<td class="num">' + (r?.gallons == null ? '--' : Number(r.gallons).toFixed(2)) + '</td>' +
-            '<td class="num">' + money(r?.amount || 0) + '</td>' +
-            '<td>' + escapeHtml(String(r?.station_name || '--')) + '</td>' +
-            '<td>' + escapeHtml(String(r?.state || '--')) + '</td>' +
-            '<td>' + escapeHtml(String(r?.qbo_status || '--')) + '</td>' +
-            '<td>' + src + '</td>' +
-          '</tr>';
-        }).join('');
       }
 
       async function refreshRelayTransactions() {
-        var body = el('relayTransactionsBody');
-        if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Loading Relay transactions...</td></tr>';
-        try {
-          var rsp = await fetch('/api/banking/transactions?limit=2000', { headers: { Accept: 'application/json' } });
-          var json = await rsp.json();
-          var rows = Array.isArray(json?.data) ? json.data : [];
-          wave6.relayRows = rows.filter(function (r) { return String(r?.source || '').toLowerCase() === 'relay'; });
-          renderRelayRows();
-          loadRelayStatus();
-        } catch (e) {
-          if (body) body.innerHTML = '<tr><td colspan="9" class="muted">Relay transactions unavailable: ' + String(e?.message || e) + '</td></tr>';
-        }
+        await loadRelayTransactions();
       }
 
       async function syncRelayNow() {
@@ -35698,8 +35715,7 @@
       function openRelayWorkspace() {
         setMainBankingMode('wave6');
         setWave6Panel('relay');
-        loadRelayStatus();
-        refreshRelayTransactions();
+        loadRelayTransactions();
       }
       function openSettlementsWorkspace() {
         setMainBankingMode('wave6');
@@ -35720,6 +35736,7 @@
       window.openSettlementsWorkspace = openSettlementsWorkspace;
       window.openFactoringWorkspace = openFactoringWorkspace;
       window.closeWave6Workspace = closeWave6Workspace;
+      window.loadRelayTransactions = loadRelayTransactions;
       window.refreshRelayTransactions = refreshRelayTransactions;
       window.syncRelayTransactionsNow = syncRelayNow;
       window.importRelayCsvNow = importRelayCsv;
