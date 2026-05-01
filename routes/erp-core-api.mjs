@@ -77,6 +77,42 @@ let qboCatalogAutoSyncTimer = null;
 let qboSyncQueueRetryTimer = null;
 let cacheCleanupTimer = null;
 
+function validateRequired(body, rules) {
+  const errors = {};
+  const b = body && typeof body === 'object' ? body : {};
+  for (const [field, rule] of Object.entries(rules)) {
+    const v = b[field];
+    if (rule === 'required') {
+      if (v === null || v === undefined || String(v).trim() === '') {
+        errors[field] = 'required';
+      }
+    } else if (rule === 'positive_number') {
+      const n = Number(v);
+      if (!Number.isFinite(n) || n <= 0) {
+        errors[field] = 'must be positive number';
+      }
+    } else if (rule === 'nonzero_number') {
+      const n = Number(v);
+      if (!Number.isFinite(n) || n === 0) {
+        errors[field] = 'must be nonzero number';
+      }
+    } else if (rule === 'date') {
+      if (!v || isNaN(Date.parse(String(v)))) {
+        errors[field] = 'required date';
+      }
+    } else if (rule === 'min10chars') {
+      if (!v || String(v).trim().length < 10) {
+        errors[field] = 'minimum 10 characters';
+      }
+    } else if (Array.isArray(rule)) {
+      if (!rule.includes(v)) {
+        errors[field] = 'must be one of: ' + rule.join(', ');
+      }
+    }
+  }
+  return errors;
+}
+
 async function withTimeout(promise, timeoutMs = EXTERNAL_API_TIMEOUT_MS, label = 'external call') {
   let timer = null;
   try {
@@ -4133,6 +4169,25 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/damage/report', async (req, res) => {
     const { unit, driver, damage_type, description, photos, location, timestamp } = req.body || {};
+    const b = {
+      unit_number: unit,
+      description,
+      reported_at: timestamp,
+      driver_name: driver
+    };
+    const _errors = validateRequired(b, {
+      unit_number: 'required',
+      description: 'min10chars',
+      reported_at: 'date',
+      driver_name: 'required'
+    });
+    if (Object.keys(_errors).length) {
+      return res.status(400).json({
+        ok: false,
+        error: 'validation_failed',
+        fields: _errors
+      });
+    }
     try {
       const pool = getPool();
       if (pool) {
@@ -4256,6 +4311,27 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/work-orders', async (req, res) => {
     const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const _validateBody = {
+      unit_number: b.unit_number || b.unit,
+      service_type: b.service_type || b.serviceType,
+      service_date: b.service_date || b.serviceDate,
+      repair_location_type: b.repair_location_type || b.repairLocationType,
+      repair_location_detail: b.repair_location_detail || b.repairLocationDetail
+    };
+    const _errors = validateRequired(_validateBody, {
+      unit_number: 'required',
+      service_type: 'required',
+      service_date: 'date',
+      repair_location_type: 'required',
+      repair_location_detail: 'required'
+    });
+    if (Object.keys(_errors).length) {
+      return res.status(400).json({
+        ok: false,
+        error: 'validation_failed',
+        fields: _errors
+      });
+    }
     const payload = {
       unit_number: String(b.unit_number || b.unit || '').trim() || null,
       service_type: String(b.service_type || b.serviceType || '').trim() || null,
@@ -4357,6 +4433,23 @@ export function mountErpCoreApi(app, opts = {}) {
 
   app.post('/api/transactions', async (req, res) => {
     const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const _validateBody = {
+      txn_type: b.txn_type || b.transaction_type || b.type,
+      amount: b.amount,
+      txn_date: b.txn_date || b.transaction_date || b.txnDate || b.date
+    };
+    const _errors = validateRequired(_validateBody, {
+      txn_type: ['expense', 'bill', 'check', 'payment'],
+      amount: 'nonzero_number',
+      txn_date: 'date'
+    });
+    if (Object.keys(_errors).length) {
+      return res.status(400).json({
+        ok: false,
+        error: 'validation_failed',
+        fields: _errors
+      });
+    }
     const transactionType = String(b.transaction_type || b.type || '').trim();
     const typeKey = normalizeTransactionTypeKey(transactionType);
     const driverId = String(b.driver_id || '').trim();
@@ -5392,6 +5485,27 @@ export function mountErpCoreApi(app, opts = {}) {
     try {
       if (!getPool()) return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set' });
       const b = req.body && typeof req.body === 'object' ? req.body : {};
+      const _validateBody = {
+        unit_number: b.unit_number || b.unit,
+        fuel_type: b.fuel_type || b.fuelType,
+        gallons: b.gallons,
+        total_amount: b.total_amount || b.totalAmount,
+        load_number: b.load_number || b.loadNumber
+      };
+      const _errors = validateRequired(_validateBody, {
+        unit_number: 'required',
+        fuel_type: 'required',
+        gallons: 'positive_number',
+        total_amount: 'positive_number',
+        load_number: 'required'
+      });
+      if (Object.keys(_errors).length) {
+        return res.status(400).json({
+          ok: false,
+          error: 'validation_failed',
+          fields: _errors
+        });
+      }
       await ensureFuelExpenseTables();
       await ensureLoadExpenseLinksTable();
       const fuelType = normalizeFuelTypeKey(b.fuel_type || b.fuelType);
