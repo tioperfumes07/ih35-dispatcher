@@ -36760,6 +36760,199 @@
     })();
   </script>
 
+  <script>
+    (function () {
+      function authHeadersLite() {
+        const token = localStorage.getItem('ih35_token');
+        const h = { Accept: 'application/json' };
+        if (token) h.Authorization = 'Bearer ' + token;
+        return h;
+      }
+
+      async function fetchJsonLite(url) {
+        const res = await fetch(url, { headers: authHeadersLite() });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      }
+
+      function money(n) {
+        const v = Number(n);
+        if (!Number.isFinite(v)) return '—';
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+      }
+
+      function esc(v) {
+        return String(v == null ? '' : v)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;');
+      }
+
+      function renderRecentRows(host, rows, type) {
+        if (!host) return;
+        if (!Array.isArray(rows) || !rows.length) {
+          host.innerHTML = '<div class="acct-approved-sub">No recent records.</div>';
+          return;
+        }
+        host.innerHTML = rows.slice(0, 5).map((r) => {
+          const name = r.vendor_name || r.payee_name || r.vendor || r.payee || r.name || '—';
+          const sub = r.memo || r.description || r.bill_number || r.expense_number || '—';
+          const amt = money(r.amount_total ?? r.amount ?? r.total ?? 0);
+          const dt = String(r.txn_date || r.bill_date || r.expense_date || r.date || '').slice(0, 10) || '—';
+          const status = String(r.status || (r.posted_to_qbo ? 'Posted' : 'Open') || 'Open');
+          const initial = String(name || '?').trim().charAt(0).toUpperCase() || '?';
+          return (
+            '<div class="acct-approved-recent-row">' +
+              '<span class="acct-approved-avatar">' + esc(initial) + '</span>' +
+              '<div><div class="acct-approved-main">' + esc(name) + '</div><div class="acct-approved-sub">' + esc(sub) + '</div></div>' +
+              '<div><div class="acct-approved-amt">' + esc(amt) + '</div><div class="acct-approved-date">' + esc(dt) + '</div></div>' +
+              '<span class="acct-approved-pill ' + (/overdue|late|error/i.test(status) ? 'warn' : 'ok') + '">' + esc(status) + '</span>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      async function fillAccountingHomeApproved() {
+        const sec = document.getElementById('section-accounting');
+        const strip = document.getElementById('acctBoardStrip');
+        if (!sec || !strip) return;
+        if (strip.dataset.approvedHomeReady === '1') return;
+
+        const expMonthSeed = document.getElementById('acctBoardKpiExpMonth')?.textContent?.trim() || '—';
+        const billWeekSeed = document.getElementById('acctBoardKpiBillsWeek')?.textContent?.trim() || '—';
+        const syncSeed = document.getElementById('acctBoardKpiSyncAlerts')?.textContent?.trim() || '—';
+        const unrecSeed = document.getElementById('acctBoardKpiUnreconciled')?.textContent?.trim() || '—';
+
+        sec.classList.add('acct-approved-home');
+        strip.innerHTML =
+          '<div class="acct-approved-home-wrap">' +
+            '<div class="acct-approved-kpis">' +
+              '<div class="acct-approved-kpi-card" onclick="openAccountingTab && openAccountingTab(\'acct-bill-history\', document.getElementById(\'acctBillHistTrigger\'))"><div class="acct-approved-kpi-label">Open Bills</div><div class="acct-approved-kpi-val acct-approved-kpi-val--amber" id="acctApprovedKpiOpenBills">' + esc(billWeekSeed) + '</div><div class="acct-approved-kpi-sub">Needs payment</div></div>' +
+              '<div class="acct-approved-kpi-card" onclick="openAccountingTab && openAccountingTab(\'acct-bill-history\', document.getElementById(\'acctBillHistTrigger\'))"><div class="acct-approved-kpi-label">Overdue Bills</div><div class="acct-approved-kpi-val acct-approved-kpi-val--red" id="acctApprovedKpiOverdueBills">—</div><div class="acct-approved-kpi-sub">Past due date</div></div>' +
+              '<div class="acct-approved-kpi-card"><div class="acct-approved-kpi-label">Spend This Month</div><div class="acct-approved-kpi-val" id="acctApprovedKpiSpendMonth">' + esc(expMonthSeed) + '</div><div class="acct-approved-kpi-sub">Expenses + bills</div></div>' +
+              '<div class="acct-approved-kpi-card"><div class="acct-approved-kpi-label">Unposted To QBO</div><div class="acct-approved-kpi-val acct-approved-kpi-val--red" id="acctApprovedKpiUnposted">' + esc(syncSeed) + '</div><div class="acct-approved-kpi-sub">Sync queue pending</div></div>' +
+              '<div class="acct-approved-kpi-card" onclick="location.href=\'/banking.html\'"><div class="acct-approved-kpi-label">Uncategorized</div><div class="acct-approved-kpi-val acct-approved-kpi-val--amber" id="acctApprovedKpiUncat">' + esc(unrecSeed) + '</div><div class="acct-approved-kpi-sub">Bank queue</div></div>' +
+              '<div class="acct-approved-kpi-card" onclick="location.href=\'/banking.html\'"><div class="acct-approved-kpi-label">Checking Balance</div><div class="acct-approved-kpi-val acct-approved-kpi-val--green" id="acctApprovedKpiChecking">—</div><div class="acct-approved-kpi-sub">Primary account</div></div>' +
+            '</div>' +
+            '<div class="acct-approved-row-2">' +
+              '<div class="acct-approved-card">' +
+                '<div class="acct-approved-card-h">Quick Create</div>' +
+                '<div class="acct-approved-sect-h">Expenses</div>' +
+                '<div class="acct-approved-btn-grid">' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'fuel-expense\')">Fuel Expense</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'repair-expense\')">Repair Expense</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'maintenance-expense\')">Maint. Expense</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'driver-expense\')">Driver Expense</button>' +
+                  '<button type="button" onclick="erpNewExpense()">Expense</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'fuel-fast-entry\')">Fast Entry</button>' +
+                '</div>' +
+                '<div class="acct-approved-sect-h">Bills</div>' +
+                '<div class="acct-approved-btn-grid">' +
+                  '<button type="button" onclick="erpOpenRepairBill()">Repair Bill</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'fuel-bill\')">Fuel Bill</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'maintenance-bill\')">Maint. Bill</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'driver-bill\')">Driver Bill</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'vendor-bill\')">Bill</button>' +
+                  '<button type="button" onclick="erpOpenMultiBillsModal()">Multiple Bills</button>' +
+                '</div>' +
+                '<div class="acct-approved-sect-h">Payments</div>' +
+                '<div class="acct-approved-btn-grid">' +
+                  '<button type="button" onclick="erpNewPayBills()">Bill Payment</button>' +
+                  '<button type="button" onclick="erpOpenWriteCheckModal()">Write Check</button>' +
+                  '<button type="button" onclick="erpOpenDedicatedAccountingForm(\'bank-transfer\')">Bank Transfer</button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="acct-approved-card">' +
+                '<div class="acct-approved-card-h"><span>Bank Accounts</span><a class="acct-approved-card-link" href="/banking.html">Go to Banking →</a></div>' +
+                '<div id="acctApprovedBankSummary" class="acct-approved-bank-list"><div class="acct-approved-sub">Loading accounts...</div></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="acct-approved-row-3">' +
+              '<div class="acct-approved-card"><div class="acct-approved-card-h"><span>Recent Bills</span><button type="button" class="acct-approved-card-link" onclick="openAccountingTab(\'acct-bill-history\', document.getElementById(\'acctBillHistTrigger\'))">View all →</button></div><div id="acctApprovedRecentBills" class="acct-approved-recent-list"></div></div>' +
+              '<div class="acct-approved-card"><div class="acct-approved-card-h"><span>Recent Expenses</span><button type="button" class="acct-approved-card-link" onclick="openAccountingTab(\'acct-expense-history\', document.getElementById(\'acctLogsDdTrigger\'))">View all →</button></div><div id="acctApprovedRecentExpenses" class="acct-approved-recent-list"></div></div>' +
+            '</div>' +
+          '</div>';
+
+        strip.dataset.approvedHomeReady = '1';
+
+        try {
+          const accounts = await fetchJsonLite('/api/banking/accounts');
+          const tx = await fetchJsonLite('/api/banking/transactions');
+          const list = Array.isArray(accounts?.accounts) ? accounts.accounts : [];
+          const rows = Array.isArray(tx?.rows) ? tx.rows : Array.isArray(tx) ? tx : [];
+          const summary = document.getElementById('acctApprovedBankSummary');
+          const uncatByAcct = new Map();
+          rows.forEach((r) => {
+            const acctId = String(r.account_id || r.bank_account_id || r.accountId || '');
+            if (!acctId) return;
+            const isCat = !!(r.is_categorized || r.category || r.matched_ref || r.match_ref || r.erp_txn_id);
+            if (!isCat) uncatByAcct.set(acctId, (uncatByAcct.get(acctId) || 0) + 1);
+          });
+          if (summary) {
+            summary.innerHTML = list.map((a) => {
+              const id = String(a.id || a.account_id || a.qbo_account_id || '');
+              const bal = Number(a.balance || a.current_balance || 0);
+              const uncat = uncatByAcct.get(id) || 0;
+              const statusCls = uncat > 0 ? 'warn' : 'ok';
+              return (
+                '<div class="acct-approved-bank-tile">' +
+                  '<div class="acct-approved-bank-label">' + esc(a.bank_label || a.type || 'Bank') + '</div>' +
+                  '<div class="acct-approved-bank-name">' + esc(a.name || a.account_name || 'Account') + '</div>' +
+                  '<div class="acct-approved-bank-balance ' + (bal < 0 ? 'neg' : '') + '">' + esc(money(bal)) + '</div>' +
+                  '<div class="acct-approved-bank-sub"><span class="acct-approved-pill ' + statusCls + '">' + (uncat > 0 ? 'Needs Match' : 'Reconciled') + '</span><span>' + esc(String(uncat)) + ' uncategorized</span></div>' +
+                '</div>'
+              );
+            }).join('') || '<div class="acct-approved-sub">No DIP accounts.</div>';
+          }
+          const checking = list.find((a) => /checking/i.test(String(a.name || a.account_name || ''))) || list[0];
+          if (checking) {
+            const v = Number(checking.balance || checking.current_balance || 0);
+            const el = document.getElementById('acctApprovedKpiChecking');
+            if (el) {
+              el.textContent = money(v);
+              el.classList.toggle('acct-approved-kpi-val--red', v < 0);
+              el.classList.toggle('acct-approved-kpi-val--green', v >= 0);
+            }
+          }
+          const uncatCount = rows.filter((r) => !(r.is_categorized || r.category || r.matched_ref || r.match_ref || r.erp_txn_id)).length;
+          const uncatEl = document.getElementById('acctApprovedKpiUncat');
+          if (uncatEl) uncatEl.textContent = String(uncatCount);
+        } catch (_) {}
+
+        async function loadRecent() {
+          const billsHost = document.getElementById('acctApprovedRecentBills');
+          const expHost = document.getElementById('acctApprovedRecentExpenses');
+          try {
+            const [bills, exp] = await Promise.all([
+              fetchJsonLite('/api/accounting/bills?limit=5').catch(() => ({ rows: [] })),
+              fetchJsonLite('/api/accounting/expenses?limit=5').catch(() => ({ rows: [] }))
+            ]);
+            const billRows = Array.isArray(bills?.rows) ? bills.rows : Array.isArray(bills) ? bills : [];
+            const expRows = Array.isArray(exp?.rows) ? exp.rows : Array.isArray(exp) ? exp : [];
+            renderRecentRows(billsHost, billRows, 'bill');
+            renderRecentRows(expHost, expRows, 'expense');
+          } catch (_) {
+            renderRecentRows(billsHost, [], 'bill');
+            renderRecentRows(expHost, [], 'expense');
+          }
+        }
+        void loadRecent();
+      }
+
+      const boot = () => {
+        if (!document.body || !document.body.classList.contains('erp-maintenance')) return;
+        void fillAccountingHomeApproved();
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot, { once: true });
+      } else {
+        boot();
+      }
+    })();
+  </script>
+
 
 
 </body>

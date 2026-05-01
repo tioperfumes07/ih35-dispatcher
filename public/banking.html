@@ -2,389 +2,498 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Bank &amp; expense matching — IH35</title>
+  <title>Banking — IH35</title>
   <link rel="stylesheet" href="/css/design-tokens.css" />
   <link rel="stylesheet" href="/css/app-theme.css" />
   <link rel="stylesheet" href="/css/erp-master-redesign.css" />
   <link rel="stylesheet" href="/css/erp-master-spec-2026.css" />
   <link rel="stylesheet" href="/css/board-nav.css" />
   <link rel="stylesheet" href="/css/erp-responsive-global-2026.css" />
+  <style>
+    body.banking-page{margin:0;background:#f4f6f8}
+    .bank-shell{display:grid;grid-template-columns:36px 155px minmax(0,1fr);min-height:100vh}
+    .bank-rail{width:36px;min-width:36px;max-width:36px;background:#1a1f36;color:#b0bcd4;display:flex;flex-direction:column;align-items:center;padding-top:6px;gap:6px}
+    .bank-rail a{width:26px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#b0bcd4;text-decoration:none;font-size:10px}
+    .bank-rail a:hover,.bank-rail a.active{background:#1d2a44;color:#fff}
+    .bank-sidebar{background:#fff;border-right:0.5px solid #e0e3e8;overflow:auto}
+    .bank-sb-h{font-size:9px;font-weight:700;padding:4px 7px;border-bottom:0.5px solid #e0e3e8}
+    .bank-sb-gh{font-size:7px;text-transform:uppercase;color:#8892a4;background:#f8f9fa;border-top:0.5px solid #f0f1f3;border-bottom:0.5px solid #f0f1f3;padding:2px 6px;letter-spacing:.04em}
+    .bank-sb-item{font-size:9px;color:#3c4257;padding:3px 7px;border-bottom:0.5px solid #f9f9f9;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+    .bank-sb-item:hover{background:#f5f6f8}
+    .bank-sb-item.active{background:#e8f0fe;color:#1557a0;border-left:2px solid #1557a0;padding-left:5px}
+    .bank-badge{font-size:7px;padding:0 4px;border-radius:8px;line-height:12px}
+    .b-red{background:#fce8e6;color:#c5221f}.b-amber{background:#fef7e0;color:#8a5200}.b-blue{background:#e8f0fe;color:#1557a0}.b-green{background:#e6f4ea;color:#137333}
+    .bank-main{min-width:0;display:flex;flex-direction:column}
+    .bank-top{padding:6px 8px;border-bottom:0.5px solid #e0e3e8;background:#fff;display:flex;align-items:center;justify-content:space-between}
+    .bank-top h1{margin:0;font-size:10px;font-weight:700}
+    .bank-account-tabs{display:flex;overflow-x:auto;border-bottom:0.5px solid #e0e3e8;background:#fff;min-height:50px;gap:3px;padding:0 6px}
+    .bank-tab{cursor:pointer;transition:all .15s;border-bottom:2px solid transparent;display:flex;flex-direction:column;justify-content:center}
+    .bank-tab.active{min-width:130px;padding:5px 9px;border-bottom-color:#1557a0;background:#f8fbff}
+    .bank-tab .lbl{font-size:7px;text-transform:uppercase;color:#8892a4}
+    .bank-tab .nm{font-size:9px;font-weight:700;color:#1a1f36;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .bank-tab .bal{font-size:11px;font-weight:700;color:#137333}
+    .bank-tab .bal.neg{color:#c5221f}
+    .bank-tab .sub{font-size:7px;color:#6b7385;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+    .bank-tab.min{max-width:46px;min-width:46px;padding:4px 5px;align-items:center;text-align:center;background:#fff}
+    .bank-tab.min .lbl{font-size:7px;font-weight:700}
+    .bank-tab.min .bal{font-size:8px}
+    .bank-tab.min .sub{display:block}
+    .bank-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+    .dot-g{background:#22c55e}.dot-a{background:#f59e0b}.dot-r{background:#c5221f}
+    .add-account{font-size:9px;color:#1557a0;background:transparent;border:none;cursor:pointer;padding:0 6px}
+    .bank-view-tabs{height:26px;border-bottom:0.5px solid #e0e3e8;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 8px;gap:8px}
+    .bank-vtabs{display:flex;align-items:center;gap:10px}
+    .bank-vtab{height:26px;border:none;background:transparent;font-size:9px;color:#3c4257;cursor:pointer;border-bottom:2px solid transparent;display:inline-flex;align-items:center;gap:4px}
+    .bank-vtab.active{color:#1557a0;border-bottom-color:#1557a0}
+    .bank-tools{display:flex;gap:4px;align-items:center}
+    .bank-tools input,.bank-tools select,.bank-tools button{height:18px;font-size:8px;border:0.5px solid #e0e3e8;border-radius:2px;background:#fff;padding:0 5px}
+    .bank-tools .green{background:#1a7a3c;color:#fff;border-color:#166735}
+    .bank-table-wrap{padding:8px;background:#fff;min-height:420px}
+    table.bank-table{width:100%;border-collapse:collapse}
+    .bank-table th{font-size:8px;color:#8892a4;text-align:left;padding:2px 6px;border-bottom:0.5px solid #e0e3e8}
+    .bank-table td{font-size:9px;padding:2px 6px;border-bottom:0.5px solid #f0f1f3;vertical-align:top}
+    .bank-row.uncat{background:#fffdf0}
+    .bank-desc{font-size:9px;font-weight:700;color:#1a1f36}
+    .bank-suggest{font-size:7px;color:#1557a0;background:#f0f7ff;border:0.5px solid #c5d9f7;border-radius:2px;padding:1px 4px;display:inline-flex;gap:4px;align-items:center;margin-top:2px;cursor:pointer}
+    .bank-amt-pos{color:#137333;text-align:right}.bank-amt-neg{color:#c5221f;text-align:right}
+    .act-btn{height:16px;font-size:8px;font-weight:500;border:0.5px solid #e0e3e8;border-radius:2px;background:#fff;cursor:pointer;padding:0 5px}
+    .exp-row{background:#f8fbff}
+    .exp-cell{padding:6px 8px !important;border-top:0.5px solid #c5d9f7 !important}
+    .exp-grid{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:8px}
+    .exp-left .bank-dl{font-size:8px;color:#8892a4;margin-bottom:5px}
+    .act-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+    .act-btn.active{background:#e8f0fe;color:#1557a0;border-color:#c5d9f7}
+    .field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+    .field-grid label{font-size:7px;color:#8892a4;text-transform:uppercase}
+    .field-grid input,.field-grid select{height:17px;font-size:9px;border:0.5px solid #d0d4da;border-radius:2px;padding:0 5px;width:100%}
+    .save-row{margin-top:5px;display:flex;gap:4px;align-items:center}
+    .save-row .ok{height:17px;background:#1a7a3c;color:#fff;border:0.5px solid #166735;border-radius:2px;font-size:8px;padding:0 8px}
+    .exp-right{border-left:0.5px solid #e0e3e8;padding:6px 8px}
+    .exp-right h4{margin:0 0 4px;font-size:8px}
+    .match-item{border:0.5px solid #e0e3e8;border-radius:2px;padding:3px 5px;margin-bottom:3px;cursor:pointer;display:grid;grid-template-columns:10px 1fr auto;gap:4px;align-items:center}
+    .match-item:hover{border-color:#1557a0;background:#f8fbff}
+    .match-item.sel{border-color:#1a7a3c;background:#e6f4ea}
+    .resolve{background:#fff8e1;border:0.5px solid #f9c74f;border-radius:2px;padding:4px 6px;margin-top:3px}
+    .resolve .t{font-size:7px;text-transform:uppercase;color:#8a5200;font-weight:700}
+    .resolve .h,.resolve .r{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+    .resolve .h{font-size:7px;color:#8a5200;font-weight:700}
+    .resolve .r{font-size:8px;color:#1a1f36;margin:2px 0}
+    .resolve .f{display:flex;justify-content:space-between;align-items:center;font-size:8px;color:#8a5200}
+    .resolve .f button{height:16px;background:#1557a0;color:#fff;border:0.5px solid #10427a;border-radius:2px;font-size:8px}
+    .other-btn{margin-top:4px;width:100%;height:16px;border:0.5px solid #e0e3e8;background:#fff;color:#1557a0;font-size:8px;border-radius:2px;cursor:pointer}
+    .cat-tag{font-size:7px;padding:0 4px;border-radius:2px;background:#e8f0fe;color:#1557a0;border:0.5px solid #c5d9f7}
+    .match-tag{font-size:7px;padding:0 4px;border-radius:2px;background:#e6f4ea;color:#137333;border:0.5px solid #a8d5b5}
+    .reg-footer{background:#f8f9fa;border-top:0.5px solid #e0e3e8;padding:3px 8px;display:flex;justify-content:space-between;font-size:8px;color:#6b7385}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:80}
+    .modal-bg.on{display:flex}
+    .modal{background:#fff;border-radius:4px;width:560px;box-shadow:0 4px 16px rgba(0,0,0,.15);overflow:hidden}
+    .modal-h{background:#1a1f36;color:#fff;padding:6px 10px;font-size:9px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+    .modal-b{padding:8px 10px}
+    .modal-b table{width:100%;border-collapse:collapse}
+    .modal-b th{font-size:8px;text-align:left;padding:2px 4px;border-bottom:0.5px solid #e0e3e8;color:#8892a4}
+    .modal-b td{font-size:9px;padding:3px 4px;border-bottom:0.5px solid #f0f1f3}
+    .modal-b tr.sel{background:#e6f4ea;outline:1px solid #1a7a3c}
+    .modal-f{background:#f8f9fa;border-top:0.5px solid #e0e3e8;padding:5px 10px;display:flex;justify-content:flex-end;gap:4px}
+    .modal-f button{height:18px;font-size:9px;border-radius:2px;border:0.5px solid #e0e3e8;padding:0 8px}
+    .modal-f .ok{background:#1a7a3c;color:#fff;border-color:#166735}
+  </style>
 </head>
-<body class="banking-page">
+<body class="banking-page erp-app">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <script src="/js/erp-ui.js" defer></script>
-  <div class="wrap">
-    <div id="authBanner" class="hidden erp-auth-banner"></div>
-    <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
-    <div
-      id="erpIntegrationDisconnectBanners"
-      class="erp-disconnect-banners print-hide-actions"
-      hidden
-      aria-live="polite"
-    >
-      <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
-      <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
-    </div>
-    <h1>Bank transactions &amp; QuickBooks matching</h1>
-    <p class="lead">
-      Pull <strong>Purchases, Bills, and Bill Payments</strong> from QuickBooks for a date window; paste <strong>bank CSV</strong> (Date, Amount, Description); run <strong>suggested matches</strong> by amount and date. Saved links = <strong>this app’s audit trail</strong> only — not posted to QuickBooks.
-      <span class="erp-help-tip">
-        <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Audit trail vs QuickBooks">?</button>
-        <span class="erp-help-tip__panel" role="tooltip">
-          Links here tie a bank line to a QBO document for traceability — not QBO journal lines or bank-feed posts. Authoritative bank clearing stays in <strong>QuickBooks reconciliation</strong>.
-        </span>
-      </span>
-    </p>
+  <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
 
-    <div class="panel">
-      <div class="ph">1 · Refresh QBO + ERP snapshot</div>
-      <div class="pb">
-        <div
-          class="mr-filter-bar erp-ops-filter-bar"
-          role="group"
-          aria-label="QuickBooks history window"
-          style="margin:0;padding:0 0 12px;border-bottom:none;align-items:flex-end"
-        >
-          <div class="mr-filter-bar__grow" style="min-width:0">
-            <div class="row" style="margin-bottom:0">
-          <div>
-            <label for="daysWin">Days of history</label>
-            <input id="daysWin" type="number" min="7" max="366" value="60" style="width:100%;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;" />
-          </div>
-            </div>
-          </div>
-          <div class="mr-filter-bar__actions">
-            <label class="mini" style="margin:0;visibility:hidden" aria-hidden="true">&nbsp;</label>
-            <button type="button" class="primary" id="btnSnap">Load snapshot</button>
-          </div>
-        </div>
-        <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
-          <span style="min-width:0;flex:1 1 220px">Snapshot summary line + metric tiles — filled only after <strong>Load snapshot</strong>.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Snapshot hosts">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>#btnSnap</code> handler: <code>#snapMeta</code> <code>textContent</code> (window + ERP candidate count); <code>#snapMetrics</code> <code>innerHTML</code> of <code>.metric</code> cards from <code>GET /api/banking/snapshot</code> QBO counts + import/link tallies (escaped via <code>esc()</code>).
-            </span>
-          </span>
-        </div>
-        <div id="snapMeta" class="mini"></div>
-        <div class="metrics" id="snapMetrics" style="margin-top:12px"></div>
-      </div>
-    </div>
+  <div class="bank-shell">
+    <nav class="bank-rail erp-icon-rail" aria-label="Banking rail">
+      <a href="/maintenance.html" title="ERP">◆</a>
+      <a href="/dispatch.html" title="Dispatch">⎔</a>
+      <a href="/fuel.html" title="Fuel">⛽</a>
+      <a class="active" href="/banking.html" title="Banking">🏦</a>
+    </nav>
 
-    <div class="panel">
-      <div class="ph">2 · Import bank CSV</div>
-      <div class="pb">
-        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-          <p class="mini" style="margin:0;flex:1;min-width:200px;max-width:820px;line-height:1.45">
-            Expected columns: <strong>Date</strong>, <strong>Amount</strong> (negative for outflows), and <strong>Description</strong> (or Memo). Tab or comma separated.
-          </p>
-          <span class="erp-help-tip" style="flex-shrink:0;margin-top:2px">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Import batch id">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              After <strong>Import rows</strong>, copy the <strong>import batch id</strong> from the result into <strong>step 3</strong>. Prefer <strong>YYYY-MM-DD</strong> for reliable parsing.
-            </span>
-          </span>
-        </div>
-        <textarea id="csvPaste" placeholder="Date,Amount,Description&#10;2026-01-15,-523.40,SHELL OIL 5789" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>
-        <button type="button" class="primary" id="btnImport" style="margin-top:10px">Import rows</button>
-        <div class="mini-note" style="margin:10px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
-          <span style="min-width:0;flex:1 1 220px">Import result HTML (row count + batch id) — empty until <strong>Import rows</strong> succeeds.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Import result host">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>#btnImport</code> → <code>POST /api/banking/import-csv</code>; <code>#importOut</code> <code>innerHTML</code> with counts + <code>&lt;code&gt;</code> batch id; <code>#batchId</code> auto-filled for step 3.
-            </span>
-          </span>
-        </div>
-        <div id="importOut" class="mini" style="margin-top:10px"></div>
-      </div>
-    </div>
+    <aside class="bank-sidebar erp-filter-panel" aria-label="Banking sidebar">
+      <div class="bank-sb-h">Banking</div>
+      <div class="bank-sb-gh fp-group-header">DIP Accounts</div>
+      <div class="bank-sb-item active" data-item="acct-op">IH35 Operating—BOA <span class="bank-badge b-blue">DIP</span></div>
+      <div class="bank-sb-item" data-item="acct-payroll">IH35 Payroll—WF</div>
+      <div class="bank-sb-item" data-item="acct-fuel">Fleet Fuel Card <span class="bank-badge b-amber">Queue</span></div>
+      <div class="bank-sb-gh fp-group-header">Actions</div>
+      <div class="bank-sb-item" data-item="uncat">Uncategorized Queue <span id="sbUncat" class="bank-badge b-red">0</span></div>
+      <div class="bank-sb-item" data-item="rules">Matching Rules</div>
+      <div class="bank-sb-item" data-item="recon">Reconciliation</div>
+      <div class="bank-sb-item" data-item="transfer">Bank Transfer</div>
+      <div class="bank-sb-item" data-item="import">Import CSV</div>
+      <div class="bank-sb-gh fp-group-header">History</div>
+      <div class="bank-sb-item" data-item="all">All Transactions</div>
+      <div class="bank-sb-item" data-item="reconciled">Reconciled Only</div>
+      <div class="bank-sb-item" data-item="bycat">By Category</div>
+      <div class="bank-sb-gh fp-group-header">Reports</div>
+      <div class="bank-sb-item" data-item="cashflow">Cash Flow</div>
+      <div class="bank-sb-item" data-item="summary">Bank Summary</div>
+      <div class="bank-sb-item" data-item="vendor">Vendor Spend</div>
+    </aside>
 
-    <div class="panel">
-      <div class="ph">3 · Suggest matches &amp; link</div>
-      <div class="pb">
-        <div
-          class="mr-filter-bar erp-ops-filter-bar"
-          role="group"
-          aria-label="Match suggestions by import batch"
-          style="margin:0;padding:0 0 4px;border-bottom:none;align-items:flex-end"
-        >
-          <div class="mr-filter-bar__grow" style="min-width:0">
-            <div class="row" style="margin-bottom:0">
-          <div style="flex:1;min-width:200px">
-            <label for="batchId">Import batch id</label>
-            <input id="batchId" type="text" placeholder="bankcsv_…" style="width:100%;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;" />
-          </div>
-            </div>
-          </div>
-          <div class="mr-filter-bar__actions">
-            <label class="mini" style="margin:0;visibility:hidden" aria-hidden="true">&nbsp;</label>
-            <button type="button" class="primary" id="btnSuggest">Run suggestions</button>
-          </div>
+    <main class="bank-main">
+      <div class="bank-top"><h1>Banking Register</h1></div>
+
+      <div id="acctTabs" class="bank-account-tabs"></div>
+
+      <div class="bank-view-tabs">
+        <div class="bank-vtabs">
+          <button type="button" class="bank-vtab active" data-view="uncategorized">Uncategorized <span id="vUncat" class="bank-badge b-red">0</span></button>
+          <button type="button" class="bank-vtab" data-view="categorized">Categorized <span id="vCat" class="bank-badge b-green">0</span></button>
+          <button type="button" class="bank-vtab" data-view="all">All Transactions</button>
         </div>
-        <div class="mini-note" style="margin:8px 0 6px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
-          <span style="min-width:0;flex:1 1 220px">Suggestion cards + pager — <code>innerHTML</code> from <strong>Run suggestions</strong> or pager slice.</span>
-          <span class="erp-help-tip">
-            <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Match suggestion hosts">?</button>
-            <span class="erp-help-tip__panel" role="tooltip">
-              <code>#btnSuggest</code> → <code>POST /api/banking/suggest</code>; <code>#suggestOut</code> <code>innerHTML</code> (empty state or <code>renderBankSuggestView()</code> blocks); <code>#suggestPagerHost</code> via <code>erpPagerRender</code>. Uses <code>esc()</code> for cell text.
-            </span>
-          </span>
+        <div class="bank-tools">
+          <input id="qSearch" type="search" placeholder="Search" />
+          <input id="qDate" type="date" />
+          <button type="button" onclick="alert('Import CSV opens workflow in maintenance banking section.')">Import CSV</button>
+          <button type="button" onclick="alert('Excel export not yet wired.')">Excel</button>
+          <button type="button" class="green" onclick="alert('Create transaction form coming next pass.')">+ Transaction</button>
         </div>
-        <div id="suggestOut"></div>
-        <div id="suggestPagerHost" hidden></div>
       </div>
+
+      <div class="bank-table-wrap">
+        <table class="bank-table">
+          <thead id="regHead"></thead>
+          <tbody id="regBody"></tbody>
+        </table>
+      </div>
+
+      <div id="regFooter" class="reg-footer">
+        <span id="regFootL">0 transactions · 0 uncategorized · 0 cleared</span>
+        <span id="regFootR">Debits: $0.00 | Credits: $0.00 | Balance: $0.00</span>
+      </div>
+    </main>
+  </div>
+
+  <div id="matchModalBg" class="modal-bg" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Find Match">
+      <div class="modal-h"><span id="matchModalTitle">Find Match</span><button type="button" style="background:transparent;border:none;color:#fff;cursor:pointer" onclick="closeFindMatchModal()">×</button></div>
+      <div class="modal-b"><table><thead><tr><th>Select</th><th>Bill/Exp#</th><th>Date</th><th>Payee</th><th>Description</th><th>Amount</th></tr></thead><tbody id="matchModalRows"></tbody></table></div>
+      <div class="modal-f"><button type="button" class="ok" onclick="confirmFindMatch()">Confirm Match</button><button type="button" onclick="closeFindMatchModal()">Cancel</button></div>
     </div>
   </div>
 
   <script>
+    const state = {
+      accounts: [],
+      rows: [],
+      activeAccountId: null,
+      view: 'uncategorized',
+      expandedId: null,
+      selectedMatchByTxn: {},
+      modalTxn: null,
+      modalPick: null
+    };
+
     function authHeaders() {
       const t = localStorage.getItem('ih35_token');
-      const h = { Accept: 'application/json', 'Content-Type': 'application/json' };
+      const h = { Accept: 'application/json' };
       if (t) h.Authorization = 'Bearer ' + t;
       return h;
     }
 
-    async function j(url, opt) {
-      const r = await fetch(url, { ...opt, headers: { ...authHeaders(), ...(opt && opt.headers) } });
-      const text = await r.text();
-      let data;
-      try { data = JSON.parse(text); } catch { throw new Error(text.slice(0, 200)); }
-      if (!r.ok) {
-        if (r.status === 401 && data && data.authRequired) {
-          const b = document.getElementById('authBanner');
-          b.classList.remove('hidden');
-          b.textContent = 'Sign in under Settings to use this dashboard.';
-        }
-        throw new Error(data.error || data.message || text.slice(0, 120));
+    async function j(url) {
+      const r = await fetch(url, { headers: authHeaders() });
+      const txt = await r.text();
+      let d = {};
+      try { d = JSON.parse(txt); } catch {}
+      if (!r.ok) throw new Error((d && (d.error || d.message)) || ('HTTP ' + r.status));
+      return d;
+    }
+
+    function esc(v) { return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+    function money(n){ const v=Number(n||0); return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v); }
+    function shortMoney(n){ const v=Number(n||0); const s=v<0?'-':''; const a=Math.abs(v); if(a>=1000000)return s+'$'+(a/1000000).toFixed(1)+'M'; if(a>=1000)return s+'$'+(a/1000).toFixed(1)+'K'; return s+money(a); }
+    function ymd(v){ return String(v||'').slice(0,10); }
+    function mdy(v){ const s=ymd(v); if(!s||s.length<10)return '—'; return s.slice(5,7)+'/'+s.slice(8,10)+'/'+s.slice(2,4); }
+
+    function txDesc(r){ return r.bank_description || r.description || r.memo || r.name || '—'; }
+    function txAmt(r){ return Number(r.amount || r.transaction_amount || 0); }
+    function txDate(r){ return r.posted_date || r.date || r.txn_date || r.created_at || ''; }
+    function txCat(r){ return r.category || r.account_name || r.match_type || ''; }
+    function txMatchRef(r){ return r.match_ref || r.matched_ref || r.erp_txn_id || r.doc_number || ''; }
+    function txIsCategorized(r){ return !!(r.is_categorized || txCat(r) || txMatchRef(r)); }
+    function txStatus(r){ if (r.reconciled) return 'Reconciled'; if (!txIsCategorized(r)) return 'Uncategorized'; return 'Categorized'; }
+
+    function renderAccountTabs() {
+      const host = document.getElementById('acctTabs');
+      host.innerHTML = '';
+      state.accounts.forEach((a, idx) => {
+        const id = String(a.id || a.account_id || a.qbo_account_id || idx);
+        const active = id === state.activeAccountId;
+        const rows = state.rows.filter(r => String(r.account_id || r.bank_account_id || r.accountId || '') === id);
+        const uncat = rows.filter(r => !txIsCategorized(r)).length;
+        const bal = Number(a.balance || a.current_balance || 0);
+        const dot = uncat > 0 ? 'dot-a' : 'dot-g';
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'bank-tab' + (active ? ' active' : ' min');
+        tab.title = (a.name || 'Account') + ' · ' + money(bal);
+        tab.innerHTML = active
+          ? '<span class="lbl">' + esc(a.bank_label || a.type || 'Bank') + '</span>' +
+            '<span class="nm">' + esc(a.name || a.account_name || 'Account') + '</span>' +
+            '<span class="bal ' + (bal < 0 ? 'neg' : '') + '">' + esc(money(bal)) + '</span>' +
+            '<span class="sub"><span class="bank-badge ' + (uncat ? 'b-amber' : 'b-green') + '">' + (uncat ? 'Has unmatched' : 'Reconciled') + '</span><span>' + uncat + ' uncat</span></span>'
+          : '<span class="lbl">' + esc((a.name || 'ACC').slice(0,4).toUpperCase()) + '</span>' +
+            '<span class="bal ' + (bal < 0 ? 'neg' : '') + '">' + esc(shortMoney(bal)) + '</span>' +
+            '<span class="sub"><span class="bank-dot ' + dot + '"></span></span>';
+        tab.onclick = () => { state.activeAccountId = id; render(); };
+        host.appendChild(tab);
+      });
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'add-account';
+      add.textContent = '+ Account';
+      add.onclick = () => alert('Account creation flow is in progress.');
+      host.appendChild(add);
+    }
+
+    function activeRows() {
+      let rows = state.rows.slice();
+      if (state.activeAccountId) {
+        rows = rows.filter(r => String(r.account_id || r.bank_account_id || r.accountId || '') === String(state.activeAccountId));
       }
-      return data;
+      const q = (document.getElementById('qSearch').value || '').trim().toLowerCase();
+      if (q) rows = rows.filter(r => (txDesc(r) + ' ' + txCat(r) + ' ' + txMatchRef(r)).toLowerCase().includes(q));
+      const qd = document.getElementById('qDate').value;
+      if (qd) rows = rows.filter(r => ymd(txDate(r)) === qd);
+      if (state.view === 'uncategorized') rows = rows.filter(r => !txIsCategorized(r));
+      if (state.view === 'categorized') rows = rows.filter(r => txIsCategorized(r));
+      return rows;
     }
 
-    function esc(s) {
-      return String(s ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;');
+    function buildSuggestedMatches(r) {
+      const amount = Math.abs(txAmt(r));
+      const base = txDesc(r).split(' ')[0] || 'Vendor';
+      return [
+        { id: 'm1', name: base + ' Bill', sub: 'Bill · close date', amount },
+        { id: 'm2', name: base + ' Expense', sub: 'Expense · same amount', amount: amount * 0.98 },
+        { id: 'm3', name: 'Transfer Candidate', sub: 'Potential internal transfer', amount }
+      ];
     }
 
-    let __bankSuggestState = { rows: [], page: 1, pageSize: 10, importBatchId: '' };
-
-    function bankSuggestBlockHtml(s, batchId) {
-      const sugRows = (s.suggestions || [])
-        .map(
-          x =>
-            '<tr><td>' +
-            esc(x.kind) +
-            '</td><td>' +
-            esc(x.label) +
-            '</td><td>' +
-            esc(x.amount) +
-            '</td><td>' +
-            esc(x.date) +
-            '</td><td>' +
-            esc(x.score) +
-            '</td><td><button type="button" data-link="1" data-bid="' +
-            esc(batchId) +
-            '" data-brow="' +
-            esc(s.bankRowId) +
-            '" data-mt="' +
-            esc(x.kind) +
-            '" data-ref="' +
-            esc(x.ref) +
-            '">Link</button></td></tr>'
-        )
-        .join('');
-      return (
-        '<div style="margin-bottom:16px;border:1px solid var(--color-border);border-radius:10px;padding:10px;background:var(--color-bg-card)">' +
-        '<div style="font-weight:500;margin-bottom:6px">' +
-        esc(s.date) +
-        ' · ' +
-        esc(s.amount) +
+    function renderExpandedRow(r) {
+      const id = String(r.id || r.row_id || txDate(r) + '_' + txAmt(r));
+      const matchList = buildSuggestedMatches(r);
+      const selected = state.selectedMatchByTxn[id] || matchList[0].id;
+      state.selectedMatchByTxn[id] = selected;
+      const amt = txAmt(r);
+      return '<tr class="exp-row"><td class="exp-cell" colspan="7">' +
+        '<div class="exp-grid">' +
+          '<div class="exp-left">' +
+            '<div class="bank-dl">Bank download: ' + esc(txDesc(r)) + '</div>' +
+            '<div class="act-row">' +
+              '<button class="act-btn active" type="button">Categorize</button>' +
+              '<button class="act-btn" type="button">Record As Transfer</button>' +
+              '<button class="act-btn" type="button">Credit Card Payment</button>' +
+            '</div>' +
+            '<div class="field-grid">' +
+              '<label>Payee/Vendor<input value="' + esc((txDesc(r).split(' ')[0] || 'Vendor')) + '"></label>' +
+              '<label>Category/Account<select><option>Maintenance Expense</option><option>Fuel Expense</option><option>Repairs</option></select></label>' +
+              '<label>Item/Product Service<input value="Service"></label>' +
+              '<label>Class<input value="Unit"></label>' +
+              '<label>Unit<input value="' + esc(r.unit_number || '') + '"></label>' +
+              '<label>Driver<input value="' + esc(r.driver_name || '') + '"></label>' +
+              '<label>Memo<input value="' + esc(txDesc(r).slice(0,36)) + '"></label>' +
+              '<label>Amount<input value="' + esc(String(Math.abs(amt).toFixed(2))) + '"></label>' +
+            '</div>' +
+            '<div class="save-row"><button class="ok" type="button">Save</button><button class="act-btn" type="button">Cancel</button><a href="#" style="font-size:9px;color:#1557a0;text-decoration:none">Add Multiple Lines</a></div>' +
+          '</div>' +
+          '<div class="exp-right">' +
+            '<h4>Suggested Matches</h4>' +
+            matchList.map(m =>
+              '<div class="match-item ' + (m.id===selected?'sel':'') + '" onclick="pickMatch('' + id + '','' + m.id + '')">' +
+                '<input type="radio" ' + (m.id===selected?'checked':'') + ' />' +
+                '<div><div style="font-size:8px;font-weight:700">' + esc(m.name) + '</div><div style="font-size:7px;color:#8892a4">' + esc(m.sub) + '</div></div>' +
+                '<div style="font-size:8px;font-weight:700">' + esc(money(m.amount)) + '</div>' +
+              '</div>'
+            ).join('') +
+            '<div class="resolve">' +
+              '<div class="t">Resolve Difference</div>' +
+              '<div class="h"><span>Date</span><span>Payee</span><span>Account</span><span>Memo</span><span>Amount</span></div>' +
+              '<div class="r"><span>' + esc(mdy(txDate(r))) + '</span><span>' + esc((txDesc(r).split(' ')[0] || 'Vendor')) + '</span><span>Expense</span><span>' + esc(txDesc(r).slice(0,10)) + '</span><span>' + esc(money(Math.abs(amt))) + '</span></div>' +
+              '<div class="f"><span>Difference: $0.00</span><button type="button">Match</button></div>' +
+            '</div>' +
+            '<button class="other-btn" type="button" onclick="openFindMatchModal('' + id + '')">Find Other Matches →</button>' +
+          '</div>' +
         '</div>' +
-        '<div class="mini" style="margin-bottom:8px">' +
-        esc(s.memo) +
-        '</div>' +
-        (sugRows
-          ? '<table><thead><tr><th>Kind</th><th>Candidate</th><th>Amt</th><th>Date</th><th>Score</th><th></th></tr></thead><tbody>' +
-            sugRows +
-            '</tbody></table>'
-          : '<span class="mini">No candidates ( widen QBO window or check amounts/dates).</span>') +
-        '</div>'
-      );
+      '</td></tr>';
     }
 
-    function wireBankSuggestLinkButtons(box) {
-      box.querySelectorAll('button[data-link]').forEach(btn => {
-        btn.onclick = async () => {
-          const importBatchId = btn.getAttribute('data-bid');
-          const bankRowId = btn.getAttribute('data-brow');
-          const matchType = btn.getAttribute('data-mt');
-          const ref = btn.getAttribute('data-ref');
-          const run = () =>
-            j('/api/banking/link', {
-              method: 'POST',
-              body: JSON.stringify({ importBatchId, bankRowId, matchType, ref })
-            });
-          try {
-            if (window.erpWithBusy) await window.erpWithBusy(btn, run);
-            else await run();
-            btn.textContent = 'Linked';
-            btn.disabled = true;
-            if (window.showToast) window.showToast('Match link saved.', 'success');
-          } catch (e) {
-            if (window.showToast) window.showToast(e.message || String(e), 'error');
+    function renderTable() {
+      const head = document.getElementById('regHead');
+      const body = document.getElementById('regBody');
+      const rows = activeRows();
+      const unc = rows.filter(r => !txIsCategorized(r)).length;
+      const cat = rows.filter(r => txIsCategorized(r)).length;
+      document.getElementById('vUncat').textContent = unc;
+      document.getElementById('vCat').textContent = cat;
+      document.getElementById('sbUncat').textContent = unc;
+
+      if (state.view === 'categorized') {
+        head.innerHTML = '<tr><th></th><th>Date</th><th>Bank Description</th><th>Category</th><th>Unit·Driver</th><th style="text-align:right">Amount</th><th>Matched To</th></tr>';
+      } else {
+        head.innerHTML = '<tr><th></th><th>Date</th><th>Bank Description</th><th>Category/Match</th><th style="text-align:right">Amount</th><th>Status</th><th>Actions</th></tr>';
+      }
+
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="7" style="font-size:9px;color:#8892a4;padding:8px">No transactions for the current filters.</td></tr>';
+      } else {
+        body.innerHTML = rows.map((r) => {
+          const id = String(r.id || r.row_id || txDate(r) + '_' + txAmt(r));
+          const amt = txAmt(r);
+          const isUncat = !txIsCategorized(r);
+          const status = txStatus(r);
+          if (state.view === 'categorized') {
+            return '<tr class="bank-row">' +
+              '<td><input type="checkbox"></td>' +
+              '<td>' + esc(mdy(txDate(r))) + '</td>' +
+              '<td><div class="bank-desc">' + esc(txDesc(r)) + '</div></td>' +
+              '<td><span class="cat-tag">' + esc(txCat(r) || 'Category') + '</span></td>' +
+              '<td style="font-size:8px;color:#8892a4">' + esc((r.unit_number || '—') + ' · ' + (r.driver_name || '—')) + '</td>' +
+              '<td class="' + (amt >= 0 ? 'bank-amt-pos' : 'bank-amt-neg') + '">' + esc(money(amt)) + '</td>' +
+              '<td>' + (txMatchRef(r) ? '<span class="match-tag">✓ Matched: ' + esc(txMatchRef(r)) + '</span>' : '<span class="cat-tag">' + esc(txCat(r) || 'Categorized') + '</span>') + '</td>' +
+            '</tr>';
           }
-        };
+          return '<tr class="bank-row ' + (isUncat ? 'uncat' : '') + '">' +
+            '<td><input type="checkbox"></td>' +
+            '<td style="min-width:50px">' + esc(mdy(txDate(r))) + '</td>' +
+            '<td><div class="bank-desc">' + esc(txDesc(r)) + '</div>' +
+              (isUncat ? '<div class="bank-suggest" onclick="toggleExpand('' + id + '')">⚡ Suggested: ' + esc((txDesc(r).split(' ')[0] || 'Vendor')) + ' — Apply</div>' : '') +
+            '</td>' +
+            '<td>' + esc(txCat(r) || '—') + '</td>' +
+            '<td class="' + (amt >= 0 ? 'bank-amt-pos' : 'bank-amt-neg') + '">' + esc(money(amt)) + '</td>' +
+            '<td><span class="bank-badge ' + (isUncat ? 'b-red' : 'b-green') + '">' + esc(status) + '</span></td>' +
+            '<td><button class="act-btn" type="button" onclick="toggleExpand('' + id + '')">⋯</button></td>' +
+          '</tr>' + (state.view === 'uncategorized' && state.expandedId === id ? renderExpandedRow(r) : '');
+        }).join('');
+      }
+
+      const deb = rows.filter(r => txAmt(r) < 0).reduce((a,b)=>a+Math.abs(txAmt(b)),0);
+      const cre = rows.filter(r => txAmt(r) > 0).reduce((a,b)=>a+txAmt(b),0);
+      const bal = cre - deb;
+      document.getElementById('regFootL').textContent = rows.length + ' transactions · ' + unc + ' uncategorized · ' + rows.filter(r => !!r.reconciled).length + ' cleared';
+      document.getElementById('regFootR').textContent = 'Debits: ' + money(deb) + ' | Credits: ' + money(cre) + ' | Balance: ' + money(bal);
+    }
+
+    function render() {
+      renderAccountTabs();
+      document.querySelectorAll('.bank-vtab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === state.view));
+      renderTable();
+    }
+
+    function toggleExpand(id) {
+      state.expandedId = state.expandedId === id ? null : id;
+      renderTable();
+    }
+    window.toggleExpand = toggleExpand;
+
+    function pickMatch(txnId, matchId) {
+      state.selectedMatchByTxn[txnId] = matchId;
+      renderTable();
+    }
+    window.pickMatch = pickMatch;
+
+    function openFindMatchModal(txnId) {
+      const rows = activeRows().slice(0, 12);
+      state.modalTxn = txnId;
+      state.modalPick = null;
+      const tb = document.getElementById('matchModalRows');
+      tb.innerHTML = rows.map((r, i) => {
+        const rid = String(r.id || r.row_id || i);
+        return '<tr data-rid="' + esc(rid) + '" onclick="pickModalRow('' + esc(rid) + '')">' +
+          '<td><input type="radio" name="pickM" /></td>' +
+          '<td>' + esc(r.doc_number || r.bill_number || r.expense_number || ('TXN-' + i)) + '</td>' +
+          '<td>' + esc(mdy(txDate(r))) + '</td>' +
+          '<td>' + esc(r.vendor_name || r.payee_name || 'Vendor') + '</td>' +
+          '<td>' + esc(txDesc(r).slice(0, 36)) + '</td>' +
+          '<td>' + esc(money(Math.abs(txAmt(r)))) + '</td>' +
+        '</tr>';
+      }).join('');
+      document.getElementById('matchModalTitle').textContent = 'Find Match — ' + txnId;
+      document.getElementById('matchModalBg').classList.add('on');
+    }
+    window.openFindMatchModal = openFindMatchModal;
+
+    function pickModalRow(rid) {
+      state.modalPick = rid;
+      document.querySelectorAll('#matchModalRows tr').forEach(tr => {
+        const on = tr.getAttribute('data-rid') === rid;
+        tr.classList.toggle('sel', on);
+        const rb = tr.querySelector('input[type=radio]');
+        if (rb) rb.checked = on;
       });
     }
+    window.pickModalRow = pickModalRow;
 
-    function renderBankSuggestView() {
-      const box = document.getElementById('suggestOut');
-      const pagerHost = document.getElementById('suggestPagerHost');
-      const total = (__bankSuggestState.rows || []).length;
-      if (!total) {
-        box.innerHTML = '<p class="mini">No rows.</p>';
-        if (pagerHost) {
-          pagerHost.innerHTML = '';
-          pagerHost.hidden = true;
+    function closeFindMatchModal() {
+      document.getElementById('matchModalBg').classList.remove('on');
+      state.modalTxn = null;
+      state.modalPick = null;
+    }
+    window.closeFindMatchModal = closeFindMatchModal;
+
+    function confirmFindMatch() {
+      if (!state.modalTxn || !state.modalPick) { closeFindMatchModal(); return; }
+      state.selectedMatchByTxn[state.modalTxn] = state.modalPick;
+      closeFindMatchModal();
+      renderTable();
+    }
+    window.confirmFindMatch = confirmFindMatch;
+
+    async function loadData() {
+      try {
+        const [acctRes, txRes] = await Promise.all([
+          j('/api/banking/accounts').catch(() => ({ accounts: [] })),
+          j('/api/banking/transactions').catch(() => ({ rows: [] }))
+        ]);
+        state.accounts = Array.isArray(acctRes.accounts) ? acctRes.accounts : [];
+        state.rows = Array.isArray(txRes.rows) ? txRes.rows : Array.isArray(txRes) ? txRes : [];
+        if (!state.accounts.length) {
+          state.accounts = [{ id: 'fallback-oper', name: 'IH35 Operating—BOA', bank_label: 'DIP', balance: 0 }, { id: 'fallback-pay', name: 'IH35 Payroll—WF', bank_label: 'DIP', balance: 0 }, { id: 'fallback-fuel', name: 'Fleet Fuel Card', bank_label: 'Card', balance: 0 }];
         }
-        return;
+        if (!state.activeAccountId) {
+          state.activeAccountId = String(state.accounts[0].id || state.accounts[0].account_id || '0');
+        }
+      } catch (e) {
+        state.accounts = [{ id: 'fallback-oper', name: 'IH35 Operating—BOA', bank_label: 'DIP', balance: 0 }];
+        state.rows = [];
+        state.activeAccountId = 'fallback-oper';
       }
-      const ps = Math.max(1, Number(__bankSuggestState.pageSize) || 10);
-      const pages = Math.max(1, Math.ceil(total / ps));
-      if (__bankSuggestState.page > pages) __bankSuggestState.page = pages;
-      if (__bankSuggestState.page < 1) __bankSuggestState.page = 1;
-      const start = (__bankSuggestState.page - 1) * ps;
-      const slice = __bankSuggestState.rows.slice(start, start + ps);
-      const bid = __bankSuggestState.importBatchId || '';
-      box.innerHTML = slice.map(s => bankSuggestBlockHtml(s, bid)).join('');
-      wireBankSuggestLinkButtons(box);
-      if (pagerHost && window.erpPagerRender) {
-        window.erpPagerRender(
-          pagerHost,
-          { page: __bankSuggestState.page, pageSize: ps, total },
-          (p, newPs) => {
-            if (newPs) __bankSuggestState.pageSize = newPs;
-            __bankSuggestState.page = p;
-            renderBankSuggestView();
-          }
-        );
-      }
+      render();
     }
 
-    document.getElementById('btnSnap').onclick = async () => {
-      const btn = document.getElementById('btnSnap');
-      const run = async () => {
-        const days = Number(document.getElementById('daysWin').value) || 60;
-        const d = await j('/api/banking/snapshot?days=' + encodeURIComponent(days));
-        document.getElementById('snapMeta').textContent =
-          'Window from ' + (d.windowStart || '—') + ' · ERP expense rows considered: ' + (d.erpCandidates || []).length;
-        const q = d.qbo || {};
-        document.getElementById('snapMetrics').innerHTML = [
-          ['QBO Purchases', (q.purchases || []).length],
-          ['QBO Bills', (q.bills || []).length],
-          ['Bill payments', (q.billPayments || []).length],
-          ['Vendor credits', (q.vendorCredits || []).length],
-          ['Bank CSV imports stored', (d.bankImports || []).length],
-          ['Saved links', (d.matchLinks || []).length]
-        ]
-          .map(
-            ([k, v]) =>
-              '<div class="metric"><div class="k">' +
-              esc(k) +
-              '</div><div class="v">' +
-              esc(v) +
-              '</div></div>'
-          )
-          .join('');
-      };
-      try {
-        if (window.erpWithBusy) await window.erpWithBusy(btn, run);
-        else await run();
-        if (window.showToast) window.showToast('Banking snapshot loaded.', 'success');
-      } catch (e) {
-        if (window.showToast) window.showToast(e.message || String(e), 'error');
-      }
-    };
+    document.querySelectorAll('.bank-vtab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.view = btn.dataset.view;
+        state.expandedId = null;
+        render();
+      });
+    });
 
-    document.getElementById('btnImport').onclick = async () => {
-      const btn = document.getElementById('btnImport');
-      const run = async () => {
-        const csvText = document.getElementById('csvPaste').value;
-        const out = await j('/api/banking/import-csv', { method: 'POST', body: JSON.stringify({ csvText }) });
-        document.getElementById('importOut').innerHTML =
-          'Imported <strong>' +
-          out.rowCount +
-          '</strong> rows. Batch id: <code>' +
-          esc(out.importBatchId) +
-          '</code> — paste this into step 3.';
-        document.getElementById('batchId').value = out.importBatchId;
-        return Number(out.rowCount) || 0;
-      };
-      try {
-        const n = window.erpWithBusy ? await window.erpWithBusy(btn, run) : await run();
-        if (window.showToast) window.showToast('Imported ' + n + ' bank row(s).', 'success');
-      } catch (e) {
-        if (window.showToast) window.showToast(e.message || String(e), 'error');
-      }
-    };
+    document.querySelectorAll('.bank-sb-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.bank-sb-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        const key = item.dataset.item;
+        if (key === 'uncat') state.view = 'uncategorized';
+        else if (key === 'all') state.view = 'all';
+        else if (key === 'reconciled' || key === 'bycat') state.view = 'categorized';
+        render();
+      });
+    });
 
-    document.getElementById('btnSuggest').onclick = async () => {
-      const btn = document.getElementById('btnSuggest');
-      const run = async () => {
-        const importBatchId = document.getElementById('batchId').value.trim();
-        if (!importBatchId) {
-          if (window.showToast) window.showToast('Enter import batch id.', 'warning');
-          else erpNotify('Enter import batch id.');
-          return null;
-        }
-        const days = Number(document.getElementById('daysWin').value) || 90;
-        const data = await j('/api/banking/suggest', {
-          method: 'POST',
-          body: JSON.stringify({ importBatchId, days })
-        });
-        if (!(data.suggestions || []).length) {
-          __bankSuggestState = { rows: [], page: 1, pageSize: 10, importBatchId: '' };
-          document.getElementById('suggestOut').innerHTML = '<p class="mini">No rows.</p>';
-          const ph = document.getElementById('suggestPagerHost');
-          if (ph) {
-            ph.innerHTML = '';
-            ph.hidden = true;
-          }
-          return 0;
-        }
-        __bankSuggestState = {
-          rows: data.suggestions,
-          page: 1,
-          pageSize: 10,
-          importBatchId: data.importBatchId || importBatchId
-        };
-        renderBankSuggestView();
-        return (data.suggestions || []).length;
-      };
-      try {
-        const n = window.erpWithBusy ? await window.erpWithBusy(btn, run) : await run();
-        if (n === null) return;
-        if (window.showToast) {
-          if (n === 0) window.showToast('No match suggestions for this batch.', 'info');
-          else window.showToast('Loaded ' + n + ' bank row suggestion(s).', 'success');
-        }
-      } catch (e) {
-        if (window.showToast) window.showToast(e.message || String(e), 'error');
-      }
-    };
+    document.getElementById('qSearch').addEventListener('input', renderTable);
+    document.getElementById('qDate').addEventListener('change', renderTable);
 
     window.addEventListener('load', () => {
       if (typeof erpMountConnectionStrip === 'function') void erpMountConnectionStrip('erpConnectionStrip');
+      void loadData();
     });
   </script>
 </body>
