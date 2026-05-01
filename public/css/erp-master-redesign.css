@@ -195,8 +195,7 @@
   --qb-sidebar-active-bg: var(--pill-blue-bg);
   --qb-radius-card: var(--radius-card);
   --qb-radius-control: var(--radius-input);
-  /** Wider left rail so module names (e.g. Accounting, Fuel planner) stay readable */
-  --erp-icon-rail-width: 138px;
+  --erp-icon-rail-width: 36px;
 }
 
 /* --- App shell: full viewport, no horizontal bleed --- */
@@ -593,8 +592,8 @@ body.erp-maintenance .erp-icon-nav {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
-  padding: 8px 0 12px;
+  gap: 0;
+  padding: 4px 0 8px;
   background: var(--color-nav-bg);
   border-right: 1px solid var(--color-border);
   overflow-y: auto;
@@ -609,19 +608,20 @@ body.erp-maintenance .erp-icon-nav__link {
   justify-content: center;
   gap: 2px;
   width: 100%;
-  min-height: 58px;
-  padding: 8px 4px;
+  min-height: 44px;
+  height: 44px;
+  padding: 4px 0;
   margin: 0;
   border: none;
-  border-radius: var(--radius-input);
+  border-radius: 0;
   background: transparent;
-  color: #cdd9e5;
-  font-size: 11px;
+  color: #ffffff;
+  font-size: 6px;
   font-weight: 500;
   text-decoration: none;
   text-align: center;
   cursor: pointer;
-  line-height: 1.15;
+  line-height: 1;
 }
 
 body.erp-maintenance .erp-icon-nav__btn.nav-btn:hover,
@@ -637,31 +637,33 @@ body.erp-maintenance .ir-item:hover .ir-flyout {
 }
 
 body.erp-maintenance .erp-icon-nav__btn.nav-btn.active {
-  background: rgba(255, 255, 255, 0.14);
+  background: #253047;
   color: #ffffff;
-  box-shadow: inset 0 -2px 0 #388bfd;
+  box-shadow: none;
 }
 
 body.erp-maintenance .erp-icon-nav__glyph {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
 }
 
 body.erp-maintenance .erp-icon-nav__lbl {
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  font-size: 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
   max-width: 100%;
-  padding: 0 2px;
-  line-height: 1.25;
+  padding: 0;
+  line-height: 1;
   overflow: visible;
-  white-space: normal;
-  word-break: break-word;
-  hyphens: auto;
+  white-space: nowrap;
+  word-break: normal;
+  hyphens: none;
 }
 
 @media (min-width: 721px) {
   body.erp-maintenance .erp-icon-nav__lbl {
-    font-size: 11px;
+    font-size: 6px;
   }
 }
 
