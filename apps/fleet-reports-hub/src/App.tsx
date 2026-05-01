@@ -1499,7 +1499,9 @@ export default function App() {
                       </ul>
                     </section>
                   )}
-                  <PartsCatalogPanel />
+                  {reportTabForSection !== 'compliance' && reportTabForSection !== 'dot' ? (
+                    <PartsCatalogPanel />
+                  ) : null}
                 </ErrorBoundary>
               ) : (
                 <ErrorBoundary name="Home">

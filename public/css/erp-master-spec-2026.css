@@ -2152,11 +2152,31 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
 
 /* Rule 24 — optional integration disconnect banners (synced from `erpMountConnectionStrip` when hosts exist) */
 .erp-disconnect-banners {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
   margin: 0 0 10px;
   max-width: 100%;
+}
+.erp-disconnect-banners__dismiss {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 2;
+  border: 1px solid color-mix(in srgb, #8a5200 35%, transparent);
+  background: color-mix(in srgb, #fff 88%, #fef7e0);
+  color: #5c3d00;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
+  font-size: 18px;
+  cursor: pointer;
+}
+.erp-disconnect-banners__dismiss:hover {
+  background: #fff;
 }
 .erp-disconnect-banner {
   padding: 8px 14px;
@@ -2177,7 +2197,7 @@ body.erp-maintenance .erp-main-surface > .erp-connection-strip {
   text-decoration: underline;
 }
 body.banking-page .wrap > .erp-connection-strip {
-  max-width: 1120px;
+  max-width: 1119px;
   margin-left: auto;
   margin-right: auto;
 }

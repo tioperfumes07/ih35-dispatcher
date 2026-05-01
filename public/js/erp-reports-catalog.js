@@ -250,9 +250,26 @@
   }
 
   function repDynamicBack() {
+    try {
+      const st = window.__erpNavHistory;
+      if (Array.isArray(st) && st.length > 1) {
+        st.pop();
+        const prev = st[st.length - 1];
+        if (prev && String(prev).startsWith('reports-')) {
+          try {
+            window.location.hash = '#' + prev;
+          } catch (_) {
+            /* ignore */
+          }
+          return;
+        }
+      }
+    } catch (_) {
+      /* ignore */
+    }
     if (typeof openReportsTab === 'function') {
       const b = document.querySelector('#section-reports .subtab[onclick*="rep-overview"]');
-      openReportsTab('rep-overview', b);
+      openReportsTab('rep-overview', b, { fromHash: true });
     }
   }
 
@@ -971,15 +988,15 @@ ${extraCss}
           const wrap = document.createElement('div');
           wrap.style.marginTop = '8px';
           wrap.innerHTML =
-            '<label class="qb-l">Position</label> <input type="text" class="qb-in" id="repDfPosition" placeholder="Optional filter" />';
+            '<label class="qb-l">Position</label> <input type="text" class="qb-in" id="repDfPosition" placeholder="Optional filter" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">';
           fl.appendChild(wrap);
         }
       } else {
         fl.innerHTML = `
-        <div><label class="qb-l">Start</label><input type="date" class="qb-in" id="repDfStart" value="${r0.start}" /></div>
-        <div><label class="qb-l">End</label><input type="date" class="qb-in" id="repDfEnd" value="${r0.end}" /></div>
-        <div><label class="qb-l">Unit</label><input type="text" class="qb-in" id="repDfUnit" placeholder="Optional" /></div>
-        ${datasetsWithOptionalPosition ? '<div><label class="qb-l">Position</label><input type="text" class="qb-in" id="repDfPosition" placeholder="Optional" /></div>' : ''}
+        <div><label class="qb-l">Start</label><input type="date" class="qb-in" id="repDfStart" value="${r0.start}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>
+        <div><label class="qb-l">End</label><input type="date" class="qb-in" id="repDfEnd" value="${r0.end}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>
+        <div><label class="qb-l">Unit</label><input type="text" class="qb-in" id="repDfUnit" placeholder="Optional" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>
+        ${datasetsWithOptionalPosition ? '<div><label class="qb-l">Position</label><input type="text" class="qb-in" id="repDfPosition" placeholder="Optional" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' : ''}
         <div style="align-self:flex-end"><button type="button" class="btn" id="repDfRun">Run</button></div>
       `;
       }
@@ -1490,10 +1507,10 @@ ${extraCss}
     const r0 = defaultRange();
     if (fl) {
       fl.innerHTML = `
-        <div><label class="qb-l">Start date</label><input type="date" class="qb-in" id="repQbStart" value="${r0.start}" /></div>
-        <div><label class="qb-l">End date</label><input type="date" class="qb-in" id="repQbEnd" value="${r0.end}" /></div>
+        <div><label class="qb-l">Start date</label><input type="date" class="qb-in" id="repQbStart" value="${r0.start}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>
+        <div><label class="qb-l">End date</label><input type="date" class="qb-in" id="repQbEnd" value="${r0.end}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>
         <div><label class="qb-l">Accounting</label>
-          <select class="qb-in" id="repQbAcct"><option value="Accrual">Accrual</option><option value="Cash">Cash</option></select>
+          <select class="qb-in" id="repQbAcct" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="Accrual">Accrual</option><option value="Cash">Cash</option></select>
         </div>
         <div style="align-self:flex-end"><button type="button" class="btn" id="repQbRun">Run</button></div>
       `;
@@ -1606,17 +1623,17 @@ ${extraCss}
       const start12 = `${y12.getFullYear()}-${String(y12.getMonth() + 1).padStart(2, '0')}-${String(y12.getDate()).padStart(2, '0')}`;
       fl.innerHTML = `<div class="form-stack" style="max-width:720px;line-height:1.45">
         <div class="qb-l">Vehicle scope</div>
-        <label style="font-size:12px"><input type="radio" name="repDotCfgScope" value="single" checked /> Single unit (PDF + JSON)</label>
-        <label style="font-size:12px;margin-left:12px"><input type="radio" name="repDotCfgScope" value="fleet" /> Fleet audit (JSON only)</label>
+        <label style="font-size:12px"><input type="radio" name="repDotCfgScope" value="single" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Single unit (PDF + JSON)</label>
+        <label style="font-size:12px;margin-left:12px"><input type="radio" name="repDotCfgScope" value="fleet" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Fleet audit (JSON only)</label>
         <label class="qb-l" style="margin-top:8px">Unit number</label>
-        <input type="text" class="qb-in" id="repDotCfgUnit" placeholder="e.g. 101" />
+        <input type="text" class="qb-in" id="repDotCfgUnit" placeholder="e.g. 101" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
         <label class="qb-l">Fleet unit ids (comma / newline) — optional</label>
-        <textarea class="qb-memo" id="repDotCfgUnitIds" rows="2" placeholder="Leave blank + fleet scope = all units with work orders"></textarea>
+        <textarea class="qb-memo" id="repDotCfgUnitIds" rows="2" placeholder="Leave blank + fleet scope = all units with work orders" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>
         <div class="qb-l" style="margin-top:10px">Date range</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="date" class="qb-in" id="repDotCfgStart" value="${start12}" />
+          <input type="date" class="qb-in" id="repDotCfgStart" value="${start12}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
           <span class="mini-note">to</span>
-          <input type="date" class="qb-in" id="repDotCfgEnd" value="${yEnd}" />
+          <input type="date" class="qb-in" id="repDotCfgEnd" value="${yEnd}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
         </div>
         <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
           ${['Last 12 months', 'Last 24 months', 'Last 3 years', 'Year to date', 'Custom']
@@ -1628,37 +1645,37 @@ ${extraCss}
         </div>
         <div class="qb-l" style="margin-top:10px">Sections to include</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;font-size:12px">
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="vehicle_info" checked /> Vehicle identification</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="annual_inspections" checked /> Annual inspections</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="pm_history" checked /> PM / preventive history</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="repair_history" checked /> Repair register (chronological)</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="work_orders_by_type" checked /> WO buckets by service type (4A–4H)</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4i_service_locations" checked /> Service locations (4I)</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="accident_history" checked /> Accident history</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="dvir_history" checked /> DVIR history</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="out_of_service" checked /> Out of service</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="tire_records" checked /> Tire records</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4_air_bag" checked /> Air bag history (4E)</label>
-          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4_battery" checked /> Battery history (4F)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="vehicle_info" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Vehicle identification</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="annual_inspections" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Annual inspections</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="pm_history" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> PM / preventive history</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="repair_history" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Repair register (chronological)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="work_orders_by_type" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> WO buckets by service type (4A–4H)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4i_service_locations" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Service locations (4I)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="accident_history" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Accident history</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="dvir_history" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> DVIR history</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="out_of_service" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Out of service</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="tire_records" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Tire records</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4_air_bag" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Air bag history (4E)</label>
+          <label><input type="checkbox" class="rep-dot-sec-cb" value="section4_battery" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Battery history (4F)</label>
         </div>
         <div class="qb-l" style="margin-top:10px">Group work orders (PDF part 4 buckets)</div>
-        <label style="font-size:12px"><input type="radio" name="repDotCfgGroupBy" value="service_type" checked /> By service type</label>
-        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgGroupBy" value="date" /> Chronological (hide category buckets)</label>
+        <label style="font-size:12px"><input type="radio" name="repDotCfgGroupBy" value="service_type" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> By service type</label>
+        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgGroupBy" value="date" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Chronological (hide category buckets)</label>
         <div class="qb-l" style="margin-top:10px">Service filters (optional)</div>
         <span class="mini-note">Comma or newline separated lists → query params.</span>
-        <label class="qb-l">Record types</label><input type="text" class="qb-in" id="repDotCfgRecTypes" placeholder="e.g. repair, pm_service" />
-        <label class="qb-l">Service types</label><input type="text" class="qb-in" id="repDotCfgSvcTypes" placeholder="Oil change, Brakes…" />
-        <label class="qb-l">Locations</label><input type="text" class="qb-in" id="repDotCfgLocs" placeholder="Shop name…" />
-        <label class="qb-l">Vendors</label><input type="text" class="qb-in" id="repDotCfgVendors" placeholder="Vendor name…" />
+        <label class="qb-l">Record types</label><input type="text" class="qb-in" id="repDotCfgRecTypes" placeholder="e.g. repair, pm_service" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <label class="qb-l">Service types</label><input type="text" class="qb-in" id="repDotCfgSvcTypes" placeholder="Oil change, Brakes…" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <label class="qb-l">Locations</label><input type="text" class="qb-in" id="repDotCfgLocs" placeholder="Shop name…" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
+        <label class="qb-l">Vendors</label><input type="text" class="qb-in" id="repDotCfgVendors" placeholder="Vendor name…" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
         <div class="qb-l" style="margin-top:10px">Show only</div>
-        <label style="font-size:12px"><input type="checkbox" id="repDotCfgDefects" /> Records with defects / issues</label>
-        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgPosted" /> Posted to QuickBooks</label>
-        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgDotAcc" /> DOT-reportable accidents only</label>
-        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgIncludeEmpty" checked /> Include empty section shells</label>
+        <label style="font-size:12px"><input type="checkbox" id="repDotCfgDefects" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Records with defects / issues</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgPosted" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Posted to QuickBooks</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgDotAcc" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> DOT-reportable accidents only</label>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="repDotCfgIncludeEmpty" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Include empty section shells</label>
         <div class="qb-l" style="margin-top:10px">Format</div>
-        <label style="font-size:12px"><input type="radio" name="repDotCfgFormat" value="full" checked /> Full detail</label>
-        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="summary" /> Summary</label>
-        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="compliance" /> Compliance focus</label>
+        <label style="font-size:12px"><input type="radio" name="repDotCfgFormat" value="full" checked / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Full detail</label>
+        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="summary" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Summary</label>
+        <label style="font-size:12px;margin-left:10px"><input type="radio" name="repDotCfgFormat" value="compliance" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> Compliance focus</label>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn" id="repDotCfgPreview">Preview JSON</button>
           <button type="button" class="btn" style="background:#1557a0;color:#fff;border-color:#1557a0" id="repDotCfgPreviewPdf">Preview PDF</button>
@@ -1805,7 +1822,7 @@ ${extraCss}
     let searchQ = '';
     const root = document.createElement('div');
     root.className = 'rep-filter-ms';
-    root.innerHTML = `<input type="text" class="rep-filter-ms__search" placeholder="Search or add..." aria-label="Filter options" />
+    root.innerHTML = `<input type="text" class="rep-filter-ms__search" placeholder="Search or add..." aria-label="Filter options" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
     <div class="rep-filter-ms__chips"></div>
     <div class="rep-filter-ms__opts"></div>
     <div class="rep-filter-ms__add hidden" role="button" tabindex="0"></div>`;
@@ -1856,7 +1873,7 @@ ${extraCss}
       optsBox.innerHTML = list
         .map(v => {
           const on = selected.has(v);
-          return `<label class="rep-filter-ms__opt"><input type="checkbox"${on ? ' checked' : ''}/><span>${escapeHtml(v)}</span></label>`;
+          return `<label class="rep-filter-ms__opt"><input type="checkbox"${on ? ' checked' : ''}/ style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><span>${escapeHtml(v)}</span></label>`;
         })
         .join('');
       optsBox.querySelectorAll('label').forEach((lab, i) => {

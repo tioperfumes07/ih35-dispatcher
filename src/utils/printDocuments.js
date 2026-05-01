@@ -252,6 +252,22 @@
     .pill-warn { background: #fff8e1; color: #f57f17; border-color: #ffb74d; }
     h1, h2, h3 { page-break-after: avoid; }
     tr { page-break-inside: avoid; }
+    /* If print is invoked from a window that still contains ERP chrome, strip nav sidebars from paper. */
+    @media print {
+      .erp-module-sidebar,
+      .erp-icon-nav,
+      #erpIconNav,
+      .topbar,
+      nav.board-nav,
+      #boardNavMount,
+      .maint-action-strip,
+      .maint-top-toolbar {
+        display: none !important;
+      }
+      body {
+        background: #fff !important;
+      }
+    }
   `;
 
   function esc(s) {
@@ -823,11 +839,27 @@
     const { categoryLines, itemLines } = normalizeWoCost(d);
     const sec3 = buildCostSection(categoryLines, itemLines, d.invoiceTotal);
     const exPos = extractPositionsFromCost(d);
-    const positions = (Array.isArray(d.positions) && d.positions.length ? d.positions : exPos.positions).filter(Boolean);
-    const mapT = d.positionMap || inferMapType(positions);
+    let positions = (Array.isArray(d.positions) && d.positions.length ? d.positions : exPos.positions).filter(Boolean);
+    const tireRt = String(d.recordType || '').toLowerCase() === 'tire';
+    const tireHead =
+      String(d.tirePositionText || d.tirePosition || '').trim() ||
+      (Array.isArray(d.tireLineItems) && d.tireLineItems.length
+        ? String(d.tireLineItems[0]?.tirePosition || d.tireLineItems[0]?.position || '').trim()
+        : '');
+    if (tireRt && tireHead) {
+      const seg = tireHead.split(/[·|]/)[0].trim();
+      if (seg && !positions.includes(seg)) positions = [...positions, seg];
+    }
+    const mapT =
+      d.positionMap ||
+      (tireRt ? 'tires' : inferMapType(positions));
+    let detailsForMap = exPos.details;
+    if (tireRt && tireHead && (!detailsForMap || !detailsForMap.length)) {
+      detailsForMap = [{ position: tireHead, partNumber: '', description: d.serviceType || 'Tire service', qty: '', amount: '' }];
+    }
     let sec4 = '';
     if (positions.length || mapT || d.partsMapSvg) {
-      sec4 = buildPositionMap(positions, mapT, exPos.details, d.partsMapSvg);
+      sec4 = buildPositionMap(positions, mapT, detailsForMap, d.partsMapSvg);
     }
     let sec5 = '';
     if (pick(d.notes)) sec5 = `<div class="note-box">${esc(d.notes)}</div>`;

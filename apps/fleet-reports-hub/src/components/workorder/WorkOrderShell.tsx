@@ -526,7 +526,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
             </label>
             <label className="field">
               <span className="wo-field-lbl">Suggested load</span>
-              <input className="wo-input" readOnly value={props.suggestedLoad} />
+              <input className="wo-input" readOnly value={props.suggestedLoad}  />
             </label>
           </div>
           {props.driverName.trim() ? (
@@ -1104,7 +1104,7 @@ export function WorkOrderShell(props: WorkOrderShellProps) {
                     readOnly
                     aria-readonly
                     value={props.ledgerMode === 'bill' ? 'Bill' : 'Expense'}
-                  />
+                   />
                 </label>
               ) : (
                 <SearchableCombo

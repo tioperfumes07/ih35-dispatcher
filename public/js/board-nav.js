@@ -83,7 +83,8 @@
       label: 'Lists & catalogs',
       href: '/maintenance.html#catalog',
       links: [
-        { label: 'Fleet & Samsara writes', href: '/maintenance.html#catalog-fleet' },
+        { label: 'Fleet assets', href: '/maintenance.html#catalog-fleet-assets' },
+        { label: 'Samsara rename tools', href: '/maintenance.html#catalog-fleet-tools' },
         { label: 'Name management', href: '/maintenance.html#catalog-name-mgmt' },
         { label: 'Operational status', href: '/maintenance.html#catalog-operational' },
         { label: 'QuickBooks items & accounts', href: '/maintenance.html#catalog-qbo' },

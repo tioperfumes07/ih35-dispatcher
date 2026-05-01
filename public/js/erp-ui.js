@@ -15,16 +15,65 @@
   function erpCurrentBuildVersion() {
     try {
       var v = document.documentElement.getAttribute('data-build-version');
-      return v ? String(v).trim() : '';
+      if (v) return String(v).trim();
+      var runtimeRef = typeof global.__IH35_DEPLOY_REF === 'string' ? String(global.__IH35_DEPLOY_REF).trim() : '';
+      return runtimeRef || '';
     } catch (_) {
       return '';
     }
+  }
+
+  function erpForceHardRefresh(expectedRef) {
+    try {
+      var u = new URL(global.location.href);
+      u.searchParams.set('ih35_refresh', String(Date.now()));
+      if (expectedRef) u.searchParams.set('ih35_ref', String(expectedRef));
+      global.location.replace(u.toString());
+    } catch (_) {
+      global.location.reload();
+    }
+  }
+
+  function erpShowUpdateModal(nextVersion) {
+    if (!document.body) return;
+    var v = String(nextVersion || '').trim();
+    if (!v) return;
+    var id = 'ih35UpdateModal';
+    var existing = document.getElementById(id);
+    if (existing) {
+      var detail = existing.querySelector('[data-ih35-update-detail]');
+      if (detail) detail.textContent = 'Latest deploy ref: ' + v;
+      existing.classList.remove('hidden');
+      return;
+    }
+    var wrap = document.createElement('div');
+    wrap.id = id;
+    wrap.style.cssText =
+      'position:fixed;inset:0;z-index:100001;background:rgba(2,6,23,.45);display:flex;align-items:center;justify-content:center;padding:16px;';
+    wrap.innerHTML =
+      '<div style="width:min(520px,96vw);background:#fff;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 24px 60px rgba(15,23,42,.28);padding:16px 16px 14px">' +
+      '<div style="font-weight:700;font-size:16px;color:#0f172a;margin-bottom:6px">A newer version is available</div>' +
+      '<div style="font-size:13px;color:#334155;line-height:1.45;margin-bottom:10px">This page is on an older build. Reload to use the latest deployed version.</div>' +
+      '<div data-ih35-update-detail style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:12px">Latest deploy ref: ' + v + '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button type="button" data-ih35-update-dismiss style="height:32px;padding:0 12px;border:1px solid #d0d7e2;background:#fff;border-radius:8px;cursor:pointer">Later</button>' +
+      '<button type="button" data-ih35-update-reload style="height:32px;padding:0 12px;border:0;background:#1a7f37;color:#fff;border-radius:8px;cursor:pointer;font-weight:600">Reload now</button>' +
+      '</div>' +
+      '</div>';
+    wrap.querySelector('[data-ih35-update-dismiss]')?.addEventListener('click', function () {
+      wrap.remove();
+    });
+    wrap.querySelector('[data-ih35-update-reload]')?.addEventListener('click', function () {
+      erpForceHardRefresh(v);
+    });
+    document.body.appendChild(wrap);
   }
 
   function erpMarkUpdateAvailable(nextVersion) {
     try {
       global.__IH35_UPDATE_AVAILABLE = true;
       global.__IH35_UPDATE_VERSION = String(nextVersion || '').trim();
+      erpShowUpdateModal(global.__IH35_UPDATE_VERSION);
       global.dispatchEvent(
         new CustomEvent(ERP_UPDATE_EVENT, {
           detail: { version: global.__IH35_UPDATE_VERSION },
@@ -36,7 +85,7 @@
   function erpStartBuildVersionWatcher() {
     var current = erpCurrentBuildVersion();
     if (!current || typeof fetch !== 'function') return;
-    var intervalMs = 5 * 60 * 1000;
+    var intervalMs = 60 * 1000;
     var ticking = false;
 
     async function tick() {
@@ -136,7 +185,7 @@
       '</div>' +
       '<div class="erp-pager__controls">' +
       '<label class="erp-pager__size"><span class="erp-pager__size-lbl">Rows</span>' +
-      '<select class="erp-pager__size-sel" aria-label="Rows per page">' +
+      '<select class="erp-pager__size-sel" aria-label="Rows per page" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
       [10, 25, 50, 100]
         .map(n => '<option value="' + n + '"' + (n === pageSize ? ' selected' : '') + '>' + n + '</option>')
         .join('') +
@@ -382,7 +431,12 @@
     const wrap = document.getElementById('erpIntegrationDisconnectBanners');
     const qb = document.getElementById('erpQboDisconnectBanner');
     const sb = document.getElementById('erpSamsaraDisconnectBanner');
+    const dismissBtn = document.getElementById('erpIntegrationBannerDismissBtn');
     if (!wrap || !qb || !sb) return;
+    if (wrap._erpIntegrationDismissTimer) {
+      global.clearTimeout(wrap._erpIntegrationDismissTimer);
+      wrap._erpIntegrationDismissTimer = null;
+    }
     while (qb.firstChild) qb.removeChild(qb.firstChild);
     while (sb.firstChild) sb.removeChild(sb.firstChild);
     qb.classList.add('hidden');
@@ -407,7 +461,89 @@
       any = true;
     }
     wrap.hidden = !any;
+    if (dismissBtn) dismissBtn.hidden = !any;
+    if (dismissBtn && !dismissBtn._erpDismissBound) {
+      dismissBtn._erpDismissBound = true;
+      dismissBtn.addEventListener('click', () => {
+        try {
+          global.sessionStorage.setItem('ih35_integration_banners_dismissed', '1');
+        } catch (_) {
+          /* ignore */
+        }
+        wrap.hidden = true;
+        dismissBtn.hidden = true;
+        qb.classList.add('hidden');
+        sb.classList.add('hidden');
+        if (wrap._erpIntegrationDismissTimer) {
+          global.clearTimeout(wrap._erpIntegrationDismissTimer);
+          wrap._erpIntegrationDismissTimer = null;
+        }
+      });
+    }
+    let dismissed = false;
+    try {
+      dismissed = global.sessionStorage.getItem('ih35_integration_banners_dismissed') === '1';
+    } catch (_) {
+      dismissed = false;
+    }
+    if (any && dismissed) {
+      wrap.hidden = true;
+      if (dismissBtn) dismissBtn.hidden = true;
+      qb.classList.add('hidden');
+      sb.classList.add('hidden');
+      return;
+    }
+    if (any) {
+      wrap._erpIntegrationDismissTimer = global.setTimeout(() => {
+        wrap._erpIntegrationDismissTimer = null;
+        wrap.hidden = true;
+        if (dismissBtn) dismissBtn.hidden = true;
+        qb.classList.add('hidden');
+        sb.classList.add('hidden');
+      }, 5000);
+    }
   }
+
+  /** Driver promo strip — auto-dismiss 8s; `sessionStorage` key `driverBannerDismissed`. */
+  function erpInitDriverPromoBanner() {
+    const wrap = document.getElementById('erpDriverPromoBanner');
+    const dismissBtn = document.getElementById('erpDriverPromoBannerDismiss');
+    if (!wrap || !dismissBtn) return;
+    let dismissed = false;
+    try {
+      dismissed = global.sessionStorage.getItem('driverBannerDismissed') === '1';
+    } catch (_) {
+      dismissed = false;
+    }
+    if (dismissed) {
+      wrap.classList.add('hidden');
+      wrap.setAttribute('aria-hidden', 'true');
+      return;
+    }
+    const hide = () => {
+      wrap.classList.add('hidden');
+      wrap.setAttribute('aria-hidden', 'true');
+      try {
+        global.sessionStorage.setItem('driverBannerDismissed', '1');
+      } catch (_) {
+        /* ignore */
+      }
+      if (wrap._erpDriverPromoTimer) {
+        global.clearTimeout(wrap._erpDriverPromoTimer);
+        wrap._erpDriverPromoTimer = null;
+      }
+    };
+    if (!dismissBtn._erpDriverPromoBound) {
+      dismissBtn._erpDriverPromoBound = true;
+      dismissBtn.addEventListener('click', hide);
+    }
+    wrap.classList.remove('hidden');
+    wrap.setAttribute('aria-hidden', 'false');
+    if (wrap._erpDriverPromoTimer) global.clearTimeout(wrap._erpDriverPromoTimer);
+    wrap._erpDriverPromoTimer = global.setTimeout(hide, 8000);
+  }
+
+  global.erpInitDriverPromoBanner = erpInitDriverPromoBanner;
 
   /**
    * Optional topbar badge (`#erpBuildRefBadge`) to show active deploy/build ref.
@@ -610,7 +746,7 @@
           typeof global.__IH35_DEPLOY_REF === 'string' ? String(global.__IH35_DEPLOY_REF).trim() : '';
         const healthRef = hj && typeof hj.version === 'string' ? String(hj.version).trim() : '';
         if (runtimeRef || healthRef) {
-          const sameRef = runtimeRef && healthRef && runtimeRef === healthRef;
+          const sameRef = healthRef ? runtimeRef === healthRef : true;
           const shownRef = healthRef || runtimeRef;
           const seenAtIso = recordBuildRefSeen(shownRef, healthRef ? 'health' : 'runtime');
           const seenAtText = formatSeenAt(seenAtIso);
@@ -917,6 +1053,15 @@
         minH: 400
       });
     }
+    const wcDlg = document.querySelector('#erpWriteCheckModal .erp-mb-modal__dialog');
+    if (wcDlg) {
+      erpWireResizableModalShell(wcDlg, {
+        storageKey: 'write_check',
+        dragRoot: '.erp-mb-modal__head',
+        minW: 520,
+        minH: 380
+      });
+    }
     document.querySelectorAll('#shopQueueAddModal .maint-modal.erp-qb-dialog').forEach(m => {
       erpWireResizableModalShell(m, {
         storageKey: 'shop_queue',
@@ -931,6 +1076,19 @@
         dragRoot: '.erp-qb-dialog__head',
         minW: 520,
         minH: 400
+      });
+    });
+    document.querySelectorAll('.maint-modal-bg[id] .maint-modal.erp-qb-dialog').forEach(shell => {
+      const bg = shell.closest('.maint-modal-bg');
+      const id = bg && bg.id ? String(bg.id) : 'maint_modal';
+      const head = shell.querySelector('.erp-qb-dialog__head, .maint-modal-head-draggable');
+      if (!head) return;
+      const key = id.replace(/[^a-z0-9_-]/gi, '_').slice(0, 80) || 'maint_modal';
+      erpWireResizableModalShell(shell, {
+        storageKey: key,
+        dragRoot: head,
+        minW: 480,
+        minH: 320
       });
     });
     if (typeof global.erpModalChromeAttachMissingFullscreenToggles === 'function') {

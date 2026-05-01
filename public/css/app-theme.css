@@ -474,9 +474,12 @@ body.erp-maintenance .qb-picker-menu {
 body.erp-maintenance .qb-picker-item {
   padding: 5px 8px;
   border-radius: 6px;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
   min-height: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 body.erp-maintenance .qb-picker-item__label {
   font-size: 0.86rem;
@@ -485,6 +488,9 @@ body.erp-maintenance .qb-picker-item__label {
 body.erp-maintenance .qb-picker-item__meta {
   font-size: 0.72rem;
   color: var(--color-text-label);
+  white-space: normal;
+  max-width: 100%;
+  line-height: 1.25;
 }
 
 /* Right-side “Add new” drawer (QBO-like) */
@@ -2668,6 +2674,11 @@ body.erp-maintenance .maint-section-card {
   color: var(--color-bg-card);
 }
 
+.nav-badge--warn {
+  background: var(--color-semantic-warning, var(--qb-amber, #b45309));
+  color: #fff;
+}
+
 body.erp-maintenance .maint-board-layout {
   display: grid;
   grid-template-columns: minmax(0, min(200px, 100%)) minmax(0, 1fr);
@@ -3979,7 +3990,7 @@ body.erp-maintenance #section-catalog .panel-body > .subtabs {
 
 body.erp-maintenance #section-catalog .panel-body > .subtabs > .subtab {
   flex: 1 1 auto;
-  min-width: min(100%, 148px);
+  min-width: min(100%, 147px);
   max-width: 100%;
   min-height: 0;
   white-space: normal;
@@ -4091,6 +4102,10 @@ body.erp-maintenance #section-fuel .panel-head > div,
 body.erp-maintenance #section-maintenance .panel-head > div {
   min-width: 0;
   min-height: 0;
+}
+
+body.erp-maintenance #section-dashboard .grid.grid-4.erp-kpi-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 /* Rule 1 — safety / tracking: embed .tracking-sub is often flex/grid from spec; shells shrink inside the section column. */
@@ -4298,7 +4313,7 @@ body.erp-maintenance #section-safety .panel-head > div {
   }
 
   body.erp-maintenance #section-dashboard .grid.grid-4.erp-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 8px;
   }
 
@@ -4443,7 +4458,14 @@ body.erp-maintenance #section-safety .panel-head > div {
 
   body.erp-maintenance.print-wo-only .topbar,
   body.erp-maintenance.print-wo-only #authBanner,
-  body.erp-maintenance.print-wo-only #qboSyncAlertBar {
+  body.erp-maintenance.print-wo-only #qboSyncAlertBar,
+  body.erp-maintenance.print-wo-only #erpIconNav,
+  body.erp-maintenance.print-wo-only .erp-icon-nav,
+  body.erp-maintenance.print-wo-only .sidebar-expand-fab,
+  body.erp-maintenance.print-wo-only .erp-module-sidebar,
+  body.erp-maintenance.print-wo-only .maint-modal-bg,
+  body.erp-maintenance.print-wo-only nav.board-nav,
+  body.erp-maintenance.print-wo-only #boardNavMount {
     display: none !important;
   }
 

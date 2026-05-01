@@ -55,10 +55,14 @@
     }
 
     if (!String(s.repairLocationType || '').trim()) {
-      pushErr('repairLocationSelect', 'repair_loc_type', 'Choose a service location type.');
+      pushErr('repairLocationTypeCombo', 'repair_loc_type', 'Choose a service location type.');
     }
     if (!String(s.repairLocationDetail || '').trim()) {
       pushErr('repairLocationSearch', 'repair_loc_detail', 'Enter service location detail.');
+    }
+
+    if (!String(s.serviceDate || '').trim()) {
+      pushErr('serviceDateInput', 'service_date', 'Service date is required.');
     }
 
     const extNeedInvOrWo =

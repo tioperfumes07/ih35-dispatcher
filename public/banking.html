@@ -55,7 +55,7 @@
             <div class="row" style="margin-bottom:0">
           <div>
             <label for="daysWin">Days of history</label>
-            <input id="daysWin" type="number" min="7" max="366" value="60" style="width:100px;padding:8px;border:1px solid var(--line);border-radius:8px" />
+            <input id="daysWin" type="number" min="7" max="366" value="60" style="width:100%;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;" />
           </div>
             </div>
           </div>
@@ -92,7 +92,7 @@
             </span>
           </span>
         </div>
-        <textarea id="csvPaste" placeholder="Date,Amount,Description&#10;2026-01-15,-523.40,SHELL OIL 5789"></textarea>
+        <textarea id="csvPaste" placeholder="Date,Amount,Description&#10;2026-01-15,-523.40,SHELL OIL 5789" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>
         <button type="button" class="primary" id="btnImport" style="margin-top:10px">Import rows</button>
         <div class="mini-note" style="margin:10px 0 4px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
           <span style="min-width:0;flex:1 1 220px">Import result HTML (row count + batch id) — empty until <strong>Import rows</strong> succeeds.</span>
@@ -120,7 +120,7 @@
             <div class="row" style="margin-bottom:0">
           <div style="flex:1;min-width:200px">
             <label for="batchId">Import batch id</label>
-            <input id="batchId" type="text" placeholder="bankcsv_…" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px" />
+            <input id="batchId" type="text" placeholder="bankcsv_…" style="width:100%;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;" />
           </div>
             </div>
           </div>

@@ -148,32 +148,32 @@ export function DriverProfilesPage({ onViewSchedule }: Props) {
         {err ? <div style={{ marginBottom: 8, color: '#fca5a5' }}>{err}</div> : null}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 10 }}>
-          <label><span>Full name</span><input value={String(draft.full_name || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Unit number</span><input value={String(draft.unit_number || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Status</span><input value={String(draft.status || 'active')} readOnly style={inputStyle()} /></label>
+          <label><span>Full name</span><input value={String(draft.full_name || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Unit number</span><input value={String(draft.unit_number || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Status</span><input value={String(draft.status || 'active')} readOnly style={inputStyle()}  /></label>
 
-          <label><span>Phone</span><input value={String(draft.phone || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Email</span><input value={String(draft.email || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Hire date</span><input type="date" value={String((draft as any).hire_date || '')} readOnly style={inputStyle()} /></label>
+          <label><span>Phone</span><input value={String(draft.phone || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Email</span><input value={String(draft.email || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Hire date</span><input type="date" value={String((draft as any).hire_date || '')} readOnly style={inputStyle()}  /></label>
 
-          <label><span>CDL number</span><input value={String(draft.cdl_number || '')} readOnly style={inputStyle()} /></label>
-          <label><span>CDL state</span><input value={String((draft as any).cdl_state || '')} readOnly style={inputStyle()} /></label>
-          <label><span>CDL expiry</span><input type="date" value={String(draft.cdl_expiry || '')} readOnly style={inputStyle()} /></label>
+          <label><span>CDL number</span><input value={String(draft.cdl_number || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>CDL state</span><input value={String((draft as any).cdl_state || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>CDL expiry</span><input type="date" value={String(draft.cdl_expiry || '')} readOnly style={inputStyle()}  /></label>
 
-          <label><span>License number</span><input value={String((draft as any).license_number || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Medical expiry</span><input type="date" value={String(draft.medical_expiry || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Date of birth</span><input type="date" value={String((draft as any).date_of_birth || '')} readOnly style={inputStyle()} /></label>
+          <label><span>License number</span><input value={String((draft as any).license_number || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Medical expiry</span><input type="date" value={String(draft.medical_expiry || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Date of birth</span><input type="date" value={String((draft as any).date_of_birth || '')} readOnly style={inputStyle()}  /></label>
 
-          <label><span>Emergency contact</span><input value={String((draft as any).emergency_contact || '')} readOnly style={inputStyle()} /></label>
-          <label><span>Emergency phone</span><input value={String((draft as any).emergency_phone || '')} readOnly style={inputStyle()} /></label>
+          <label><span>Emergency contact</span><input value={String((draft as any).emergency_contact || '')} readOnly style={inputStyle()}  /></label>
+          <label><span>Emergency phone</span><input value={String((draft as any).emergency_phone || '')} readOnly style={inputStyle()}  /></label>
           <div />
 
-          <label style={{ gridColumn: '1 / -1' }}><span>Notes</span><textarea rows={3} value={String(draft.notes || '')} readOnly style={inputStyle(true)} /></label>
+          <label style={{ gridColumn: '1 / -1' }}><span>Notes</span><textarea rows={3} value={String(draft.notes || '')} readOnly style={inputStyle(true)}  /></label>
 
           <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(148,163,184,0.2)', paddingTop: 8 }}>
             <label style={{ display: 'grid', gap: 6 }}>
               <span>QBO Vendor (links expenses to this driver)</span>
-              <input list="driverQboVendorList" value={String((draft as any).qbo_vendor_name || '')} readOnly style={inputStyle()} />
+              <input list="driverQboVendorList" value={String((draft as any).qbo_vendor_name || '')} readOnly style={inputStyle()}  />
               <datalist id="driverQboVendorList">
                 {vendors.map((v) => <option key={v.id || v.name} value={v.name} />)}
               </datalist>

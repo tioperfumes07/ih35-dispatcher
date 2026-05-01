@@ -133,7 +133,7 @@
           <label style="cursor:pointer;display:block">
             <input type="radio" name="dedupe_keep_${String(group.groupSignature).replace(/[^a-zA-Z0-9]+/g, '_')}" value="${escapeAttr(
             r.qboId
-          )}" id="${radioId}" />
+          )}" id="${radioId}" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
             <div class="erp-dedupe-keeplbl" data-role="lbl"></div>
           </label>
         </td>
@@ -337,7 +337,7 @@
             <div class="mini-note">All transactions will transfer to the kept record.</div></td></tr>
         </table>
         <label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0;font-size:13px">
-          <input type="checkbox" id="erpDedupeConfirmCb" />
+          <input type="checkbox" id="erpDedupeConfirmCb" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
           <span>I understand this merge cannot be easily undone and I have verified the correct records.</span>
         </label>
         <div style="display:flex;justify-content:space-between;margin-top:16px">
@@ -592,13 +592,13 @@
   <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
     <div style="flex:1;min-width:200px">
       <label class="qb-l">Search for record A</label>
-      <input class="qb-in" id="erpDedupeSearchA" autocomplete="off" placeholder="Type name or id…" />
+      <input class="qb-in" id="erpDedupeSearchA" autocomplete="off" placeholder="Type name or id…" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
       <div id="erpDedupeDdA" class="mini-note"></div>
     </div>
     <button type="button" class="btn btn--small" id="erpDedupeSwap">Swap A and B</button>
     <div style="flex:1;min-width:200px">
       <label class="qb-l">Search for record B</label>
-      <input class="qb-in" id="erpDedupeSearchB" autocomplete="off" />
+      <input class="qb-in" id="erpDedupeSearchB" autocomplete="off" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
       <div id="erpDedupeDdB" class="mini-note"></div>
     </div>
   </div>

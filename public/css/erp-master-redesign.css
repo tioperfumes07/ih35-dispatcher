@@ -122,6 +122,12 @@ body.erp-maintenance .erp-icon-nav__link:hover {
   color: #e6edf3;
 }
 
+/* CSS-only icon rail flyout (micro-parity requirement) */
+body.erp-maintenance .ir-item:hover .ir-flyout {
+  display: flex;
+  flex-direction: column;
+}
+
 body.erp-maintenance .erp-icon-nav__btn.nav-btn.active {
   background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
@@ -3232,7 +3238,7 @@ body.banking-page #boardNavMount {
 body.banking-page .wrap {
   margin: 0 auto;
   min-width: 0;
-  max-width: min(1120px, 100%);
+  max-width: min(1119px, 100%);
   padding: max(16px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
     max(40px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
 }

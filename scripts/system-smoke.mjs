@@ -38,7 +38,9 @@ const CRITICAL = [
   ['GET', '/api/maintenance/service-types'],
   ['GET', '/api/integrity/dashboard'],
   ['GET', '/api/integrity/counts'],
-  ['GET', '/api/integrity/thresholds']
+  ['GET', '/api/integrity/thresholds'],
+  ['GET', '/api/erp/company-profile'],
+  ['GET', '/api/samsara/vehicles']
 ];
 
 /** Optional: DB reachability (fails in dev when URL points at a dead host). */
@@ -74,18 +76,21 @@ const HTML_PAGES = [
       'erp-reports-shell',
       'id="erpReportsCatalogShell"',
       'id="erpReportsCatalogShell"',
+      'id="erpDriverPromoBanner"',
       'acct-dash-kpis',
       'id="acctBoardStrip"',
       'erpConnectionStrip',
       'id="erpApp"',
       'id="bpOpenBillsPagerHost"',
+      'id="upRecent-fuel-pager"',
       'id="driverFilesPagerHost"',
-      'id="repairLocationSelect"',
+      'id="repairLocationTypeCombo"',
       'maint-cost-imports-shortcut',
       'printDocuments.js',
       'erp-multi-bills.js',
       'erpOpenMultiBillsModal',
       'id="erpMultiBillsModal"',
+      'id="svcMaintJsonCatalogBody"',
       'erp-ui.js',
       'section-maintenance'
     ]
@@ -179,7 +184,12 @@ function criticalContractError(path, json) {
         ? null
         : 'expected { ok:true, dashboard:[], vehicles:[], tireAlerts:[] }';
     case '/api/maintenance/records':
-      return json && typeof json === 'object' ? null : 'expected object payload';
+      return json.ok === true &&
+        Array.isArray(json.records) &&
+        Array.isArray(json.apTransactions) &&
+        Array.isArray(json.workOrders)
+        ? null
+        : 'expected { ok:true, records:[], apTransactions:[], workOrders:[] }';
     case '/api/maintenance/service-types':
       return json.ok === true && Array.isArray(json.names)
         ? null
@@ -221,6 +231,12 @@ function criticalContractError(path, json) {
         const bad = vals.some(v => typeof v !== 'number' || !Number.isFinite(v));
         return bad ? 'expected all thresholds values to be finite numbers' : null;
       }
+    case '/api/erp/company-profile':
+      return json.ok === true && json.companyProfile && typeof json.companyProfile === 'object'
+        ? null
+        : 'expected { ok:true, companyProfile:{} }';
+    case '/api/samsara/vehicles':
+      return json.ok === true && Array.isArray(json.vehicles) ? null : 'expected { ok:true, vehicles: [] }';
     default:
       return null;
   }
@@ -244,6 +260,25 @@ async function one(method, path) {
         ? `(alerts total ${json.counts.total ?? '—'})`
         : '';
   return { path, status: r.status, ok: r.ok, hint, json, jsonSnippet: summarize(json, path) };
+}
+
+async function onePostJson(path, body) {
+  const url = base + path;
+  const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(FETCH_MS) : undefined;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body && typeof body === 'object' ? body : {}),
+    signal: ctrl
+  });
+  const text = await r.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { _nonJson: text.slice(0, 120) };
+  }
+  return { path, status: r.status, ok: r.ok, hint: '', json, jsonSnippet: summarize(json, path) };
 }
 
 async function oneHtml(path, needleOrList) {
@@ -410,6 +445,12 @@ function summarize(j, path) {
   if (path === '/api/integrity/thresholds' && j.ok === true && j.thresholds && typeof j.thresholds === 'object') {
     return `thresholdKeys=${Object.keys(j.thresholds).length}`;
   }
+  if (path === '/api/erp/company-profile' && j.ok === true && j.companyProfile && typeof j.companyProfile === 'object') {
+    return `companyProfileKeys=${Object.keys(j.companyProfile).length}`;
+  }
+  if (path === '/api/samsara/vehicles' && j.ok === true && Array.isArray(j.vehicles)) {
+    return `vehicles=${j.vehicles.length}`;
+  }
   return JSON.stringify(j).slice(0, 100);
 }
 
@@ -451,6 +492,56 @@ for (const [method, path] of CRITICAL) {
     console.log('   Is the server running? Try: npm start');
     process.exit(1);
   }
+}
+
+try {
+  const board = await one('GET', '/api/board');
+  let shPass = true;
+  if (!board.ok) {
+    shPass = false;
+    console.log(`✗ ${board.status} GET /api/board (need 2xx for service-history probe)`);
+    console.log('   ', board.jsonSnippet);
+  } else {
+    const v0 = board.json && Array.isArray(board.json.vehicles) ? board.json.vehicles[0] : null;
+    const unitId = v0
+      ? String(v0.unit_number || v0.unitNumber || v0.name || '')
+          .trim()
+          .slice(0, 120)
+      : '';
+    if (!unitId) {
+      console.log('○ GET /api/units/…/service-history/… (skipped — no board vehicle id)');
+    } else {
+      const shPath = `/api/units/${encodeURIComponent(unitId)}/service-history/${encodeURIComponent('PM')}`;
+      const sh = await one('GET', shPath);
+      const shContract =
+        sh.json &&
+        typeof sh.json === 'object' &&
+        !sh.json._nonJson &&
+        sh.json.ok === true &&
+        Object.prototype.hasOwnProperty.call(sh.json, 'nextDueMiles');
+      shPass = sh.ok && shContract;
+      console.log(`${shPass ? '✓' : '✗'} ${sh.status} GET ${shPath}`.trim());
+      if (!shPass) {
+        console.log('   ', sh.jsonSnippet);
+        console.log('    Contract:', shContract ? `HTTP ${sh.status}` : 'expected { ok:true, nextDueMiles: … }');
+      }
+    }
+  }
+  if (!shPass) criticalFailures++;
+
+  const post = await onePostJson('/api/fleet/sync-from-samsara', { assets: [], drivers: [] });
+  const postPass =
+    post.status === 200 &&
+    post.json &&
+    typeof post.json === 'object' &&
+    post.json.ok === true &&
+    Array.isArray(post.json.errors);
+  if (!postPass) criticalFailures++;
+  console.log(`${postPass ? '✓' : '✗'} ${post.status} POST /api/fleet/sync-from-samsara`.trim());
+  if (!postPass) console.log('   ', post.jsonSnippet);
+} catch (e) {
+  criticalFailures++;
+  console.log(`✗ FAIL fleet/samsara smoke probes: ${e.message || e}`);
 }
 
 try {

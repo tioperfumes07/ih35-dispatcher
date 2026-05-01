@@ -25,6 +25,7 @@ import integrationsRoutes, { startRelayAutoSync } from "./routes/integrations.mj
 import { mountReportsRestApi } from "./routes/reports-rest-api.mjs";
 import { mountScheduledReports, startReportScheduleRunner } from "./routes/scheduled-reports.mjs";
 import pdfRouter from "./routes/pdf.mjs";
+import dotAuditReportsRouter from "./routes/dot-audit-reports.mjs";
 import { createForm425cRouter } from "./routes/form-425c-api.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,8 +54,16 @@ const SMOKE_GATE_API_PATHS = new Set([
   "/api/maintenance/service-types",
   "/api/integrity/dashboard",
   "/api/integrity/counts",
-  "/api/integrity/thresholds"
+  "/api/integrity/thresholds",
+  "/api/erp/company-profile",
+  "/api/samsara/vehicles"
 ]);
+
+function smokeGateExemptGet(pathOnly) {
+  if (SMOKE_GATE_API_PATHS.has(pathOnly)) return true;
+  if (/^\/api\/units\/[^/]+\/service-history\/[^/]+$/.test(pathOnly)) return true;
+  return false;
+}
 
 function readSessionTokenFromReq(req) {
   const auth = String(req.headers.authorization || "").trim();
@@ -91,7 +100,8 @@ function smokeApiSessionGate(req, res, next) {
   if (pathOnly === "/api/__smoke_not_found__") return next();
   if (pathOnly === "/api/pdf/__smoke__") return next();
   const smokeGate = String(process.env.IH35_SMOKE_GATE || "").trim() === "1";
-  if (smokeGate && req.method === "GET" && SMOKE_GATE_API_PATHS.has(pathOnly)) return next();
+  if (smokeGate && req.method === "GET" && smokeGateExemptGet(pathOnly)) return next();
+  if (smokeGate && req.method === "POST" && pathOnly === "/api/fleet/sync-from-samsara") return next();
   if (!authRequired()) return next();
   const tok = readSessionTokenFromReq(req);
   const v = tok && verifySessionToken(tok);
@@ -123,6 +133,15 @@ async function start() {
   app.use(express.json());
   app.use((_, res, next) => {
     res.setHeader("X-IH35-Deploy-Ref", deployRef);
+    next();
+  });
+  app.use((req, res, next) => {
+    const p = String(req.path || "");
+    if (p === "/health" || p === "/ih35-runtime.js" || p === "/api/health" || p === "/api/health/sync") {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    }
     next();
   });
 
@@ -158,7 +177,7 @@ async function start() {
   app.use(
     express.static(publicDir, {
       setHeaders: (res, filePath) => {
-        if (filePath.endsWith(".html")) {
+        if (filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) {
           res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
           res.setHeader("Pragma", "no-cache");
           res.setHeader("Expires", "0");
@@ -334,6 +353,7 @@ async function start() {
   mountErpCoreApi(app, { logError: console.error });
   registerAccountingRoutes(app);
   registerCatalogRoutes(app);
+  app.use(dotAuditReportsRouter);
   app.use("/api/form-425c", createForm425cRouter({ logError: console.error }));
 
   app.get("/api/live", (_req, res) => {
@@ -360,12 +380,10 @@ async function start() {
     });
   });
 
-  // Keep legacy smoke-gate surface for maintenance records while canonical routes are expanded.
-  app.get("/api/maintenance/records", (_req, res) => {
-    res.json({ ok: true, records: [] });
-  });
-
   app.get("/ih35-runtime.js", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.type("application/javascript").send(
       [
         "window.__IH35_FLEET_HUB_BASE = '/fleet-reports/';",

@@ -106,12 +106,43 @@ body.erp-maintenance #section-maintenance .maint-action-strip .maint-action-stri
 
 /* --- Page shell --- */
 body.erp-maintenance .maint-page-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
   gap: 0;
+}
+
+/* Maintenance section: column stack so KPI strip, shell, and tab panels do not overlap siblings. */
+body.erp-maintenance #section-maintenance.section.active {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+body.erp-maintenance #section-maintenance.section.active > .maint-page-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* WO / fleet / R&M panels participate in shell flex (inner columns use flex:1). */
+body.erp-maintenance #section-maintenance.section.active .maint-page-shell > .maint-main-tab-panel.active {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+body.erp-maintenance #section-maintenance.section.active #maintWorkOrderFormMount {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
 }
 
 /* LEVEL 1 — top action bar */
@@ -342,8 +373,14 @@ body.erp-maintenance .maint-wo-col-form {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+}
+
+body.erp-maintenance .maint-wo-col-form > .maint-wo-form-stack-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
 }
 
 body.erp-maintenance .maint-wo-form-stack-inner {
@@ -352,7 +389,7 @@ body.erp-maintenance .maint-wo-form-stack-inner {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -362,7 +399,7 @@ body.erp-maintenance .maint-wo-main-aside {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -372,7 +409,7 @@ body.erp-maintenance .maint-wo-workspace {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -441,8 +478,8 @@ body.erp-maintenance .maint-form-stack {
 }
 
 body.erp-maintenance .maint-form-actions.maint-form-actions--sticky {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  flex-shrink: 0;
   z-index: 100;
   background: #fff;
   border-top: 1px solid #e0e3e8;
@@ -813,14 +850,17 @@ body.erp-maintenance .maint-wo-workspace {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 body.erp-maintenance .maint-wo-form-shell {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 body.erp-maintenance .maint-form-actions.maint-form-actions--sticky {
-  position: sticky;
-  bottom: 0;
+  position: relative;
   z-index: 100;
   flex-shrink: 0;
   margin: 0;

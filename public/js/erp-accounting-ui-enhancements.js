@@ -102,14 +102,14 @@
       prefix +
       '_from" value="' +
       today +
-      '" />' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
       '<span class="erp-df-sep">—</span>' +
       '<span class="erp-df-lbl">TO</span>' +
       '<input type="date" class="qb-in erp-df-to" id="' +
       prefix +
       '_to" value="' +
       today +
-      '" />' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
       '<div class="erp-df-chips">' +
       chips +
       '</div>' +
@@ -153,28 +153,28 @@
       '<div class="erp-acct-workflow-section">' +
       '<div class="erp-acct-workflow-h">Header</div>' +
       '<div class="erp-acct-field-grid erp-fe-head">' +
-      '<div class="erp-acct-field"><span class="qb-l">Type</span><select class="qb-in" id="feType"><option>Diesel</option><option>DEF</option><option>Reefer</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Type</span><select class="qb-in" id="feType" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option>Diesel</option><option>DEF</option><option>Reefer</option></select></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Txn date</span><input type="date" class="qb-in" id="feDate" value="' +
       today +
-      '" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Vendor</span><input class="qb-in" list="qboVendorOptions" id="feVendor" placeholder="QuickBooks vendor" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Unit</span><input class="qb-in" list="unitOptions" id="feUnit" placeholder="Unit / asset" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Payment method</span><input class="qb-in" list="paymentMethodOptions" id="fePayMethod" placeholder="Card, ACH…" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Load / inv #</span><input class="qb-in" id="feLoadInv" placeholder="Load or invoice" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Vendor inv #</span><input class="qb-in" id="feVendorInv" placeholder="Supplier #" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Shop / WO #</span><input class="qb-in" id="feShopWo" placeholder="Internal WO" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Expense #</span><input class="qb-in" id="feExpenseNo" placeholder="Doc number" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Pay from bank</span><input class="qb-in" list="qboBankAccountOptions" id="feBank" placeholder="Bank account" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Vendor</span><input class="qb-in" list="qboVendorOptions" id="feVendor" placeholder="QuickBooks vendor" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Unit</span><input class="qb-in" list="unitOptions" id="feUnit" placeholder="Unit / asset" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Payment method</span><input class="qb-in" list="paymentMethodOptions" id="fePayMethod" placeholder="Card, ACH…" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Load / inv #</span><input class="qb-in" id="feLoadInv" placeholder="Load or invoice" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Vendor inv #</span><input class="qb-in" id="feVendorInv" placeholder="Supplier #" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Shop / WO #</span><input class="qb-in" id="feShopWo" placeholder="Internal WO" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Expense #</span><input class="qb-in" id="feExpenseNo" placeholder="Doc number" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Pay from bank</span><input class="qb-in" list="qboBankAccountOptions" id="feBank" placeholder="Bank account" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div></div>' +
       '<div class="erp-acct-workflow-section">' +
       '<div class="erp-acct-workflow-h">Cost lines</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table" id="feCostTable">' +
       '<thead><tr><th class="num">Qty (gal)</th><th class="num">$/gal</th><th class="num">Line $</th><th></th></tr></thead><tbody>' +
-      '<tr><td><input class="qb-in fe-qty num" inputmode="decimal" placeholder="0" /></td><td><input class="qb-in fe-rate num" inputmode="decimal" placeholder="0.0000" /></td><td><input class="qb-in fe-line num" readonly placeholder="—" /></td><td><button type="button" class="erp-acct-btn erp-acct-btn--muted fe-rm" disabled>Remove</button></td></tr>' +
+      '<tr><td><input class="qb-in fe-qty num" inputmode="decimal" placeholder="0" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in fe-rate num" inputmode="decimal" placeholder="0.0000" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in fe-line num" readonly placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><button type="button" class="erp-acct-btn erp-acct-btn--muted fe-rm" disabled>Remove</button></td></tr>' +
       '</tbody></table></div>' +
       '<div style="margin-top:8px"><button type="button" class="erp-acct-btn erp-acct-btn--muted" id="feAddLine">Add line</button></div></div>' +
       '<div class="erp-acct-workflow-section">' +
-      '<div class="erp-acct-field" style="max-width:100%"><span class="qb-l">Memo</span><textarea class="qb-memo" id="feMemo" rows="2" style="width:100%;min-width:0;resize:vertical;box-sizing:border-box" placeholder="Notes for auditors…"></textarea></div></div>' +
+      '<div class="erp-acct-field" style="max-width:100%"><span class="qb-l">Memo</span><textarea class="qb-memo" id="feMemo" rows="2" style="width:100%;min-width:0;resize:vertical;box-sizing:border-box;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;" placeholder="Notes for auditors…"></textarea></div></div>' +
       renderDateBarHtml('fe_hist', '') +
       '<div class="erp-acct-workflow-section"><div class="erp-acct-workflow-h">History</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table"><thead><tr><th>Date</th><th>Vendor</th><th>Unit</th><th class="num">Gallons</th><th class="num">Total</th><th>QBO</th></tr></thead><tbody><tr><td colspan="6" class="mini-note">Apply the date bar to scope preview rows when the fuel API is connected.</td></tr></tbody></table></div></div>' +
@@ -198,17 +198,17 @@
       '<div class="erp-acct-field-grid">' +
       '<div class="erp-acct-field"><span class="qb-l">Journal date</span><input type="date" class="qb-in" id="jeDate" value="' +
       today +
-      '" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Journal #</span><input class="qb-in" id="jeNum" readonly value="AUTO" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Currency</span><input class="qb-in" readonly value="USD" /></div>' +
-      '<div class="erp-acct-field" style="flex:2 1 260px"><span class="qb-l">Memo</span><input class="qb-in" id="jeMemo" placeholder="Optional" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Journal #</span><input class="qb-in" id="jeNum" readonly value="AUTO" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Currency</span><input class="qb-in" readonly value="USD" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field" style="flex:2 1 260px"><span class="qb-l">Memo</span><input class="qb-in" id="jeMemo" placeholder="Optional" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div></div>' +
       '<div class="erp-acct-workflow-section">' +
       '<div class="erp-acct-workflow-h">Lines</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table" id="jeTable">' +
       '<thead><tr><th>Account</th><th>Description</th><th class="num">Debit</th><th class="num">Credit</th><th>Name</th><th>Class</th></tr></thead><tbody>' +
-      '<tr><td><input class="qb-in" placeholder="Expense" disabled /></td><td><input class="qb-in je-desc" value="" placeholder="Description" /></td><td><input class="qb-in je-d num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in je-c num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in" disabled placeholder="—" /></td><td><input class="qb-in" disabled placeholder="—" /></td></tr>' +
-      '<tr><td><input class="qb-in" placeholder="Bank" disabled /></td><td><input class="qb-in je-desc" value="" placeholder="Description" /></td><td><input class="qb-in je-d num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in je-c num" inputmode="decimal" value="" placeholder="0.00" /></td><td><input class="qb-in" disabled placeholder="—" /></td><td><input class="qb-in" disabled placeholder="—" /></td></tr>' +
+      '<tr><td><input class="qb-in" placeholder="Expense" disabled / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in je-desc" value="" placeholder="Description" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in je-d num" inputmode="decimal" value="" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in je-c num" inputmode="decimal" value="" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in" disabled placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in" disabled placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td></tr>' +
+      '<tr><td><input class="qb-in" placeholder="Bank" disabled / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in je-desc" value="" placeholder="Description" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in je-d num" inputmode="decimal" value="" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in je-c num" inputmode="decimal" value="" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in" disabled placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><input class="qb-in" disabled placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td></tr>' +
       '</tbody></table></div>' +
       '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">' +
       '<button type="button" class="erp-acct-btn erp-acct-btn--muted" id="jeAddLine">Add line</button>' +
@@ -235,14 +235,14 @@
       ) +
       '<div class="erp-acct-workflow-section">' +
       '<div class="erp-acct-field-grid">' +
-      '<div class="erp-acct-field"><span class="qb-l">From account</span><select class="qb-in" id="trFrom"><option value="a1">Operating · …1020</option><option value="a2">Payroll · …1030</option></select></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">To account</span><select class="qb-in" id="trTo"><option value="a2">Payroll · …1030</option><option value="a1">Operating · …1020</option></select></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Amount</span><input class="qb-in" id="trAmt" inputmode="decimal" placeholder="0.00" /></div>' +
-      '<div class="erp-acct-field" style="flex:2 1 220px"><span class="qb-l">Memo</span><input class="qb-in" id="trMemo" placeholder="Optional" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Reference #</span><input class="qb-in" id="trRef" placeholder="Optional" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">From account</span><select class="qb-in" id="trFrom" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="a1">Operating · …1020</option><option value="a2">Payroll · …1030</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">To account</span><select class="qb-in" id="trTo" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="a2">Payroll · …1030</option><option value="a1">Operating · …1020</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Amount</span><input class="qb-in" id="trAmt" inputmode="decimal" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field" style="flex:2 1 220px"><span class="qb-l">Memo</span><input class="qb-in" id="trMemo" placeholder="Optional" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Reference #</span><input class="qb-in" id="trRef" placeholder="Optional" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Transfer date</span><input type="date" class="qb-in" id="trDate" value="' +
       today +
-      '" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div>' +
       '<p class="erp-acct-warn" id="trSame" hidden>Cannot transfer to the same account.</p>' +
       '<div class="mini-note" id="trBal" style="margin-top:10px;line-height:1.5">From: — balance after: —<br/>To: — balance after: —</div>' +
@@ -266,22 +266,22 @@
       ) +
       '<div class="erp-acct-workflow-section"><div class="erp-acct-workflow-h">Settlement header</div>' +
       '<div class="erp-acct-field-grid">' +
-      '<div class="erp-acct-field"><span class="qb-l">Driver</span><input class="qb-in" list="maintDriverOptions" placeholder="Search driver" disabled /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Settlement #</span><input class="qb-in" readonly value="AUTO" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Driver</span><input class="qb-in" list="maintDriverOptions" placeholder="Search driver" disabled / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Settlement #</span><input class="qb-in" readonly value="AUTO" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Period from</span><input type="date" class="qb-in" value="' +
       today +
-      '" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Period to</span><input type="date" class="qb-in" value="' +
       today +
-      '" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div>' +
       '<div class="erp-acct-field-grid" style="margin-top:10px">' +
-      '<div class="erp-acct-field"><span class="qb-l">Pay from account</span><select class="qb-in" disabled><option>Choose bank…</option></select></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Payment method</span><select class="qb-in" disabled><option>ACH</option><option>Check</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Pay from account</span><select class="qb-in" disabled style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option>Choose bank…</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Payment method</span><select class="qb-in" disabled style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option>ACH</option><option>Check</option></select></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Payment date</span><input type="date" class="qb-in" value="' +
       today +
-      '" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Check #</span><input class="qb-in" disabled placeholder="If check" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Check #</span><input class="qb-in" disabled placeholder="If check" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div></div>' +
       '<div class="erp-acct-workflow-section"><div class="erp-acct-workflow-h">Revenue / loads</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table"><thead><tr><th>Load #</th><th>Date</th><th>Origin</th><th>Dest</th><th class="num">Miles</th><th class="num">Rate</th><th class="num">Gross</th><th>Status</th></tr></thead><tbody><tr><td colspan="8" class="mini-note">No loads in range yet.</td></tr></tbody></table></div>' +
@@ -304,7 +304,7 @@
       '<p class="mini-note" style="margin:0">Gross revenue: $0.00</p>' +
       '<p class="mini-note" style="margin:4px 0">Total deductions: −$0.00</p>' +
       '<p style="margin:8px 0 0"><span class="mini-note">NET PAY</span><br/><span class="erp-acct-netpay">$0.00</span></p></div>' +
-      renderDateBarHtml('ds_hist', '<span class="qb-l">Driver</span><input class="qb-in" style="max-width:200px" disabled placeholder="Filter" />') +
+      renderDateBarHtml('ds_hist', '<span class="qb-l">Driver</span><input class="qb-in" style="max-width:200px;height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" disabled placeholder="Filter" />') +
       '<div class="erp-acct-workflow-section"><div class="erp-acct-workflow-h">Past settlements</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table"><thead><tr><th>Date</th><th>Driver</th><th>#</th><th class="num">Gross</th><th class="num">Deductions</th><th class="num">Net</th><th>Status</th></tr></thead><tbody><tr><td colspan="7" class="mini-note">No history.</td></tr></tbody></table></div></div>' +
       '<div class="erp-acct-workflow-foot">' +
@@ -324,31 +324,31 @@
       ) +
       '<div class="erp-acct-workflow-section">' +
       '<div class="erp-acct-field-grid">' +
-      '<div class="erp-acct-field"><span class="qb-l">Load #</span><input class="qb-in" placeholder="Required" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Status</span><select class="qb-in"><option>Active</option><option>Delivered</option><option>Cancelled</option><option>In transit</option><option>Planning</option></select></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Load #</span><input class="qb-in" placeholder="Required" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Status</span><select class="qb-in" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option>Active</option><option>Delivered</option><option>Cancelled</option><option>In transit</option><option>Planning</option></select></div>' +
       '<div class="erp-acct-field"><span class="qb-l">Pick up date</span><input type="date" class="qb-in" value="' +
       today +
-      '" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Delivery date</span><input type="date" class="qb-in" /></div>' +
+      '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Delivery date</span><input type="date" class="qb-in" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div>' +
       '<div class="erp-acct-field-grid" style="margin-top:10px">' +
-      '<div class="erp-acct-field"><span class="qb-l">Driver</span><input class="qb-in" list="maintDriverOptions" placeholder="Search" disabled /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Unit / truck</span><input class="qb-in" list="unitOptions" placeholder="Unit" disabled /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Customer</span><input class="qb-in" list="qboCustomerOptions" placeholder="QBO customer" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Revenue ($)</span><input class="qb-in" inputmode="decimal" placeholder="0.00" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Driver</span><input class="qb-in" list="maintDriverOptions" placeholder="Search" disabled / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Unit / truck</span><input class="qb-in" list="unitOptions" placeholder="Unit" disabled / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Customer</span><input class="qb-in" list="qboCustomerOptions" placeholder="QBO customer" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Revenue ($)</span><input class="qb-in" inputmode="decimal" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div>' +
       '<div class="erp-acct-field-grid" style="margin-top:10px">' +
-      '<div class="erp-acct-field" style="flex:2 1 200px"><span class="qb-l">Origin</span><input class="qb-in" placeholder="City / location" /></div>' +
-      '<div class="erp-acct-field" style="flex:2 1 200px"><span class="qb-l">Destination</span><input class="qb-in" placeholder="City / location" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Miles</span><input class="qb-in" inputmode="decimal" placeholder="Loaded + empty" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Invoice #</span><input class="qb-in" placeholder="Customer invoice" /></div>' +
+      '<div class="erp-acct-field" style="flex:2 1 200px"><span class="qb-l">Origin</span><input class="qb-in" placeholder="City / location" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field" style="flex:2 1 200px"><span class="qb-l">Destination</span><input class="qb-in" placeholder="City / location" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Miles</span><input class="qb-in" inputmode="decimal" placeholder="Loaded + empty" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Invoice #</span><input class="qb-in" placeholder="Customer invoice" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div>' +
       '<div class="erp-acct-field-grid" style="margin-top:10px">' +
-      '<div class="erp-acct-field"><span class="qb-l">Settlement #</span><input class="qb-in" disabled placeholder="If settled" /></div>' +
-      '<div class="erp-acct-field"><span class="qb-l">Reference #</span><input class="qb-in" placeholder="BOL, etc." /></div>' +
-      '<div class="erp-acct-field" style="flex:2 1 220px"><span class="qb-l">Notes</span><input class="qb-in" placeholder="Notes" /></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Settlement #</span><input class="qb-in" disabled placeholder="If settled" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field"><span class="qb-l">Reference #</span><input class="qb-in" placeholder="BOL, etc." / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+      '<div class="erp-acct-field" style="flex:2 1 220px"><span class="qb-l">Notes</span><input class="qb-in" placeholder="Notes" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
       '</div></div>' +
-      renderDateBarHtml('lt_hist', '<span class="qb-l">Status</span><select class="qb-in" style="max-width:140px"><option>All</option></select>') +
+      renderDateBarHtml('lt_hist', '<span class="qb-l">Status</span><select class="qb-in" style="max-width:140px;height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option>All</option></select>') +
       '<div class="erp-acct-workflow-section"><div class="erp-acct-workflow-h">Load history</div>' +
       '<div class="erp-acct-workflow-table-wrap"><table class="erp-acct-workflow-table"><thead><tr><th>Load #</th><th>Date</th><th>Driver</th><th>Customer</th><th>Status</th><th class="num">Revenue</th></tr></thead><tbody><tr><td colspan="6" class="mini-note">Open Dispatch for live boards or connect TMS.</td></tr></tbody></table></div></div>' +
       '<div class="erp-acct-workflow-foot">' +
@@ -373,12 +373,12 @@
 
     function rowHtml() {
       return (
-        '<tr><td><input class="qb-in" placeholder="Account" disabled /></td>' +
-        '<td><input class="qb-in je-desc" value="" /></td>' +
-        '<td><input class="qb-in je-d num" inputmode="decimal" /></td>' +
-        '<td><input class="qb-in je-c num" inputmode="decimal" /></td>' +
-        '<td><input class="qb-in" disabled placeholder="—" /></td>' +
-        '<td><input class="qb-in" disabled placeholder="—" /></td></tr>'
+        '<tr><td><input class="qb-in" placeholder="Account" disabled / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in je-desc" value="" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in je-d num" inputmode="decimal" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in je-c num" inputmode="decimal" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in" disabled placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in" disabled placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td></tr>'
       );
     }
 
@@ -419,9 +419,9 @@
 
     function rowHtml() {
       return (
-        '<tr><td><input class="qb-in fe-qty num" inputmode="decimal" placeholder="0" /></td>' +
-        '<td><input class="qb-in fe-rate num" inputmode="decimal" placeholder="0.0000" /></td>' +
-        '<td><input class="qb-in fe-line num" readonly placeholder="—" /></td><td><button type="button" class="erp-acct-btn erp-acct-btn--muted fe-rm">Remove</button></td></tr>'
+        '<tr><td><input class="qb-in fe-qty num" inputmode="decimal" placeholder="0" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in fe-rate num" inputmode="decimal" placeholder="0.0000" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td>' +
+        '<td><input class="qb-in fe-line num" readonly placeholder="—" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></td><td><button type="button" class="erp-acct-btn erp-acct-btn--muted fe-rm">Remove</button></td></tr>'
       );
     }
 

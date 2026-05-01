@@ -1,0 +1,495 @@
+/* IH35 — Lists & Catalogs + shared compact list surfaces (scoped) */
+
+#section-catalog.catalog-ih35-lc {
+  --ih35-lc-navy: #1a1f36;
+  --ih35-lc-green: #1a7a3c;
+  --ih35-lc-blue: #1557a0;
+  --ih35-lc-bg: #f4f6f8;
+  --ih35-lc-card: #ffffff;
+  --ih35-lc-border: #e0e3e8;
+  --ih35-lc-muted: #6b7385;
+  --ih35-lc-row-hover: #f5f6f8;
+  --ih35-lc-row-sel: #e8f0fe;
+  --ih35-lc-samsara-row: #f0f7ff;
+}
+
+#section-catalog.catalog-ih35-lc .panel-body {
+  background: var(--ih35-lc-bg);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+  overflow: hidden;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-mega-tabs,
+#section-catalog.catalog-ih35-lc .ih35-lc-more-tabs {
+  flex-shrink: 0;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-more-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 10px 8px;
+  background: var(--ih35-lc-bg);
+  border-bottom: 1px solid var(--ih35-lc-border);
+  font-size: 11px;
+  color: var(--ih35-lc-muted);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-more-tabs .ih35-lc-more-label {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 4px;
+}
+
+#section-catalog.catalog-ih35-lc .catalog-subpanel {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+#section-catalog.catalog-ih35-lc .catalog-subpanel.active {
+  display: flex;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-two {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ih35-lc-bg);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--ih35-lc-border);
+  background: var(--ih35-lc-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-search {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ih35-lc-border);
+  flex-shrink: 0;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-search input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-group-hdr {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ih35-lc-muted);
+  padding: 5px 10px 3px;
+  background: #f8f9fa;
+  border-bottom: 0.5px solid var(--ih35-lc-border);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-item {
+  padding: 7px 10px;
+  font-size: 12px;
+  color: #3c4257;
+  cursor: pointer;
+  border-bottom: 0.5px solid #f1f3f4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-item:hover {
+  background: var(--ih35-lc-row-hover);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-item.ih35-lc-left-item--active {
+  background: var(--ih35-lc-row-sel);
+  border-left: 3px solid var(--ih35-lc-blue);
+  padding-left: 7px;
+  color: var(--ih35-lc-blue);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-count {
+  font-size: 9px;
+  background: #f1f3f4;
+  color: var(--ih35-lc-muted);
+  border-radius: 10px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-left-item--active .ih35-lc-count {
+  background: #c5d9f7;
+  color: var(--ih35-lc-blue);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-toolbar {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ih35-lc-border);
+  background: var(--ih35-lc-card);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-toolbar-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ih35-lc-navy);
+  flex: 1 1 120px;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-filter {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--ih35-lc-border);
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-filter .ih35-lc-filter-grow {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--ih35-lc-card);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area .table-wrap {
+  overflow: auto;
+  max-height: none;
+  height: 100%;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area table.catalog-admin-table,
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area table.report-table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area th {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ih35-lc-muted);
+  padding: 5px 8px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--ih35-lc-border);
+  text-align: left;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area td {
+  padding: 4px 8px;
+  border-bottom: 0.5px solid var(--ih35-lc-border);
+  color: var(--ih35-lc-navy);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-table-area tbody tr:hover {
+  background: var(--ih35-lc-row-hover);
+}
+
+#section-catalog.catalog-ih35-lc tr.ih35-lc-row-sel td {
+  background: var(--ih35-lc-row-sel);
+}
+
+#section-catalog.catalog-ih35-lc tr.ih35-lc-row-samsara td {
+  background: var(--ih35-lc-samsara-row);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-pill {
+  font-size: 9px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 10px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-pill--ok {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-pill--warn {
+  background: #fef7e0;
+  color: #8a5200;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-pill--err {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-pill--info {
+  background: #e8f0fe;
+  color: var(--ih35-lc-blue);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-pill--neutral {
+  background: #f1f3f4;
+  color: #5f6368;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-icon-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid var(--ih35-lc-border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--ih35-lc-muted);
+  padding: 0;
+  line-height: 1;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-icon-btn:hover {
+  background: var(--ih35-lc-row-hover);
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 500;
+  background: #e8f0fe;
+  color: var(--ih35-lc-blue);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Catalog modals (fleet / parts / service) */
+#catalogFleetAssetModal.ih35-lc-modal-host,
+#catalogPartModal.ih35-lc-modal-host,
+#catalogServiceTypeModal.ih35-lc-modal-host {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 12040;
+  background: rgba(15, 23, 42, 0.45);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+#catalogFleetAssetModal.ih35-lc-modal-host.on,
+#catalogPartModal.ih35-lc-modal-host.on,
+#catalogServiceTypeModal.ih35-lc-modal-host.on {
+  display: flex;
+}
+
+#catalogFleetAssetModal .ih35-lc-modal,
+#catalogPartModal .ih35-lc-modal,
+#catalogServiceTypeModal .ih35-lc-modal {
+  position: relative;
+  width: 560px;
+  max-width: 96vw;
+  max-height: 92vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid var(--ih35-lc-border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+#catalogFleetAssetModal .ih35-lc-modal.ih35-lc-modal--fs,
+#catalogPartModal .ih35-lc-modal.ih35-lc-modal--fs,
+#catalogServiceTypeModal .ih35-lc-modal.ih35-lc-modal--fs {
+  width: min(1100px, 98vw);
+  max-width: 98vw;
+  height: min(900px, 94vh);
+  max-height: 94vh;
+}
+
+#catalogFleetAssetModal .ih35-lc-modal-hd,
+#catalogPartModal .ih35-lc-modal-hd,
+#catalogServiceTypeModal .ih35-lc-modal-hd {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ih35-lc-border);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ih35-lc-navy);
+}
+
+#catalogFleetAssetModal .ih35-lc-modal-bd,
+#catalogPartModal .ih35-lc-modal-bd,
+#catalogServiceTypeModal .ih35-lc-modal-bd {
+  padding: 10px 12px 12px;
+}
+
+#catalogFleetAssetModal .ih35-lc-modal-ft,
+#catalogPartModal .ih35-lc-modal-ft,
+#catalogServiceTypeModal .ih35-lc-modal-ft {
+  padding: 8px 12px;
+  border-top: 1px solid var(--ih35-lc-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#catalogFleetAssetModal .ih35-lc-modal-resize,
+#catalogPartModal .ih35-lc-modal-resize,
+#catalogServiceTypeModal .ih35-lc-modal-resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  border-radius: 2px;
+  background: linear-gradient(135deg, transparent 50%, rgba(107, 115, 133, 0.35) 50%);
+}
+
+#catalogFleetAssetModal .form-grid-2,
+#catalogPartModal .form-grid-2,
+#catalogServiceTypeModal .form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+#catalogFleetAssetModal .field-full,
+#catalogPartModal .field-full,
+#catalogServiceTypeModal .field-full {
+  grid-column: 1 / -1;
+}
+
+#catalogFleetAssetModal label,
+#catalogPartModal label,
+#catalogServiceTypeModal label {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ih35-lc-muted);
+  display: block;
+  margin-bottom: 3px;
+}
+
+#catalogFleetAssetModal input,
+#catalogFleetAssetModal select,
+#catalogFleetAssetModal textarea,
+#catalogPartModal input,
+#catalogPartModal select,
+#catalogPartModal textarea,
+#catalogServiceTypeModal input,
+#catalogServiceTypeModal select,
+#catalogServiceTypeModal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  height: 28px;
+  font-size: 11px;
+  padding: 0 7px;
+  border: 1px solid #d0d4da;
+  border-radius: 4px;
+  color: var(--ih35-lc-navy);
+}
+
+#catalogFleetAssetModal textarea,
+#catalogPartModal textarea,
+#catalogServiceTypeModal textarea {
+  height: auto;
+  min-height: 56px;
+  padding: 6px 7px;
+}
+
+#section-catalog.catalog-ih35-lc .ih35-lc-th-sort {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+#section-catalog.catalog-ih35-lc thead th.ih35-lc-th-sorted .ih35-lc-th-sort {
+  color: var(--ih35-lc-blue);
+  font-weight: 600;
+}
+
+#section-catalog.catalog-ih35-lc tbody tr.ih35-lc-row-sel {
+  outline: 1px solid rgba(21, 87, 160, 0.35);
+  outline-offset: -1px;
+}
+
+/* Maintenance unit cards — compact (lists standard) */
+body.erp-maintenance .maint-unit-card {
+  max-height: 52px;
+  min-height: 44px;
+  padding: 4px 8px;
+}
+
+body.erp-maintenance .maint-unit-card__avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 9px;
+}
+
+body.erp-maintenance .maint-unit-card__fuel-bar {
+  width: 32px;
+  height: 3px;
+}
+
+body.erp-maintenance .maint-unit-card__title {
+  font-size: 12px;
+}
+
+body.erp-maintenance .maint-unit-card__sub,
+body.erp-maintenance .maint-unit-card__mile {
+  font-size: 10px;
+}

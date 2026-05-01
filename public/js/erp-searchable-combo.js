@@ -1,5 +1,5 @@
 /**
- * Lightweight searchable list for inputs backed by a <datalist> or <select>.
+ * Lightweight searchable list for inputs backed by a <datalist> or <select style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">.
  * Escape closes; Enter picks first match; Tab picks and advances.
  */
 (function (global) {

@@ -25,8 +25,11 @@ import { MAINTENANCE_SERVICE_CATALOG_SEEDS } from '../lib/maintenance-service-ca
 import { readQboStore, clearQboConnectionFailure } from '../lib/qbo-attachments.mjs';
 import { createQboApiClient } from '../lib/qbo-api-client.mjs';
 import { getVehicles, samsaraGet, getDriverVehicleAssignments } from '../services/samsara.js';
+import { fetchSamsaraDriversNormalized } from '../lib/samsara-client.mjs';
 import multer from 'multer';
 import { extractPdfText } from '../lib/pdf-text.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const QBO_ERR_STALE_MS = 24 * 60 * 60 * 1000;
 const SAMSARA_HEALTH_CACHE_MS = 60 * 1000;
@@ -53,6 +56,10 @@ const COMMON_WORK_ORDER_SERVICE_TYPE_SEEDS = [
   'Suspension Repair',
   'Trailer Repair'
 ];
+
+/** Short-lived cache for thin QBO list GETs (avoids hammering QBO when many fields hydrate). */
+const QBO_LIST_GET_CACHE_MS = 5 * 60 * 1000;
+let qboListGetCache = { bundle: null, expiresAt: 0 };
 
 const COMMON_PARTS_REFERENCE_SEEDS = [
   { part_key: 'oil_filter', label: 'Oil Filter', avg_replacement_miles: 25000, avg_replacement_months: 2, avg_cost_mid: 24 },
@@ -82,6 +89,22 @@ async function withTimeout(promise, timeoutMs = EXTERNAL_API_TIMEOUT_MS, label =
   } finally {
     if (timer) clearTimeout(timer);
   }
+}
+
+function qboSqlEscapeQueryValue(s) {
+  return String(s ?? '').replace(/'/g, "''");
+}
+
+function qboQueryEntityRows(data, entityName) {
+  const qr = data?.QueryResponse || {};
+  const rows = qr[entityName];
+  if (!rows) return [];
+  return Array.isArray(rows) ? rows : [rows];
+}
+
+function qboQueryEntityFirst(data, entityName) {
+  const rows = qboQueryEntityRows(data, entityName);
+  return rows[0] || null;
 }
 
 function summarizeSamsaraVehiclesPayload(payload) {
@@ -879,7 +902,148 @@ async function fetchLiveQboCatalogBundle() {
   const items = Array.isArray(itemResp?.QueryResponse?.Item) ? itemResp.QueryResponse.Item : [];
   const classes = Array.isArray(classResp?.QueryResponse?.Class) ? classResp.QueryResponse.Class : [];
   const customers = Array.isArray(customerResp?.QueryResponse?.Customer) ? customerResp.QueryResponse.Customer : [];
+  console.log('[QBO] Catalog fetch counts:', {
+    vendors: vendors.length,
+    accounts: accounts.length,
+    items: items.length,
+    classes: classes.length,
+    customers: customers.length
+  });
   return { vendors, accounts, items, classes, customers };
+}
+
+function readFleetServiceTypesFromJsonFile() {
+  try {
+    const fp = path.join(process.cwd(), 'apps/fleet-reports-hub/server/data/service-types.json');
+    const raw = fs.readFileSync(fp, 'utf8');
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map((row, i) => ({
+        id: String(row.id || row.service_key || `json-${i}`),
+        slug: String(row.service_key || '').trim() || null,
+        name: String(row.service_name || row.name || '').trim(),
+        category: row.service_category != null ? String(row.service_category) : null,
+        interval_miles: row.interval_miles != null ? Number(row.interval_miles) : null,
+        interval_months: row.interval_months != null ? Number(row.interval_months) : null,
+        notes: row.notes != null ? String(row.notes) : null,
+        vehicle_make: null,
+        vehicle_model: null,
+        avg_cost_low: row.avg_cost_low != null ? Number(row.avg_cost_low) : null,
+        avg_cost_high: row.avg_cost_high != null ? Number(row.avg_cost_high) : null
+      }))
+      .filter((r) => r.name);
+  } catch {
+    return [];
+  }
+}
+
+async function getQboBundleForThinListRoutes(logError) {
+  const now = Date.now();
+  if (qboListGetCache.bundle && now < qboListGetCache.expiresAt) {
+    return qboListGetCache.bundle;
+  }
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  const erp = readFullErpJson();
+  const erpCache = erp?.qboCache && typeof erp.qboCache === 'object' ? erp.qboCache : {};
+  let bundle = normalizeMasterBundle({
+    vendors: arr(erpCache.vendors),
+    items: arr(erpCache.items),
+    accounts: arr(erpCache.accounts),
+    classes: arr(erpCache.classes),
+    customers: arr(erpCache.customers)
+  });
+  try {
+    if (qboConnectionFlags().connected) {
+      if (getPool()) {
+        const synced = await syncQboCatalogCacheNow(logError, { silent: true });
+        if (synced?.ok && synced?.bundle) bundle = synced.bundle;
+      } else {
+        const live = await fetchLiveQboCatalogBundle();
+        bundle = normalizeMasterBundle(live);
+      }
+    }
+  } catch (e) {
+    logError('getQboBundleForThinListRoutes', e);
+  }
+  try {
+    const flags = qboConnectionFlags();
+    const nv = (bundle?.vendors || []).length;
+    const na = (bundle?.accounts || []).length;
+    if (flags.connected && (nv === 0 || na === 0)) {
+      console.warn('[QBO] Thin list bundle is sparse while QBO reports connected:', {
+        vendors: nv,
+        accounts: na,
+        customers: (bundle?.customers || []).length,
+        items: (bundle?.items || []).length
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+  qboListGetCache = { bundle, expiresAt: now + QBO_LIST_GET_CACHE_MS };
+  return bundle;
+}
+
+function qboVendorAddressLinesFromEntity(v) {
+  const b = v?.BillAddr;
+  if (!b || typeof b !== 'object') return '';
+  const parts = [b.Line1, b.Line2, b.Line3, b.City, b.CountrySubDivisionCode, b.PostalCode, b.Country]
+    .map((x) => String(x || '').trim())
+    .filter(Boolean);
+  return parts.join('\n');
+}
+
+function mapQboVendorForApi(v) {
+  const Id = String(v?.Id || v?.id || v?.qboId || '').trim();
+  const DisplayName = String(v?.DisplayName || v?.name || '').trim();
+  const CompanyName = String(v?.CompanyName || '').trim();
+  const bal = Number(v?.Balance);
+  const Active = v?.Active !== false && v?.active !== false;
+  const vendorAddress = qboVendorAddressLinesFromEntity(v);
+  return {
+    Id,
+    DisplayName,
+    CompanyName,
+    Balance: Number.isFinite(bal) ? bal : 0,
+    Active,
+    ...(vendorAddress ? { vendorAddress } : {})
+  };
+}
+function mapQboAccountForApi(a) {
+  const Id = String(a?.Id || a?.id || a?.qboId || '').trim();
+  return {
+    Id,
+    Name: String(a?.Name || a?.name || '').trim(),
+    AccountType: String(a?.AccountType || a?.accountType || '').trim(),
+    Active: a?.Active !== false
+  };
+}
+function mapQboCustomerForApi(c) {
+  const Id = String(c?.Id || c?.id || c?.qboId || '').trim();
+  const bal = Number(c?.Balance);
+  return {
+    Id,
+    DisplayName: String(c?.DisplayName || c?.name || '').trim(),
+    Balance: Number.isFinite(bal) ? bal : 0,
+    Active: c?.Active !== false
+  };
+}
+function mapQboItemForApi(it) {
+  const Id = String(it?.Id || it?.id || it?.qboId || '').trim();
+  return {
+    Id,
+    Name: String(it?.Name || it?.name || '').trim(),
+    Sku: String(it?.Sku || '').trim(),
+    UnitPrice: it?.UnitPrice != null ? Number(it.UnitPrice) : null,
+    Description: String(it?.Description || '').trim(),
+    Type: String(it?.Type || it?.type || '').trim(),
+    Active: it?.Active !== false
+  };
+}
+function mapQboClassForApi(c) {
+  const Id = String(c?.Id || c?.id || c?.qboId || '').trim();
+  return { Id, Name: String(c?.Name || c?.name || '').trim(), Active: c?.Active !== false };
 }
 
 function normalizeMasterBundle(bundle) {
@@ -1840,6 +2004,335 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/qbo/open-bills', async (req, res) => {
+    try {
+      const { configured, connected } = qboConnectionFlags();
+      if (!configured) {
+        return res.status(400).json({ ok: false, error: 'QuickBooks is not configured', bills: [] });
+      }
+      if (!connected) {
+        return res.status(400).json({ ok: false, error: 'QuickBooks is not connected', bills: [] });
+      }
+      const qbo = createQboApiClient();
+      const billId = String(req.query.billId || '').replace(/\D/g, '');
+      const vendorId = String(req.query.vendorId || '').replace(/\D/g, '');
+      const search = String(req.query.search || '').trim().toLowerCase();
+      const maxResults = Math.min(800, Math.max(1, Number(req.query.maxResults) || 150));
+
+      let billsRaw = [];
+      if (billId) {
+        const data = await withTimeout(
+          qbo.qboQuery(`SELECT * FROM Bill WHERE Id = '${qboSqlEscapeQueryValue(billId)}' MAXRESULTS 1`),
+          EXTERNAL_API_TIMEOUT_MS,
+          'QBO Bill by id'
+        );
+        billsRaw = qboQueryEntityRows(data, 'Bill');
+      } else {
+        const escV = qboSqlEscapeQueryValue(vendorId);
+        const q = vendorId
+          ? `SELECT * FROM Bill WHERE Balance > '0' AND VendorRef = '${escV}' ORDERBY TxnDate DESC MAXRESULTS ${maxResults}`
+          : `SELECT * FROM Bill WHERE Balance > '0' ORDERBY TxnDate DESC MAXRESULTS ${maxResults}`;
+        const data = await withTimeout(qbo.qboQuery(q), EXTERNAL_API_TIMEOUT_MS, 'QBO open bills');
+        billsRaw = qboQueryEntityRows(data, 'Bill');
+      }
+
+      const vendorData = await withTimeout(
+        qbo.qboQuery('SELECT Id, DisplayName, CompanyName FROM Vendor MAXRESULTS 1000'),
+        EXTERNAL_API_TIMEOUT_MS,
+        'QBO vendors for open bills'
+      );
+      const vendorNameById = new Map();
+      for (const v of qboQueryEntityRows(vendorData, 'Vendor')) {
+        const id = String(v?.Id || '').trim();
+        if (!id) continue;
+        const nm = String(v?.DisplayName || v?.CompanyName || '').trim();
+        vendorNameById.set(id, nm);
+      }
+
+      let bills = billsRaw.map((b) => {
+        const vid = String(b?.VendorRef?.value || b?.VendorRef?.name || '')
+          .trim()
+          .replace(/\D/g, '');
+        const bal = Number(b?.Balance != null ? b.Balance : b?.TotalAmt) || 0;
+        return {
+          id: String(b?.Id || '').trim(),
+          docNumber: String(b?.DocNumber || '').trim(),
+          txnDate: String(b?.TxnDate || '').slice(0, 10),
+          dueDate: String(b?.DueDate || '').slice(0, 10),
+          balance: bal,
+          vendorId: vid,
+          vendorName: vendorNameById.get(vid) || ''
+        };
+      });
+
+      if (search) {
+        bills = bills.filter(
+          (b) =>
+            String(b.docNumber || '')
+              .toLowerCase()
+              .includes(search) ||
+            String(b.vendorName || '')
+              .toLowerCase()
+              .includes(search) ||
+            String(b.id || '').includes(search)
+        );
+      }
+
+      return res.json({ ok: true, bills, notice: '' });
+    } catch (e) {
+      logError('GET /api/qbo/open-bills', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), bills: [] });
+    }
+  });
+
+  app.get('/api/qbo/vendors', async (_req, res) => {
+    try {
+      const bundle = await getQboBundleForThinListRoutes(logError);
+      const vendors = (bundle.vendors || []).map(mapQboVendorForApi).filter((v) => v.Id);
+      console.log('[QBO] GET /api/qbo/vendors →', vendors.length, 'vendors');
+      return res.json({ ok: true, vendors });
+    } catch (e) {
+      logError('GET /api/qbo/vendors', e);
+      return res.json({ ok: false, error: e?.message || String(e), vendors: [] });
+    }
+  });
+
+  app.get('/api/qbo/vendors/search', async (req, res) => {
+    try {
+      const bundle = await getQboBundleForThinListRoutes(logError);
+      const q = String(req.query?.q || '').trim().toLowerCase();
+      let vendors = (bundle.vendors || []).map(mapQboVendorForApi).filter((v) => v.Id);
+      if (q) {
+        vendors = vendors.filter(
+          (v) =>
+            v.DisplayName.toLowerCase().includes(q) ||
+            (v.CompanyName && v.CompanyName.toLowerCase().includes(q))
+        );
+      }
+      return res.json({ ok: true, vendors });
+    } catch (e) {
+      logError('GET /api/qbo/vendors/search', e);
+      return res.json({ ok: false, error: e?.message || String(e), vendors: [] });
+    }
+  });
+
+  app.get('/api/qbo/accounts', async (_req, res) => {
+    try {
+      const bundle = await getQboBundleForThinListRoutes(logError);
+      const accounts = (bundle.accounts || []).map(mapQboAccountForApi).filter((a) => a.Id);
+      console.log('[QBO] GET /api/qbo/accounts →', accounts.length, 'accounts');
+      return res.json({ ok: true, accounts });
+    } catch (e) {
+      logError('GET /api/qbo/accounts', e);
+      return res.json({ ok: false, error: e?.message || String(e), accounts: [] });
+    }
+  });
+
+  app.get('/api/qbo/customers', async (_req, res) => {
+    try {
+      const bundle = await getQboBundleForThinListRoutes(logError);
+      const customers = (bundle.customers || []).map(mapQboCustomerForApi).filter((c) => c.Id);
+      return res.json({ ok: true, customers });
+    } catch (e) {
+      logError('GET /api/qbo/customers', e);
+      return res.json({ ok: false, error: e?.message || String(e), customers: [] });
+    }
+  });
+
+  app.get('/api/qbo/items', async (_req, res) => {
+    try {
+      const bundle = await getQboBundleForThinListRoutes(logError);
+      const items = (bundle.items || []).map(mapQboItemForApi).filter((it) => it.Id);
+      return res.json({ ok: true, items });
+    } catch (e) {
+      logError('GET /api/qbo/items', e);
+      return res.json({ ok: false, error: e?.message || String(e), items: [] });
+    }
+  });
+
+  app.get('/api/qbo/classes', async (_req, res) => {
+    try {
+      const bundle = await getQboBundleForThinListRoutes(logError);
+      const classes = (bundle.classes || []).map(mapQboClassForApi).filter((c) => c.Id);
+      return res.json({ ok: true, classes });
+    } catch (e) {
+      logError('GET /api/qbo/classes', e);
+      return res.json({ ok: false, error: e?.message || String(e), classes: [] });
+    }
+  });
+
+  app.post('/api/qbo/bill-payment', async (req, res) => {
+    if (!requireBankingWriteRole(req, res)) return;
+    try {
+      const { configured, connected } = qboConnectionFlags();
+      if (!configured || !connected) {
+        return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+      }
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const vendorQboId = String(body.vendorQboId || '').replace(/\D/g, '');
+      const bankAccountQboId = String(body.bankAccountQboId || '').replace(/\D/g, '');
+      const payType = String(body.payType || 'Check').trim();
+      const txnDate = String(body.txnDate || '').trim().slice(0, 10) || new Date().toISOString().slice(0, 10);
+      const checkNumRaw = String(body.checkNum || '').trim();
+      const privateNote = body.privateNote != null ? String(body.privateNote).slice(0, 4000) : '';
+      const linesIn = Array.isArray(body.lines) ? body.lines : [];
+      const lines = linesIn
+        .map((l) => ({
+          billId: String(l?.billId || '').replace(/\D/g, ''),
+          amount: Math.round(Number(l?.amount) * 100) / 100
+        }))
+        .filter((l) => l.billId && l.amount > 0);
+
+      if (!vendorQboId) return res.status(400).json({ ok: false, error: 'vendorQboId required' });
+      if (!bankAccountQboId) return res.status(400).json({ ok: false, error: 'bankAccountQboId required' });
+      if (!lines.length) return res.status(400).json({ ok: false, error: 'At least one payment line required' });
+
+      const qbo = createQboApiClient();
+
+      async function fetchBill(bid) {
+        const data = await withTimeout(
+          qbo.qboQuery(`SELECT * FROM Bill WHERE Id = '${qboSqlEscapeQueryValue(bid)}' MAXRESULTS 1`),
+          EXTERNAL_API_TIMEOUT_MS,
+          'QBO Bill for payment'
+        );
+        return qboQueryEntityFirst(data, 'Bill');
+      }
+
+      async function nextBillPaymentDocNumber(baseRaw) {
+        const base = String(baseRaw || '').trim() || 'PAY';
+        for (let i = 0; i < 500; i += 1) {
+          const candidate = i === 0 ? base : `${base}-${i}`;
+          const cq = qboSqlEscapeQueryValue(candidate);
+          const q = `SELECT Id FROM BillPayment WHERE DocNumber = '${cq}' MAXRESULTS 1`;
+          const data = await withTimeout(qbo.qboQuery(q), EXTERNAL_API_TIMEOUT_MS, 'QBO BillPayment doc lookup');
+          const hit = qboQueryEntityFirst(data, 'BillPayment');
+          if (!hit) return candidate.slice(0, 21);
+        }
+        return `${base}-${Date.now()}`.slice(0, 21);
+      }
+
+      const billRows = [];
+      for (const l of lines) {
+        const b = await fetchBill(l.billId);
+        if (!b || !b.Id) {
+          return res.status(400).json({ ok: false, error: `Bill not found in QuickBooks: ${l.billId}` });
+        }
+        const vid = String(b?.VendorRef?.value || '').trim().replace(/\D/g, '');
+        if (vid !== vendorQboId) {
+          return res.status(400).json({
+            ok: false,
+            error: `Bill ${l.billId} belongs to a different vendor than the payment vendor`
+          });
+        }
+        const openBal = Number(b?.Balance != null ? b.Balance : b?.TotalAmt) || 0;
+        if (l.amount - openBal > 0.02) {
+          return res.status(400).json({
+            ok: false,
+            error: `Pay amount exceeds open balance for bill ${l.billId}`
+          });
+        }
+        billRows.push(b);
+      }
+
+      const primaryDocBase = String(billRows[0]?.DocNumber || '').trim() || String(lines[0].billId || '').trim();
+      const isCheck = String(payType).toLowerCase() === 'check';
+      let docNumber;
+      if (isCheck && checkNumRaw) {
+        docNumber = checkNumRaw.slice(0, 21);
+      } else {
+        docNumber = await nextBillPaymentDocNumber(primaryDocBase);
+      }
+
+      const totalPay = Math.round(lines.reduce((s, l) => s + l.amount, 0) * 100) / 100;
+      const bp = {
+        VendorRef: { value: vendorQboId },
+        PayType: isCheck ? 'Check' : 'CreditCard',
+        TotalAmt: totalPay,
+        Line: lines.map((l) => ({
+          Amount: l.amount,
+          LinkedTxn: [{ TxnId: l.billId, TxnType: 'Bill' }]
+        }))
+      };
+      if (docNumber) bp.DocNumber = docNumber;
+      if (txnDate) bp.TxnDate = txnDate;
+      if (privateNote) bp.PrivateNote = privateNote;
+      if (isCheck) {
+        bp.CheckPayment = {
+          BankAccountRef: { value: bankAccountQboId },
+          PrintStatus: 'NotSet'
+        };
+      } else {
+        bp.CreditCardPayment = {
+          CCAccountRef: { value: bankAccountQboId }
+        };
+      }
+
+      const posted = await withTimeout(qbo.qboPost('billpayment', bp), EXTERNAL_API_TIMEOUT_MS, 'QBO billpayment post');
+      const billPayment = posted?.BillPayment || posted;
+      const billPaymentId = String(billPayment?.Id || posted?.Id || '').trim();
+      const docOut = String(billPayment?.DocNumber || docNumber || '').trim();
+      return res.json({ ok: true, billPaymentId, docNumber: docOut, erpLogId: null });
+    } catch (e) {
+      logError('POST /api/qbo/bill-payment', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  /** Standalone check (QBO Purchase, PaymentType Check) — vendor payee + bank + expense line. */
+  app.post('/api/qbo/purchase-check', async (req, res) => {
+    if (!requireBankingWriteRole(req, res)) return;
+    try {
+      const { configured, connected } = qboConnectionFlags();
+      if (!configured || !connected) {
+        return res.status(400).json({ ok: false, error: 'QuickBooks is not connected' });
+      }
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const vendorQboId = String(body.vendorQboId || body.vendorId || '').replace(/\D/g, '');
+      const bankAccountQboId = String(body.bankAccountQboId || body.bankId || '').replace(/\D/g, '');
+      const expenseAccountQboId = String(body.expenseAccountQboId || body.accountId || '').replace(/\D/g, '');
+      const checkNumber = String(body.checkNumber || body.docNumber || '').trim().slice(0, 21);
+      const txnDate = String(body.txnDate || '').trim().slice(0, 10) || new Date().toISOString().slice(0, 10);
+      const memo = body.memo != null ? String(body.memo).trim().slice(0, 4000) : '';
+      const addr = body.vendorAddress != null ? String(body.vendorAddress).trim().slice(0, 2000) : '';
+      const totalAmt = Math.round(Number(body.totalAmt || body.amount || 0) * 100) / 100;
+      if (!vendorQboId) return res.status(400).json({ ok: false, error: 'vendorQboId required' });
+      if (!bankAccountQboId) return res.status(400).json({ ok: false, error: 'bankAccountQboId required' });
+      if (!expenseAccountQboId) return res.status(400).json({ ok: false, error: 'expenseAccountQboId required' });
+      if (!checkNumber) return res.status(400).json({ ok: false, error: 'checkNumber required' });
+      if (!Number.isFinite(totalAmt) || totalAmt <= 0) {
+        return res.status(400).json({ ok: false, error: 'totalAmt must be a positive number' });
+      }
+      const qbo = createQboApiClient();
+      const privateNote = [memo, addr].filter(Boolean).join(' | ') || undefined;
+      const payload = {
+        PaymentType: 'Check',
+        CheckPayment: {
+          BankAccountRef: { value: bankAccountQboId },
+          PrintStatus: 'NeedToPrint'
+        },
+        EntityRef: { value: vendorQboId, type: 'Vendor' },
+        DocNumber: checkNumber,
+        TxnDate: txnDate,
+        PrivateNote: privateNote,
+        Line: [
+          {
+            Amount: totalAmt,
+            DetailType: 'AccountBasedExpenseLineDetail',
+            AccountBasedExpenseLineDetail: {
+              AccountRef: { value: expenseAccountQboId }
+            }
+          }
+        ]
+      };
+      const posted = await withTimeout(qbo.qboPost('purchase', payload), EXTERNAL_API_TIMEOUT_MS, 'QBO purchase check');
+      const purchaseId = String(posted?.Purchase?.Id || posted?.Id || '').trim();
+      return res.json({ ok: true, purchaseId, checkNumber, txnDate });
+    } catch (e) {
+      logError('POST /api/qbo/purchase-check', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.get('/api/qbo/sync-alerts', async (_req, res) => {
     try {
       const payload = await buildQboSyncAlertsPayload();
@@ -1866,6 +2359,7 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!synced?.ok) {
         return res.status(503).json({ ok: false, error: synced?.error || 'QuickBooks sync failed', synced: synced?.synced || { vendors: 0, accounts: 0, items: 0, classes: 0 } });
       }
+      qboListGetCache = { bundle: null, expiresAt: 0 };
       return res.json({ ok: true, synced: synced.synced, source: 'live', refreshedAt: synced.refreshedAt || new Date().toISOString() });
     } catch (e) {
       logError('POST /api/qbo/sync-catalog', e);
@@ -2008,6 +2502,36 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('GET /api/maintenance/dashboard', e);
       return res.json({ ok: false, vehicles: [], dashboard: [], tireAlerts: [], source: 'error' });
+    }
+  });
+
+  /**
+   * Full ERP maintenance document (records, AP, work orders, fuel relay rows, etc.).
+   * Reads the same JSON store as `readFullErpJson` — must not be overridden by a stub in server.js.
+   */
+  app.get('/api/maintenance/records', (_req, res) => {
+    try {
+      const full = readFullErpJson();
+      const base = full && typeof full === 'object' ? full : {};
+      const records = Array.isArray(base.records) ? base.records : [];
+      const apTransactions = Array.isArray(base.apTransactions) ? base.apTransactions : [];
+      const workOrders = Array.isArray(base.workOrders) ? base.workOrders : [];
+      return res.json({
+        ok: true,
+        ...base,
+        records,
+        apTransactions,
+        workOrders
+      });
+    } catch (e) {
+      logError('GET /api/maintenance/records', e);
+      return res.status(500).json({
+        ok: false,
+        error: e?.message || String(e),
+        records: [],
+        apTransactions: [],
+        workOrders: []
+      });
     }
   });
 
@@ -2354,16 +2878,50 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
-  app.get('/api/catalog/service-types', async (_req, res) => {
+  app.get('/api/catalog/service-types', async (req, res) => {
     try {
-      if (!getPoolForRoute()) return res.json({ ok: true, services: [], data: [] });
+      const q = String(req.query?.search || req.query?.q || '')
+        .trim()
+        .toLowerCase();
+      if (!getPoolForRoute()) {
+        let services = readFleetServiceTypesFromJsonFile();
+        if (q) {
+          services = services.filter(
+            (s) =>
+              String(s.name || '')
+                .toLowerCase()
+                .includes(q) ||
+              String(s.slug || '')
+                .toLowerCase()
+                .includes(q) ||
+              String(s.category || '')
+                .toLowerCase()
+                .includes(q)
+          );
+        }
+        return res.json({ ok: true, services, data: services });
+      }
       await ensureFleetCatalogSeedRows(logError);
       const { rows } = await dbQueryForRoute(
         `SELECT id, slug, name, category, interval_miles, interval_months, notes, vehicle_make, vehicle_model
            FROM service_types
           ORDER BY name ASC`
       );
-      const services = rows || [];
+      let services = rows || [];
+      if (q) {
+        services = services.filter(
+          (s) =>
+            String(s.name || '')
+              .toLowerCase()
+              .includes(q) ||
+            String(s.slug || '')
+              .toLowerCase()
+              .includes(q) ||
+            String(s.category || '')
+              .toLowerCase()
+              .includes(q)
+        );
+      }
       return res.json({ ok: true, services, data: services });
     } catch (e) {
       logError('GET /api/catalog/service-types', e);
@@ -6320,7 +6878,9 @@ export function mountErpCoreApi(app, opts = {}) {
       if (type && type !== 'all') {
         if (type === 'deposits') where.push('amount > 0');
         else if (type === 'withdrawals') where.push('amount < 0');
+        else if (type === 'categorized') where.push(`LOWER(COALESCE(status, '')) = 'categorized'`);
         else if (type === 'uncategorized') where.push(`LOWER(COALESCE(status, '')) = 'uncategorized'`);
+        else if (type === 'excluded') where.push(`LOWER(COALESCE(status, '')) = 'excluded'`);
         else if (type === 'reconciled') where.push('COALESCE(reconciled, false) = true');
       }
       const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
@@ -9655,6 +10215,52 @@ export function mountErpCoreApi(app, opts = {}) {
     }
   });
 
+  app.get('/api/erp/company-profile', (_req, res) => {
+    try {
+      const erp = readFullErpJson();
+      const cp = erp.companyProfile && typeof erp.companyProfile === 'object' ? erp.companyProfile : {};
+      res.json({ ok: true, companyProfile: { ...cp } });
+    } catch (e) {
+      logError('GET /api/erp/company-profile', e);
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.patch('/api/erp/company-profile', (req, res) => {
+    try {
+      const erp = readFullErpJson();
+      if (!erp.companyProfile || typeof erp.companyProfile !== 'object') erp.companyProfile = {};
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const str = (k) => (body[k] != null ? String(body[k]).trim() : undefined);
+      const assign = (k, v) => {
+        if (v !== undefined) erp.companyProfile[k] = v;
+      };
+      assign('legalName', str('legalName'));
+      assign('dbaName', str('dbaName'));
+      assign('usdotNumber', str('usdotNumber'));
+      assign('mcNumber', str('mcNumber'));
+      assign('street', str('street'));
+      assign('city', str('city'));
+      assign('state', str('state'));
+      assign('zip', str('zip'));
+      assign('phone', str('phone'));
+      assign('email', str('email'));
+      assign('iftaAccountNumber', str('iftaAccountNumber'));
+      assign('stateOfOperations', str('stateOfOperations'));
+      assign('randomDrugTestRateNote', str('randomDrugTestRateNote'));
+      if (body.pmIntervalMiles !== undefined) {
+        const n = Number(body.pmIntervalMiles);
+        if (Number.isFinite(n) && n > 0) erp.companyProfile.pmIntervalMiles = Math.round(n);
+        else delete erp.companyProfile.pmIntervalMiles;
+      }
+      writeFullErpJson(erp);
+      res.json({ ok: true, companyProfile: { ...erp.companyProfile } });
+    } catch (e) {
+      logError('PATCH /api/erp/company-profile', e);
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
   app.get('/api/integrity/dashboard', (req, res) => {
     try {
       const erp = readFullErpJson();
@@ -9941,6 +10547,258 @@ export function mountErpCoreApi(app, opts = {}) {
     } catch (e) {
       logError('POST /api/maintenance/fleet-mileage-settings', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/maintenance/service-interval-catalog', async (_req, res) => {
+    try {
+      if (!getPool()) {
+        return res.json({ ok: true, services: [], source: 'no-db' });
+      }
+      await ensureFleetCatalogSeedRows(logError);
+      const { rows } = await dbQuery(
+        `SELECT name, interval_miles, interval_months, category, slug FROM service_types ORDER BY name ASC`
+      );
+      return res.json({ ok: true, services: rows || [], source: 'postgres' });
+    } catch (e) {
+      logError('GET /api/maintenance/service-interval-catalog', e);
+      return res.json({ ok: true, services: [], source: 'error' });
+    }
+  });
+
+  function normSvcToken(s) {
+    return String(s || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  app.get('/api/units/:unitId/service-history/:serviceType', async (req, res) => {
+    try {
+      const unitId = decodeURIComponent(String(req.params.unitId || '').trim());
+      const serviceType = decodeURIComponent(String(req.params.serviceType || '').trim());
+      if (!unitId || !serviceType) {
+        return res.status(400).json({ ok: false, error: 'unitId and serviceType are required' });
+      }
+      const want = normSvcToken(serviceType);
+      const full = readFullErpJson();
+      const records = Array.isArray(full.records) ? full.records : [];
+      let best = null;
+      let bestKey = '';
+      for (const r of records) {
+        const u = String(r.unit || '').trim();
+        if (u !== unitId) continue;
+        const st = normSvcToken(r.serviceType || '');
+        if (!st || !(st === want || st.includes(want) || want.includes(st))) continue;
+        const d = String(r.serviceDate || r.createdAt || '').slice(0, 10);
+        const key = `${d}\t${String(r.createdAt || r.updatedAt || '')}`;
+        if (!best || key > bestKey) {
+          best = r;
+          bestKey = key;
+        }
+      }
+      const lastDate = best ? String(best.serviceDate || best.createdAt || '').slice(0, 10) || null : null;
+      const lastMileageRaw = best != null ? Number(best.serviceMileage ?? best.miles ?? best.odometer ?? NaN) : NaN;
+      const lastMileage = Number.isFinite(lastMileageRaw) ? lastMileageRaw : null;
+
+      let intervalMiles = null;
+      let intervalMonths = null;
+      if (getPool()) {
+        try {
+          await ensureFleetCatalogSeedRows(logError);
+          const { rows } = await dbQuery(
+            `SELECT interval_miles, interval_months FROM service_types
+              WHERE lower(trim(name)) = lower(trim($1)) LIMIT 1`,
+            [serviceType]
+          );
+          if (rows?.[0]) {
+            intervalMiles = rows[0].interval_miles != null ? Number(rows[0].interval_miles) : null;
+            intervalMonths = rows[0].interval_months != null ? Number(rows[0].interval_months) : null;
+          }
+          if (intervalMiles == null) {
+            const { rows: r2 } = await dbQuery(
+              `SELECT interval_miles, interval_months FROM service_types
+                WHERE lower(name) LIKE '%' || lower($1) || '%' ORDER BY length(name) ASC LIMIT 1`,
+              [serviceType]
+            );
+            if (r2?.[0]) {
+              intervalMiles = r2[0].interval_miles != null ? Number(r2[0].interval_miles) : null;
+              intervalMonths = r2[0].interval_months != null ? Number(r2[0].interval_months) : null;
+            }
+          }
+        } catch (_) {
+          /* keep defaults */
+        }
+      }
+      if (intervalMiles == null || !Number.isFinite(intervalMiles) || intervalMiles <= 0) intervalMiles = 25000;
+      if (intervalMonths == null || !Number.isFinite(intervalMonths) || intervalMonths <= 0) intervalMonths = 2;
+
+      const fleetAvg = getPool() ? await getFleetAvgMilesPerMonth(dbQuery).catch(() => 12000) : 12000;
+      const curQ = req.query?.currentMiles;
+      const currentMiles =
+        curQ != null && String(curQ).trim() !== '' && Number.isFinite(Number(curQ)) ? Number(curQ) : null;
+
+      let nextDueMiles = null;
+      if (lastMileage != null && Number.isFinite(lastMileage)) {
+        nextDueMiles = Math.round(lastMileage + intervalMiles);
+      }
+      let milesRemaining = null;
+      if (nextDueMiles != null && currentMiles != null && Number.isFinite(currentMiles)) {
+        milesRemaining = Math.round(nextDueMiles - currentMiles);
+      }
+      let estimatedNextDate = null;
+      let status = 'unknown';
+      if (milesRemaining != null) {
+        if (milesRemaining < 0) {
+          status = 'overdue';
+          estimatedNextDate = 'OVERDUE';
+        } else if (milesRemaining <= 2000) {
+          status = 'amber';
+          const days = Math.max(1, Math.round((milesRemaining / Math.max(1000, fleetAvg)) * 30));
+          const dt = new Date();
+          dt.setDate(dt.getDate() + days);
+          estimatedNextDate = dt.toISOString().slice(0, 10);
+        } else {
+          status = 'ok';
+          const days = Math.max(1, Math.round((milesRemaining / Math.max(1000, fleetAvg)) * 30));
+          const dt = new Date();
+          dt.setDate(dt.getDate() + days);
+          estimatedNextDate = dt.toISOString().slice(0, 10);
+        }
+      }
+
+      return res.json({
+        ok: true,
+        unitId,
+        serviceType,
+        lastDate,
+        lastMileage,
+        intervalMiles,
+        intervalMonths,
+        nextDueMiles,
+        milesRemaining,
+        estimatedNextDate,
+        status,
+        fleetAvgMilesPerMonth: fleetAvg
+      });
+    } catch (e) {
+      logError('GET /api/units/:unitId/service-history/:serviceType', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/samsara/vehicles', async (_req, res) => {
+    try {
+      const assets = await getMergedFleetAssetProfiles(logError);
+      return res.json({ ok: true, vehicles: assets, count: assets.length });
+    } catch (e) {
+      logError('GET /api/samsara/vehicles', e);
+      return res.json({ ok: true, vehicles: [], count: 0, error: e?.message || String(e) });
+    }
+  });
+
+  app.get('/api/samsara/drivers', async (_req, res) => {
+    try {
+      const drivers = await fetchSamsaraDriversNormalized({ limit: 400 });
+      return res.json({ ok: true, drivers, count: drivers.length });
+    } catch (e) {
+      logError('GET /api/samsara/drivers', e);
+      return res.json({ ok: true, drivers: [], count: 0, error: e?.message || String(e) });
+    }
+  });
+
+  app.post('/api/fleet/sync-from-samsara', async (req, res) => {
+    if (!getPool()) {
+      if (String(process.env.IH35_SMOKE_GATE || '').trim() === '1') {
+        return res.status(200).json({ ok: true, saved: 0, updated: 0, errors: [], smokeProbeNoDb: true });
+      }
+      return res.status(503).json({ ok: false, error: 'DATABASE_URL is not set', saved: 0, updated: 0, errors: [] });
+    }
+    try {
+      await ensureDriverSchedulerTables();
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const assets = Array.isArray(body.assets) ? body.assets : [];
+      const drivers = Array.isArray(body.drivers) ? body.drivers : [];
+      let saved = 0;
+      let updated = 0;
+      const errors = [];
+
+      for (const a of assets) {
+        const sid = String(a.samsara_id || a.samsaraId || a.id || '').trim();
+        if (!sid) continue;
+        const unit = String(a.unit_number || a.unitNumber || '').trim() || null;
+        const assetType = String(a.asset_type || a.assetType || '').trim() || 'Truck';
+        const status = String(a.status || 'Active').trim() || 'Active';
+        const vin = String(a.vin || a.vin_override || '').trim() || null;
+        const plate = String(a.license_plate || a.licensePlate || a.license_plate_override || '').trim() || null;
+        const year = a.year != null && a.year !== '' ? Number(a.year) : null;
+        const make = String(a.make || a.make_override || '').trim() || null;
+        const model = String(a.model || a.model_override || '').trim() || null;
+        try {
+          const ex = await dbQuery('SELECT 1 FROM fleet_assets WHERE samsara_id = $1 LIMIT 1', [sid]);
+          const existed = (ex.rows || []).length > 0;
+          await dbQuery(
+            `INSERT INTO fleet_assets (samsara_id, unit_number, asset_type, status, vin_override, license_plate_override, year_override, make_override, model_override, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
+             ON CONFLICT (samsara_id) DO UPDATE SET
+               unit_number = COALESCE(EXCLUDED.unit_number, fleet_assets.unit_number),
+               asset_type = COALESCE(NULLIF(EXCLUDED.asset_type, ''), fleet_assets.asset_type),
+               status = COALESCE(NULLIF(EXCLUDED.status, ''), fleet_assets.status),
+               vin_override = COALESCE(EXCLUDED.vin_override, fleet_assets.vin_override),
+               license_plate_override = COALESCE(EXCLUDED.license_plate_override, fleet_assets.license_plate_override),
+               year_override = COALESCE(EXCLUDED.year_override, fleet_assets.year_override),
+               make_override = COALESCE(EXCLUDED.make_override, fleet_assets.make_override),
+               model_override = COALESCE(EXCLUDED.model_override, fleet_assets.model_override),
+               updated_at = now()`,
+            [sid, unit, assetType, status, vin, plate, Number.isFinite(year) ? year : null, make, model]
+          );
+          if (existed) updated += 1;
+          else saved += 1;
+        } catch (e) {
+          errors.push({ kind: 'asset', samsara_id: sid, error: e?.message || String(e) });
+        }
+      }
+
+      for (const d of drivers) {
+        const sid = String(d.samsara_driver_id || d.samsaraDriverId || d.id || '').trim();
+        if (!sid) continue;
+        const fullName = String(d.name || d.full_name || d.fullName || '').trim() || sid;
+        const license = String(d.license_number || d.licenseNumber || '').trim() || null;
+        const cdlState = String(d.license_state || d.licenseState || '').trim() || null;
+        const phone = String(d.phone || '').trim() || null;
+        const email = String(d.email || '').trim() || null;
+        try {
+          const up = await dbQuery(
+            `UPDATE driver_profiles SET
+               full_name = COALESCE($2, full_name),
+               license_number = COALESCE($3, license_number),
+               cdl_state = COALESCE($4, cdl_state),
+               phone = COALESCE($5, phone),
+               email = COALESCE($6, email),
+               status = COALESCE(NULLIF($7, ''), status),
+               updated_at = now()
+             WHERE samsara_driver_id = $1`,
+            [sid, fullName, license, cdlState, phone, email, 'Active']
+          );
+          if (Number(up.rowCount || 0) > 0) {
+            updated += 1;
+            continue;
+          }
+          await dbQuery(
+            `INSERT INTO driver_profiles (full_name, samsara_driver_id, license_number, cdl_state, phone, email, status, created_at, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,'Active', now(), now())`,
+            [fullName, sid, license, cdlState, phone, email]
+          );
+          saved += 1;
+        } catch (e) {
+          errors.push({ kind: 'driver', samsara_driver_id: sid, error: e?.message || String(e) });
+        }
+      }
+
+      return res.json({ ok: true, saved, updated, errors });
+    } catch (e) {
+      logError('POST /api/fleet/sync-from-samsara', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e), saved: 0, updated: 0, errors: [] });
     }
   });
 }
