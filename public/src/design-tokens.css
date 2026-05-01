@@ -1,0 +1,108 @@
+/* IH35 TMS — Design Tokens
+   Locked design system — do NOT modify token values without spec approval.
+   Generated 2026-05-01 per IH35_HANDOFF_SPEC.md §1
+*/
+:root {
+  /* === COLORS === */
+  --ih-navy: #1a1f36;
+  --ih-navy-active: #2a3050;
+  --ih-navy-border: #2a2f46;
+  --ih-green: #1a7a3c;
+  --ih-blue: #1557a0;
+  --ih-red: #c5221f;
+  --ih-gold: #b07d00;
+
+  /* Pill backgrounds + text pairs */
+  --ih-pill-active-bg: #c0dd97;
+  --ih-pill-active-text: #173404;
+  --ih-pill-warn-bg: #fef8e0;
+  --ih-pill-warn-text: #b07d00;
+  --ih-pill-error-bg: #f7c1c1;
+  --ih-pill-error-text: #501313;
+  --ih-pill-info-bg: #cfe2f3;
+  --ih-pill-info-text: #1557a0;
+
+  /* Computed/read-only field */
+  --ih-readonly-computed-bg: #eaf3de;
+  --ih-readonly-computed-border: #97c459;
+  --ih-readonly-pulled-bg: #f0f7ff;
+  --ih-readonly-pulled-border: #cfdcef;
+
+  /* Section A (Categories) */
+  --ih-section-a-bg: #f5e8c8;
+  --ih-section-a-text: #6b4f00;
+  --ih-section-a-border: #b07d00;
+  --ih-section-a-table-border: #d4c89a;
+  --ih-section-a-row-bg: #faf3df;
+
+  /* Section B (Items) */
+  --ih-section-b-bg: #d8e8d8;
+  --ih-section-b-text: #173404;
+  --ih-section-b-border: #1a7a3c;
+  --ih-section-b-table-border: #97c459;
+  --ih-section-b-row-bg: #f0f7e8;
+
+  /* Parts panel */
+  --ih-parts-panel-bg: #fffcf0;
+  --ih-parts-panel-border: #d4c89a;
+  --ih-parts-panel-header-text: #b07d00;
+  --ih-parts-panel-table-head-bg: #f0e8d0;
+
+  /* Selected row */
+  --ih-row-selected-bg: #e6f1fb;
+  --ih-row-selected-border: #1557a0;
+
+  /* Surface */
+  --ih-bg-surface: #f5f5f0;
+  --ih-bg-card: #ffffff;
+  --ih-bg-section-header: #f0f0e8;
+  --ih-bg-input-faded: #fafafa;
+  --ih-text-primary: #1a1f36;
+  --ih-text-secondary: #555555;
+  --ih-text-muted: #888888;
+  --ih-text-label: #666666;
+  --ih-border-light: #d0d0c8;
+  --ih-border-divider: #e0e0d8;
+
+  /* === FONT SIZES === */
+  --ih-font-content: 9px;
+  --ih-font-label: 8px;
+  --ih-font-pill: 7px;
+  --ih-font-kpi: 13px;
+  --ih-font-title: 10px;
+  --ih-font-button: 9px;
+
+  /* === HEIGHTS === */
+  --ih-height-field: 17px;
+  --ih-height-button: 22px;
+  --ih-height-topbar: 22px;
+  --ih-height-banner: 22px;
+  --ih-height-savebar: 28px;
+  --ih-sidebar-width: 72px;
+  --ih-sidebar-strip: 2px;
+  --ih-sidebar-icon: 12px;
+
+  /* === SPACING === */
+  --ih-padding-cell: 4px 6px;
+  --ih-gap-grid: 6px;
+  --ih-gap-form-row: 4px;
+  --ih-radius: 2px;
+  --ih-radius-pill: 8px;
+  --ih-border-width: 0.5px;
+
+  /* === LETTER SPACING === */
+  --ih-letter-label: 0.4px;
+  --ih-letter-pill: 0.3px;
+
+  /* === DRIVER APP (mobile, dark theme) === */
+  --ih-driver-bg: #0f1219;
+  --ih-driver-card: #1a1f2c;
+  --ih-driver-text: #e6e6e6;
+  --ih-driver-text-muted: #888888;
+  --ih-driver-tap-min: 44px;
+  --ih-driver-width: 360px;
+
+  /* === ANIMATION === */
+  --ih-anim-sidebar: 150ms;
+  --ih-anim-modal: 200ms;
+}

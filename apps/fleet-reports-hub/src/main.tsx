@@ -4,6 +4,9 @@ import './index.css'
 import './styles/table-resize.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { ihTokens } from './design-tokens';
+
+void ihTokens
 
 const rootElement = document.getElementById('root')
 
