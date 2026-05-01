@@ -15596,19 +15596,25 @@
       const fill = html => {
         if (host) host.innerHTML = html;
       };
+      const hideTop = () => {
+        if (!top) return;
+        top.innerHTML = '';
+        top.classList.add('hidden');
+      };
+      const showTop = () => {
+        if (!top) return;
+        top.classList.remove('hidden');
+      };
       const payload = __maintQboSyncPayloadCache;
       if (!payload || payload.ok === false) {
         fill('<span class="mini-note">Sync unavailable.</span>');
-        if (top) top.innerHTML = '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body)">QBO issues: —</span>';
+        hideTop();
         return;
       }
       const alerts = payload.alerts || [];
       if (!alerts.length) {
         fill('<span class="mini-note">No open issues.</span>');
-        if (top) {
-          top.innerHTML =
-            '<span class="maint-qbo-dot maint-qbo-dot--ok" aria-hidden="true"></span><span class="mini-note" style="margin:0;color:var(--color-text-body)">QBO: no open issues</span>';
-        }
+        hideTop();
         return;
       }
       const rank = { high: 0, medium: 1, low: 2 };
@@ -15628,6 +15634,7 @@
       );
       const errN = alerts.filter(a => a && a.severity === 'high').length || alerts.length;
       if (top) {
+        showTop();
         top.innerHTML =
           `<span class="maint-qbo-dot" aria-hidden="true"></span><span class="maint-qbo-issues-text">${errN} error${errN === 1 ? '' : 's'}</span>` +
           `<button type="button" class="maint-qbo-issues-view" onclick="openSection('accounting', document.querySelector('.nav-btn[data-section=accounting]')); document.getElementById('acctBoardStrip')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">View</button>`;

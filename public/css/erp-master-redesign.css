@@ -4654,6 +4654,7 @@ body.erp-maintenance .maint-action-strip {
   align-items: center !important;
   padding: 0 8px !important;
   border: 0 !important;
+  overflow: hidden !important;
 }
 
 body.erp-maintenance .maint-action-strip__top {
@@ -4661,6 +4662,7 @@ body.erp-maintenance .maint-action-strip__top {
   width: 100%;
   display: flex !important;
   align-items: center !important;
+  flex-wrap: nowrap !important;
   gap: 0 !important;
 }
 
@@ -4677,10 +4679,19 @@ body.erp-maintenance .maint-action-strip__module-title {
 body.erp-maintenance .maint-action-strip__tabs {
   display: flex !important;
   align-items: center !important;
+  flex: 1 1 auto !important;
+  width: auto !important;
+  flex-wrap: nowrap !important;
   gap: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 
 body.erp-maintenance .maint-action-strip__btn {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 84px !important;
+  max-width: none !important;
   font-size: 9px !important;
   color: #b0bcd4 !important;
   padding: 0 7px !important;
@@ -4704,6 +4715,41 @@ body.erp-maintenance .maint-action-strip__btn.maint-action-strip__btn--primary,
 body.erp-maintenance .maint-action-strip__btn.active {
   color: #fff !important;
   background: #1d2a44 !important;
+}
+
+body.erp-maintenance .maint-action-strip__right {
+  margin-left: 6px !important;
+  flex: 0 0 auto !important;
+  min-height: 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+body.erp-maintenance #maintTopQboIssuesInd {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  margin: 0 !important;
+}
+
+body.erp-maintenance .maint-qbo-issues-text {
+  font-size: 9px !important;
+  color: #b0bcd4 !important;
+  line-height: 1 !important;
+}
+
+body.erp-maintenance .maint-qbo-issues-view {
+  height: 16px !important;
+  min-height: 16px !important;
+  padding: 0 6px !important;
+  border: 0.5px solid #2d3a52 !important;
+  border-radius: 2px !important;
+  background: #253047 !important;
+  color: #fff !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
 }
 
 body.erp-maintenance .erp-topbar__actions {
