@@ -53,7 +53,7 @@
     table.bank-table{width:100%;border-collapse:collapse}
     .bank-table th{font-size:8px;color:#8892a4;text-align:left;padding:2px 6px;border-bottom:0.5px solid #e0e3e8}
     .bank-table td{font-size:9px;padding:2px 6px;border-bottom:0.5px solid #f0f1f3;vertical-align:top}
-    .bank-row.uncat{background:#fffdf0}
+    .bank-row.uncat{background:#fffdf0;cursor:pointer}
     .bank-desc{font-size:9px;font-weight:700;color:#1a1f36}
     .bank-suggest{font-size:7px;color:#1557a0;background:#f0f7ff;border:0.5px solid #c5d9f7;border-radius:2px;padding:1px 4px;display:inline-flex;gap:4px;align-items:center;margin-top:2px;cursor:pointer}
     .bank-amt-pos{color:#137333;text-align:right}.bank-amt-neg{color:#c5221f;text-align:right}
@@ -360,7 +360,7 @@
               '<td>' + (txMatchRef(r) ? '<span class="match-tag">✓ Matched: ' + esc(txMatchRef(r)) + '</span>' : '<span class="cat-tag">' + esc(txCat(r) || 'Categorized') + '</span>') + '</td>' +
             '</tr>';
           }
-          return '<tr class="bank-row ' + (isUncat ? 'uncat' : '') + '">' +
+          return '<tr class="bank-row ' + (isUncat ? 'uncat' : '') + '" data-row-txn="' + esc(id) + '">' +
             '<td><input type="checkbox"></td>' +
             '<td style="min-width:50px">' + esc(mdy(txDate(r))) + '</td>' +
             '<td><div class="bank-desc">' + esc(txDesc(r)) + '</div>' +
@@ -384,7 +384,13 @@
 
     function bindDynamicHandlers() {
       document.querySelectorAll('[data-toggle-txn]').forEach((el) => {
-        el.onclick = () => toggleExpand(el.getAttribute('data-toggle-txn') || '');
+        el.onclick = (ev) => {
+          ev.stopPropagation();
+          toggleExpand(el.getAttribute('data-toggle-txn') || '');
+        };
+      });
+      document.querySelectorAll('.bank-row.uncat[data-row-txn]').forEach((el) => {
+        el.onclick = () => toggleExpand(el.getAttribute('data-row-txn') || '');
       });
       document.querySelectorAll('[data-pick-txn][data-pick-match]').forEach((el) => {
         el.onclick = () => pickMatch(el.getAttribute('data-pick-txn') || '', el.getAttribute('data-pick-match') || '');
