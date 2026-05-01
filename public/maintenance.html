@@ -15866,6 +15866,9 @@
       const samSource = String(assignmentsPayload?.source || (health?.hasSamsaraToken ? 'live' : 'cache')).trim().toLowerCase();
       const samVehicles = Number.isFinite(Number(health?.samsaraVehicles)) ? Number(health.samsaraVehicles) : 0;
       const samTone = samSource === 'live' ? 'var(--color-semantic-success)' : 'var(--color-semantic-warning)';
+      const relayConfigured = Boolean(health?.relay?.configured);
+      const relayTone = relayConfigured ? '#16A34A' : '#EA580C';
+      const relayText = relayConfigured ? '⛽ Relay connected' : '⛽ Relay pending';
       const pending = Number(queuePayload?.pending || 0) + Number(queuePayload?.failed || 0);
       const pendingTone = pending > 0 ? 'var(--color-semantic-error)' : 'var(--color-semantic-success)';
       const syncUpdatedAt = String(syncHealth?.updated_at || syncHealth?.sync?.updated_at || '').trim();
@@ -15873,6 +15876,7 @@
       strip.innerHTML =
         '<span style="color:' + qboTone + '">● QBO ' + (qboConnected ? 'connected' : 'cache') + ' | cache: ' + escapeHtml(qCacheText) + '</span>' +
         '<span style="margin-left:12px;color:' + samTone + '">● Samsara ' + (samSource === 'live' ? 'connected' : 'cache') + ' | ' + escapeHtml(String(samVehicles)) + ' vehicles</span>' +
+        '<span style="margin-left:12px;color:' + relayTone + '">● ' + relayText + '</span>' +
         '<span style="margin-left:12px;color:' + pendingTone + '">● ' + escapeHtml(String(pending)) + ' pending sync</span>' +
         '<span style="margin-left:12px;color:var(--color-text-label)">● last module sync: ' + escapeHtml(syncText) + '</span>';
 
