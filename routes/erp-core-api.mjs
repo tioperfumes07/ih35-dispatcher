@@ -1777,7 +1777,12 @@ export function mountErpCoreApi(app, opts = {}) {
       samsaraRefreshMs: SAMSARA_HEALTH_CACHE_MS,
       qboRefreshMs: QBO_LIVE_REFRESH_MS,
       qboLiveConnection: qbo.connected ? 'connected' : qbo.configured ? 'disconnected' : 'not-configured',
-      samsaraLiveConnection: token ? (samsaraError ? 'degraded' : 'connected') : 'not-configured'
+      samsaraLiveConnection: token ? (samsaraError ? 'degraded' : 'connected') : 'not-configured',
+      relay: {
+        configured: Boolean(String(process.env.RELAY_API_KEY || '').trim()),
+        baseUrl: String(process.env.RELAY_BASE_URL || '').trim() || 'https://staging.relaypayments.com',
+        status: process.env.RELAY_API_KEY ? 'connected' : 'missing_key'
+      }
     });
   });
 
@@ -6472,52 +6477,49 @@ export function mountErpCoreApi(app, opts = {}) {
 
   async function fetchRelayTransactionsFromApi() {
     const apiKey = String(process.env.RELAY_API_KEY || '').trim();
-    const baseRaw = String(process.env.RELAY_API_BASE || '').trim() || 'https://api.relayfi.com';
+    const baseRaw = String(process.env.RELAY_BASE_URL || '').trim() || 'https://staging.relaypayments.com';
     const base = baseRaw.replace(/\/+$/, '');
     if (!apiKey) {
       return { ok: false, connected: false, error: 'RELAY_API_KEY is not set', rows: [] };
     }
-    const candidates = [
-      '/v1/transactions',
-      '/transactions',
-      '/api/v1/transactions',
-    ];
-    let lastError = '';
-    for (const path of candidates) {
-      let timer = null;
-      try {
-        const controller = new AbortController();
-        timer = setTimeout(() => controller.abort(), EXTERNAL_API_TIMEOUT_MS);
-        const rsp = await fetch(`${base}${path}`, {
-          method: 'GET',
-          signal: controller.signal,
-          headers: {
-            Accept: 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-            'X-API-Key': apiKey,
-          },
-        });
-        if (timer) clearTimeout(timer);
-        if (!rsp.ok) {
-          lastError = `Relay response ${rsp.status} at ${path}`;
-          continue;
-        }
-        const json = await rsp.json();
-        const rows = Array.isArray(json?.transactions)
-          ? json.transactions
-          : Array.isArray(json?.data)
-            ? json.data
-            : Array.isArray(json)
-              ? json
-              : [];
-        return { ok: true, connected: true, rows, endpoint: path };
-      } catch (e) {
-        lastError = e?.name === 'AbortError' ? `Relay request timeout at ${path}` : (e?.message || String(e));
-      } finally {
-        if (timer) clearTimeout(timer);
+    let timer = null;
+    try {
+      const controller = new AbortController();
+      timer = setTimeout(() => controller.abort(), EXTERNAL_API_TIMEOUT_MS);
+      const rsp = await fetch(`${base}/api/fuel/transactions/`, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          Authorization: apiKey,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+      if (!rsp.ok) {
+        return {
+          ok: false,
+          connected: false,
+          error: `Relay response ${rsp.status} at /api/fuel/transactions/`,
+          rows: []
+        };
       }
+      const json = await rsp.json();
+      const rows = Array.isArray(json?.transactions)
+        ? json.transactions
+        : Array.isArray(json?.data)
+          ? json.data
+          : Array.isArray(json)
+            ? json
+            : [];
+      return { ok: true, connected: true, rows, endpoint: '/api/fuel/transactions/' };
+    } catch (e) {
+      const msg = e?.name === 'AbortError'
+        ? 'Relay request timeout at /api/fuel/transactions/'
+        : (e?.message || String(e));
+      return { ok: false, connected: false, error: msg, rows: [] };
+    } finally {
+      if (timer) clearTimeout(timer);
     }
-    return { ok: false, connected: false, error: lastError || 'Relay API request failed', rows: [] };
   }
 
   function normalizeRelayTxn(raw = {}) {
@@ -6545,6 +6547,50 @@ export function mountErpCoreApi(app, opts = {}) {
       raw,
     };
   }
+
+  app.get('/api/relay/transactions', async (req, res) => {
+    try {
+      const key = process.env.RELAY_API_KEY;
+      const base = process.env.RELAY_BASE_URL || 'https://staging.relaypayments.com';
+      if (!key) return res.json({ ok: true, transactions: [], source: 'no_key' });
+
+      const r = await fetch(`${base}/api/fuel/transactions/`, {
+        headers: { 'Authorization': key }
+      });
+
+      if (!r.ok) {
+        const text = await r.text();
+        return res.status(r.status).json({ ok: false, error: text, status: r.status });
+      }
+
+      const data = await r.json();
+      const rows = Array.isArray(data?.transactions)
+        ? data.transactions
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
+      const transactions = Array.isArray(rows) ? rows.map(t => ({
+        relay_id: t.transaction_id,
+        date: t.created_at,
+        fuel_code: t.relay_fuel_code,
+        amount: parseFloat(t.total_amount_paid || 0),
+        retail_price: parseFloat(t.total_retail_price || 0),
+        savings: parseFloat(t.total_amount_saved || 0),
+        currency: t.currency_code || 'USD',
+        driver_id: t.driver?.id || '',
+        driver_name: (t.driver?.first_name || '') + ' ' + (t.driver?.last_name || ''),
+        is_direct_bill: t.is_direct_bill || false,
+        cash_advance: parseFloat(t.cash_advance || 0)
+      })) : [];
+
+      return res.json({ ok: true, transactions, count: transactions.length, source: 'relay_live' });
+    } catch (e) {
+      logError('GET /api/relay/transactions', e);
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  });
 
   app.get('/api/banking/accounts', async (req, res) => {
     try {
