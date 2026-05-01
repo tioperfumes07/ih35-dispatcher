@@ -11,11 +11,11 @@
   <link rel="stylesheet" href="/css/board-nav.css" />
   <link rel="stylesheet" href="/css/erp-responsive-global-2026.css" />
 </head>
-<body class="settings-page">
+<body class="settings-page erp-app">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
-  <div class="wrap">
+  <div class="wrap erp-app">
     <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
     <div
       id="erpIntegrationDisconnectBanners"
@@ -32,9 +32,9 @@
 
     <div id="panelLogin" class="panel">
       <h2 style="font-size:16px;margin:0 0 12px">Sign in</h2>
-      <label>Email</label>
+      <label class="field-label">Email</label>
       <input id="loginEmail" type="email" autocomplete="username"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-      <label>Password</label>
+      <label class="field-label">Password</label>
       <input id="loginPass" type="password" autocomplete="current-password"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       <button type="button" class="primary" id="btnLogin" onclick="doLogin()">Sign in</button>
       <div id="loginErr" class="err"></div>
@@ -43,11 +43,11 @@
     <div id="panelBootstrap" class="panel hidden">
       <h2 style="font-size:16px;margin:0 0 12px">Create first administrator</h2>
       <p class="mini">One-time only, when no users exist yet.</p>
-      <label>Name</label>
+      <label class="field-label">Name</label>
       <input id="bootName" placeholder="Your name"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-      <label>Email</label>
+      <label class="field-label">Email</label>
       <input id="bootEmail" type="email"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-      <label>Password (8+ characters)</label>
+      <label class="field-label">Password (8+ characters)</label>
       <input id="bootPass" type="password"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       <button type="button" class="primary" id="btnBootstrap" onclick="doBootstrap()">Create admin</button>
       <div id="bootErr" class="err"></div>
@@ -89,13 +89,13 @@
             <tbody id="usersBody"></tbody>
           </table>
           <h3 style="font-size:14px;margin:16px 0 8px">Add user</h3>
-          <label>Email</label>
+          <label class="field-label">Email</label>
           <input id="newUserEmail" type="email"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Name</label>
+          <label class="field-label">Name</label>
           <input id="newUserName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Password</label>
+          <label class="field-label">Password</label>
           <input id="newUserPass" type="password"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Role</label>
+          <label class="field-label">Role</label>
           <select id="newUserRole" style="width:100%;padding:0 3px;border-radius:2px;border:0.5px solid #d0d4da;height:17px;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;">
             <option value="user">User</option>
             <option value="admin">Admin</option>
@@ -116,17 +116,17 @@
           </h2>
           <p class="mini" style="margin-top:0">Staff-only directory — QBO vendors stay under <strong>Lists &amp; catalogs</strong>.</p>
           <div
-            class="mr-filter-bar erp-ops-filter-bar"
+            class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
             role="group"
             aria-label="Employee directory filter"
             style="margin:0 0 10px;padding:0;border:none;align-items:flex-end;flex-wrap:wrap"
           >
             <div class="mr-filter-bar__grow" style="min-width:0;flex:1 1 220px">
-              <label for="empSearch">Search</label>
+              <label class="field-label" for="empSearch">Search</label>
               <input id="empSearch" placeholder="Search employee…" oninput="renderEmployeesTable()" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             </div>
             <div class="mr-filter-bar__actions">
-              <label class="mini" style="margin:0 0 4px;visibility:hidden;line-height:0;height:0;overflow:hidden" aria-hidden="true">&nbsp;</label>
+              <label class="mini field-label" style="margin:0 0 4px;visibility:hidden;line-height:0;height:0;overflow:hidden" aria-hidden="true">&nbsp;</label>
               <button type="button" id="btnEmpRefresh" onclick="loadEmployees()">Refresh</button>
             </div>
           </div>
@@ -145,17 +145,17 @@
           </table>
           <div id="empPagerHost" hidden></div>
           <h3 style="font-size:14px;margin:16px 0 8px">Add employee</h3>
-          <label>Name</label>
+          <label class="field-label">Name</label>
           <input id="newEmpName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Email</label>
+          <label class="field-label">Email</label>
           <input id="newEmpEmail" type="email"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Phone</label>
+          <label class="field-label">Phone</label>
           <input id="newEmpPhone" placeholder="Optional"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Title</label>
+          <label class="field-label">Title</label>
           <input id="newEmpTitle" placeholder="Dispatcher, Mechanic, Accountant…"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Department</label>
+          <label class="field-label">Department</label>
           <input id="newEmpDept" placeholder="Operations, Maintenance, Accounting…"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-          <label>Status</label>
+          <label class="field-label">Status</label>
           <select id="newEmpStatus" style="width:100%;padding:0 3px;border-radius:2px;border:0.5px solid #d0d4da;height:17px;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -168,41 +168,41 @@
           <h2 style="font-size:16px;margin:0 0 12px">Company profile</h2>
           <p class="mini" style="margin-top:0">Used on printed reports, DOT audit PDFs, and ERP headers. Saved to <code>maintenance.json</code> via <code>PATCH /api/erp/company-profile</code> (admin or ERP write).</p>
           <div class="form-stack" style="max-width:560px">
-            <label>Legal name</label>
+            <label class="field-label">Legal name</label>
             <input id="coLegalName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>DBA</label>
+            <label class="field-label">DBA</label>
             <input id="coDba"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>USDOT #</label>
+            <label class="field-label">USDOT #</label>
             <input id="coUsdot"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>MC #</label>
+            <label class="field-label">MC #</label>
             <input id="coMc"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>Street</label>
+            <label class="field-label">Street</label>
             <input id="coStreet"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <div class="search-row" style="gap:10px">
               <div style="flex:1;min-width:120px">
-                <label>City</label>
+                <label class="field-label">City</label>
                 <input id="coCity"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div style="width:100px">
-                <label>State</label>
+                <label class="field-label">State</label>
                 <input id="coState" maxlength="8"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div style="width:120px">
-                <label>ZIP</label>
+                <label class="field-label">ZIP</label>
                 <input id="coZip"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
             </div>
-            <label>Phone</label>
+            <label class="field-label">Phone</label>
             <input id="coPhone"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>Email</label>
+            <label class="field-label">Email</label>
             <input id="coEmail" type="email"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>IFTA account #</label>
+            <label class="field-label">IFTA account #</label>
             <input id="coIfta"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>State of operations (home state)</label>
+            <label class="field-label">State of operations (home state)</label>
             <input id="coHomeState" maxlength="8"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>PM interval (miles)</label>
+            <label class="field-label">PM interval (miles)</label>
             <input id="coPmMiles" type="number" min="1000" step="500"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-            <label>Average miles per truck per month</label>
+            <label class="field-label">Average miles per truck per month</label>
             <input id="coFleetAvgMo" type="number" min="1000" max="30000" step="100"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <p class="mini-note" style="margin:0 0 8px;max-width:52ch">
               Used to convert mileage intervals to estimated months (PM schedule, predictors, catalog). Stored month columns use
@@ -210,7 +210,7 @@
               <code>erp_fleet_defaults</code>. Saving updates month columns across service types, vehicle schedules, and parts reference.
             </p>
             <button type="button" id="btnFleetAvgSave" onclick="saveFleetAvgMilesPerMonth()">Save fleet pace</button>
-            <label>Random drug test program note</label>
+            <label class="field-label">Random drug test program note</label>
             <textarea id="coDrugNote" rows="3" style="width:100%;padding:10px;border-radius:2px;border:0.5px solid #d0d4da;font-size:9px;font-family:Arial,sans-serif;box-sizing:border-box;"></textarea>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
               <button type="button" class="primary" id="btnCoSave" onclick="saveCompanyProfile()">Save company profile</button>
@@ -229,71 +229,71 @@
           <div class="form-stack erp-int-threshold-form" style="max-width:720px">
             <div class="erp-int-threshold-form__grid">
               <div>
-                <label for="intTh_maxTiresPerUnit90d">Max tire services per unit (90 days)</label>
+                <label class="field-label" for="intTh_maxTiresPerUnit90d">Max tire services per unit (90 days)</label>
                 <input type="number" id="intTh_maxTiresPerUnit90d" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxSameTirePosition180d">Same tire position repeats (180 days)</label>
+                <label class="field-label" for="intTh_maxSameTirePosition180d">Same tire position repeats (180 days)</label>
                 <input type="number" id="intTh_maxSameTirePosition180d" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_tireCostAnomalyMult">Tire invoice cost anomaly (× fleet)</label>
+                <label class="field-label" for="intTh_tireCostAnomalyMult">Tire invoice cost anomaly (× fleet)</label>
                 <input type="number" id="intTh_tireCostAnomalyMult" min="1" step="0.1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxFleetTiresPerMonth">Fleet tire services per month</label>
+                <label class="field-label" for="intTh_maxFleetTiresPerMonth">Fleet tire services per month</label>
                 <input type="number" id="intTh_maxFleetTiresPerMonth" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxRepairsPerDriver90d">Max repairs per driver (90 days)</label>
+                <label class="field-label" for="intTh_maxRepairsPerDriver90d">Max repairs per driver (90 days)</label>
                 <input type="number" id="intTh_maxRepairsPerDriver90d" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxAccidentsPerDriver12mo">Max accidents per driver (12 months)</label>
+                <label class="field-label" for="intTh_maxAccidentsPerDriver12mo">Max accidents per driver (12 months)</label>
                 <input type="number" id="intTh_maxAccidentsPerDriver12mo" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxRepairCostDriver90d">Max driver repair spend (90 days, USD)</label>
+                <label class="field-label" for="intTh_maxRepairCostDriver90d">Max driver repair spend (90 days, USD)</label>
                 <input type="number" id="intTh_maxRepairCostDriver90d" min="0" step="100"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxRepairsSameDriverUnit60d">Same driver + unit repairs (60 days)</label>
+                <label class="field-label" for="intTh_maxRepairsSameDriverUnit60d">Same driver + unit repairs (60 days)</label>
                 <input type="number" id="intTh_maxRepairsSameDriverUnit60d" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_fuelConsumptionIncreasePct">Fuel use spike (% vs baseline)</label>
+                <label class="field-label" for="intTh_fuelConsumptionIncreasePct">Fuel use spike (% vs baseline)</label>
                 <input type="number" id="intTh_fuelConsumptionIncreasePct" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_unusualGallonsMult">Unusual fill volume (× average)</label>
+                <label class="field-label" for="intTh_unusualGallonsMult">Unusual fill volume (× average)</label>
                 <input type="number" id="intTh_unusualGallonsMult" min="1" step="0.1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_fuelPriceSpikePct">Fuel price spike (%)</label>
+                <label class="field-label" for="intTh_fuelPriceSpikePct">Fuel price spike (%)</label>
                 <input type="number" id="intTh_fuelPriceSpikePct" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_serviceCostAnomalyMult">Service cost vs fleet (×)</label>
+                <label class="field-label" for="intTh_serviceCostAnomalyMult">Service cost vs fleet (×)</label>
                 <input type="number" id="intTh_serviceCostAnomalyMult" min="1" step="0.1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxMonthlyCostPerUnit">Max maint. spend / unit / month (USD)</label>
+                <label class="field-label" for="intTh_maxMonthlyCostPerUnit">Max maint. spend / unit / month (USD)</label>
                 <input type="number" id="intTh_maxMonthlyCostPerUnit" min="0" step="100"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_maxServiceRecordsPerUnit60d">Service records per unit (60 days)</label>
+                <label class="field-label" for="intTh_maxServiceRecordsPerUnit60d">Service records per unit (60 days)</label>
                 <input type="number" id="intTh_maxServiceRecordsPerUnit60d" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_vendorInvoiceIncreasePct">Vendor invoice spike (%)</label>
+                <label class="field-label" for="intTh_vendorInvoiceIncreasePct">Vendor invoice spike (%)</label>
                 <input type="number" id="intTh_vendorInvoiceIncreasePct" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_accidentQuarterlyCostUsd">Accident quarterly cost cap (USD)</label>
+                <label class="field-label" for="intTh_accidentQuarterlyCostUsd">Accident quarterly cost cap (USD)</label>
                 <input type="number" id="intTh_accidentQuarterlyCostUsd" min="0" step="500"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
               <div>
-                <label for="intTh_accidentQuarterlyCostYoYPct">Accident cost YoY cap (%)</label>
+                <label class="field-label" for="intTh_accidentQuarterlyCostYoYPct">Accident cost YoY cap (%)</label>
                 <input type="number" id="intTh_accidentQuarterlyCostYoYPct" min="0" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               </div>
             </div>

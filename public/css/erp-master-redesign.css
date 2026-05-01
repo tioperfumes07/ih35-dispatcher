@@ -1,3 +1,176 @@
+/* ── IH35 UNIVERSAL FIELD STANDARD ───────────────────── */
+.erp-app input:not([type=checkbox]):not([type=radio]):not([type=range]),
+.erp-app select,
+.erp-app textarea {
+  height: 17px !important;
+  padding: 0 5px !important;
+  font-size: 9px !important;
+  font-family: Arial, sans-serif !important;
+  border: 0.5px solid #d0d4da !important;
+  border-radius: 2px !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+.erp-app select {
+  padding: 0 3px !important;
+}
+.erp-app textarea {
+  height: auto !important;
+  min-height: 32px !important;
+  font-size: 9px !important;
+  resize: vertical !important;
+}
+.erp-app input[readonly],
+.erp-app input.qb-ro {
+  background: #f8f9fa !important;
+  border-color: #e0e3e8 !important;
+  color: #6b7385 !important;
+}
+.erp-app input.qb-auto,
+.erp-app select.qb-auto {
+  background: #f8fbff !important;
+  border-color: #9fc3e8 !important;
+  color: #1557a0 !important;
+}
+.erp-app input.qb-err,
+.erp-app select.qb-err {
+  background: #fff8f8 !important;
+  border-color: #c5221f !important;
+}
+.erp-app label.field-label {
+  font-size: 8px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #8892a4 !important;
+  text-align: center !important;
+  display: block !important;
+  margin-bottom: 2px !important;
+}
+.erp-app table th {
+  font-size: 8px !important;
+  font-weight: 500 !important;
+  color: #8892a4 !important;
+  background: #f8f9fa !important;
+  padding: 2px 6px !important;
+}
+.erp-app table td {
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+}
+.erp-app table td input,
+.erp-app table td select {
+  height: 16px !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 9px !important;
+}
+.erp-app .pill,
+.erp-app [class*="status-pill"],
+.erp-app [class*="-pill"] {
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  padding: 0 4px !important;
+  border-radius: 2px !important;
+  line-height: 13px !important;
+  display: inline-block !important;
+}
+.erp-app button.action-btn,
+.erp-app .save-bar button,
+.erp-app .save-bar input[type=button] {
+  height: 18px !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  border-radius: 2px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.erp-top-bar {
+  height: 26px !important;
+  background: #fff !important;
+  border-bottom: 0.5px solid #e0e3e8 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  gap: 6px !important;
+}
+.erp-top-bar button.create-btn {
+  height: 18px !important;
+  padding: 0 8px !important;
+  background: #1a1f36 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 2px !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  font-family: Arial, sans-serif !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+.erp-banner {
+  height: 22px !important;
+  background: #1a1f36 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+}
+.erp-banner .ban-item {
+  font-size: 9px !important;
+  color: #b0bcd4 !important;
+  padding: 0 7px !important;
+  height: 22px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.erp-banner .ban-item.active {
+  color: #fff !important;
+  background: #1d2a44 !important;
+}
+.erp-save-bar {
+  height: 28px !important;
+  background: #fff !important;
+  border-top: 0.5px solid #e0e3e8 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  gap: 3px !important;
+  flex-shrink: 0 !important;
+}
+.erp-icon-rail {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  background: #1a1f36 !important;
+}
+.erp-filter-panel {
+  width: 135px !important;
+  min-width: 135px !important;
+  max-width: 140px !important;
+}
+.erp-filter-panel * {
+  font-size: 9px !important;
+}
+.erp-filter-panel .fp-group-header {
+  font-size: 8px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  color: #8892a4 !important;
+  background: #f8f9fa !important;
+  padding: 2px 6px !important;
+}
+.erp-filter-panel input[type=checkbox] {
+  width: 9px !important;
+  height: 9px !important;
+  accent-color: #1557a0 !important;
+}
+/* ── END IH35 UNIVERSAL FIELD STANDARD ───────────────── */
+
 /**
  * IH35 ERP — QuickBooks-style shell (UI only).
  * Loaded after app-theme.css; overrides layout for body.erp-maintenance #erpApp.erp-master.
@@ -3880,8 +4053,8 @@ body.erp-maintenance .erp-icon-nav__btn.nav-btn::after {
 :root {
   --erp-heading-font-size: 13px;
   --erp-heading-font-weight: 500;
-  --erp-control-height: 30px;
-  --erp-control-padding-x: 8px;
+  --erp-control-height: 17px;
+  --erp-control-padding-x: 5px;
 }
 
 /* Reports tab bar style reference: 13px / 500 */
@@ -3955,8 +4128,8 @@ body.settings-page input[type='time'] {
   min-height: var(--erp-control-height) !important;
   max-height: var(--erp-control-height) !important;
   padding: 0 var(--erp-control-padding-x) !important;
-  font-size: 13px !important;
-  line-height: 1.1 !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
   box-sizing: border-box;
 }
 
@@ -3966,8 +4139,8 @@ body.dispatch-page textarea,
 body.fuel-board textarea,
 body.banking-page textarea,
 body.settings-page textarea {
-  font-size: 13px !important;
-  padding: 6px 8px !important;
+  font-size: 9px !important;
+  padding: 0 5px !important;
   line-height: 1.3 !important;
 }
 
@@ -3984,10 +4157,10 @@ body.dispatch-page #dispatchApp .erp-topbar.topbar,
 body.fuel-board .topbar,
 body.banking-page .topbar,
 body.settings-page .topbar {
-  min-height: 42px;
+  min-height: 26px;
   display: flex;
   align-items: center !important;
-  gap: 8px;
+  gap: 6px;
 }
 
 body.erp-maintenance .erp-topbar__lead,
@@ -4011,11 +4184,11 @@ body.dispatch-page #dispatchApp .erp-topbar .topbar-home-link {
 body.erp-maintenance .erp-topbar .qb-in,
 body.dispatch-page #dispatchApp .erp-topbar .qb-in,
 body.fuel-board .topbar .qb-in {
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0 10px;
-  font-size: 13px;
+  height: 17px;
+  min-height: 17px;
+  max-height: 17px;
+  padding: 0 5px;
+  font-size: 9px;
 }
 
 body.erp-maintenance .erp-topbar__actions > button,

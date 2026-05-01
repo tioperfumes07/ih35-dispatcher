@@ -14,16 +14,16 @@
     if (/[?&]embed=1(?:&|$)/.test(location.search)) document.documentElement.classList.add('dispatch-embed');
   </script>
 </head>
-<body class="dispatch-page">
+<body class="dispatch-page erp-app">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <script src="/js/erp-ui.js" defer></script>
   <script src="/js/erp-modal-chrome.js" defer></script>
-  <div id="dispatchApp" class="app erp-master">
+  <div id="dispatchApp" class="app erp-master erp-app">
     <button type="button" class="sidebar-expand-fab" id="dispatchSidebarExpandFab" onclick="toggleDispatchSidebar(false)" title="Show lists &amp; shortcuts column">»</button>
 
-    <nav class="erp-icon-nav" aria-label="Company navigation">
+    <nav class="erp-icon-nav erp-icon-rail" aria-label="Company navigation">
       <a class="erp-icon-nav__link" href="/maintenance.html#accounting" title="Accounting — expenses, bills, QuickBooks">
         <span class="erp-icon-nav__glyph" aria-hidden="true">$</span><span class="erp-icon-nav__lbl">Accounting</span>
       </a>
@@ -53,20 +53,20 @@
       </a>
     </nav>
 
-    <aside class="erp-module-sidebar" aria-label="Lists and shortcuts for loads and dispatch">
+    <aside class="erp-module-sidebar erp-filter-panel" aria-label="Lists and shortcuts for loads and dispatch">
       <div class="erp-module-sidebar__head">
         <div class="erp-module-sidebar__brand-title">Loads &amp; dispatch</div>
         <button type="button" class="erp-module-sidebar__collapse" onclick="toggleDispatchSidebar(true)" title="Hide lists column">«</button>
       </div>
       <div class="erp-module-sidebar__scroll">
         <div class="erp-module-sidebar__inner">
-          <div class="erp-sb-heading">Loads</div>
+          <div class="erp-sb-heading fp-group-header">Loads</div>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="all" onclick="dispatchGoTab('all')">All loads</button>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="delivered" onclick="dispatchGoTab('delivered')">Delivered / completed</button>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="fleet" onclick="dispatchGoTab('fleet')">Fleet</button>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="open" onclick="dispatchGoTab('open')">Open loads</button>
           <button type="button" class="erp-sb-link" data-dispatch-sblink="unbilled" onclick="dispatchGoTab('unbilled')">Unbilled loads</button>
-          <div class="erp-sb-heading">Shortcuts</div>
+          <div class="erp-sb-heading fp-group-header">Shortcuts</div>
           <a class="erp-sb-link" href="/maintenance.html#accounting">Accounting</a>
           <a class="erp-sb-link" href="/banking.html">Bank matching</a>
           <a class="erp-sb-link" href="/maintenance.html#fuel">Fuel (ERP tab)</a>
@@ -75,12 +75,12 @@
         </div>
       </div>
       <div class="erp-module-sidebar__footer dispatch-sidebar-footer">
-        <div class="erp-sb-heading">Connections</div>
+        <div class="erp-sb-heading fp-group-header">Connections</div>
         <div id="dispatchSidebarQboStatus" class="mini-note dispatch-sidebar-footer__line">QuickBooks: checking connection…</div>
         <div id="dispatchSidebarQboAlertBrief" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px;line-height:1.4"></div>
         <div id="dispatchSidebarFleetStatus" class="mini-note dispatch-sidebar-footer__line" style="margin-top:6px">Samsara: waiting for first refresh…</div>
         <div id="dispatchSidebarLastUpdated" class="mini-note dispatch-sidebar-footer__line" style="margin-top:8px">Last refresh: waiting…</div>
-        <div class="erp-sb-heading" style="margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="erp-sb-heading fp-group-header" style="margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>Tips</span>
           <span class="erp-help-tip">
             <button type="button" class="erp-help-tip__btn" aria-expanded="false" onclick="erpHelpTipToggle(event)" title="Dispatch tips">?</button>
@@ -108,7 +108,7 @@
             <div id="erpQboDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--qbo hidden" role="status"></div>
             <div id="erpSamsaraDisconnectBanner" class="erp-disconnect-banner erp-disconnect-banner--samsara hidden" role="status"></div>
           </div>
-          <header class="topbar erp-topbar">
+          <header class="topbar erp-topbar erp-top-bar">
             <div class="title" id="dispatchPageTitle">Loads &amp; dispatch</div>
             <a href="/" class="topbar-home-link keep-embed" title="Company hub">IH 35 Transportation LLC</a>
             <div class="erp-topbar__search">
@@ -141,12 +141,12 @@
             </div>
           </div>
 
-          <div class="tabs dispatch-board-tabs">
-    <button type="button" class="tab active" data-tab="open">Open loads</button>
-    <button type="button" class="tab" data-tab="delivered">Delivered / completed</button>
-    <button type="button" class="tab" data-tab="unbilled">Unbilled loads</button>
-    <button type="button" class="tab" data-tab="all">All loads</button>
-    <button type="button" class="tab" data-tab="fleet">Fleet</button>
+          <div class="tabs dispatch-board-tabs erp-banner">
+    <button type="button" class="tab ban-item active" data-tab="open">Open loads</button>
+    <button type="button" class="tab ban-item" data-tab="delivered">Delivered / completed</button>
+    <button type="button" class="tab ban-item" data-tab="unbilled">Unbilled loads</button>
+    <button type="button" class="tab ban-item" data-tab="all">All loads</button>
+    <button type="button" class="tab ban-item" data-tab="fleet">Fleet</button>
           </div>
   <div class="wrap dispatch-board-wrap">
     <p class="muted dispatch-board-intro dispatch-board-intro--compact" style="margin:0 0 12px;font-size:12px;line-height:1.5;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
@@ -225,12 +225,12 @@
       <div class="modal-body">
         <div class="grid2">
           <div class="row">
-            <label class="lbl">Load # / invoice # (same number)</label>
+            <label class="lbl field-label">Load # / invoice # (same number)</label>
             <input class="in" id="f_load_number" placeholder="Suggested on new load"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <p class="muted" style="margin:6px 0 0;font-size:11px">Invoice <code>DocNumber</code> in QuickBooks uses this value. Next number is suggested from your loads (baseline <span id="nextLoadHint">13501</span> via server).</p>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Rate confirmation PDF (autofill)</label>
+            <label class="lbl field-label">Rate confirmation PDF (autofill)</label>
             <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
               <input type="file" accept="application/pdf" id="rateConPdfInput"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               <button type="button" class="btn btn-ghost" id="dispatchBtnRateConPdf" onclick="dispatchApplyRateConPdf()">Extract &amp; fill form</button>
@@ -243,11 +243,11 @@
             </p>
           </div>
           <div class="row">
-            <label class="lbl">Status</label>
+            <label class="lbl field-label">Status</label>
             <select class="in" id="f_status" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Customer (QuickBooks)</label>
+            <label class="lbl field-label">Customer (QuickBooks)</label>
             <input type="hidden" id="f_qbo_customer_id" />
             <div class="ac-wrap">
               <input class="in" id="f_customer_search" list="qboCustomerDatalist" placeholder="Type to search customers…" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
@@ -257,11 +257,11 @@
             <p class="muted" style="margin:6px 0 0;font-size:12px">Type to filter; pick from the list or datalist. Sync QuickBooks catalog after customer changes in QuickBooks Online.</p>
           </div>
           <div class="row">
-            <label class="lbl">Customer W/O #</label>
+            <label class="lbl field-label">Customer W/O #</label>
             <input class="in" id="f_customer_wo_number" placeholder="e.g. 62998 (broker / customer ref)" maxlength="80"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Driver — quick pick (TMS / Samsara → QBO)</label>
+            <label class="lbl field-label">Driver — quick pick (TMS / Samsara → QBO)</label>
             <select class="in" id="f_driver_roster_select" onchange="onDriverRosterSelect()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
               <option value="">— Choose linked TMS driver or Samsara driver —</option>
             </select>
@@ -270,7 +270,7 @@
             </p>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Driver (QuickBooks vendor)</label>
+            <label class="lbl field-label">Driver (QuickBooks vendor)</label>
             <input type="hidden" id="f_qbo_driver_vendor_id" />
             <div class="ac-wrap">
               <input class="in" id="f_driver_vendor" placeholder="Type vendor name…" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
@@ -279,14 +279,14 @@
             <p class="muted" style="margin:6px 0 0;font-size:12px">The driver or carrier is a <strong>vendor</strong> in QuickBooks. Add vendors in QuickBooks Online, then use <strong>Sync QuickBooks catalog</strong>.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Truck — pick Samsara vehicle</label>
+            <label class="lbl field-label">Truck — pick Samsara vehicle</label>
             <select class="in" id="f_truck_samsara_select" onchange="onSamsaraTruckSelect()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
               <option value="">— Samsara fleet asset (optional) —</option>
             </select>
             <p class="muted" style="margin:6px 0 0;font-size:11px">Same list as the <strong>Fleet</strong> tab. Fills the truck field and TMS row; you can still type a different unit below.</p>
           </div>
           <div class="row">
-            <label class="lbl">Truck (QBO class name, T1…)</label>
+            <label class="lbl field-label">Truck (QBO class name, T1…)</label>
             <input type="hidden" id="f_truck_id" />
             <div class="ac-wrap">
               <input class="in" id="f_truck_search" list="truckClassDatalist" placeholder="Type unit e.g. T172…" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
@@ -304,7 +304,7 @@
             </div>
           </div>
           <div class="row">
-            <label class="lbl">Trailer</label>
+            <label class="lbl field-label">Trailer</label>
             <input type="hidden" id="f_trailer_id" />
             <div class="ac-wrap">
               <input class="in" id="f_trailer_search" list="trailerUnitDatalist" placeholder="Type trailer unit…" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
@@ -320,30 +320,30 @@
             </div>
           </div>
           <div class="row">
-            <label class="lbl">Dispatcher</label>
+            <label class="lbl field-label">Dispatcher</label>
             <input class="in" id="f_dispatcher" placeholder="Name"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
           </div>
           <div class="row">
-            <label class="lbl">Start / End date</label>
+            <label class="lbl field-label">Start / End date</label>
             <div style="display:flex;gap:8px">
               <input class="in" type="date" id="f_start"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               <input class="in" type="date" id="f_end"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             </div>
           </div>
           <div class="row">
-            <label class="lbl">Practical miles (loaded / empty)</label>
+            <label class="lbl field-label">Practical miles (loaded / empty)</label>
             <div style="display:flex;gap:8px">
               <input class="in" type="number" id="f_plm" step="0.1" placeholder="Loaded"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
               <input class="in" type="number" id="f_pem" step="0.1" placeholder="Empty"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             </div>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Trip revenue ($) — linehaul on invoice</label>
+            <label class="lbl field-label">Trip revenue ($) — linehaul on invoice</label>
             <input class="in" type="number" id="f_revenue" step="0.01" min="0" placeholder="Primary linehaul amount"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <p class="muted" style="margin:6px 0 0;font-size:11px">This load number is the <strong>customer invoice number</strong> in QuickBooks (and on settlement). Each northbound / southbound trip gets its own load #. Settlement net uses linehaul plus extra lines below, minus expenses tagged with this load / inv #.</p>
           </div>
           <div class="row" style="grid-column:1/-1">
-            <label class="lbl">Linehaul QuickBooks item</label>
+            <label class="lbl field-label">Linehaul QuickBooks item</label>
             <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
               <div style="flex:1;min-width:200px">
                 <input type="hidden" id="f_qbo_linehaul_item_id" />
@@ -356,7 +356,7 @@
           </div>
           <div class="row" style="grid-column:1/-1">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
-              <label class="lbl" style="margin:0">Additional invoice charges</label>
+              <label class="lbl field-label" style="margin:0">Additional invoice charges</label>
               <button type="button" class="btn btn-ghost" style="padding:6px 12px;font-size:13px" onclick="addInvoiceExtraRow()">+ Add QBO charge line</button>
             </div>
             <div id="invoiceExtraLines" class="invoice-extra-lines"></div>
@@ -411,7 +411,7 @@
       <div class="modal-body">
         <p class="muted" style="margin-top:0">Rate confirmations, delivery paperwork, BOLs, etc. Files stay with the load # (same as invoice #) for settlement.</p>
         <div style="margin-bottom:14px">
-          <label class="lbl">Upload</label>
+          <label class="lbl field-label">Upload</label>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
             <input type="file" id="doc_file"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <select class="in sm" id="doc_type" style="max-width:200px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
@@ -584,10 +584,10 @@
       const row = document.createElement('div');
       row.className = 'invoice-extra-row';
       row.innerHTML =
-        '<div><label class="lbl" style="font-size:10px">QBO item</label><input type="hidden" class="inv-extra-item-id" value="" /><input class="in inv-extra-item-name" list="qboInvoiceItemDatalist" placeholder="Item name…" autocomplete="off" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
-        '<div><label class="lbl" style="font-size:10px">Amount ($)</label><input class="in inv-extra-amt" type="number" step="0.01" min="0" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
-        '<div><label class="lbl" style="font-size:10px">Description</label><input class="in inv-extra-desc" placeholder="Optional on invoice" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
-        '<div><label class="lbl" style="font-size:10px">&nbsp;</label><button type="button" class="btn btn-ghost" style="padding:8px 12px" onclick="this.closest(\'.invoice-extra-row\').remove()" title="Remove line">×</button></div>';
+        '<div><label class="lbl field-label" style="font-size:10px">QBO item</label><input type="hidden" class="inv-extra-item-id" value="" /><input class="in inv-extra-item-name" list="qboInvoiceItemDatalist" placeholder="Item name…" autocomplete="off" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+        '<div><label class="lbl field-label" style="font-size:10px">Amount ($)</label><input class="in inv-extra-amt" type="number" step="0.01" min="0" placeholder="0.00" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+        '<div><label class="lbl field-label" style="font-size:10px">Description</label><input class="in inv-extra-desc" placeholder="Optional on invoice" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+        '<div><label class="lbl field-label" style="font-size:10px">&nbsp;</label><button type="button" class="btn btn-ghost" style="padding:8px 12px" onclick="this.closest(\'.invoice-extra-row\').remove()" title="Remove line">×</button></div>';
       host.appendChild(row);
       const nameInp = row.querySelector('.inv-extra-item-name');
       const idHid = row.querySelector('.inv-extra-item-id');
@@ -2180,18 +2180,18 @@
       wrap.dataset.rowId = id;
       wrap.innerHTML =
         '<div class="stop-card-top">' +
-        '<div><label class="lbl">Stop type</label><select class="in stop-type" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="pickup">pickup</option><option value="delivery">delivery</option><option value="empty">empty</option></select></div>' +
-        '<div><label class="lbl">Location</label><div class="ac-wrap"><input class="in stop-loc" placeholder="Search / type location…" autocomplete="off" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><div class="ac-list"></div></div></div>' +
-        '<div><label class="lbl">Date/time</label><input class="in stop-dt" type="datetime-local" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
-        '<div><label class="lbl">Window</label><select class="in stop-win" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
+        '<div><label class="lbl field-label">Stop type</label><select class="in stop-type" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="pickup">pickup</option><option value="delivery">delivery</option><option value="empty">empty</option></select></div>' +
+        '<div><label class="lbl field-label">Location</label><div class="ac-wrap"><input class="in stop-loc" placeholder="Search / type location…" autocomplete="off" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><div class="ac-list"></div></div></div>' +
+        '<div><label class="lbl field-label">Date/time</label><input class="in stop-dt" type="datetime-local" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+        '<div><label class="lbl field-label">Window</label><select class="in stop-win" style="height:17px;padding:0 3px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
         stopWindowSelectOptionsHtml() +
         '</select></div>' +
-        '<div><label class="lbl">&nbsp;</label><button type="button" class="btn btn-ghost" onclick="this.closest(\'.stop-block\').remove();updateStopMilesSummary();" title="Remove stop">×</button></div>' +
+        '<div><label class="lbl field-label">&nbsp;</label><button type="button" class="btn btn-ghost" onclick="this.closest(\'.stop-block\').remove();updateStopMilesSummary();" title="Remove stop">×</button></div>' +
         '</div>' +
-        '<div class="stop-card-addr"><label class="lbl">Address</label><textarea class="stop-addr" rows="3" placeholder="Full street, city, state, zip — drag corner to resize" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>' +
+        '<div class="stop-card-addr"><label class="lbl field-label">Address</label><textarea class="stop-addr" rows="3" placeholder="Full street, city, state, zip — drag corner to resize" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>' +
         '<div class="stop-card-bottom">' +
-        '<div><label class="lbl">Prac. mi.</label><input class="in stop-pm" type="number" step="0.1" value="0" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
-        '<div><label class="lbl">Short. mi.</label><input class="in stop-sm" type="number" step="0.1" value="0" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+        '<div><label class="lbl field-label">Prac. mi.</label><input class="in stop-pm" type="number" step="0.1" value="0" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
+        '<div><label class="lbl field-label">Short. mi.</label><input class="in stop-sm" type="number" step="0.1" value="0" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></div>' +
         '</div>';
       document.getElementById('stops').appendChild(wrap);
       bindAutocomplete(wrap);

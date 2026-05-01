@@ -176,7 +176,7 @@
           class="erp-wc-checknum"
           style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border-radius:8px;background:var(--color-bg-card)"
         >
-          <label class="qb-l" for="wcCheckNum" style="font-weight:800;margin:0;font-size:11px;letter-spacing:0.04em;color:var(--color-text-label)">CHECK #</label>
+          <label class="qb-l field-label" for="wcCheckNum" style="font-weight:800;margin:0;font-size:11px;letter-spacing:0.04em;color:var(--color-text-label)">CHECK #</label>
           <input
             id="wcCheckNum"
             class="qb-in erp-wc-checknum-input"
@@ -190,26 +190,26 @@
       </div>
       <div class="erp-mb-modal__body" style="padding:12px 16px 18px;display:grid;gap:12px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0">
-          <label class="qb-l">Payee / vendor <span class="maint-label-req">*</span>
+          <label class="qb-l field-label">Payee / vendor <span class="maint-label-req">*</span>
             <input id="wcVendorSearch" class="qb-in" list="vendorList" autocomplete="off" placeholder="Search QuickBooks vendors" oninput="erpWriteCheckResolveVendor()" onblur="erpWriteCheckResolveVendor()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <input type="hidden" id="wcVendorQboId" />
           </label>
-          <label class="qb-l">Bank account <span class="maint-label-req">*</span>
+          <label class="qb-l field-label">Bank account <span class="maint-label-req">*</span>
             <input id="wcBankSearch" class="qb-in" list="qboBankAccountOptions" autocomplete="off" placeholder="Checking account" oninput="erpWriteCheckResolveBank()" onblur="erpWriteCheckResolveBank()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <input type="hidden" id="wcBankQboId" />
           </label>
-          <label class="qb-l">Payment date
+          <label class="qb-l field-label">Payment date
             <input id="wcTxnDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
           </label>
-          <label class="qb-l">Expense category <span class="maint-label-req">*</span>
+          <label class="qb-l field-label">Expense category <span class="maint-label-req">*</span>
             <input id="wcAcctSearch" class="qb-in" list="qboAccountExpenseOptions" autocomplete="off" placeholder="Expense account" oninput="erpWriteCheckResolveAcct()" onblur="erpWriteCheckResolveAcct()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <input type="hidden" id="wcAcctQboId" />
           </label>
         </div>
-        <label class="qb-l">Memo
+        <label class="qb-l field-label">Memo
           <input id="wcMemo" class="qb-in" placeholder="Optional"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
         </label>
-        <label class="qb-l">Address (payee)
+        <label class="qb-l field-label">Address (payee)
           <textarea id="wcAddr" class="qb-in" rows="2" placeholder="Optional — auto-filled when vendor is selected" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>
         </label>
         <div id="wcOpenBillsWrap" class="hidden">
@@ -223,7 +223,7 @@
           <p class="mini-note" style="margin:6px 0 0">Checked rows add to the check total (bill pay). For direct expense without a bill, leave rows unchecked and use the amount field below.</p>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-          <label class="qb-l" style="margin:0">Direct amount (when not paying listed bills)
+          <label class="qb-l field-label" style="margin:0">Direct amount (when not paying listed bills)
             <input id="wcAmountDirect" class="qb-in" type="number" step="0.01" min="0" placeholder="0.00" style="max-width:160px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" oninput="erpWriteCheckRecalcTotal()" />
           </label>
           <div style="font-size:20px;font-weight:800" id="wcTotalDisplay">AMOUNT: $0.00</div>
@@ -485,9 +485,9 @@
       </header>
       <div class="erp-qb-dialog__body">
         <input type="hidden" id="sqShopType" value="internal" />
-        <label class="qb-l">Unit</label>
+        <label class="qb-l field-label">Unit</label>
         <input id="sqUnit" class="qb-in maint-field" list="unitOptions" placeholder="T1234" style="width:100%;max-width:100%;margin-bottom:10px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
-        <label class="qb-l">Fleet type</label>
+        <label class="qb-l field-label">Fleet type</label>
         <select id="sqAssetCat" class="qb-in" style="width:100%;margin-bottom:10px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;">
           <option>Trucks</option>
           <option>Refrigerated Vans</option>
@@ -495,11 +495,11 @@
           <option>Dry Vans</option>
           <option>Company Vehicles</option>
         </select>
-        <label class="qb-l">Job title</label>
+        <label class="qb-l field-label">Job title</label>
         <input id="sqTitle" class="qb-in" placeholder="Brakes, PM, tire, engine…" style="width:100%;margin-bottom:10px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
-        <label class="qb-l">Estimated hours (for delay alerts)</label>
+        <label class="qb-l field-label">Estimated hours (for delay alerts)</label>
         <input id="sqEstH" type="number" min="0" step="0.5" class="qb-in" placeholder="8" style="width:100%;margin-bottom:10px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
-        <label class="qb-l">Vendor / shop hint (external, roadside, or parts)</label>
+        <label class="qb-l field-label">Vendor / shop hint (external, roadside, or parts)</label>
         <input id="sqVendor" class="qb-in" placeholder="Supplier / vendor (optional)" style="width:100%;margin-bottom:0;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" />
       </div>
       <footer class="erp-qb-dialog__foot">
@@ -537,7 +537,7 @@
         
       </header>
       <div class="erp-qb-dialog__body">
-        <label class="qb-l">Reason</label>
+        <label class="qb-l field-label">Reason</label>
         <select id="sqDelayCode" class="qb-in" style="width:100%;margin-bottom:10px;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;">
           <option value="missing_parts">Missing parts</option>
           <option value="long_queue">Long shop queue</option>
@@ -545,7 +545,7 @@
           <option value="vendor_delay">Vendor / external delay</option>
           <option value="other">Other</option>
         </select>
-        <label class="qb-l">Note</label>
+        <label class="qb-l field-label">Note</label>
         <textarea id="sqDelayNote" class="qb-memo" style="width:100%;min-height:72px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" placeholder="Optional detail"></textarea>
       </div>
       <footer class="erp-qb-dialog__foot">
@@ -568,7 +568,7 @@
         <div id="maintFleetTypeFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px"></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin:0 0 10px">
           <div>
-            <label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:4px">QuickBooks Class</label>
+            <label class="field-label" style="display:block;font-size:12px;color:#94a3b8;margin-bottom:4px">QuickBooks Class</label>
             <input type="text" id="unitQboClassInput" list="qboClassDatalist" placeholder="Type to search QBO classes..." class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
             <input type="hidden" id="unitQboClassUnit" />
           </div>
@@ -597,31 +597,31 @@
       </header>
       <div class="erp-qb-dialog__body">
         <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <label class="qb-l" style="display:grid;gap:4px"><span>Vehicle Type Selector</span><select id="unifiedTxVehicleType" class="qb-in" onchange="refreshUnifiedUnitOptions()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="all">All Units</option><option value="trucks">Trucks</option><option value="reefers">Reefers</option><option value="flatbeds">Flatbeds</option><option value="dry-vans">Dry Vans</option><option value="company">Company Vehicles</option></select></label>
-          <label class="qb-l" style="display:grid;gap:4px"><span>Unit Number (2 step picker)</span><input id="unifiedTxUnit" class="qb-in" list="unifiedTxUnitOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Vehicle Type Selector</span><select id="unifiedTxVehicleType" class="qb-in" onchange="refreshUnifiedUnitOptions()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="all">All Units</option><option value="trucks">Trucks</option><option value="reefers">Reefers</option><option value="flatbeds">Flatbeds</option><option value="dry-vans">Dry Vans</option><option value="company">Company Vehicles</option></select></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Unit Number (2 step picker)</span><input id="unifiedTxUnit" class="qb-in" list="unifiedTxUnitOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
         </div>
         <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <label class="qb-l" style="display:grid;gap:4px"><span>Date</span><input id="unifiedTxDate" type="date" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-          <label class="qb-l" style="display:grid;gap:4px"><span>Vendor</span><input id="unifiedTxVendor" class="qb-in" list="vendorList" placeholder="Autocomplete from QBO cache"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Date</span><input id="unifiedTxDate" type="date" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Vendor</span><input id="unifiedTxVendor" class="qb-in" list="vendorList" placeholder="Autocomplete from QBO cache"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
         </div>
         <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <label class="qb-l" style="display:grid;gap:4px"><span id="unifiedTxDriverLabel">Driver</span><input id="unifiedTxDriver" class="qb-in" list="unifiedTxDriverOptions" placeholder="Autocomplete"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-          <label class="qb-l" style="display:grid;gap:4px"><span id="unifiedTxLoadLabel">Load #</span><input id="unifiedTxLoadNumber" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span id="unifiedTxDriverLabel">Driver</span><input id="unifiedTxDriver" class="qb-in" list="unifiedTxDriverOptions" placeholder="Autocomplete"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span id="unifiedTxLoadLabel">Load #</span><input id="unifiedTxLoadNumber" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
         </div>
         <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <label class="qb-l" style="display:grid;gap:4px"><span>Service/Expense Type</span><select id="unifiedTxType" class="qb-in" onchange="applyUnifiedTransactionRules()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="repair_order">Repair Order</option><option value="maintenance_order">Maintenance Order</option><option value="pm_service">PM Service</option><option value="accident_repair">Accident Repair</option><option value="tire_record">Tire Record</option><option value="maintenance_bill">Maintenance Bill</option><option value="repair_bill">Repair Bill</option><option value="service_bill">Service Bill</option><option value="accident_bill">Accident Bill</option><option value="tire_bill">Tire Bill</option><option value="fuel_expense">Fuel Expense</option><option value="maintenance_expense">Maintenance Expense</option><option value="repair_expense">Repair Expense</option><option value="tire_expense">Tire Expense</option><option value="toll">Toll</option><option value="lumper">Lumper</option><option value="per_diem">Per Diem</option></select></label>
-          <label class="qb-l" style="display:grid;gap:4px"><span>Amount</span><input id="unifiedTxAmount" type="number" step="0.01" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Service/Expense Type</span><select id="unifiedTxType" class="qb-in" onchange="applyUnifiedTransactionRules()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="repair_order">Repair Order</option><option value="maintenance_order">Maintenance Order</option><option value="pm_service">PM Service</option><option value="accident_repair">Accident Repair</option><option value="tire_record">Tire Record</option><option value="maintenance_bill">Maintenance Bill</option><option value="repair_bill">Repair Bill</option><option value="service_bill">Service Bill</option><option value="accident_bill">Accident Bill</option><option value="tire_bill">Tire Bill</option><option value="fuel_expense">Fuel Expense</option><option value="maintenance_expense">Maintenance Expense</option><option value="repair_expense">Repair Expense</option><option value="tire_expense">Tire Expense</option><option value="toll">Toll</option><option value="lumper">Lumper</option><option value="per_diem">Per Diem</option></select></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Amount</span><input id="unifiedTxAmount" type="number" step="0.01" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
         </div>
-        <div style="margin-bottom:8px"><label class="qb-l" style="display:grid;gap:4px"><span>Description</span><textarea id="unifiedTxDescription" rows="2" class="qb-memo" style="width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label></div>
-        <div style="margin-bottom:8px"><label class="qb-l" style="display:grid;gap:4px"><span>Notes</span><textarea id="unifiedTxNotes" rows="2" class="qb-memo" style="width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label></div>
-        <div style="margin-bottom:8px"><label class="qb-l" style="display:grid;gap:4px"><span>Receipt/Photo Upload</span><input id="unifiedTxReceipt" type="file" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label></div>
+        <div style="margin-bottom:8px"><label class="qb-l field-label" style="display:grid;gap:4px"><span>Description</span><textarea id="unifiedTxDescription" rows="2" class="qb-memo" style="width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label></div>
+        <div style="margin-bottom:8px"><label class="qb-l field-label" style="display:grid;gap:4px"><span>Notes</span><textarea id="unifiedTxNotes" rows="2" class="qb-memo" style="width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label></div>
+        <div style="margin-bottom:8px"><label class="qb-l field-label" style="display:grid;gap:4px"><span>Receipt/Photo Upload</span><input id="unifiedTxReceipt" type="file" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label></div>
         <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <label class="qb-l" style="display:grid;gap:4px"><span>QBO Account</span><input id="unifiedTxQboAccount" class="qb-in" list="unifiedTxQboAccountOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-          <label class="qb-l" style="display:grid;gap:4px"><span>QBO Class</span><input id="unifiedTxQboClass" class="qb-in" list="fleetQboClassOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>QBO Account</span><input id="unifiedTxQboAccount" class="qb-in" list="unifiedTxQboAccountOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>QBO Class</span><input id="unifiedTxQboClass" class="qb-in" list="fleetQboClassOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
         </div>
         <div class="search-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px">
-          <label class="qb-l" style="display:grid;gap:4px"><span>Status</span><select id="unifiedTxStatus" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select></label>
-          <label class="qb-l" style="display:grid;gap:4px"><span>Priority</span><select id="unifiedTxPriority" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Status</span><select id="unifiedTxStatus" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select></label>
+          <label class="qb-l field-label" style="display:grid;gap:4px"><span>Priority</span><select id="unifiedTxPriority" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
         </div>
       </div>
       <footer class="erp-qb-dialog__foot" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap">
@@ -690,7 +690,7 @@
   <datalist id="accidentFaultOptions"></datalist>
   <datalist id="tireConditionOptions"></datalist>
 
-  <div class="app erp-master" id="erpApp">
+  <div class="app erp-master erp-app" id="erpApp">
     <button type="button" class="sidebar-expand-fab" id="sidebarExpandFab" onclick="toggleErpSidebar(false)" title="Show lists &amp; shortcuts column">»</button>
 
     <style>
@@ -700,7 +700,7 @@
       .ir-flyout__item{height:22px;padding:0 8px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--color-text-body);font:500 9px/1 Arial,sans-serif;letter-spacing:.03em;text-transform:uppercase;text-align:left;cursor:pointer;text-decoration:none;display:flex;align-items:center}
       .ir-flyout__item:hover{background:var(--color-surface-muted);border-color:var(--color-border)}
     </style>
-    <nav id="erpIconNav" class="erp-icon-nav" aria-label="Company navigation" style="width:36px;min-width:36px;max-width:36px;flex:0 0 36px">
+    <nav id="erpIconNav" class="erp-icon-nav erp-icon-rail" aria-label="Company navigation" style="width:36px;min-width:36px;max-width:36px;flex:0 0 36px">
       <div class="ir-item">
         <button type="button" class="erp-icon-nav__btn nav-btn" data-section="dashboard" title="Home overview" onclick="openSection('dashboard', this)">
           <span class="erp-icon-nav__glyph" aria-hidden="true">⌂</span><span class="erp-icon-nav__lbl">Home</span>
@@ -800,7 +800,7 @@
       <button type="button" class="nav-btn" data-section="uploads" onclick="openSection('uploads', this); openUploadSubpanel('fuel');" tabindex="-1" aria-hidden="true"></button>
     </div>
 
-    <aside class="erp-module-sidebar" aria-label="Lists and shortcuts for the open area">
+    <aside class="erp-module-sidebar erp-filter-panel" aria-label="Lists and shortcuts for the open area">
       <div class="erp-module-sidebar__head">
         <div id="erpModuleBrandTitle" class="erp-module-sidebar__brand-title">Maintenance</div>
         <button type="button" class="erp-module-sidebar__collapse" onclick="toggleErpSidebar(true)" title="Hide lists column">«</button>
@@ -915,12 +915,12 @@
             ×
           </button>
         </div>
-        <header class="topbar erp-topbar">
+        <header class="topbar erp-topbar erp-top-bar">
           <div class="erp-topbar__lead">
             <div class="erp-new-wrap">
               <button
                 type="button"
-                class="erp-btn-primary erp-topbar-new-btn"
+                class="erp-btn-primary erp-topbar-new-btn create-btn"
                 id="erpNewMenuBtn"
                 style="height:18px;padding:0 8px;background:#1a1f36;color:#fff;border:none;border-radius:2px;font-size:9px;font-weight:500;font-family:Arial,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;"
                 onclick="erpToggleNewMenu(event)"
@@ -1130,12 +1130,12 @@
             </div>
           </div>
           <div class="panel-body">
-            <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
-              <label style="min-width:140px"><span class="qb-l">From</span><input id="fuelRelayFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-              <label style="min-width:140px"><span class="qb-l">To</span><input id="fuelRelayTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-              <label style="min-width:160px"><span class="qb-l">Driver</span><input id="fuelRelayDriver" class="qb-in" placeholder="Any driver"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-              <label style="min-width:120px"><span class="qb-l">Unit</span><input id="fuelRelayUnit" class="qb-in" placeholder="Any unit"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-              <label style="min-width:100px"><span class="qb-l">State</span><input id="fuelRelayState" class="qb-in" maxlength="2" placeholder="TX"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+            <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
+              <label class="field-label" style="min-width:140px"><span class="qb-l">From</span><input id="fuelRelayFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <label class="field-label" style="min-width:140px"><span class="qb-l">To</span><input id="fuelRelayTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <label class="field-label" style="min-width:160px"><span class="qb-l">Driver</span><input id="fuelRelayDriver" class="qb-in" placeholder="Any driver"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <label class="field-label" style="min-width:120px"><span class="qb-l">Unit</span><input id="fuelRelayUnit" class="qb-in" placeholder="Any unit"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <label class="field-label" style="min-width:100px"><span class="qb-l">State</span><input id="fuelRelayState" class="qb-in" maxlength="2" placeholder="TX"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               <button type="button" class="btn btn--small" onclick="loadRelayFuelTransactions(false)">Apply</button>
             </div>
             <div style="overflow:auto;max-height:420px;border:1px solid var(--color-border);border-radius:8px">
@@ -1268,7 +1268,7 @@
             <span style="min-width:0;flex:1 1 200px">Tag / duty / violation chips, search, and <strong>Show</strong> below scope the HOS grid.</span>
             
           </div>
-          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="HOS filters">
+          <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" aria-label="HOS filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -1295,7 +1295,7 @@
                 <div class="mr-filter-drop"><p class="mr-filter-drop__hint"><strong>Relevant</strong> hides off-duty + no truck; other modes show full window.</p></div>
               </details>
               <div class="mr-filter-bar__show">
-                <label class="mini-note" for="safetyHosDutyFilter" style="margin:0">Show</label>
+                <label class="mini-note field-label" for="safetyHosDutyFilter" style="margin:0">Show</label>
                 <select id="safetyHosDutyFilter" class="in mr-filter-inline-select" onchange="renderSafetyHos()" title="Filter by duty state" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <option value="relevant">Relevant (hide off-duty, no truck)</option>
                   <option value="active">Active duties only</option>
@@ -1337,7 +1337,7 @@
             <span class="mini-note" style="margin:0">Active / in service lists</span>
             
           </div>
-          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Active list filters">
+          <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" aria-label="Active list filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -1348,7 +1348,7 @@
                 <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Duty and vehicle columns follow the live Samsara clock.</p></div>
               </details>
               <div class="mr-filter-bar__show">
-                <label class="mini-note" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
+                <label class="mini-note field-label" for="safetyActiveDutyFilter" style="margin:0">List filter</label>
                 <select id="safetyActiveDutyFilter" class="in mr-filter-inline-select" onchange="renderSafetyActivePanels()" title="Same modes as HOS tab" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <option value="relevant">Relevant (hide off-duty, no truck)</option>
                   <option value="active">Active duties only</option>
@@ -1402,7 +1402,7 @@
             <span class="mini-note" style="margin:0">Assignments</span>
             
           </div>
-          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Assignment filters">
+          <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" aria-label="Assignment filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -1414,7 +1414,7 @@
               </details>
               <input id="safetyAssignSearch" class="in mr-filter-search" style="width:100%;height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;" placeholder="Search…" oninput="renderSafetyAssignments()" title="Filter vehicle or driver" />
               <div class="mr-filter-bar__show">
-                <label class="mini-note" for="safetyAssignFilter" style="margin:0">Show</label>
+                <label class="mini-note field-label" for="safetyAssignFilter" style="margin:0">Show</label>
                 <select id="safetyAssignFilter" class="in mr-filter-inline-select" onchange="renderSafetyAssignments()" title="Active = open assignment or end time in the future" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <option value="all">All</option>
                   <option value="active">Active</option>
@@ -1454,7 +1454,7 @@
             <span class="mini-note" style="margin:0">Driver files</span>
             
           </div>
-          <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Driver files filters">
+          <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" aria-label="Driver files filters">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -1465,7 +1465,7 @@
                 <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Dates and notes are stored in this app (not QuickBooks).</p></div>
               </details>
               <div class="mr-filter-bar__show">
-                <label class="mini-note" for="driverFilesUrgentOnly" style="margin:0">Show</label>
+                <label class="mini-note field-label" for="driverFilesUrgentOnly" style="margin:0">Show</label>
                 <select id="driverFilesUrgentOnly" class="in mr-filter-inline-select" onchange="renderDriverFiles()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <option value="all">All drivers</option>
                   <option value="dueSoon">Due soon / expired</option>
@@ -1717,21 +1717,21 @@
             <input type="hidden" id="driverProfileLiteSamsaraId" />
             <input type="hidden" id="driverProfileLiteQboVendorId" />
             <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
-              <label style="display:grid;gap:4px"><span>Full name</span><input id="driverProfileLiteName" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Unit number</span><input id="driverProfileLiteUnit" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Status</span><select id="driverProfileLiteStatus" style="width:100%;box-sizing:border-box;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-              <label style="display:grid;gap:4px"><span>Phone</span><input id="driverProfileLitePhone" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Email</span><input id="driverProfileLiteEmail" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Hire date</span><input id="driverProfileLiteHireDate" type="date" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>CDL Number</span><input id="driverProfileLiteCdlNumber" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>CDL State</span><input id="driverProfileLiteCdlState" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>CDL Expiry</span><input id="driverProfileLiteCdlExpiry" type="date" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Medical Expiry</span><input id="driverProfileLiteMedicalExpiry" type="date" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>License number</span><input id="driverProfileLiteLicenseNumber" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Emergency contact</span><input id="driverProfileLiteEmergencyContact" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px"><span>Emergency phone</span><input id="driverProfileLiteEmergencyPhone" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px;grid-column:1/-1"><span>QBO Vendor (links expenses to this driver)</span><input id="driverProfileLiteQboVendorName" list="vendorList" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
-              <label style="display:grid;gap:4px;grid-column:1/-1"><span>Notes</span><textarea id="driverProfileLiteNotes" rows="3" style="width:100%;box-sizing:border-box;padding:8px 10px;border:0.5px solid #d0d4da;border-radius:2px;font-size:9px;font-family:Arial,sans-serif;"></textarea></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Full name</span><input id="driverProfileLiteName" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Unit number</span><input id="driverProfileLiteUnit" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Status</span><select id="driverProfileLiteStatus" style="width:100%;box-sizing:border-box;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Phone</span><input id="driverProfileLitePhone" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Email</span><input id="driverProfileLiteEmail" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Hire date</span><input id="driverProfileLiteHireDate" type="date" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>CDL Number</span><input id="driverProfileLiteCdlNumber" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>CDL State</span><input id="driverProfileLiteCdlState" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>CDL Expiry</span><input id="driverProfileLiteCdlExpiry" type="date" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Medical Expiry</span><input id="driverProfileLiteMedicalExpiry" type="date" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>License number</span><input id="driverProfileLiteLicenseNumber" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Emergency contact</span><input id="driverProfileLiteEmergencyContact" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px"><span>Emergency phone</span><input id="driverProfileLiteEmergencyPhone" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px;grid-column:1/-1"><span>QBO Vendor (links expenses to this driver)</span><input id="driverProfileLiteQboVendorName" list="vendorList" style="width:100%;box-sizing:border-box;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;height:17px;font-size:9px;font-family:Arial,sans-serif;" /></label>
+              <label class="field-label" style="display:grid;gap:4px;grid-column:1/-1"><span>Notes</span><textarea id="driverProfileLiteNotes" rows="3" style="width:100%;box-sizing:border-box;padding:8px 10px;border:0.5px solid #d0d4da;border-radius:2px;font-size:9px;font-family:Arial,sans-serif;"></textarea></label>
             </div>
             <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
               <button type="button" class="btn btn--small ghost" onclick="closeDriverProfileLiteModal()">Cancel</button>
@@ -1785,17 +1785,17 @@
           </div>
         </div>
         <div class="maint-page-shell">
-          <div class="maint-action-strip" aria-label="Maintenance actions">
+          <div class="maint-action-strip erp-banner" aria-label="Maintenance actions">
             <div class="maint-action-strip__top">
               <div class="maint-action-strip__tabs" role="tablist" aria-label="Maintenance views">
-                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="integrity" onclick="openMaintMainTab('integrity', this, { skipModal: true })">
+                <button type="button" class="maint-action-strip__btn maint-action-strip__btn--primary maint-nav-tab ban-item active" data-maint-main="record" onclick="openMaintMainTab('record', this)">Create work order</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab ban-item" data-maint-main="fleet" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab ban-item" data-maint-main="rm" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab ban-item" data-maint-main="shop-loc" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab ban-item" data-maint-main="integrity" onclick="openMaintMainTab('integrity', this, { skipModal: true })">
                   Integrity alerts <span id="maintBannerIntegrityCount" class="maint-banner-count-pill hidden" aria-live="polite"></span>
                 </button>
-                <button type="button" class="maint-action-strip__btn maint-nav-tab" data-maint-main="shop" onclick="openMaintMainTab('shop', this, { skipModal: true })">Shop status</button>
+                <button type="button" class="maint-action-strip__btn maint-nav-tab ban-item" data-maint-main="shop" onclick="openMaintMainTab('shop', this, { skipModal: true })">Shop status</button>
               </div>
               <div class="maint-action-strip__right" aria-live="polite">
                 <span id="maintTopQboIssuesInd" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"></span>
@@ -1805,12 +1805,12 @@
 
           </div>
           <div id="maintMainSubtabs" class="erp-sr-tab-anchor" aria-hidden="true">
-            <button type="button" class="maint-nav-tab" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="integrity" tabindex="-1" onclick="openMaintMainTab('integrity', this, { skipModal: true })">Integrity alerts</button>
-            <button type="button" class="maint-nav-tab" data-maint-main="shop" tabindex="-1" onclick="openMaintMainTab('shop', this, { skipModal: true })">Shop status</button>
+            <button type="button" class="maint-nav-tab ban-item" data-maint-main="record" tabindex="-1" onclick="openMaintMainTab('record', this, { skipModal: true })">Create work order</button>
+            <button type="button" class="maint-nav-tab ban-item" data-maint-main="fleet" tabindex="-1" onclick="openMaintMainTab('fleet', this, { skipModal: true })">Fleet table</button>
+            <button type="button" class="maint-nav-tab ban-item" data-maint-main="rm" tabindex="-1" onclick="openMaintMainTab('rm', this, { skipModal: true })">R&amp;M status</button>
+            <button type="button" class="maint-nav-tab ban-item" data-maint-main="shop-loc" tabindex="-1" onclick="openMaintMainTab('shop-loc', this, { skipModal: true })">Service / location</button>
+            <button type="button" class="maint-nav-tab ban-item" data-maint-main="integrity" tabindex="-1" onclick="openMaintMainTab('integrity', this, { skipModal: true })">Integrity alerts</button>
+            <button type="button" class="maint-nav-tab ban-item" data-maint-main="shop" tabindex="-1" onclick="openMaintMainTab('shop', this, { skipModal: true })">Shop status</button>
           </div>
         <div id="maintMainTabRecord" class="maint-main-tab-panel">
         <div id="maintWorkOrderFormMount">
@@ -2060,7 +2060,7 @@
                           
                         </span>
                         <input id="costInput" class="qb-in maint-field" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;padding:0 5px;border-radius:2px;box-sizing:border-box;width:100%;" type="number" step="0.01" placeholder="0.00" title="Invoice total" oninput="renderMaintAsideWoSummary()" />
-                        <label class="maint-lock-inline"><input type="checkbox" id="costTotalLock"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/> Lock total</label>
+                        <label class="maint-lock-inline field-label"><input type="checkbox" id="costTotalLock"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/> Lock total</label>
                         <div id="maintInvoiceCostSummary" class="maint-cost-coordination" style="display:none"></div>
                       </div>
                     </div>
@@ -2286,11 +2286,11 @@
                       Notes <strong>1–5</strong> — each box is one topic. Press <strong>Enter</strong> for a new line <em>inside</em> that note (the number does not change).
                     </p>
                     <div id="maintNotesSlots" class="maint-notes-slots" aria-label="Work order notes">
-                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">1.</span><textarea id="maintNoteSlot1" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 1" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
-                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">2.</span><textarea id="maintNoteSlot2" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 2" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
-                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">3.</span><textarea id="maintNoteSlot3" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 3" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
-                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">4.</span><textarea id="maintNoteSlot4" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 4" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
-                      <label class="maint-notes-slot"><span class="maint-notes-slot__num" aria-hidden="true">5.</span><textarea id="maintNoteSlot5" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 5" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
+                      <label class="maint-notes-slot field-label"><span class="maint-notes-slot__num" aria-hidden="true">1.</span><textarea id="maintNoteSlot1" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 1" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
+                      <label class="maint-notes-slot field-label"><span class="maint-notes-slot__num" aria-hidden="true">2.</span><textarea id="maintNoteSlot2" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 2" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
+                      <label class="maint-notes-slot field-label"><span class="maint-notes-slot__num" aria-hidden="true">3.</span><textarea id="maintNoteSlot3" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 3" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
+                      <label class="maint-notes-slot field-label"><span class="maint-notes-slot__num" aria-hidden="true">4.</span><textarea id="maintNoteSlot4" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 4" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
+                      <label class="maint-notes-slot field-label"><span class="maint-notes-slot__num" aria-hidden="true">5.</span><textarea id="maintNoteSlot5" class="qb-in maint-note-slot" rows="2" autocomplete="off" aria-label="Note 5" style="height:17px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></label>
                     </div>
                   </div>
                   <textarea id="notesInput" class="qb-memo maint-notes maint-notes--serialized" tabindex="-1" aria-label="Notes (serialized)" rows="1" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>
@@ -2411,7 +2411,7 @@
                       </div>
                       <div class="maint-field-cell" style="margin-top:6px;max-width:440px">
                         <span class="qb-l">DOT reportable</span>
-                        <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:4px 0 0;cursor:pointer;white-space:nowrap">
+                        <label class="mini-note field-label" style="display:flex;align-items:center;gap:8px;margin:4px 0 0;cursor:pointer;white-space:nowrap">
                           <input type="checkbox" id="accidentDotReportableInput" onchange="this.dataset.erpTouched='1'"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
                           <span>Toggle to confirm you reviewed DOT-reportable status</span>
                         </label>
@@ -2494,7 +2494,7 @@
 
                 </div>
                 </div>
-                <div class="maint-form-actions maint-section-card maint-form-actions--sticky maint-wo-workspace__savebar">
+                <div class="maint-form-actions maint-section-card maint-form-actions--sticky maint-wo-workspace__savebar erp-save-bar">
                     <select id="maintSaveAction" class="maint-save-action-hidden" aria-hidden="true" tabindex="-1" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                       <option value="save">Save</option>
                       <option value="save_close">Save &amp; close</option>
@@ -2602,7 +2602,7 @@
                 <button type="button" class="btn secondary maint-rm-subtab" data-maint-rm-sub="due" onclick="maintRmSwitchSubtab('due', this)">Due schedule</button>
               </div>
               <div id="maintRmSubpaneAlerts">
-              <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Security alerts filters" style="padding-top:0;margin-bottom:10px;font-size:9px;font-family:Arial,sans-serif">
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" aria-label="Security alerts filters" style="padding-top:0;margin-bottom:10px;font-size:9px;font-family:Arial,sans-serif">
                 <div class="mr-filter-bar__grow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
                   <div style="min-width:220px;flex:1">
                     <div class="mini-note" style="margin:0 0 4px;font-size:9px;font-family:Arial,sans-serif">Search</div>
@@ -2687,7 +2687,7 @@
               <div class="panel-title" style="margin:0">Integrity alerts</div>
             </div>
             <div class="panel-body">
-              <div class="mr-filter-bar erp-ops-filter-bar" style="padding-top:0;margin-bottom:10px;font-size:9px;font-family:Arial,sans-serif">
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="padding-top:0;margin-bottom:10px;font-size:9px;font-family:Arial,sans-serif">
                 <div class="mr-filter-bar__grow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
                   <div style="min-width:220px;flex:1">
                     <div class="mini-note" style="margin:0 0 4px;font-size:9px;font-family:Arial,sans-serif">Search</div>
@@ -2760,7 +2760,7 @@
                 </div>
               </div>
               <div class="panel-body">
-                <div class="mr-filter-bar erp-ops-filter-bar" aria-label="Fleet table filters" style="padding-top:0">
+                <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" aria-label="Fleet table filters" style="padding-top:0">
                   <div class="mr-filter-bar__chips">
                     <details class="mr-filter-chipwrap">
                       <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -3256,7 +3256,7 @@
               </div>
             </div>
             <div class="panel-body">
-              <div class="mr-filter-bar erp-ops-filter-bar" style="padding-top:0">
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="padding-top:0">
                 <div class="mr-filter-bar__chips">
                   <details class="mr-filter-chipwrap">
                     <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -3293,7 +3293,7 @@
             <span class="mini-note" style="margin:0">Drivers (Samsara HOS)</span>
             
           </div>
-          <div class="mr-filter-bar erp-ops-filter-bar">
+          <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel">
             <div class="mr-filter-bar__chips">
               <details class="mr-filter-chipwrap">
                 <summary class="mr-filter-chip">Tags <span aria-hidden="true">▾</span></summary>
@@ -3304,7 +3304,7 @@
                 <div class="mr-filter-drop"><p class="mr-filter-drop__hint">Drive-left uses the same clock math as Safety.</p></div>
               </details>
               <div class="mr-filter-bar__show">
-                <label class="mini-note" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
+                <label class="mini-note field-label" for="trackingDriversDutyFilter" style="margin:0">Duty filter</label>
                 <select id="trackingDriversDutyFilter" class="in mr-filter-inline-select" onchange="renderTrackingDrivers()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <option value="relevant">Relevant (hide off-duty, no truck)</option>
                   <option value="active">Active duties only</option>
@@ -3778,7 +3778,7 @@
               <span id="maintConnQbo" class="muted">QuickBooks: —</span>
               <span class="muted">·</span>
               <span id="maintConnApi" class="muted">API health: —</span>
-              <label style="cursor:pointer;font-weight:500;margin-left:4px;white-space:nowrap"
+              <label class="field-label" style="cursor:pointer;font-weight:500;margin-left:4px;white-space:nowrap"
                 ><input type="checkbox" id="maintAutoQboMasterRefresh"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/> Refresh QBO master lists on each timer tick</label
               >
             </div>
@@ -4128,7 +4128,7 @@
               <div id="acctApSavedDateBarHost" class="acct-ap-saved-df-host" aria-label="Saved transactions date range"></div>
               <input type="hidden" id="apListDateFrom" value="" />
               <input type="hidden" id="apListDateTo" value="" />
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap" role="group" aria-label="Filter saved bills">
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap" role="group" aria-label="Filter saved bills">
                 <div style="min-width:200px;flex:1 1 220px">
                   <span class="qb-l">Series</span>
                   <select id="apSeriesFilter" class="qb-in" onchange="renderApTransactions()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
@@ -4175,7 +4175,7 @@
             </div>
             <div class="panel-body form-stack">
               <div
-                class="mr-filter-bar erp-ops-filter-bar"
+                class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
                 role="group"
                 aria-label="Bill payment composer fields"
                 style="margin-bottom:10px;align-items:flex-start"
@@ -4294,7 +4294,7 @@
                 
               </div>
               <div
-                class="mr-filter-bar erp-ops-filter-bar"
+                class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
                 role="group"
                 aria-label="Bill payment log filters"
                 style="margin-bottom:10px;align-items:flex-start"
@@ -4519,10 +4519,10 @@
                       </div>
                       <div class="erp-qb-cost-global" role="group" aria-label="Default line type for new fuel cost lines">
                         <span class="erp-qb-cost-global__label">New lines</span>
-                        <label class="erp-qb-cost-global__opt"
+                        <label class="erp-qb-cost-global__opt field-label"
                           ><input type="radio" name="fuelManualCostGlobalMode" value="category" checked  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/> Category</label
                         >
-                        <label class="erp-qb-cost-global__opt"
+                        <label class="erp-qb-cost-global__opt field-label"
                           ><input type="radio" name="fuelManualCostGlobalMode" value="item"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/> Item</label
                         >
                         
@@ -4581,7 +4581,7 @@
               </div>
               <div id="acctFuelLedgerDateBarHost" class="acct-fuel-ledger-df-host" aria-label="Fuel ledger date range"></div>
               <div
-                class="mr-filter-bar erp-ops-filter-bar"
+                class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
                 role="group"
                 aria-label="Fuel expense ledger filters"
                 style="margin-bottom:10px;align-items:flex-start"
@@ -4616,7 +4616,7 @@
                   <input id="fuelExpDefaultCustomerQboId" type="hidden" />
                 </div>
                 <div style="grid-column:span 2;display:flex;align-items:center;gap:10px;padding-top:4px;flex-wrap:wrap">
-                  <label class="mini-note" style="display:flex;align-items:center;gap:8px;margin:0">
+                  <label class="mini-note field-label" style="display:flex;align-items:center;gap:8px;margin:0">
                     <input type="checkbox" id="fuelExpUseCategory" checked  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
                     Post as expense category line
                   </label>
@@ -4642,7 +4642,7 @@
                     
                   </div>
                   <div id="acctFuelRelayImportSummary" class="mini-note"></div>
-                  <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin:10px 0">
+                  <label class="mini-note field-label" style="display:flex;gap:8px;align-items:center;margin:10px 0">
                     <input type="checkbox" id="acctFuelRelayImportAlreadyQbo" checked  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
                     <span>Already in QBO — staging only (reconciliation).</span>
                   </label>
@@ -4662,25 +4662,25 @@
                   <button type="button" class="qb-btn-add" onclick="loadRelayWebhookSettings()">Refresh</button>
                 </div>
                 <div class="wo-line-grid" style="margin:0 0 10px">
-                  <label>
+                  <label class="field-label">
                     <span class="qb-l">Enable webhook</span>
                     <select id="relayWebhookEnabled" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                       <option value="1">Enabled</option>
                       <option value="0">Disabled</option>
                     </select>
                   </label>
-                  <label>
+                  <label class="field-label">
                     <span class="qb-l">Auto-post to QuickBooks</span>
                     <select id="relayAutoPostQbo" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                       <option value="1">Enabled</option>
                       <option value="0">Disabled</option>
                     </select>
                   </label>
-                  <label style="grid-column:span 2">
+                  <label class="field-label" style="grid-column:span 2">
                     <span class="qb-l">Webhook token (Bearer / x-relay-token)</span>
                     <input id="relayWebhookToken" class="qb-in" type="password" placeholder="Optional: set/rotate token" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
                   </label>
-                  <label style="grid-column:span 2">
+                  <label class="field-label" style="grid-column:span 2">
                     <span class="qb-l">Webhook HMAC secret (x-relay-signature)</span>
                     <input id="relayWebhookSecret" class="qb-in" type="password" placeholder="Optional: set/rotate secret" autocomplete="off"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
                   </label>
@@ -4893,7 +4893,7 @@
                 
               </div>
               <div
-                class="mr-filter-bar erp-ops-filter-bar"
+                class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
                 role="group"
                 aria-label="Expense history filters"
                 style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap"
@@ -5379,9 +5379,9 @@
                 </div>
               </div>
               <div class="panel-body" style="padding-top:0">
-                <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap;font-size:9px;font-family:Arial,sans-serif">
-                  <label><span class="qb-l" style="font-size:9px;font-family:Arial,sans-serif">From</span><input id="bankingFilterFrom" class="qb-in" style="height:17px;font-size:9px;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;background:#f8f9fa;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;" type="date" /></label>
-                  <label><span class="qb-l" style="font-size:9px;font-family:Arial,sans-serif">To</span><input id="bankingFilterTo" class="qb-in" style="height:17px;font-size:9px;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;background:#f8f9fa;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;" type="date" /></label>
+                <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap;font-size:9px;font-family:Arial,sans-serif">
+                  <label class="field-label"><span class="qb-l" style="font-size:9px;font-family:Arial,sans-serif">From</span><input id="bankingFilterFrom" class="qb-in" style="height:17px;font-size:9px;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;background:#f8f9fa;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;" type="date" /></label>
+                  <label class="field-label"><span class="qb-l" style="font-size:9px;font-family:Arial,sans-serif">To</span><input id="bankingFilterTo" class="qb-in" style="height:17px;font-size:9px;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;background:#f8f9fa;font-family:Arial,sans-serif;box-sizing:border-box;width:100%;" type="date" /></label>
                   <button type="button" class="btn btn--small" style="height:18px;font-size:8px;padding:0 6px;border:0.5px solid #e0e3e8;border-radius:2px;background:#fff;color:#3c4257;cursor:pointer;white-space:nowrap" onclick="bankingQuickRange('this-month')">This Month</button>
                   <button type="button" class="btn btn--small" style="height:18px;font-size:8px;padding:0 6px;border:0.5px solid #e0e3e8;border-radius:2px;background:#fff;color:#3c4257;cursor:pointer;white-space:nowrap" onclick="bankingQuickRange('last-month')">Last Month</button>
                   <input id="bankingFilterSearch" class="qb-in" style="height:17px;font-size:9px;width:100%;border:0.5px solid #d0d4da;border-radius:2px;padding:0 5px;background:#f8f9fa;font-family:Arial,sans-serif;box-sizing:border-box;" placeholder="Search description/amount" oninput="loadBankingRegisterPage(0)" />
@@ -5458,15 +5458,15 @@
           <div class="panel-body">
             <div id="wave6RelayPanel" class="banking-hidden">
               <div class="mini-note" id="relayStatusBanner" style="padding:8px;border:1px solid #facc15;background:#fefce8;border-radius:8px;margin-bottom:8px">Relay status loading...</div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">From</span><input id="relayFilterFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">To</span><input id="relayFilterTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Driver</span><input id="relayFilterDriver" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Unit</span><input id="relayFilterUnit" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">State</span><input id="relayFilterState" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">From</span><input id="relayFilterFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">To</span><input id="relayFilterTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Driver</span><input id="relayFilterDriver" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Unit</span><input id="relayFilterUnit" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">State</span><input id="relayFilterState" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
                 <button type="button" class="btn btn--small" onclick="refreshRelayTransactions()">Refresh</button>
                 <button type="button" class="btn btn--small" onclick="syncRelayTransactionsNow()">Sync Now</button>
-                <label style="display:flex;align-items:flex-end;gap:6px"><span class="qb-l">Import CSV</span><input id="relayCsvInput" class="qb-in" type="file" accept=".csv,text/csv"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="display:flex;align-items:flex-end;gap:6px"><span class="qb-l">Import CSV</span><input id="relayCsvInput" class="qb-in" type="file" accept=".csv,text/csv"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
                 <button type="button" class="btn btn--small" onclick="importRelayCsvNow()">Import CSV</button>
               </div>
               <div style="overflow:auto;max-height:380px;border:1px solid var(--color-border);border-radius:8px">
@@ -5478,9 +5478,9 @@
             </div>
 
             <div id="wave6SettlementsPanel" class="banking-hidden">
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">Driver</span><input id="settlementFilterDriver" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Status</span><select id="settlementFilterStatus" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="paid">Paid</option></select></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">Driver</span><input id="settlementFilterDriver" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Status</span><select id="settlementFilterStatus" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="paid">Paid</option></select></label>
                 <button type="button" class="btn btn--small" onclick="loadSettlements()">Refresh</button>
                 <button type="button" class="btn btn--small" onclick="openSettlementCreateForm()">+ New Settlement</button>
               </div>
@@ -5493,18 +5493,18 @@
               </div>
               <div id="settlementEditor" class="banking-form-panel banking-hidden" style="margin-top:8px">
                 <div class="mini-note"><strong>Create Settlement</strong></div>
-                <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                  <label><span class="qb-l">Driver</span><input id="settlementDriverName" class="qb-in" list="driverList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Driver ID</span><input id="settlementDriverId" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">From</span><input id="settlementFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">To</span><input id="settlementTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers (comma)</span><input id="settlementLoads" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Gross Pay</span><input id="settlementGross" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Fuel Deduction</span><input id="settlementFuelDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Advance Deduction</span><input id="settlementAdvanceDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Other Deductions</span><input id="settlementOtherDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Net Pay</span><input id="settlementNetPay" class="qb-in" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label style="min-width:280px;flex:1 1 280px"><span class="qb-l">Notes</span><textarea id="settlementNotes" class="qb-in" rows="2" style="height:17px;width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label>
+                <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                  <label class="field-label"><span class="qb-l">Driver</span><input id="settlementDriverName" class="qb-in" list="driverList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Driver ID</span><input id="settlementDriverId" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">From</span><input id="settlementFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">To</span><input id="settlementTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers (comma)</span><input id="settlementLoads" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Gross Pay</span><input id="settlementGross" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Fuel Deduction</span><input id="settlementFuelDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Advance Deduction</span><input id="settlementAdvanceDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Other Deductions</span><input id="settlementOtherDed" class="qb-in" type="number" step="0.01" oninput="recalcSettlementNetDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Net Pay</span><input id="settlementNetPay" class="qb-in" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label" style="min-width:280px;flex:1 1 280px"><span class="qb-l">Notes</span><textarea id="settlementNotes" class="qb-in" rows="2" style="height:17px;width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label>
                 </div>
                 <div class="banking-modal-footer">
                   <button type="button" class="btn btn--small" onclick="saveSettlement(false)">Save Settlement</button>
@@ -5515,9 +5515,9 @@
             </div>
 
             <div id="wave6FactoringPanel" class="banking-hidden">
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">Factor</span><input id="factoringFilterFactor" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Status</span><select id="factoringFilterStatus" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="">All</option><option value="pending">Pending</option><option value="received">Received</option><option value="reconciled">Reconciled</option></select></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">Factor</span><input id="factoringFilterFactor" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Status</span><select id="factoringFilterStatus" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="">All</option><option value="pending">Pending</option><option value="received">Received</option><option value="reconciled">Reconciled</option></select></label>
                 <button type="button" class="btn btn--small" onclick="loadFactoringAdvances()">Refresh</button>
                 <button type="button" class="btn btn--small" onclick="openFactoringCreateForm()">+ New Advance</button>
               </div>
@@ -5529,24 +5529,24 @@
               </div>
               <div id="factoringEditor" class="banking-form-panel banking-hidden" style="margin-top:8px">
                 <div class="mini-note"><strong>Create Factoring Advance</strong></div>
-                <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                  <label><span class="qb-l">Factor name</span><input id="factoringFactorName" class="qb-in" value="Faro"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers</span><input id="factoringLoads" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Invoice</span><input id="factoringInvoice" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Advance</span><input id="factoringAdvance" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Fee</span><input id="factoringFee" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Net</span><input id="factoringNet" class="qb-in" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Deposit date</span><input id="factoringDepositDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label style="min-width:260px;flex:1 1 260px"><span class="qb-l">Notes</span><textarea id="factoringNotes" class="qb-in" rows="2" style="height:17px;width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label>
+                <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                  <label class="field-label"><span class="qb-l">Factor name</span><input id="factoringFactorName" class="qb-in" value="Faro"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers</span><input id="factoringLoads" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Invoice</span><input id="factoringInvoice" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Advance</span><input id="factoringAdvance" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Fee</span><input id="factoringFee" class="qb-in" type="number" step="0.01" oninput="recalcFactoringDraft()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Net</span><input id="factoringNet" class="qb-in" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Deposit date</span><input id="factoringDepositDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label" style="min-width:260px;flex:1 1 260px"><span class="qb-l">Notes</span><textarea id="factoringNotes" class="qb-in" rows="2" style="height:17px;width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label>
                 </div>
                 <div class="banking-modal-footer"><button type="button" class="btn btn--small" onclick="saveFactoringAdvance()">Save Advance</button></div>
               </div>
               <div class="banking-form-panel" style="margin-top:8px">
                 <div class="mini-note"><strong>Factoring Reconciliation Report</strong></div>
-                <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                  <label><span class="qb-l">Factor</span><input id="factReportFactor" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Year</span><input id="factReportYear" class="qb-in" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                  <label><span class="qb-l">Month</span><input id="factReportMonth" class="qb-in" type="number" min="1" max="12"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                  <label class="field-label"><span class="qb-l">Factor</span><input id="factReportFactor" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Year</span><input id="factReportYear" class="qb-in" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                  <label class="field-label"><span class="qb-l">Month</span><input id="factReportMonth" class="qb-in" type="number" min="1" max="12"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
                   <button type="button" class="btn btn--small" onclick="loadFactoringReport()">Run</button>
                 </div>
                 <div id="factoringReportTotals" class="mini-note" style="margin-top:8px">Totals: --</div>
@@ -5662,11 +5662,11 @@
 
             <div id="bankingDrawerExpenseForm" class="banking-form-panel banking-hidden">
               <div class="mini-note"><strong>Create Expense</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Vendor</span><input id="bankingDrawerVendor" class="qb-in" list="qboVendorList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Category / QBO Account</span><input id="bankingDrawerCategory" class="qb-in" list="qboAccountList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">QBO Class</span><input id="bankingDrawerClass" class="qb-in" list="qboClassList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Memo</span><input id="bankingDrawerMemo" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Vendor</span><input id="bankingDrawerVendor" class="qb-in" list="qboVendorList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Category / QBO Account</span><input id="bankingDrawerCategory" class="qb-in" list="qboAccountList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">QBO Class</span><input id="bankingDrawerClass" class="qb-in" list="qboClassList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Memo</span><input id="bankingDrawerMemo" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
                 <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Save &amp; Post to QBO</button>
@@ -5676,9 +5676,9 @@
 
             <div id="bankingDrawerApplyBillForm" class="banking-form-panel banking-hidden">
               <div class="mini-note"><strong>Apply to Bill</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label style="min-width:240px;flex:1 1 240px"><span class="qb-l">Search bills</span><input id="bankingDrawerBillSearch" class="qb-in" placeholder="Vendor / amount / date" oninput="searchBankingBills()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Selected bill</span><select id="bankingDrawerBillTarget" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label" style="min-width:240px;flex:1 1 240px"><span class="qb-l">Search bills</span><input id="bankingDrawerBillSearch" class="qb-in" placeholder="Vendor / amount / date" oninput="searchBankingBills()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Selected bill</span><select id="bankingDrawerBillTarget" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
               </div>
               <div id="bankingDrawerBillDetail" class="mini-note" style="margin-top:8px"></div>
               <div style="display:flex;justify-content:flex-end;margin-top:8px">
@@ -5688,10 +5688,10 @@
 
             <div id="bankingDrawerBillPaymentForm" class="banking-form-panel banking-hidden">
               <div class="mini-note"><strong>Bill Payment</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Vendor</span><input id="bankingDrawerBillVendor" class="qb-in" list="qboVendorList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Bill reference #</span><input id="bankingDrawerBillRef" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Amount</span><input id="bankingDrawerBillAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Vendor</span><input id="bankingDrawerBillVendor" class="qb-in" list="qboVendorList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Bill reference #</span><input id="bankingDrawerBillRef" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Amount</span><input id="bankingDrawerBillAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div style="display:flex;justify-content:flex-end;margin-top:8px">
                 <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Post Payment</button>
@@ -5700,11 +5700,11 @@
 
             <div id="bankingDrawerTransferForm" class="banking-form-panel banking-hidden">
               <div class="mini-note"><strong>Transfer</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">From account</span><input id="bankingDrawerFromAccount" class="qb-in" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">To account</span><select id="bankingDrawerToAccount" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
-                <label><span class="qb-l">Date</span><input id="bankingDrawerTransferDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Memo</span><input id="bankingDrawerTransferMemo" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">From account</span><input id="bankingDrawerFromAccount" class="qb-in" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">To account</span><select id="bankingDrawerToAccount" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
+                <label class="field-label"><span class="qb-l">Date</span><input id="bankingDrawerTransferDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Memo</span><input id="bankingDrawerTransferMemo" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div style="display:flex;justify-content:flex-end;margin-top:8px">
                 <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Post Transfer</button>
@@ -5713,12 +5713,12 @@
 
             <div id="bankingDrawerSettlementForm" class="banking-form-panel banking-hidden">
               <div class="mini-note"><strong>Driver Settlement</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Driver</span><input id="bankingDrawerDriver" class="qb-in" list="driverList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Period start</span><input id="bankingDrawerSettleStart" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Period end</span><input id="bankingDrawerSettleEnd" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Type</span><select id="bankingDrawerSettleType" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="advance">Advance</option><option value="final">Final Payment</option><option value="partial">Partial</option></select></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Link settlement</span><input id="bankingDrawerSettlementTarget" class="qb-in" placeholder="Existing settlement id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Driver</span><input id="bankingDrawerDriver" class="qb-in" list="driverList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Period start</span><input id="bankingDrawerSettleStart" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Period end</span><input id="bankingDrawerSettleEnd" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Type</span><select id="bankingDrawerSettleType" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="advance">Advance</option><option value="final">Final Payment</option><option value="partial">Partial</option></select></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Link settlement</span><input id="bankingDrawerSettlementTarget" class="qb-in" placeholder="Existing settlement id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div style="display:flex;justify-content:flex-end;margin-top:8px">
                 <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Apply</button>
@@ -5737,12 +5737,12 @@
 
             <div id="bankingDrawerFactoringForm" class="banking-form-panel banking-hidden">
               <div class="mini-note"><strong>Factoring Advance</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">Factor name</span><input id="bankingDrawerFactorName" class="qb-in" value="Faro"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Invoice amount</span><input id="bankingDrawerInvoiceAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Advance amount</span><input id="bankingDrawerAdvanceAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Fee amount</span><input id="bankingDrawerFeeAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers</span><input id="bankingDrawerLoadNumbers" class="qb-in" placeholder="L-1001,L-1002"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">Factor name</span><input id="bankingDrawerFactorName" class="qb-in" value="Faro"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Invoice amount</span><input id="bankingDrawerInvoiceAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Advance amount</span><input id="bankingDrawerAdvanceAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Fee amount</span><input id="bankingDrawerFeeAmount" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Load numbers</span><input id="bankingDrawerLoadNumbers" class="qb-in" placeholder="L-1001,L-1002"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div style="display:flex;justify-content:flex-end;margin-top:8px">
                 <button type="button" class="btn btn--small" onclick="submitBankingCategorizeAction(true)">Save Advance</button>
@@ -5773,10 +5773,10 @@
               <button type="button" class="btn btn--small" onclick="closeBankingImportModal()">Cancel</button>
             </div>
             <div id="bankImportStepUpload">
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
-                <label style="min-width:240px;flex:1 1 240px"><span class="qb-l">Account</span><select id="bankImportAccount" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
-                <label><span class="qb-l">Statement month</span><input id="bankImportMonth" class="qb-in" type="month"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">File (PDF/CSV)</span><input id="bankImportFile" class="qb-in" type="file" accept=".pdf,.csv,text/csv,application/pdf"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label" style="min-width:240px;flex:1 1 240px"><span class="qb-l">Account</span><select id="bankImportAccount" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
+                <label class="field-label"><span class="qb-l">Statement month</span><input id="bankImportMonth" class="qb-in" type="month"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">File (PDF/CSV)</span><input id="bankImportFile" class="qb-in" type="file" accept=".pdf,.csv,text/csv,application/pdf"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div class="mini-note" style="margin-top:8px;padding:10px;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc">
                 Drag &amp; drop your bank statement here or click to browse. Accepts: PDF, CSV.
@@ -5826,17 +5826,17 @@
             </div>
             <div id="bankingRuleEditor" class="banking-form-panel banking-hidden" style="margin-top:10px">
               <div class="mini-note"><strong>Create / Edit Rule</strong></div>
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">Rule name</span><input id="bankRuleName" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Priority</span><input id="bankRulePriority" class="qb-in" type="number" min="1" max="100" value="10"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">When field</span><select id="bankRuleField" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="description">Description</option><option value="vendor_name">Vendor</option><option value="amount">Amount</option><option value="amount_range">Amount Range</option></select></label>
-                <label><span class="qb-l">Operator</span><select id="bankRuleOp" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="contains">Contains</option><option value="equals">Equals</option><option value="starts_with">Starts with</option><option value="between">Between</option></select></label>
-                <label><span class="qb-l">Value</span><input id="bankRuleValue1" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Value 2</span><input id="bankRuleValue2" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Action type</span><select id="bankRuleAction" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="expense">Expense</option><option value="bill_payment">Bill Payment</option><option value="transfer">Transfer</option><option value="settlement">Settlement</option></select></label>
-                <label><span class="qb-l">Vendor</span><input id="bankRuleVendor" class="qb-in" list="qboVendorList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Category/Account</span><input id="bankRuleCategory" class="qb-in" list="qboAccountList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Auto-apply</span><input id="bankRuleAutoApply" type="checkbox"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:8px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">Rule name</span><input id="bankRuleName" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Priority</span><input id="bankRulePriority" class="qb-in" type="number" min="1" max="100" value="10"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">When field</span><select id="bankRuleField" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="description">Description</option><option value="vendor_name">Vendor</option><option value="amount">Amount</option><option value="amount_range">Amount Range</option></select></label>
+                <label class="field-label"><span class="qb-l">Operator</span><select id="bankRuleOp" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="contains">Contains</option><option value="equals">Equals</option><option value="starts_with">Starts with</option><option value="between">Between</option></select></label>
+                <label class="field-label"><span class="qb-l">Value</span><input id="bankRuleValue1" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Value 2</span><input id="bankRuleValue2" class="qb-in"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Action type</span><select id="bankRuleAction" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="expense">Expense</option><option value="bill_payment">Bill Payment</option><option value="transfer">Transfer</option><option value="settlement">Settlement</option></select></label>
+                <label class="field-label"><span class="qb-l">Vendor</span><input id="bankRuleVendor" class="qb-in" list="qboVendorList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Category/Account</span><input id="bankRuleCategory" class="qb-in" list="qboAccountList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Auto-apply</span><input id="bankRuleAutoApply" type="checkbox"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div class="banking-modal-footer">
                 <button type="button" class="btn btn--small" onclick="testBankingRuleDraft()">Test Rule</button>
@@ -5868,11 +5868,11 @@
               <div class="panel-title" style="margin:0">Start New Reconciliation</div>
               <button type="button" class="btn btn--small" onclick="closeBankingStartReconciliationModal()">Cancel</button>
             </div>
-            <div class="mr-filter-bar erp-ops-filter-bar" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
-              <label style="min-width:220px;flex:1 1 220px"><span class="qb-l">Account</span><select id="bankReconStartAccount" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
-              <label><span class="qb-l">Statement month</span><input id="bankReconStartMonth" class="qb-in" type="month"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-              <label><span class="qb-l">Statement end date</span><input id="bankReconStartEndDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-              <label><span class="qb-l">Statement ending balance</span><input id="bankReconStartEndingBalance" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+            <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap">
+              <label class="field-label" style="min-width:220px;flex:1 1 220px"><span class="qb-l">Account</span><select id="bankReconStartAccount" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></label>
+              <label class="field-label"><span class="qb-l">Statement month</span><input id="bankReconStartMonth" class="qb-in" type="month"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <label class="field-label"><span class="qb-l">Statement end date</span><input id="bankReconStartEndDate" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+              <label class="field-label"><span class="qb-l">Statement ending balance</span><input id="bankReconStartEndingBalance" class="qb-in" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
             </div>
             <div class="banking-modal-footer">
               <button type="button" class="btn btn--small" onclick="beginBankingReconciliationSession()">Begin Reconciliation</button>
@@ -5901,7 +5901,7 @@
               <button type="button" class="btn btn--small" onclick="closeBankingUnlockReconModal()">Cancel</button>
             </div>
             <div class="mini-note" style="margin-top:10px">Unlock this reconciliation? Reason is required.</div>
-            <label style="display:block;margin-top:8px"><span class="qb-l">Reason</span><textarea id="bankReconUnlockReason" class="qb-in" rows="3" style="height:17px;width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label>
+            <label class="field-label" style="display:block;margin-top:8px"><span class="qb-l">Reason</span><textarea id="bankReconUnlockReason" class="qb-in" rows="3" style="height:17px;width:100%;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;"></textarea></label>
             <div class="banking-modal-footer">
               <button type="button" class="btn btn--small" onclick="closeBankingUnlockReconModal()">Cancel</button>
               <button type="button" class="btn btn--small" onclick="confirmUnlockBankingReconciliation()">Unlock</button>
@@ -6070,9 +6070,9 @@
                 <strong id="wave7ReportTitle" style="font-size:18px">Report</strong>
               </div>
               <div class="wave7-controls-row">
-                <label><span class="qb-l">From</span><input id="wave7From" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">To</span><input id="wave7To" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">As of</span><input id="wave7AsOf" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">From</span><input id="wave7From" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">To</span><input id="wave7To" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">As of</span><input id="wave7AsOf" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div class="wave7-controls-row">
                 <button type="button" class="btn btn--small" onclick="wave7SetQuickRange('this-month')">This Month</button>
@@ -6087,16 +6087,16 @@
                 <span class="qb-l">Method</span>
                 <button type="button" id="wave7MethodCash" class="btn btn--small" onclick="wave7SetMethod('Cash')">Cash</button>
                 <button type="button" id="wave7MethodAccrual" class="btn btn--small" onclick="wave7SetMethod('Accrual')">Accrual</button>
-                <label id="wave7AgingWrap" class="hidden"><span class="qb-l">Aging</span><select id="wave7Aging" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="120">120 days</option></select></label>
-                <label id="wave7DriverWrap" class="hidden"><span class="qb-l">Driver</span><input id="wave7Driver" class="qb-in" placeholder="driver id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7UnitWrap" class="hidden"><span class="qb-l">Unit</span><input id="wave7Unit" class="qb-in" placeholder="unit #"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7LoadWrap" class="hidden"><span class="qb-l">Load</span><input id="wave7Load" class="qb-in" placeholder="load #"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7AccountWrap" class="hidden"><span class="qb-l">Account</span><input id="wave7Account" class="qb-in" placeholder="account id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7TxnTypeWrap" class="hidden"><span class="qb-l">Type</span><input id="wave7TxnType" class="qb-in" placeholder="transaction type"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7VendorWrap" class="hidden"><span class="qb-l">Vendor</span><input id="wave7Vendor" class="qb-in" placeholder="vendor id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7QuarterWrap" class="hidden"><span class="qb-l">Quarter</span><select id="wave7Quarter" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option></select></label>
-                <label id="wave7YearWrap" class="hidden"><span class="qb-l">Year</span><input id="wave7Year" class="qb-in" type="number" min="2000" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label id="wave7FactorWrap" class="hidden"><span class="qb-l">Factor</span><input id="wave7Factor" class="qb-in" placeholder="factor name"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7AgingWrap" class="hidden field-label"><span class="qb-l">Aging</span><select id="wave7Aging" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="120">120 days</option></select></label>
+                <label id="wave7DriverWrap" class="hidden field-label"><span class="qb-l">Driver</span><input id="wave7Driver" class="qb-in" placeholder="driver id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7UnitWrap" class="hidden field-label"><span class="qb-l">Unit</span><input id="wave7Unit" class="qb-in" placeholder="unit #"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7LoadWrap" class="hidden field-label"><span class="qb-l">Load</span><input id="wave7Load" class="qb-in" placeholder="load #"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7AccountWrap" class="hidden field-label"><span class="qb-l">Account</span><input id="wave7Account" class="qb-in" placeholder="account id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7TxnTypeWrap" class="hidden field-label"><span class="qb-l">Type</span><input id="wave7TxnType" class="qb-in" placeholder="transaction type"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7VendorWrap" class="hidden field-label"><span class="qb-l">Vendor</span><input id="wave7Vendor" class="qb-in" placeholder="vendor id"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7QuarterWrap" class="hidden field-label"><span class="qb-l">Quarter</span><select id="wave7Quarter" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option></select></label>
+                <label id="wave7YearWrap" class="hidden field-label"><span class="qb-l">Year</span><input id="wave7Year" class="qb-in" type="number" min="2000" step="1"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label id="wave7FactorWrap" class="hidden field-label"><span class="qb-l">Factor</span><input id="wave7Factor" class="qb-in" placeholder="factor name"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
               </div>
               <div class="wave7-controls-row">
                 <button type="button" class="btn btn--small" onclick="wave7RunReport()">Run Report</button>
@@ -6141,8 +6141,8 @@
               <span class="mini-note" id="qboFinSourceBanner"></span>
             </div>
             <div class="panel-body">
-              <div class="mr-filter-bar erp-ops-filter-bar" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
-                <label><span class="qb-l">Report</span>
+              <div class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin:0 0 10px;align-items:flex-end;flex-wrap:wrap">
+                <label class="field-label"><span class="qb-l">Report</span>
                   <select id="qboFinReport" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                     <option value="profit-loss">Profit &amp; Loss</option>
                     <option value="profit-loss-detail">P&amp;L Detail</option>
@@ -6156,10 +6156,10 @@
                     <option value="vendor-expenses">Vendor Expenses</option>
                   </select>
                 </label>
-                <label><span class="qb-l">From</span><input id="qboFinFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">To</span><input id="qboFinTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">As of</span><input id="qboFinAsOf" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
-                <label><span class="qb-l">Method</span>
+                <label class="field-label"><span class="qb-l">From</span><input id="qboFinFrom" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">To</span><input id="qboFinTo" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">As of</span><input id="qboFinAsOf" class="qb-in" type="date"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+                <label class="field-label"><span class="qb-l">Method</span>
                   <select id="qboFinMethod" class="qb-in" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                     <option value="Cash">Cash</option>
                     <option value="Accrual">Accrual</option>
@@ -6507,7 +6507,7 @@
             </div>
             <div class="panel-body form-stack">
               <div
-                class="mr-filter-bar erp-ops-filter-bar"
+                class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
                 role="group"
                 aria-label="Settlement trip lookup"
                 style="margin-bottom:10px;align-items:flex-end;flex-wrap:wrap"
@@ -6652,7 +6652,7 @@
             <div class="panel-body form-stack">
               <p class="mini-note" style="margin:0 0 10px">Filters + search below —  explains columns.</p>
               <div
-                class="mr-filter-bar erp-ops-filter-bar"
+                class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
                 role="group"
                 aria-label="Detailed maintenance report filters"
                 style="margin-bottom:10px;align-items:flex-start"
@@ -7261,17 +7261,17 @@
               <div class="catalog-add-card" style="margin-top:16px;max-width:560px">
                 <div class="catalog-add-card__head"><span class="catalog-add-card__title">New QuickBooks vendor</span></div>
                 <div class="catalog-add-card__body form-stack">
-                  <label class="qb-l">Display name <span class="mini-note">(required)</span></label>
+                  <label class="qb-l field-label">Display name <span class="mini-note">(required)</span></label>
                   <input id="qboNewVendorDisplayName" class="qb-in maint-field" placeholder="Vendor / driver pay name" autocomplete="organization" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
-                  <label class="qb-l">Company name <span class="mini-note">(optional)</span></label>
+                  <label class="qb-l field-label">Company name <span class="mini-note">(optional)</span></label>
                   <input id="qboNewVendorCompany" class="qb-in maint-field" placeholder="Legal or DBA" autocomplete="off" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <div class="search-row" style="flex-wrap:wrap;gap:10px">
                     <div style="flex:1;min-width:160px">
-                      <label class="qb-l">Phone</label>
+                      <label class="qb-l field-label">Phone</label>
                       <input id="qboNewVendorPhone" class="qb-in maint-field" placeholder="555…" autocomplete="tel" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                     </div>
                     <div style="flex:1;min-width:160px">
-                      <label class="qb-l">Email</label>
+                      <label class="qb-l field-label">Email</label>
                       <input id="qboNewVendorEmail" class="qb-in maint-field" placeholder="payee@…" autocomplete="email" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                     </div>
                   </div>
@@ -7383,9 +7383,9 @@
                   <span class="catalog-add-card__badge">+</span>
                 </div>
                 <div class="catalog-add-card__body form-stack">
-                  <label class="qb-l">Machine code</label>
+                  <label class="qb-l field-label">Machine code</label>
                   <input id="newOpStatusValue" class="qb-in maint-field" placeholder="e.g. yard_hold" autocomplete="off" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
-                  <label class="qb-l">Human label</label>
+                  <label class="qb-l field-label">Human label</label>
                   <input id="newOpStatusLabel" class="qb-in maint-field" placeholder="e.g. Yard hold" autocomplete="off" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <button type="button" class="catalog-plus-btn" onclick="addOperationalCatalogRow()">+ Add status to ERP</button>
                 </div>
@@ -7511,13 +7511,13 @@
                   <span class="catalog-add-card__badge">+</span>
                 </div>
                 <div class="catalog-add-card__body form-stack">
-                  <label class="qb-l">Equipment IDs (comma-separated)</label>
+                  <label class="qb-l field-label">Equipment IDs (comma-separated)</label>
                   <input id="equipmentAssignItemsInput" class="qb-in maint-field" placeholder="e.g. tarp_20x20, chain_binder, corner_protector" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
-                  <label class="qb-l">Notes</label>
+                  <label class="qb-l field-label">Notes</label>
                   <input id="equipmentAssignNotesInput" class="qb-in maint-field" placeholder="Optional assignment note" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
                     <span class="qb-l" style="margin:0">Select units</span>
-                    <label class="mini-note" style="display:inline-flex;align-items:center;gap:6px;margin:0">
+                    <label class="mini-note field-label" style="display:inline-flex;align-items:center;gap:6px;margin:0">
                       <input type="checkbox" id="equipmentAssignSelectAllUnits" onchange="toggleAllEquipmentUnits(this.checked)" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
                       Select all
                     </label>
@@ -7600,22 +7600,22 @@
                 <div class="ih35-lc-modal-bd">
                   <input type="hidden" id="catalogFleetEditSid" />
                   <div class="form-grid-2">
-                    <div><label>Unit #</label><input id="catalogFleetFUnit"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Fleet type</label><select id="catalogFleetFType" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></div>
-                    <div><label>Year</label><input id="catalogFleetFYear" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Make</label><input id="catalogFleetFMake"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Model</label><input id="catalogFleetFModel"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>VIN</label><input id="catalogFleetFVin"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>License plate</label><input id="catalogFleetFPlate"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>State</label><input id="catalogFleetFState"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>GVWR</label><input id="catalogFleetFGvwr"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Engine</label><input id="catalogFleetFEngine"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Transmission</label><input id="catalogFleetFTrans"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Fuel type</label><input id="catalogFleetFFuel"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Color</label><input id="catalogFleetFColor"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Operational status</label><select id="catalogFleetFStatus" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></div>
-                    <div><label>QBO class</label><input id="catalogFleetFQbo" list="fleetQboClassOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div class="field-full"><label>Notes</label><textarea id="catalogFleetFNotes" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>
+                    <div><label class="field-label">Unit #</label><input id="catalogFleetFUnit"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Fleet type</label><select id="catalogFleetFType" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></div>
+                    <div><label class="field-label">Year</label><input id="catalogFleetFYear" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Make</label><input id="catalogFleetFMake"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Model</label><input id="catalogFleetFModel"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">VIN</label><input id="catalogFleetFVin"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">License plate</label><input id="catalogFleetFPlate"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">State</label><input id="catalogFleetFState"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">GVWR</label><input id="catalogFleetFGvwr"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Engine</label><input id="catalogFleetFEngine"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Transmission</label><input id="catalogFleetFTrans"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Fuel type</label><input id="catalogFleetFFuel"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Color</label><input id="catalogFleetFColor"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Operational status</label><select id="catalogFleetFStatus" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></select></div>
+                    <div><label class="field-label">QBO class</label><input id="catalogFleetFQbo" list="fleetQboClassOptions"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div class="field-full"><label class="field-label">Notes</label><textarea id="catalogFleetFNotes" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>
                   </div>
                 </div>
                 <div class="ih35-lc-modal-ft">
@@ -7638,16 +7638,16 @@
                 <div class="ih35-lc-modal-bd">
                   <input type="hidden" id="catalogPartEditKey" />
                   <div class="form-grid-2">
-                    <div class="field-full"><label>Part name</label><input id="catalogPartFName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Category</label><input id="catalogPartFCat"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Make</label><input id="catalogPartFMake"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Model</label><input id="catalogPartFModel"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Avg life miles</label><input id="catalogPartFMi" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Avg life months</label><input id="catalogPartFMo" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Cost low $</label><input id="catalogPartFLow" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Cost high $</label><input id="catalogPartFHigh" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div class="field-full"><label>Notes</label><textarea id="catalogPartFNotes" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>
-                    <div class="field-full"><label>Source</label><input id="catalogPartFSource" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div class="field-full"><label class="field-label">Part name</label><input id="catalogPartFName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Category</label><input id="catalogPartFCat"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Make</label><input id="catalogPartFMake"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Model</label><input id="catalogPartFModel"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Avg life miles</label><input id="catalogPartFMi" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Avg life months</label><input id="catalogPartFMo" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Cost low $</label><input id="catalogPartFLow" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Cost high $</label><input id="catalogPartFHigh" type="number" step="0.01"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div class="field-full"><label class="field-label">Notes</label><textarea id="catalogPartFNotes" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>
+                    <div class="field-full"><label class="field-label">Source</label><input id="catalogPartFSource" readonly  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
                   </div>
                 </div>
                 <div class="ih35-lc-modal-ft">
@@ -7670,15 +7670,15 @@
                 <div class="ih35-lc-modal-bd">
                   <input type="hidden" id="catalogSvcEditId" />
                   <div class="form-grid-2">
-                    <div class="field-full"><label>Service name</label><input id="catalogSvcFName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Category</label><input id="catalogSvcFCat" list="catalogSvcCatList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div class="field-full"><label class="field-label">Service name</label><input id="catalogSvcFName"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Category</label><input id="catalogSvcFCat" list="catalogSvcCatList"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
                     <datalist id="catalogSvcCatList"></datalist>
-                    <div><label>Record type</label><select id="catalogSvcFRec" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="maintenance">Maintenance</option><option value="repair">Repair</option><option value="pm">PM</option><option value="tire">Tire</option><option value="inspection">Inspection</option><option value="accident">Accident</option><option value="other">Other</option></select></div>
-                    <div><label>Interval miles</label><input id="catalogSvcFMi" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Interval months</label><input id="catalogSvcFMo" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Vehicle make</label><input id="catalogSvcFVMk"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div><label>Vehicle model</label><input id="catalogSvcFVMo"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
-                    <div class="field-full"><label>Notes</label><textarea id="catalogSvcFNotes" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>
+                    <div><label class="field-label">Record type</label><select id="catalogSvcFRec" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"><option value="maintenance">Maintenance</option><option value="repair">Repair</option><option value="pm">PM</option><option value="tire">Tire</option><option value="inspection">Inspection</option><option value="accident">Accident</option><option value="other">Other</option></select></div>
+                    <div><label class="field-label">Interval miles</label><input id="catalogSvcFMi" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Interval months</label><input id="catalogSvcFMo" type="number"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Vehicle make</label><input id="catalogSvcFVMk"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div><label class="field-label">Vehicle model</label><input id="catalogSvcFVMo"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></div>
+                    <div class="field-full"><label class="field-label">Notes</label><textarea id="catalogSvcFNotes" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea></div>
                   </div>
                 </div>
                 <div class="ih35-lc-modal-ft">
@@ -7989,7 +7989,7 @@
         <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" title="Line amount"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       </td>
       <td class="maint-qb-td-bill">
-        <label class="maint-qb-bill-lbl"><input type="checkbox" class="wo-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+        <label class="maint-qb-bill-lbl field-label"><input type="checkbox" class="wo-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
       </td>
       <td class="maint-qb-td-cust">
         <input
@@ -8077,7 +8077,7 @@
         <input class="qb-in wo-amt" type="number" step="0.01" placeholder="0" title="Line amount"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       </td>
       <td class="maint-qb-td-bill">
-        <label class="maint-qb-bill-lbl"><input type="checkbox" class="wo-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+        <label class="maint-qb-bill-lbl field-label"><input type="checkbox" class="wo-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
       </td>
       <td class="maint-qb-td-cust">
         <input
@@ -8150,7 +8150,7 @@
          style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       </td>
       <td class="maint-qb-td-bill">
-        <label class="maint-qb-bill-lbl"><input type="checkbox" class="wo-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+        <label class="maint-qb-bill-lbl field-label"><input type="checkbox" class="wo-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
       </td>
       <td class="maint-qb-td-cust">
         <input
@@ -8254,7 +8254,7 @@
         <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       </td>
       <td class="maint-qb-td-bill">
-        <label class="maint-qb-bill-lbl"><input type="checkbox" class="maint-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+        <label class="maint-qb-bill-lbl field-label"><input type="checkbox" class="maint-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
       </td>
       <td class="maint-qb-td-cust">
         <input
@@ -8354,7 +8354,7 @@
         <input class="qb-in maint-field maint-line-amt" type="number" step="0.01" min="0" placeholder="0.00"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       </td>
       <td class="maint-qb-td-bill">
-        <label class="maint-qb-bill-lbl"><input type="checkbox" class="maint-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
+        <label class="maint-qb-bill-lbl field-label"><input type="checkbox" class="maint-line-billable" title="Billable"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/></label>
       </td>
       <td class="maint-qb-td-cust">
         <input
@@ -8460,7 +8460,7 @@
          style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
       </td>
       <td class="fuel-m-td-lock">
-        <label class="fuel-m-line-lock-lbl">
+        <label class="fuel-m-line-lock-lbl field-label">
           <input type="checkbox" class="fuel-m-line-lock"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
           <span class="fuel-m-line-lock-lbl__txt">Lock</span>
         </label>
@@ -12838,13 +12838,13 @@
         window.__erpLedgerStubWhich === 'journal'
           ? '<div class="form-stack" style="padding:8px 4px 0;max-width:520px;line-height:1.5">' +
             '<p class="mini-note" style="margin:0 0 12px">Journal entries post directly in QuickBooks. Use this workspace to mirror debits/credits before we wire full QBO JE create.</p>' +
-            '<label class="qb-l">Entry date</label><input type="date" class="qb-in" disabled value="" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
-            '<label class="qb-l">Memo</label><textarea class="qb-memo" rows="3" disabled placeholder="Coming soon" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>' +
+            '<label class="qb-l field-label">Entry date</label><input type="date" class="qb-in" disabled value="" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
+            '<label class="qb-l field-label">Memo</label><textarea class="qb-memo" rows="3" disabled placeholder="Coming soon" style="font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></textarea>' +
             '<p class="mini-note" style="margin:12px 0 0">Save/sync is unchanged — this dialog is UI-only until the ledger composer ships.</p></div>'
           : '<div class="form-stack" style="padding:8px 4px 0;max-width:520px;line-height:1.5">' +
             '<p class="mini-note" style="margin:0 0 12px">Transfers move funds between balance-sheet accounts in QuickBooks. Use QBO for live transfers today; this form will call the same rules as Accounting bills.</p>' +
-            '<label class="qb-l">From</label><input class="qb-in" disabled placeholder="Bank / card account" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
-            '<label class="qb-l">To</label><input class="qb-in" disabled placeholder="Destination account" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
+            '<label class="qb-l field-label">From</label><input class="qb-in" disabled placeholder="Bank / card account" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
+            '<label class="qb-l field-label">To</label><input class="qb-in" disabled placeholder="Destination account" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">' +
             '<p class="mini-note" style="margin:12px 0 0">Save/sync is unchanged — this dialog is UI-only until the transfer composer ships.</p></div>';
       mount.innerHTML =
         '<div class="erp-ledger-stub-shell" data-erp-ledger-stub="1">' +
@@ -21895,7 +21895,7 @@
               }
             </div>
             <div class="print-hide-actions" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0">
-              <label class="mini-note" style="margin:0">Status</label>
+              <label class="mini-note field-label" style="margin:0">Status</label>
               <select class="qb-in" style="font-size:9px;max-width:200px;height:17px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;" data-shop-id="${escapeHtml(entry.id)}" onfocus="this.dataset.prevStatus=this.value" onchange="onShopQueueStatusSelect(this)">
                 <option value="queued" ${status === 'queued' ? 'selected' : ''}>In queue</option>
                 <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In progress</option>
@@ -25094,7 +25094,7 @@
         .map((u) => {
           const unit = escapeHtml(String(u.unit_number || u.unit || '').trim());
           const meta = [u.asset_type, u.status].filter(Boolean).map((x) => escapeHtml(String(x))).join(' · ');
-          return `<label class="mini-note" style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px dashed var(--color-border)">
+          return `<label class="mini-note field-label" style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px dashed var(--color-border)">
             <input type="checkbox" class="equipment-unit-check" value="${unit}" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">
             <span style="font-weight:600">${unit}</span>
             <span style="opacity:0.8">${meta}</span>
@@ -25494,7 +25494,7 @@
           <p class="mini-note" style="margin:0 0 10px">${escapeHtml(data.note || '')}</p>
           <p id="vendorLinkSelectionSummary" class="catalog-link-summary">Select a QuickBooks vendor and/or a Samsara driver below.</p>
           <div class="vendor-link-toolbar form-stack" style="margin:12px 0;max-width:720px">
-            <label class="qb-l">TMS driver (Postgres)</label>
+            <label class="qb-l field-label">TMS driver (Postgres)</label>
             <select id="vendorLinkTmsDriverSelect" class="qb-in maint-field" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 3px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;">${opts || '<option value="">No drivers in database</option>'}</select>
             <div class="search-row" style="flex-wrap:wrap;gap:10px;margin-top:6px">
               <button type="button" onclick="saveTmsDriverPayeeLinks()">Save QBO + Samsara IDs to driver</button>
@@ -29302,7 +29302,7 @@
         const rows = posted.slice(0, maxShow)
           .map(
             p =>
-              `<label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;cursor:pointer">
+              `<label class="field-label" style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;cursor:pointer">
                 <input type="checkbox" class="erp-revert-cb" data-kind="${escapeHtml(p.kind)}" data-id="${escapeHtml(p.id)}"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
                 <span>${escapeHtml(p.label)}</span>
               </label>`
@@ -32088,7 +32088,7 @@
           mount.innerHTML = `
             <p class="mini-note" style="margin:0 0 8px;line-height:1.4">${msg}</p>
             ${tbl}
-            <label class="mini-note" style="display:block;margin-top:12px">Investigation notes</label>
+            <label class="mini-note field-label" style="display:block;margin-top:12px">Investigation notes</label>
             <textarea id="erpIntInvNotes" rows="4" style="width:100%;box-sizing:border-box;padding:8px;border-radius:2px;border:0.5px solid #d0d4da;font-size:9px;font-family:Arial,sans-serif;"></textarea>
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
               <button type="button" class="btn secondary" onclick="erpIntegritySaveNotes(${JSON.stringify(alertId)})">Save notes</button>
@@ -35005,11 +35005,11 @@
         var id = 'bankSplitLine' + __splitCounter;
         var p = prefill || {};
         host.insertAdjacentHTML('beforeend',
-          '<div id="' + id + '" class="mr-filter-bar erp-ops-filter-bar" style="margin-top:6px;align-items:flex-end;flex-wrap:wrap">' +
-          '<label style="min-width:140px;flex:1 1 140px"><span class="qb-l">Vendor</span><input class="qb-in bank-split-vendor" list="qboVendorList" value="' + escapeHtml(String(p.vendor_name || '')) + '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
-          '<label style="min-width:140px;flex:1 1 140px"><span class="qb-l">Category</span><input class="qb-in bank-split-category" list="qboAccountList" value="' + escapeHtml(String(p.category || '')) + '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
-          '<label><span class="qb-l">Amount</span><input class="qb-in bank-split-amount" type="number" step="0.01" value="' + escapeHtml(String(p.amount == null ? '' : p.amount)) + '" oninput="updateBankingSplitTotal()" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
-          '<label style="min-width:140px;flex:1 1 140px"><span class="qb-l">Memo</span><input class="qb-in bank-split-memo" value="' + escapeHtml(String(p.memo || '')) + '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
+          '<div id="' + id + '" class="mr-filter-bar erp-ops-filter-bar erp-filter-panel" style="margin-top:6px;align-items:flex-end;flex-wrap:wrap">' +
+          '<label class="field-label" style="min-width:140px;flex:1 1 140px"><span class="qb-l">Vendor</span><input class="qb-in bank-split-vendor" list="qboVendorList" value="' + escapeHtml(String(p.vendor_name || '')) + '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
+          '<label class="field-label" style="min-width:140px;flex:1 1 140px"><span class="qb-l">Category</span><input class="qb-in bank-split-category" list="qboAccountList" value="' + escapeHtml(String(p.category || '')) + '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
+          '<label class="field-label"><span class="qb-l">Amount</span><input class="qb-in bank-split-amount" type="number" step="0.01" value="' + escapeHtml(String(p.amount == null ? '' : p.amount)) + '" oninput="updateBankingSplitTotal()" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
+          '<label class="field-label" style="min-width:140px;flex:1 1 140px"><span class="qb-l">Memo</span><input class="qb-in bank-split-memo" value="' + escapeHtml(String(p.memo || '')) + '" / style="height:17px;padding:0 5px;font-size:9px;font-family:Arial,sans-serif;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"></label>' +
           '<button type="button" class="btn btn--small" onclick="removeBankingSplitLine(' + JSON.stringify(id) + ')">Remove</button>' +
           '</div>');
         updateSplitTotal();

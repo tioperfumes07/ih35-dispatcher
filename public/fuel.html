@@ -16,12 +16,12 @@
   </script>
   <script src="/ih35-runtime.js"></script>
 </head>
-<body class="fuel-board">
+<body class="fuel-board erp-app">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
   <div id="boardNavMount"></div>
   <script src="/js/board-nav.js" defer></script>
   <script src="/js/erp-ui.js" defer></script>
-  <div class="topbar">
+  <div class="topbar erp-top-bar">
     <h1>Fuel &amp; route planning</h1>
     <a href="/" style="margin-right:8px;font-weight:500;color:var(--color-border-focus)">Home</a>
     <a href="/dispatch.html" style="margin-right:10px;font-weight:500;color:var(--pill-green-text)">Loads &amp; TMS</a>
@@ -29,7 +29,7 @@
     <button type="button" id="fuelBtnRefreshBoard" onclick="refreshFuelBoardNow()" title="Fetch latest Samsara fleet data now">Refresh now</button>
     <button type="button" id="fuelBtnRecommend" onclick="recommendForSelected()">Recommend Stops</button>
     <input id="unitSearch" placeholder="Search unit e.g. T148" oninput="renderFleet()"  style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"/>
-    <label><input type="checkbox" id="urgentOnly" onchange="renderFleet()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> FUEL NOW only</label>
+    <label class="field-label"><input type="checkbox" id="urgentOnly" onchange="renderFleet()" style="height:17px;font-size:9px;font-family:Arial,sans-serif;padding:0 5px;border:0.5px solid #d0d4da;border-radius:2px;box-sizing:border-box;width:100%;"> FUEL NOW only</label>
     <span id="lastUpdated" class="small">Loading… · auto-refresh every 60s</span>
   </div>
   <div id="erpConnectionStrip" class="erp-connection-strip" aria-live="polite"></div>
@@ -66,7 +66,7 @@
     <button type="button" class="btn btn--small" onclick="openFuelHubFuelTxn('fuel-def-combined')">Fuel/DEF combined</button>
   </div>
 
-  <div class="layout">
+  <div class="layout erp-app">
     <div class="panel">
       <h2>Fleet</h2>
       <div class="mini-note" style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;font-size:11px;line-height:1.35;color:var(--color-text-label);max-width:62ch">
@@ -142,7 +142,7 @@
         Log buys + odometer to compute MPG between fills and flag anomalies.
       </div>
       <div
-        class="mr-filter-bar erp-ops-filter-bar"
+        class="mr-filter-bar erp-ops-filter-bar erp-filter-panel"
         role="group"
         aria-label="Diesel purchase entry"
         style="margin-bottom:10px;padding-top:0;padding-bottom:10px;border-bottom:none;align-items:flex-end"
