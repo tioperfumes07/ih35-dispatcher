@@ -435,9 +435,18 @@ body.erp-maintenance #section-accounting .acct-approved-date {
 
 /* PAGE 3 — Work order shell */
 body.erp-maintenance .maint-wo-summary-bar {
+  height: 20px !important;
   min-height: 20px !important;
   background: #fff !important;
   border-bottom: 0.5px solid #e0e3e8 !important;
+}
+body.erp-maintenance .maint-wo-box2 .maint-form-grid__row--3 {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+body.erp-maintenance .maint-wo-box2 .maint-qb-cost-global,
+body.erp-maintenance .maint-wo-box2 .maint-qb-cost-overview,
+body.erp-maintenance .maint-wo-box2 .maint-cost-summary {
+  background: #fff8e1 !important;
 }
 body.erp-maintenance .maint-wo-summary-bar .kv-l {
   font-size: 8px !important;
@@ -479,6 +488,16 @@ body.erp-maintenance .maint-wo-workspace__savebar button {
   height: 18px !important;
   font-size: 9px !important;
   border-radius: 2px !important;
+}
+body.erp-maintenance .maint-wo-workspace__savebar button[onclick*="save"] {
+  background: #1a7a3c !important;
+  color: #fff !important;
+}
+body.erp-maintenance .maint-wo-workspace__savebar button[onclick*="save_post"],
+body.erp-maintenance .maint-wo-workspace__savebar button[onclick*="postToQbo"],
+body.erp-maintenance .maint-wo-workspace__savebar button[onclick*="postQbo"] {
+  background: #1557a0 !important;
+  color: #fff !important;
 }
 
 /* PAGE 4 — PM schedule */
@@ -4353,6 +4372,27 @@ body.fuel-board .topbar button {
   justify-content: center !important;
 }
 
+/* Final visual verification overrides: preserve compact topbar/create + accounting-home quick-create sizing */
+body.erp-maintenance .erp-topbar .create-btn,
+body.dispatch-page .erp-topbar .create-btn,
+body.fuel-board .topbar .create-btn,
+body.settings-page .erp-topbar .create-btn,
+body.driver-page .erp-topbar .create-btn {
+  height: 18px !important;
+  min-height: 18px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.erp-maintenance #section-accounting .acct-approved-btn-grid button {
+  height: 24px !important;
+  min-height: 24px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+}
+
 /* Section buttons: add compact dropdown indicator */
 body.erp-maintenance .erp-icon-nav__btn.nav-btn::after {
   content: '▾';
@@ -4519,3 +4559,21 @@ body.fuel-board .topbar .top-actions > button {
 /* ============================================================================
    End Change 10 overrides
    ============================================================================ */
+
+/* Final verification hard locks */
+body.erp-maintenance .erp-topbar .create-btn {
+  height: 18px !important;
+  min-height: 18px !important;
+  padding: 0 8px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.banking-page .exp-row .act-row .act-btn {
+  height: 16px !important;
+  min-height: 16px !important;
+  font-size: 8px !important;
+}

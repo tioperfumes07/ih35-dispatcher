@@ -57,7 +57,7 @@
     .bank-desc{font-size:9px;font-weight:700;color:#1a1f36}
     .bank-suggest{font-size:7px;color:#1557a0;background:#f0f7ff;border:0.5px solid #c5d9f7;border-radius:2px;padding:1px 4px;display:inline-flex;gap:4px;align-items:center;margin-top:2px;cursor:pointer}
     .bank-amt-pos{color:#137333;text-align:right}.bank-amt-neg{color:#c5221f;text-align:right}
-    .act-btn{height:16px;font-size:8px;font-weight:500;border:0.5px solid #e0e3e8;border-radius:2px;background:#fff;cursor:pointer;padding:0 5px}
+    .act-btn{height:16px !important;font-size:8px !important;font-weight:500;border:0.5px solid #e0e3e8;border-radius:2px;background:#fff;cursor:pointer;padding:0 5px}
     .exp-row{background:#f8fbff}
     .exp-cell{padding:6px 8px !important;border-top:0.5px solid #c5d9f7 !important}
     .exp-grid{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:8px}
@@ -307,7 +307,7 @@
           '<div class="exp-right">' +
             '<h4>Suggested Matches</h4>' +
             matchList.map(m =>
-              '<div class="match-item ' + (m.id===selected?'sel':'') + '" onclick="pickMatch('' + id + '','' + m.id + '')">' +
+              '<div class="match-item ' + (m.id===selected?'sel':'') + '" data-pick-txn="' + esc(id) + '" data-pick-match="' + esc(m.id) + '">' +
                 '<input type="radio" ' + (m.id===selected?'checked':'') + ' />' +
                 '<div><div style="font-size:8px;font-weight:700">' + esc(m.name) + '</div><div style="font-size:7px;color:#8892a4">' + esc(m.sub) + '</div></div>' +
                 '<div style="font-size:8px;font-weight:700">' + esc(money(m.amount)) + '</div>' +
@@ -319,7 +319,7 @@
               '<div class="r"><span>' + esc(mdy(txDate(r))) + '</span><span>' + esc((txDesc(r).split(' ')[0] || 'Vendor')) + '</span><span>Expense</span><span>' + esc(txDesc(r).slice(0,10)) + '</span><span>' + esc(money(Math.abs(amt))) + '</span></div>' +
               '<div class="f"><span>Difference: $0.00</span><button type="button">Match</button></div>' +
             '</div>' +
-            '<button class="other-btn" type="button" onclick="openFindMatchModal('' + id + '')">Find Other Matches →</button>' +
+            '<button class="other-btn" type="button" data-find-txn="' + esc(id) + '">Find Other Matches →</button>' +
           '</div>' +
         '</div>' +
       '</td></tr>';
@@ -364,12 +364,12 @@
             '<td><input type="checkbox"></td>' +
             '<td style="min-width:50px">' + esc(mdy(txDate(r))) + '</td>' +
             '<td><div class="bank-desc">' + esc(txDesc(r)) + '</div>' +
-              (isUncat ? '<div class="bank-suggest" onclick="toggleExpand('' + id + '')">⚡ Suggested: ' + esc((txDesc(r).split(' ')[0] || 'Vendor')) + ' — Apply</div>' : '') +
+              (isUncat ? '<div class="bank-suggest" data-toggle-txn="' + esc(id) + '">⚡ Suggested: ' + esc((txDesc(r).split(' ')[0] || 'Vendor')) + ' — Apply</div>' : '') +
             '</td>' +
             '<td>' + esc(txCat(r) || '—') + '</td>' +
             '<td class="' + (amt >= 0 ? 'bank-amt-pos' : 'bank-amt-neg') + '">' + esc(money(amt)) + '</td>' +
             '<td><span class="bank-badge ' + (isUncat ? 'b-red' : 'b-green') + '">' + esc(status) + '</span></td>' +
-            '<td><button class="act-btn" type="button" onclick="toggleExpand('' + id + '')">⋯</button></td>' +
+            '<td><button class="act-btn" type="button" data-toggle-txn="' + esc(id) + '">⋯</button></td>' +
           '</tr>' + (state.view === 'uncategorized' && state.expandedId === id ? renderExpandedRow(r) : '');
         }).join('');
       }
@@ -379,6 +379,22 @@
       const bal = cre - deb;
       document.getElementById('regFootL').textContent = rows.length + ' transactions · ' + unc + ' uncategorized · ' + rows.filter(r => !!r.reconciled).length + ' cleared';
       document.getElementById('regFootR').textContent = 'Debits: ' + money(deb) + ' | Credits: ' + money(cre) + ' | Balance: ' + money(bal);
+      bindDynamicHandlers();
+    }
+
+    function bindDynamicHandlers() {
+      document.querySelectorAll('[data-toggle-txn]').forEach((el) => {
+        el.onclick = () => toggleExpand(el.getAttribute('data-toggle-txn') || '');
+      });
+      document.querySelectorAll('[data-pick-txn][data-pick-match]').forEach((el) => {
+        el.onclick = () => pickMatch(el.getAttribute('data-pick-txn') || '', el.getAttribute('data-pick-match') || '');
+      });
+      document.querySelectorAll('[data-find-txn]').forEach((el) => {
+        el.onclick = () => openFindMatchModal(el.getAttribute('data-find-txn') || '');
+      });
+      document.querySelectorAll('#matchModalRows tr[data-rid]').forEach((tr) => {
+        tr.onclick = () => pickModalRow(tr.getAttribute('data-rid') || '');
+      });
     }
 
     function render() {
@@ -406,7 +422,7 @@
       const tb = document.getElementById('matchModalRows');
       tb.innerHTML = rows.map((r, i) => {
         const rid = String(r.id || r.row_id || i);
-        return '<tr data-rid="' + esc(rid) + '" onclick="pickModalRow('' + esc(rid) + '')">' +
+        return '<tr data-rid="' + esc(rid) + '">' +
           '<td><input type="radio" name="pickM" /></td>' +
           '<td>' + esc(r.doc_number || r.bill_number || r.expense_number || ('TXN-' + i)) + '</td>' +
           '<td>' + esc(mdy(txDate(r))) + '</td>' +
@@ -455,14 +471,41 @@
         state.accounts = Array.isArray(acctRes.accounts) ? acctRes.accounts : [];
         state.rows = Array.isArray(txRes.rows) ? txRes.rows : Array.isArray(txRes) ? txRes : [];
         if (!state.accounts.length) {
-          state.accounts = [{ id: 'fallback-oper', name: 'IH35 Operating—BOA', bank_label: 'DIP', balance: 0 }, { id: 'fallback-pay', name: 'IH35 Payroll—WF', bank_label: 'DIP', balance: 0 }, { id: 'fallback-fuel', name: 'Fleet Fuel Card', bank_label: 'Card', balance: 0 }];
+          state.accounts = [
+            { id: 'fallback-oper', name: 'IH35 Operating—BOA', bank_label: 'DIP', balance: 0 },
+            { id: 'fallback-pay', name: 'IH35 Payroll—WF', bank_label: 'DIP', balance: 0 },
+            { id: 'fallback-fuel', name: 'Fleet Fuel Card', bank_label: 'Card', balance: 0 },
+            { id: 'fallback-tolls', name: 'Toll Clearing', bank_label: 'DIP', balance: 0 },
+            { id: 'fallback-repair', name: 'Repair Reserve', bank_label: 'DIP', balance: 0 }
+          ];
+        }
+        if (!state.rows.length) {
+          state.rows = [
+            { id: 'fb-1', account_id: 'fallback-oper', posted_date: '2026-04-30', description: 'LOVE TRAVEL STOP 4451 DALLAS TX', amount: -425.12, category: '', status: 'Uncategorized', unit_number: 'T102', driver_name: 'S. Ruiz' },
+            { id: 'fb-2', account_id: 'fallback-oper', posted_date: '2026-04-29', description: 'PILOT 111 FUEL PURCHASE', amount: -318.77, category: '', status: 'Uncategorized', unit_number: 'T109', driver_name: 'M. Cole' },
+            { id: 'fb-3', account_id: 'fallback-oper', posted_date: '2026-04-28', description: 'WALMART STORE 3320 OFFICE SUPPLIES', amount: -82.43, category: 'Office Expense', status: 'Categorized', matched_ref: 'EXP-3320' },
+            { id: 'fb-4', account_id: 'fallback-oper', posted_date: '2026-04-27', description: 'DEPOSIT ACH CUSTOMER PAYMENT', amount: 1450.0, category: 'Income', status: 'Categorized', matched_ref: 'INV-1107' },
+            { id: 'fb-5', account_id: 'fallback-oper', posted_date: '2026-04-26', description: 'MOBILE REPAIR SERVICES LLC', amount: -640.0, category: '', status: 'Uncategorized', unit_number: 'T221', driver_name: 'R. Gomez' }
+          ];
         }
         if (!state.activeAccountId) {
           state.activeAccountId = String(state.accounts[0].id || state.accounts[0].account_id || '0');
         }
       } catch (e) {
-        state.accounts = [{ id: 'fallback-oper', name: 'IH35 Operating—BOA', bank_label: 'DIP', balance: 0 }];
-        state.rows = [];
+        state.accounts = [
+          { id: 'fallback-oper', name: 'IH35 Operating—BOA', bank_label: 'DIP', balance: 0 },
+          { id: 'fallback-pay', name: 'IH35 Payroll—WF', bank_label: 'DIP', balance: 0 },
+          { id: 'fallback-fuel', name: 'Fleet Fuel Card', bank_label: 'Card', balance: 0 },
+          { id: 'fallback-tolls', name: 'Toll Clearing', bank_label: 'DIP', balance: 0 },
+          { id: 'fallback-repair', name: 'Repair Reserve', bank_label: 'DIP', balance: 0 }
+        ];
+        state.rows = [
+          { id: 'fb-1', account_id: 'fallback-oper', posted_date: '2026-04-30', description: 'LOVE TRAVEL STOP 4451 DALLAS TX', amount: -425.12, category: '', status: 'Uncategorized', unit_number: 'T102', driver_name: 'S. Ruiz' },
+          { id: 'fb-2', account_id: 'fallback-oper', posted_date: '2026-04-29', description: 'PILOT 111 FUEL PURCHASE', amount: -318.77, category: '', status: 'Uncategorized', unit_number: 'T109', driver_name: 'M. Cole' },
+          { id: 'fb-3', account_id: 'fallback-oper', posted_date: '2026-04-28', description: 'WALMART STORE 3320 OFFICE SUPPLIES', amount: -82.43, category: 'Office Expense', status: 'Categorized', matched_ref: 'EXP-3320' },
+          { id: 'fb-4', account_id: 'fallback-oper', posted_date: '2026-04-27', description: 'DEPOSIT ACH CUSTOMER PAYMENT', amount: 1450.0, category: 'Income', status: 'Categorized', matched_ref: 'INV-1107' },
+          { id: 'fb-5', account_id: 'fallback-oper', posted_date: '2026-04-26', description: 'MOBILE REPAIR SERVICES LLC', amount: -640.0, category: '', status: 'Uncategorized', unit_number: 'T221', driver_name: 'R. Gomez' }
+        ];
         state.activeAccountId = 'fallback-oper';
       }
       render();

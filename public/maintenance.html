@@ -922,7 +922,7 @@
                 type="button"
                 class="erp-btn-primary erp-topbar-new-btn create-btn"
                 id="erpNewMenuBtn"
-                style="height:18px;padding:0 8px;background:#1a1f36;color:#fff;border:none;border-radius:2px;font-size:9px;font-weight:500;font-family:Arial,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;"
+                style="height:18px !important;padding:0 8px !important;background:#1a1f36;color:#fff;border:none;border-radius:2px;font-size:9px !important;font-weight:500;font-family:Arial,sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1 !important;flex-shrink:0;"
                 onclick="erpToggleNewMenu(event)"
                 aria-haspopup="true"
                 aria-expanded="false"
@@ -36789,17 +36789,40 @@
           .replaceAll('"', '&quot;');
       }
 
+      function mdy2(v) {
+        const raw = String(v || '').trim();
+        if (!raw) return '—';
+        const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (iso) return `${iso[2]}/${iso[3]}/${iso[1].slice(-2)}`;
+        const d = new Date(raw);
+        if (!Number.isNaN(d.getTime())) {
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const yy = String(d.getFullYear()).slice(-2);
+          return `${mm}/${dd}/${yy}`;
+        }
+        return raw;
+      }
+
       function renderRecentRows(host, rows, type) {
         if (!host) return;
         if (!Array.isArray(rows) || !rows.length) {
-          host.innerHTML = '<div class="acct-approved-sub">No recent records.</div>';
+          const label = type === 'bill' ? 'Bill' : 'Expense';
+          host.innerHTML = Array.from({ length: 5 }).map((_, i) => (
+            '<div class="acct-approved-recent-row">' +
+              '<span class="acct-approved-avatar">' + esc(label.charAt(0)) + '</span>' +
+              '<div><div class="acct-approved-main">' + esc(label + ' pending') + '</div><div class="acct-approved-sub">No posted records yet</div></div>' +
+              '<div><div class="acct-approved-amt">—</div><div class="acct-approved-date">' + esc(mdy2(new Date(Date.now() - i * 86400000).toISOString())) + '</div></div>' +
+              '<span class="acct-approved-pill ok">Open</span>' +
+            '</div>'
+          )).join('');
           return;
         }
         host.innerHTML = rows.slice(0, 5).map((r) => {
           const name = r.vendor_name || r.payee_name || r.vendor || r.payee || r.name || '—';
           const sub = r.memo || r.description || r.bill_number || r.expense_number || '—';
           const amt = money(r.amount_total ?? r.amount ?? r.total ?? 0);
-          const dt = String(r.txn_date || r.bill_date || r.expense_date || r.date || '').slice(0, 10) || '—';
+          const dt = mdy2(r.txn_date || r.bill_date || r.expense_date || r.date || '');
           const status = String(r.status || (r.posted_to_qbo ? 'Posted' : 'Open') || 'Open');
           const initial = String(name || '?').trim().charAt(0).toUpperCase() || '?';
           return (

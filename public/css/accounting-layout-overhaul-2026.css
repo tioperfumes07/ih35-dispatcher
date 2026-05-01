@@ -34,6 +34,11 @@ body.erp-maintenance #section-accounting .subtabs.erp-tab-bar {
   margin: 0 0 12px 0 !important;
 }
 
+body.erp-maintenance #section-accounting.acct-approved-home #acctNavTabStubs.erp-tab-bar,
+body.erp-maintenance #section-accounting.acct-approved-home .subtabs.erp-tab-bar {
+  display: none !important;
+}
+
 body.erp-maintenance #section-accounting #acctNavTabStubs.erp-tab-bar::-webkit-scrollbar,
 body.erp-maintenance #section-accounting .subtabs.erp-tab-bar::-webkit-scrollbar {
   height: 4px;
