@@ -100,11 +100,12 @@
       document.getElementById('btnLoad').addEventListener('click', function () {
         controller.setState({
           categories: [
-            { category: 'Detention', description: 'Test', amount: 50 },
-            { category: 'Toll', description: 'I-35', amount: 14.5 }
+            { category: 'Toll', description: 'I-35 Laredo plaza', qty: 1, amount: 14.50 },
+            { category: 'Detention', description: 'Shipper delay 3.5h', qty: 1, amount: 175 }
           ],
           items: [
-            { item_name: 'Steer tire', location: 'ST-LF', qty: 1, unit_price: 425 }
+            { item: 'Truck Diesel', qty: 85, amount: 3.76, odo_fill_at: 284100 },
+            { item: 'SVC-OIL01 — Oil & filter change', qty: 1, amount: 190, odo_fill_at: null }
           ]
         });
       });
@@ -117,10 +118,7 @@
           service_date: '2026-05-01',
           repair_location_type: 'in_house',
           repair_location_detail: 'shop bay 2',
-          cost_lines: {
-            categories: state.categories,
-            items: state.items
-          }
+          cost_lines: state
         };
         try {
           var rsp = await fetch('/api/work-orders', {

@@ -1,44 +1,44 @@
 (function initIH35TwoSectionCost(global) {
   'use strict';
 
-  var STYLE_ID = 'ih-two-section-cost-styles';
-  var CATEGORY_OPTIONS = ['Detention', 'Toll', 'Lumper', 'Office', 'Other'];
-  var ITEM_OPTIONS = [
-    'Steer tire 295/75R22.5',
-    'Drive tire 11R22.5',
-    'Brake pad set',
-    'Mount and balance labor',
-    'Diagnostic labor',
-    'DEF fluid',
-    'Oil change service',
+  var CATEGORY_LIST_ID = 'ih35_categories';
+  var ITEM_LIST_ID = 'ih35_items';
+  var FUEL_ITEMS = ['truck diesel', 'reefer diesel', 'def'];
+
+  var CATEGORY_OPTIONS = [
+    'Fuel',
+    'Repair / Maintenance',
+    'Tire / Road service',
+    'Toll',
+    'Lumper',
+    'Detention',
+    'Office / Admin',
+    'Other'
   ];
 
-  function ensureStyles() {
-    if (document.getElementById(STYLE_ID)) return;
-    var style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = [
-      '.ih-two-section-cost{display:grid;gap:10px;color:var(--ih-text-primary);font-family:Arial,sans-serif}',
-      '.ih-two-section-cost *{box-sizing:border-box}',
-      '.ih-two-section-cost__head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid var(--ih-border-light);border-left-width:3px}',
-      '.ih-two-section-cost__head--a{background:var(--ih-section-a-bg);border-left-color:var(--ih-section-a-border)}',
-      '.ih-two-section-cost__head--b{background:var(--ih-section-b-bg);border-left-color:var(--ih-section-b-border)}',
-      '.ih-two-section-cost__title{font-size:9px;font-weight:500;letter-spacing:var(--ih-letter-label);text-transform:uppercase}',
-      '.ih-two-section-cost__add{height:var(--ih-height-button);padding:0 10px;border:var(--ih-border-width) solid var(--ih-border-light);border-radius:var(--ih-radius);background:var(--ih-bg-card);font-size:var(--ih-font-button);cursor:pointer}',
-      '.ih-two-section-cost__table{width:100%;border-collapse:collapse;background:var(--ih-bg-card)}',
-      '.ih-two-section-cost__table th,.ih-two-section-cost__table td{border:var(--ih-border-width) solid var(--ih-border-divider);padding:var(--ih-padding-cell);font-size:var(--ih-font-content);vertical-align:middle}',
-      '.ih-two-section-cost__table th{background:var(--ih-bg-section-header);text-align:left;font-size:var(--ih-font-label);letter-spacing:var(--ih-letter-label);text-transform:uppercase;color:var(--ih-text-label)}',
-      '.ih-two-section-cost__table td.num,.ih-two-section-cost__table th.num{text-align:right}',
-      '.ih-two-section-cost__input,.ih-two-section-cost__select{width:100%;height:var(--ih-height-field);border:var(--ih-border-width) solid var(--ih-border-light);border-radius:var(--ih-radius);padding:0 5px;font-size:var(--ih-font-content);background:var(--ih-bg-card);color:var(--ih-text-primary)}',
-      '.ih-two-section-cost__line-total{display:inline-block;min-width:78px;text-align:right}',
-      '.ih-two-section-cost__row-del{width:24px;height:var(--ih-height-field);border:var(--ih-border-width) solid var(--ih-border-light);border-radius:var(--ih-radius);background:var(--ih-bg-card);cursor:pointer;font-size:12px;line-height:1}',
-      '.ih-two-section-cost__subtotal-row td{background:var(--ih-bg-input-faded);font-weight:500}',
-      '.ih-two-section-cost__subtotal-label{text-align:right}',
-      '.ih-two-section-cost__total{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ih-navy);color:var(--ih-bg-card);padding:7px 10px;border-radius:var(--ih-radius)}',
-      '.ih-two-section-cost__total-label{font-size:10px;font-weight:500;letter-spacing:var(--ih-letter-label);text-transform:uppercase}',
-      '.ih-two-section-cost__total-value{font-size:13px;font-weight:700}',
-    ].join('');
-    document.head.appendChild(style);
+  var ITEM_OPTIONS = [
+    'Truck Diesel',
+    'Reefer Diesel',
+    'DEF',
+    'SVC-OIL01 — Oil & filter change',
+    'SVC-BRK01 — Brake job front',
+    'SVC-DOT01 — DOT inspection',
+    'TX TollTag transaction',
+    'Walmart DC lumper',
+    'Shipper detention 3.5h',
+    'Office supplies'
+  ];
+
+  var DEFAULT_CATEGORY = { category: '', description: '', qty: 1, amount: 0 };
+  var DEFAULT_ITEM = { item: '', qty: 1, amount: 0, odo_fill_at: null };
+
+  var fmt = function (n) {
+    return '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+
+  function toNum(value, fallback) {
+    var n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
   }
 
   function esc(value) {
@@ -49,279 +49,364 @@
       .replace(/"/g, '&quot;');
   }
 
-  function toNumber(value, fallback) {
-    var n = Number(value);
-    return Number.isFinite(n) ? n : fallback;
+  function isFuelItem(itemValue) {
+    var t = String(itemValue || '').trim().toLowerCase();
+    return FUEL_ITEMS.indexOf(t) !== -1;
   }
 
-  function money(value) {
-    var n = toNumber(value, 0);
-    return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  }
-
-  function normalizeCategory(row) {
-    var src = row && typeof row === 'object' ? row : {};
+  function normalizeCategoryLine(line) {
+    var src = line && typeof line === 'object' ? line : {};
+    var qty = toNum(src.qty, 1);
+    var amount = toNum(src.amount, 0);
+    if (qty < 0) qty = 0;
     return {
       category: String(src.category || '').trim(),
       description: String(src.description || '').trim(),
-      amount: toNumber(src.amount, 0),
+      qty: qty,
+      amount: amount,
+      total: qty * amount
     };
   }
 
-  function normalizeItem(row) {
-    var src = row && typeof row === 'object' ? row : {};
-    var qty = toNumber(src.qty, 1);
+  function normalizeItemLine(line) {
+    var src = line && typeof line === 'object' ? line : {};
+    var item = String(src.item || '').trim();
+    var qty = toNum(src.qty, 1);
+    var amount = toNum(src.amount, 0);
+    if (qty < 0) qty = 0;
+    var fuel = isFuelItem(item);
+    var odo = fuel ? (src.odo_fill_at == null || src.odo_fill_at === '' ? null : toNum(src.odo_fill_at, null)) : null;
     return {
-      item_name: String(src.item_name || '').trim(),
-      location: String(src.location || '').trim(),
-      qty: qty > 0 ? qty : 1,
-      unit_price: toNumber(src.unit_price, 0),
+      item: item,
+      qty: qty,
+      amount: amount,
+      total: qty * amount,
+      odo_fill_at: odo
     };
   }
 
-  function defaultState() {
+  function makeDefaultState() {
     return {
-      categories: [normalizeCategory({ category: '', description: '', amount: 0 })],
-      items: [normalizeItem({ item_name: '', location: '', qty: 1, unit_price: 0 })],
+      categories: [normalizeCategoryLine(DEFAULT_CATEGORY)],
+      items: [normalizeItemLine(DEFAULT_ITEM)],
+      subtotalA: 0,
+      subtotalB: 0,
+      total: 0
     };
   }
 
-  function compute(state) {
-    var totalA = state.categories.reduce(function (sum, row) {
-      return sum + toNumber(row.amount, 0);
-    }, 0);
-    var totalB = state.items.reduce(function (sum, row) {
-      return sum + toNumber(row.qty, 0) * toNumber(row.unit_price, 0);
-    }, 0);
-    return { totalA: totalA, totalB: totalB, total: totalA + totalB };
+  function recalc(state) {
+    var subtotalA = 0;
+    var subtotalB = 0;
+    var i;
+    for (i = 0; i < state.categories.length; i += 1) {
+      state.categories[i].total = toNum(state.categories[i].qty, 0) * toNum(state.categories[i].amount, 0);
+      subtotalA += state.categories[i].total;
+    }
+    for (i = 0; i < state.items.length; i += 1) {
+      var fuel = isFuelItem(state.items[i].item);
+      state.items[i].total = toNum(state.items[i].qty, 0) * toNum(state.items[i].amount, 0);
+      if (!fuel) state.items[i].odo_fill_at = null;
+      subtotalB += state.items[i].total;
+    }
+    state.subtotalA = subtotalA;
+    state.subtotalB = subtotalB;
+    state.total = subtotalA + subtotalB;
+    return state;
   }
 
   function cloneState(state) {
-    var totals = compute(state);
     return {
       categories: state.categories.map(function (row) {
-        return { category: row.category, description: row.description, amount: toNumber(row.amount, 0) };
+        return {
+          category: row.category,
+          description: row.description,
+          qty: toNum(row.qty, 0),
+          amount: toNum(row.amount, 0),
+          total: toNum(row.total, 0)
+        };
       }),
       items: state.items.map(function (row) {
         return {
-          item_name: row.item_name,
-          location: row.location,
-          qty: toNumber(row.qty, 1),
-          unit_price: toNumber(row.unit_price, 0),
+          item: row.item,
+          qty: toNum(row.qty, 0),
+          amount: toNum(row.amount, 0),
+          total: toNum(row.total, 0),
+          odo_fill_at: row.odo_fill_at == null ? null : toNum(row.odo_fill_at, null)
         };
       }),
-      totalA: totals.totalA,
-      totalB: totals.totalB,
-      total: totals.total,
+      subtotalA: toNum(state.subtotalA, 0),
+      subtotalB: toNum(state.subtotalB, 0),
+      total: toNum(state.total, 0)
     };
   }
 
-  function buildOptionsHtml(options, currentValue) {
-    var out = ['<option value=""></option>'];
-    for (var i = 0; i < options.length; i += 1) {
-      var opt = options[i];
-      var selected = String(opt) === String(currentValue || '') ? ' selected' : '';
-      out.push('<option value="' + esc(opt) + '"' + selected + '>' + esc(opt) + '</option>');
+  function ensureCatalogDatalists() {
+    var head = document.head || document.documentElement;
+    if (!document.getElementById(CATEGORY_LIST_ID)) {
+      var catList = document.createElement('datalist');
+      catList.id = CATEGORY_LIST_ID;
+      for (var i = 0; i < CATEGORY_OPTIONS.length; i += 1) {
+        var catOpt = document.createElement('option');
+        catOpt.value = CATEGORY_OPTIONS[i];
+        catList.appendChild(catOpt);
+      }
+      head.appendChild(catList);
     }
-    return out.join('');
+    if (!document.getElementById(ITEM_LIST_ID)) {
+      var itemList = document.createElement('datalist');
+      itemList.id = ITEM_LIST_ID;
+      for (var j = 0; j < ITEM_OPTIONS.length; j += 1) {
+        var itemOpt = document.createElement('option');
+        itemOpt.value = ITEM_OPTIONS[j];
+        itemList.appendChild(itemOpt);
+      }
+      head.appendChild(itemList);
+    }
   }
 
   function mount(container, options) {
     if (!container || !(container instanceof HTMLElement)) {
-      throw new Error('IH35TwoSectionCost.mount requires a valid HTMLElement container');
+      throw new Error('IH35TwoSectionCost.mount requires an HTMLElement container');
     }
-    ensureStyles();
+
+    ensureCatalogDatalists();
     var opts = options && typeof options === 'object' ? options : {};
-    var state = defaultState();
-
-    if (Array.isArray(opts.initialCategories) && opts.initialCategories.length) {
-      state.categories = opts.initialCategories.map(normalizeCategory);
-    }
-    if (Array.isArray(opts.initialItems) && opts.initialItems.length) {
-      state.items = opts.initialItems.map(normalizeItem);
-    }
-
     var onChange = typeof opts.onChange === 'function' ? opts.onChange : null;
+    var state = makeDefaultState();
+
+    if (Array.isArray(opts.initialCategoryLines) && opts.initialCategoryLines.length) {
+      state.categories = opts.initialCategoryLines.map(normalizeCategoryLine);
+    }
+    if (Array.isArray(opts.initialItemLines) && opts.initialItemLines.length) {
+      state.items = opts.initialItemLines.map(normalizeItemLine);
+    }
+    recalc(state);
+
     var root = document.createElement('div');
-    root.className = 'ih-two-section-cost';
+    root.style.display = 'grid';
+    root.style.gap = '8px';
+    root.style.fontFamily = 'Arial,sans-serif';
+    root.style.color = '#1a1f36';
     container.innerHTML = '';
     container.appendChild(root);
 
-    function emitChange() {
+    function emit() {
       if (onChange) onChange(cloneState(state));
     }
 
-    function updateComputedUi() {
-      var totals = compute(state);
-      var subtotalAEl = root.querySelector('[data-role="subtotal-a"]');
-      var subtotalBEl = root.querySelector('[data-role="subtotal-b"]');
-      var totalEl = root.querySelector('[data-role="total"]');
-      if (subtotalAEl) subtotalAEl.textContent = money(totals.totalA);
-      if (subtotalBEl) subtotalBEl.textContent = money(totals.totalB);
-      if (totalEl) totalEl.textContent = money(totals.total);
-      for (var i = 0; i < state.items.length; i += 1) {
-        var lineCell = root.querySelector('[data-role="item-line-total"][data-index="' + i + '"]');
-        if (lineCell) lineCell.textContent = money(toNumber(state.items[i].qty, 0) * toNumber(state.items[i].unit_price, 0));
-      }
+    function categoryRowHtml(row, idx) {
+      return '' +
+        '<tr>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:22%;">' +
+            '<input list="' + CATEGORY_LIST_ID + '" data-kind="category" data-index="' + idx + '" data-field="category" value="' + esc(row.category) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;border:0.5px solid #d4c89a;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;">' +
+            '<input data-kind="category" data-index="' + idx + '" data-field="description" value="' + esc(row.description) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;border:0.5px solid #d4c89a;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:50px;">' +
+            '<input type="number" step="1" data-kind="category" data-index="' + idx + '" data-field="qty" value="' + esc(row.qty) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #d4c89a;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:70px;">' +
+            '<input type="number" step="0.01" data-kind="category" data-index="' + idx + '" data-field="amount" value="' + esc(row.amount) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #d4c89a;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:70px;">' +
+            '<input readonly value="' + esc(fmt(row.total)) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #97c459;border-radius:2px;background:#eaf3de;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 2px;height:17px;font-size:9px;width:16px;text-align:center;">' +
+            '<button type="button" data-action="remove-category" data-index="' + idx + '" style="height:16px;width:16px;padding:0;border:0.5px solid transparent;border-radius:2px;background:transparent;color:#999;cursor:pointer;font-size:10px;line-height:1;">×</button>' +
+          '</td>' +
+        '</tr>';
+    }
+
+    function itemRowHtml(row, idx) {
+      var fuel = isFuelItem(row.item);
+      var odoValue = row.odo_fill_at == null ? '' : String(row.odo_fill_at);
+      return '' +
+        '<tr>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:32%;">' +
+            '<input list="' + ITEM_LIST_ID + '" data-kind="item" data-index="' + idx + '" data-field="item" value="' + esc(row.item) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;border:0.5px solid #97c459;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:50px;">' +
+            '<input type="number" step="1" data-kind="item" data-index="' + idx + '" data-field="qty" value="' + esc(row.qty) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #97c459;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:70px;">' +
+            '<input type="number" step="0.01" data-kind="item" data-index="' + idx + '" data-field="amount" value="' + esc(row.amount) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #97c459;border-radius:2px;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:70px;">' +
+            '<input readonly value="' + esc(fmt(row.total)) + '" style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #97c459;border-radius:2px;background:#eaf3de;box-sizing:border-box;" />' +
+          '</td>' +
+          '<td style="padding:1px 4px;height:17px;font-size:9px;width:80px;">' +
+            '<input type="number" step="1" data-kind="item" data-index="' + idx + '" data-field="odo_fill_at" value="' + esc(odoValue) + '" placeholder="' + (fuel ? '' : 'n/a') + '" ' + (fuel ? '' : 'disabled') + ' style="height:17px;width:100%;padding:0 4px;font-size:9px;text-align:right;border:0.5px solid #97c459;border-radius:2px;box-sizing:border-box;background:' + (fuel ? '#fff' : '#f4f4f0') + ';" />' +
+          '</td>' +
+          '<td style="padding:1px 2px;height:17px;font-size:9px;width:16px;text-align:center;">' +
+            '<button type="button" data-action="remove-item" data-index="' + idx + '" style="height:16px;width:16px;padding:0;border:0.5px solid transparent;border-radius:2px;background:transparent;color:#999;cursor:pointer;font-size:10px;line-height:1;">×</button>' +
+          '</td>' +
+        '</tr>';
     }
 
     function render() {
-      var catRows = state.categories
-        .map(function (row, idx) {
-          return (
-            '<tr>' +
-            '<td style="width:32%"><select class="ih-two-section-cost__select" data-section="categories" data-index="' + idx + '" data-field="category">' +
-            buildOptionsHtml(CATEGORY_OPTIONS, row.category) +
-            '</select></td>' +
-            '<td><input class="ih-two-section-cost__input" type="text" value="' + esc(row.description) + '" data-section="categories" data-index="' + idx + '" data-field="description"/></td>' +
-            '<td class="num" style="width:90px"><input class="ih-two-section-cost__input" type="number" step="0.01" value="' + esc(row.amount) + '" data-section="categories" data-index="' + idx + '" data-field="amount"/></td>' +
-            '<td style="width:24px"><button type="button" class="ih-two-section-cost__row-del" data-action="remove-cat" data-index="' + idx + '">×</button></td>' +
-            '</tr>'
-          );
-        })
-        .join('');
-
-      var itemRows = state.items
-        .map(function (row, idx) {
-          var lineTotal = toNumber(row.qty, 0) * toNumber(row.unit_price, 0);
-          return (
-            '<tr>' +
-            '<td style="width:26%"><select class="ih-two-section-cost__select" data-section="items" data-index="' + idx + '" data-field="item_name">' +
-            buildOptionsHtml(ITEM_OPTIONS, row.item_name) +
-            '</select></td>' +
-            '<td style="width:22%"><input class="ih-two-section-cost__input" type="text" value="' + esc(row.location) + '" data-section="items" data-index="' + idx + '" data-field="location"/></td>' +
-            '<td style="width:50px"><input class="ih-two-section-cost__input" type="number" step="1" value="' + esc(row.qty) + '" data-section="items" data-index="' + idx + '" data-field="qty"/></td>' +
-            '<td style="width:80px"><input class="ih-two-section-cost__input" type="number" step="0.01" value="' + esc(row.unit_price) + '" data-section="items" data-index="' + idx + '" data-field="unit_price"/></td>' +
-            '<td class="num" style="width:80px"><span class="ih-two-section-cost__line-total" data-role="item-line-total" data-index="' + idx + '">' + money(lineTotal) + '</span></td>' +
-            '<td style="width:24px"><button type="button" class="ih-two-section-cost__row-del" data-action="remove-item" data-index="' + idx + '">×</button></td>' +
-            '</tr>'
-          );
-        })
-        .join('');
-
+      var catRows = state.categories.map(categoryRowHtml).join('');
+      var itemRows = state.items.map(itemRowHtml).join('');
       root.innerHTML =
-        '<section>' +
-        '<div class="ih-two-section-cost__head ih-two-section-cost__head--a">' +
-        '<div class="ih-two-section-cost__title">Section A · Categories</div>' +
-        '<button type="button" class="ih-two-section-cost__add" data-action="add-cat">+ Add category line</button>' +
+        '<div style="display:grid;gap:6px;">' +
+          '<div style="height:22px;padding:4px 8px;background:#f5e8c8;color:#6b4f00;border:0.5px solid #d4c89a;border-left:3px solid #b07d00;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;font-size:8px;text-transform:uppercase;letter-spacing:0.4px;font-weight:500;">' +
+            '<span>SECTION A · CATEGORIES</span>' +
+            '<button type="button" data-action="add-category" style="height:14px;font-size:8px;padding:0 6px;background:#fff;border:0.5px solid #b07d00;color:#6b4f00;border-radius:2px;cursor:pointer;">+ Add category line</button>' +
+          '</div>' +
+          '<table style="width:100%;border-collapse:collapse;border:0.5px solid #d4c89a;table-layout:fixed;">' +
+            '<thead style="background:#faf3e0;">' +
+              '<tr>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#6b4f00;width:22%;">Category</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#6b4f00;">Description</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#6b4f00;width:50px;">Qty</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#6b4f00;width:70px;">Amount</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#6b4f00;width:70px;">Total</th>' +
+                '<th style="text-align:left;padding:2px 2px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#6b4f00;width:16px;"></th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' + catRows + '</tbody>' +
+            '<tfoot>' +
+              '<tr style="background:#f5e8c8;">' +
+                '<td colspan="4" style="padding:2px 6px;text-align:right;font-size:8px;letter-spacing:0.3px;text-transform:uppercase;color:#6b4f00;">Subtotal A</td>' +
+                '<td style="padding:2px 6px;text-align:right;font-size:9px;color:#6b4f00;" data-role="subtotal-a">' + fmt(state.subtotalA) + '</td>' +
+                '<td></td>' +
+              '</tr>' +
+            '</tfoot>' +
+          '</table>' +
         '</div>' +
-        '<table class="ih-two-section-cost__table">' +
-        '<thead><tr><th style="width:32%">Category</th><th>Description</th><th class="num" style="width:90px">Amount</th><th style="width:24px"></th></tr></thead>' +
-        '<tbody>' + catRows + '</tbody>' +
-        '<tfoot><tr class="ih-two-section-cost__subtotal-row"><td colspan="2" class="ih-two-section-cost__subtotal-label">Section A subtotal</td><td class="num" data-role="subtotal-a">' + money(0) + '</td><td></td></tr></tfoot>' +
-        '</table>' +
-        '</section>' +
-        '<section>' +
-        '<div class="ih-two-section-cost__head ih-two-section-cost__head--b">' +
-        '<div class="ih-two-section-cost__title">Section B · Items (parts &amp; service)</div>' +
-        '<button type="button" class="ih-two-section-cost__add" data-action="add-item">+ Add item line</button>' +
+        '<div style="display:grid;gap:6px;">' +
+          '<div style="height:22px;padding:4px 8px;background:#d8e8d8;color:#173404;border:0.5px solid #97c459;border-left:3px solid #1a7a3c;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;font-size:8px;text-transform:uppercase;letter-spacing:0.4px;font-weight:500;">' +
+            '<span>SECTION B · ITEMS</span>' +
+            '<button type="button" data-action="add-item" style="height:14px;font-size:8px;padding:0 6px;background:#fff;border:0.5px solid #1a7a3c;color:#173404;border-radius:2px;cursor:pointer;">+ Add item line</button>' +
+          '</div>' +
+          '<table style="width:100%;border-collapse:collapse;border:0.5px solid #97c459;table-layout:fixed;">' +
+            '<thead style="background:#ecf3ec;">' +
+              '<tr>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#173404;width:32%;">Item</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#173404;width:50px;">Qty</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#173404;width:70px;">Amount</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#173404;width:70px;">Total</th>' +
+                '<th style="text-align:left;padding:2px 6px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#173404;width:80px;">ODO fill at</th>' +
+                '<th style="text-align:left;padding:2px 2px;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#173404;width:16px;"></th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' + itemRows + '</tbody>' +
+            '<tfoot>' +
+              '<tr style="background:#d8e8d8;">' +
+                '<td colspan="3" style="padding:2px 6px;text-align:right;font-size:8px;letter-spacing:0.3px;text-transform:uppercase;color:#173404;">Subtotal B</td>' +
+                '<td style="padding:2px 6px;text-align:right;font-size:9px;color:#173404;" data-role="subtotal-b">' + fmt(state.subtotalB) + '</td>' +
+                '<td></td>' +
+                '<td></td>' +
+              '</tr>' +
+            '</tfoot>' +
+          '</table>' +
         '</div>' +
-        '<table class="ih-two-section-cost__table">' +
-        '<thead><tr><th style="width:26%">Item</th><th style="width:22%">Location</th><th style="width:50px">Qty</th><th style="width:80px">Unit $</th><th class="num" style="width:80px">Line $</th><th style="width:24px"></th></tr></thead>' +
-        '<tbody>' + itemRows + '</tbody>' +
-        '<tfoot><tr class="ih-two-section-cost__subtotal-row"><td colspan="4" class="ih-two-section-cost__subtotal-label">Section B subtotal</td><td class="num" data-role="subtotal-b">' + money(0) + '</td><td></td></tr></tfoot>' +
-        '</table>' +
-        '</section>' +
-        '<div class="ih-two-section-cost__total"><span class="ih-two-section-cost__total-label">Total · A + B</span><span class="ih-two-section-cost__total-value" data-role="total">' + money(0) + '</span></div>';
+        '<div style="height:22px;padding:4px 8px;background:#1a1f36;color:#fff;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;font-size:9px;text-transform:uppercase;letter-spacing:0.4px;">' +
+          '<span>TOTAL · A + B</span>' +
+          '<span data-role="grand-total" style="font-size:11px;font-weight:500;">' + fmt(state.total) + '</span>' +
+        '</div>';
 
-      updateComputedUi();
+      // Pattern C (parts panel) deferred to future prompt.
     }
 
-    function removeByIndex(section, index) {
-      if (section === 'categories') {
-        state.categories.splice(index, 1);
-      } else if (section === 'items') {
-        state.items.splice(index, 1);
-      }
-      render();
-      emitChange();
-    }
-
-    function updateField(target) {
-      var section = target.getAttribute('data-section');
-      var idx = Number(target.getAttribute('data-index'));
+    function applyFieldChange(target) {
+      var kind = target.getAttribute('data-kind');
+      var idx = toNum(target.getAttribute('data-index'), -1);
       var field = target.getAttribute('data-field');
-      if (!Number.isFinite(idx) || idx < 0 || !field) return;
-      var row = section === 'categories' ? state.categories[idx] : state.items[idx];
-      if (!row) return;
-      if (field === 'amount' || field === 'qty' || field === 'unit_price') {
-        row[field] = toNumber(target.value, 0);
-        if (field === 'qty' && row[field] <= 0) row[field] = 0;
+      if (idx < 0 || !field) return;
+
+      if (kind === 'category') {
+        var cat = state.categories[idx];
+        if (!cat) return;
+        if (field === 'qty') cat.qty = toNum(target.value, 0);
+        else if (field === 'amount') cat.amount = toNum(target.value, 0);
+        else cat[field] = String(target.value || '').trim();
+      } else if (kind === 'item') {
+        var itm = state.items[idx];
+        if (!itm) return;
+        if (field === 'qty') itm.qty = toNum(target.value, 0);
+        else if (field === 'amount') itm.amount = toNum(target.value, 0);
+        else if (field === 'odo_fill_at') itm.odo_fill_at = target.value === '' ? null : toNum(target.value, null);
+        else if (field === 'item') itm.item = String(target.value || '').trim();
+      }
+
+      recalc(state);
+      render();
+      emit();
+    }
+
+    function onRootClick(event) {
+      var btn = event.target && event.target.closest ? event.target.closest('button[data-action]') : null;
+      if (!btn) return;
+      var action = btn.getAttribute('data-action');
+      var idx = toNum(btn.getAttribute('data-index'), -1);
+      if (action === 'add-category') {
+        state.categories.push(normalizeCategoryLine(DEFAULT_CATEGORY));
+      } else if (action === 'add-item') {
+        state.items.push(normalizeItemLine(DEFAULT_ITEM));
+      } else if (action === 'remove-category' && idx >= 0) {
+        state.categories.splice(idx, 1);
+        if (!state.categories.length) state.categories = [normalizeCategoryLine(DEFAULT_CATEGORY)];
+      } else if (action === 'remove-item' && idx >= 0) {
+        state.items.splice(idx, 1);
+        if (!state.items.length) state.items = [normalizeItemLine(DEFAULT_ITEM)];
       } else {
-        row[field] = String(target.value || '').trim();
+        return;
       }
-      updateComputedUi();
-      emitChange();
+      recalc(state);
+      render();
+      emit();
     }
 
-    function onClick(event) {
-      var button = event.target.closest('button');
-      if (!button) return;
-      var action = button.getAttribute('data-action');
-      if (!action) return;
-      if (action === 'add-cat') {
-        state.categories.push(normalizeCategory({ category: '', description: '', amount: 0 }));
-        render();
-        emitChange();
-        return;
-      }
-      if (action === 'add-item') {
-        state.items.push(normalizeItem({ item_name: '', location: '', qty: 1, unit_price: 0 }));
-        render();
-        emitChange();
-        return;
-      }
-      if (action === 'remove-cat') {
-        removeByIndex('categories', Number(button.getAttribute('data-index')));
-        return;
-      }
-      if (action === 'remove-item') {
-        removeByIndex('items', Number(button.getAttribute('data-index')));
-      }
-    }
-
-    function onInput(event) {
+    function onRootInput(event) {
       var target = event.target;
       if (!target || !target.getAttribute) return;
-      if (!target.getAttribute('data-section')) return;
-      updateField(target);
+      if (!target.getAttribute('data-kind')) return;
+      applyFieldChange(target);
     }
 
-    root.addEventListener('click', onClick);
-    root.addEventListener('input', onInput);
-    root.addEventListener('change', onInput);
+    root.addEventListener('click', onRootClick);
+    root.addEventListener('input', onRootInput);
+    root.addEventListener('change', onRootInput);
 
     render();
-    emitChange();
+    emit();
 
     return {
       getState: function getState() {
+        recalc(state);
         return cloneState(state);
       },
       setState: function setState(newState) {
         var next = newState && typeof newState === 'object' ? newState : {};
-        state.categories = Array.isArray(next.categories) && next.categories.length
-          ? next.categories.map(normalizeCategory)
-          : defaultState().categories;
-        state.items = Array.isArray(next.items) && next.items.length
-          ? next.items.map(normalizeItem)
-          : defaultState().items;
+        var cat = Array.isArray(next.categories) && next.categories.length
+          ? next.categories.map(normalizeCategoryLine)
+          : [normalizeCategoryLine(DEFAULT_CATEGORY)];
+        var itm = Array.isArray(next.items) && next.items.length
+          ? next.items.map(normalizeItemLine)
+          : [normalizeItemLine(DEFAULT_ITEM)];
+        state = { categories: cat, items: itm, subtotalA: 0, subtotalB: 0, total: 0 };
+        recalc(state);
         render();
-        emitChange();
+        emit();
       },
       reset: function reset() {
-        state = defaultState();
+        state = makeDefaultState();
+        recalc(state);
         render();
-        emitChange();
+        emit();
       },
       destroy: function destroy() {
-        root.removeEventListener('click', onClick);
-        root.removeEventListener('input', onInput);
-        root.removeEventListener('change', onInput);
-        if (container.contains(root)) container.removeChild(root);
-      },
+        root.removeEventListener('click', onRootClick);
+        root.removeEventListener('input', onRootInput);
+        root.removeEventListener('change', onRootInput);
+        container.innerHTML = '';
+      }
     };
   }
 
-  global.IH35TwoSectionCost = { mount: mount };
+  global.IH35TwoSectionCost = {
+    mount: mount
+  };
 })(window);
