@@ -281,6 +281,12 @@
               <div class="erp-mb-field">
                 <span class="qb-l">Expense lines (same for all bills)</span>
                 <div id="mbWoLinesRoot" class="erp-mb-lines-scroll">
+                  <div class="ih-section-a-band"
+                    style="background:#f5e8c8;color:#6b4f00;border-left:3px solid #b07d00;border-top:0.5px solid #d4c89a;border-right:0.5px solid #d4c89a;padding:4px 8px;font-size:8px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;height:22px;box-sizing:border-box;">
+                    <span>SECTION A &middot; CATEGORIES</span>
+                    <span style="font-size:7px;letter-spacing:0.3px;color:#8a6d2a;">FROM CATEGORIES CATALOG · OPTIONAL</span>
+                  </div>
+
                   <details class="maint-qb-cost-details ap-wo-details" open>
                     <summary class="maint-qb-cost-details__sum">
                       <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
@@ -3928,6 +3934,12 @@
                       <button type="button" class="qb-btn-add maint-line-clear" onclick="clearWoCategoryLines()">Clear category lines</button>
                     </div>
                   </details>
+                  <div class="ih-section-b-band"
+                    style="background:#d8e8d8;color:#173404;border-left:3px solid #1a7a3c;border-top:0.5px solid #97c459;border-right:0.5px solid #97c459;padding:4px 8px;font-size:8px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;height:22px;box-sizing:border-box;margin-top:6px;">
+                    <span>SECTION B &middot; ITEMS &middot; PRODUCTS &middot; SERVICES</span>
+                    <span style="font-size:7px;letter-spacing:0.3px;color:#3a6d3a;">FROM ITEMS CATALOG · REPAIR/MAINT/TIRE ITEMS AUTO-EXPAND PARTS PANEL</span>
+                  </div>
+
                   <details class="maint-qb-cost-details ap-wo-details">
                     <summary class="maint-qb-cost-details__sum">
                       <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
@@ -3963,6 +3975,12 @@
                     </div>
                   </details>
                 </div>
+                <div class="ih-total-banner"
+                  style="background:#1a1f36;color:#fff;padding:4px 10px;font-size:9px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;height:22px;box-sizing:border-box;margin-top:6px;border-radius:0;">
+                  <span>TOTAL &middot; SECTION A + SECTION B</span>
+                  <span id="ihApGrandTotal" style="font-size:11px;font-weight:500;">$0.00</span>
+                </div>
+
                 <div class="qb-lines-actions">
                   <span class="mini-note" style="margin:0">Total lines: <strong id="woLineCount">0</strong></span>
                 </div>
