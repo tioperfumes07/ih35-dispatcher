@@ -2045,6 +2045,10 @@
                       </div>
                     </div>
                     <div class="maint-subcard__body maint-qb-cost-panels">
+                      <div class="ih-wo-section-a-band" style="background:#f5e8c8;color:#6b4f00;border-left:3px solid #b07d00;border-top:0.5px solid #d4c89a;border-right:0.5px solid #d4c89a;padding:4px 8px;font-size:8px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;height:22px;box-sizing:border-box;">
+                        <span>SECTION A &middot; CATEGORIES</span>
+                        <span style="font-size:7px;letter-spacing:0.3px;color:#8a6d2a;">FROM CATEGORIES CATALOG · OPTIONAL</span>
+                      </div>
                       <details class="maint-qb-cost-details" id="maintCostCatDetails" open>
                         <summary class="maint-qb-cost-details__sum">
                           <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
@@ -2076,6 +2080,10 @@
                           <button type="button" class="maint-cost-addline maint-cost-addline--clear" onclick="clearMaintCategoryCostLines()">Clear category lines</button>
                         </div>
                       </details>
+                      <div class="ih-wo-section-b-band" style="background:#d8e8d8;color:#173404;border-left:3px solid #1a7a3c;border-top:0.5px solid #97c459;border-right:0.5px solid #97c459;padding:4px 8px;font-size:8px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;height:22px;box-sizing:border-box;margin-top:6px;">
+                        <span>SECTION B &middot; ITEMS &middot; PRODUCTS &middot; SERVICES</span>
+                        <span style="font-size:7px;letter-spacing:0.3px;color:#3a6d3a;">FROM ITEMS CATALOG · REPAIR/MAINT/TIRE ITEMS AUTO-EXPAND PARTS PANEL</span>
+                      </div>
                       <details class="maint-qb-cost-details" id="maintCostItemDetails">
                         <summary class="maint-qb-cost-details__sum">
                           <span class="maint-qb-cost-details__chev" aria-hidden="true"></span>
@@ -2110,6 +2118,10 @@
                           <button type="button" class="maint-cost-addline maint-cost-addline--clear" onclick="clearMaintItemCostLines()">Clear item lines</button>
                         </div>
                       </details>
+                      <div class="ih-wo-total-banner" style="background:#1a1f36;color:#fff;padding:4px 10px;font-size:9px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;height:22px;box-sizing:border-box;margin-top:6px;border-radius:0;">
+                        <span>TOTAL &middot; SECTION A + SECTION B</span>
+                        <span id="ihWoGrandTotal" style="font-size:11px;font-weight:500;">$0.00</span>
+                      </div>
                       <div class="maint-qb-cost-totals-bar" id="maintCostTotalsBar" aria-live="polite">
                         <span class="maint-qb-cost-totals-bar__piece"
                           ><span class="maint-qb-cost-totals-bar__lbl">Category lines:</span>
@@ -36933,6 +36945,66 @@
         }
 
         setTimeout(recompute, 200);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachListeners, { once: true });
+      } else {
+        attachListeners();
+      }
+    })();
+  </script>
+  <script>
+    /* IH35 Prompt 9 — live WO total wiring */
+    (function () {
+      'use strict';
+      if (window.__ih35WoTotalWired) return;
+      window.__ih35WoTotalWired = true;
+
+      var WO_PANEL_ID = 'maintWorkOrderFormMount';
+      var CATEGORY_SELECTOR = '#maintCostCatHost .maint-line-amt';
+      var ITEM_SELECTOR = '#maintCostItemHost .maint-line-amt';
+
+      function num(v) {
+        var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
+        return isFinite(n) ? n : 0;
+      }
+
+      function fmt(n) {
+        var s = (Math.round(n * 100) / 100).toFixed(2);
+        var parts = s.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return '$' + parts.join('.');
+      }
+
+      function recompute() {
+        var target = document.getElementById('ihWoGrandTotal');
+        if (!target) return;
+        var sum = 0;
+        document.querySelectorAll(CATEGORY_SELECTOR).forEach(function (el) { sum += num(el.value); });
+        document.querySelectorAll(ITEM_SELECTOR).forEach(function (el) { sum += num(el.value); });
+        target.textContent = fmt(sum);
+      }
+
+      function attachListeners() {
+        var root = document.getElementById(WO_PANEL_ID) || document;
+        root.addEventListener('input', function (e) {
+          var t = e && e.target;
+          if (!t || t.tagName !== 'INPUT') return;
+          if (t.matches && (t.matches(CATEGORY_SELECTOR) || t.matches(ITEM_SELECTOR))) {
+            setTimeout(recompute, 0);
+          }
+        }, true);
+
+        var watchRoot = document.getElementById('maintCostLinesPanel');
+        if (watchRoot) {
+          var observer = new MutationObserver(function () {
+            setTimeout(recompute, 50);
+          });
+          observer.observe(watchRoot, { childList: true, subtree: true });
+        }
+
+        setTimeout(recompute, 300);
       }
 
       if (document.readyState === 'loading') {
