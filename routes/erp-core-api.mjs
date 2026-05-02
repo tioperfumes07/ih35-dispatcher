@@ -4280,15 +4280,40 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!getPoolForRoute()) {
         const erp = readFullErpJson();
         const cached = Array.isArray(erp?.workOrders) ? erp.workOrders : [];
-        return res.json({ ok: true, workOrders: cached, data: cached });
+        const hydrated = cached.map((row) => ({ ...row, cost_lines: normalizeCostLinesPayload(row) }));
+        return res.json({ ok: true, workOrders: hydrated, data: hydrated });
       }
       await ensureWorkOrdersTable();
+      await ensureWorkOrderLineTables();
       const { rows } = await dbQueryForRoute('SELECT * FROM work_orders ORDER BY created_at DESC, id DESC LIMIT 1000');
-      const workOrders = rows || [];
+      const workOrders = await attachWorkOrderCostLines(rows || []);
       return res.json({ ok: true, workOrders, data: workOrders });
     } catch (e) {
       logError('GET /api/work-orders', e);
       return res.json({ ok: true, workOrders: [], data: [] });
+    }
+  });
+
+  app.get('/api/work-orders/:id', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const cached = Array.isArray(erp?.workOrders) ? erp.workOrders : [];
+        const row = cached.find((r) => String(r?.id) === String(req.params.id));
+        if (!row) return res.status(404).json({ ok: false, error: 'not_found' });
+        const workOrder = { ...row, cost_lines: normalizeCostLinesPayload(row) };
+        return res.json({ ok: true, workOrder, data: workOrder });
+      }
+      await ensureWorkOrdersTable();
+      await ensureWorkOrderLineTables();
+      const { rows } = await dbQueryForRoute('SELECT * FROM work_orders WHERE id = $1 LIMIT 1', [req.params.id]);
+      const workOrder = rows?.[0] || null;
+      if (!workOrder) return res.status(404).json({ ok: false, error: 'not_found' });
+      workOrder.cost_lines = await readWorkOrderCostLines(workOrder.id);
+      return res.json({ ok: true, workOrder, data: workOrder });
+    } catch (e) {
+      logError('GET /api/work-orders/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -4297,11 +4322,13 @@ export function mountErpCoreApi(app, opts = {}) {
       if (!getPoolForRoute()) {
         const erp = readFullErpJson();
         const cached = Array.isArray(erp?.workOrders) ? erp.workOrders : [];
-        return res.json({ ok: true, workOrders: cached, data: cached });
+        const hydrated = cached.map((row) => ({ ...row, cost_lines: normalizeCostLinesPayload(row) }));
+        return res.json({ ok: true, workOrders: hydrated, data: hydrated });
       }
       await ensureWorkOrdersTable();
+      await ensureWorkOrderLineTables();
       const { rows } = await dbQueryForRoute('SELECT * FROM work_orders ORDER BY created_at DESC, id DESC LIMIT 1000');
-      const workOrders = rows || [];
+      const workOrders = await attachWorkOrderCostLines(rows || []);
       return res.json({ ok: true, workOrders, data: workOrders });
     } catch (e) {
       logError('GET /api/maintenance/work-orders', e);
@@ -4342,6 +4369,7 @@ export function mountErpCoreApi(app, opts = {}) {
       status: String(b.status || '').trim() || 'Open',
       source: String(b.source || 'maintenance_ui').trim(),
     };
+    const costLinesPayload = normalizeCostLinesPayload(b);
     try {
       if (!getPoolForRoute()) {
         const erp = readFullErpJson();
@@ -4349,6 +4377,7 @@ export function mountErpCoreApi(app, opts = {}) {
         const row = {
           id: String(Date.now()),
           ...payload,
+          cost_lines: costLinesPayload,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -4357,25 +4386,160 @@ export function mountErpCoreApi(app, opts = {}) {
         return res.json({ ok: true, workOrder: row, data: row });
       }
       await ensureWorkOrdersTable();
-      const { rows } = await dbQueryForRoute(
-        `INSERT INTO work_orders
-          (unit_number, service_type, description, vendor, estimated_cost, priority, status, source, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())
-         RETURNING *`,
-        [
-          payload.unit_number,
-          payload.service_type,
-          payload.description,
-          payload.vendor,
-          Number.isFinite(payload.estimated_cost) ? payload.estimated_cost : null,
-          payload.priority,
-          payload.status,
-          payload.source,
-        ]
-      );
-      return res.json({ ok: true, workOrder: rows?.[0] || null, data: rows?.[0] || null });
+      await ensureWorkOrderLineTables();
+      const pool = getPoolForRoute();
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const { rows } = await client.query(
+          `INSERT INTO work_orders
+            (unit_number, service_type, description, vendor, estimated_cost, priority, status, source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())
+           RETURNING *`,
+          [
+            payload.unit_number,
+            payload.service_type,
+            payload.description,
+            payload.vendor,
+            Number.isFinite(payload.estimated_cost) ? payload.estimated_cost : null,
+            payload.priority,
+            payload.status,
+            payload.source,
+          ]
+        );
+        const workOrder = rows?.[0] || null;
+        if (!workOrder?.id) throw new Error('work order insert failed');
+        await insertWorkOrderCostLines(client, workOrder.id, costLinesPayload);
+        const cost_lines = await readWorkOrderCostLines(workOrder.id, (sql, params) => client.query(sql, params));
+        await client.query('COMMIT');
+        const out = { ...workOrder, cost_lines };
+        return res.json({ ok: true, workOrder: out, data: out });
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
     } catch (e) {
       logError('POST /api/work-orders', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/work-orders/:woId/category-lines/:lineId', async (req, res) => {
+    const b = req.body && typeof req.body === 'object' ? req.body : null;
+    if (!b) return res.status(400).json({ ok: false, error: 'invalid_body' });
+    const updates = [];
+    const params = [];
+    if (Object.prototype.hasOwnProperty.call(b, 'category')) {
+      const v = String(b.category || '').trim();
+      if (!v) return res.status(400).json({ ok: false, error: 'category must be non-empty' });
+      params.push(v);
+      updates.push(`category = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'description')) {
+      params.push(String(b.description || '').trim() || null);
+      updates.push(`description = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'amount')) {
+      const n = Number(b.amount);
+      if (!Number.isFinite(n)) return res.status(400).json({ ok: false, error: 'amount must be a number' });
+      params.push(n);
+      updates.push(`amount = $${params.length}`);
+    }
+    if (!updates.length) return res.status(400).json({ ok: false, error: 'no updatable fields' });
+    params.push(req.params.lineId);
+    params.push(req.params.woId);
+    try {
+      await ensureWorkOrderLineTables();
+      const { rows } = await dbQueryForRoute(
+        `UPDATE work_order_category_lines
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${params.length - 1} AND work_order_id = $${params.length}
+          RETURNING *`,
+        params
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, line: rows[0], data: rows[0] });
+    } catch (e) {
+      logError('PUT /api/work-orders/:woId/category-lines/:lineId', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/work-orders/:woId/category-lines/:lineId', async (req, res) => {
+    try {
+      await ensureWorkOrderLineTables();
+      const { rows } = await dbQueryForRoute(
+        'DELETE FROM work_order_category_lines WHERE id = $1 AND work_order_id = $2 RETURNING id',
+        [req.params.lineId, req.params.woId]
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, deleted: String(rows[0].id) });
+    } catch (e) {
+      logError('DELETE /api/work-orders/:woId/category-lines/:lineId', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/work-orders/:woId/item-lines/:lineId', async (req, res) => {
+    const b = req.body && typeof req.body === 'object' ? req.body : null;
+    if (!b) return res.status(400).json({ ok: false, error: 'invalid_body' });
+    const updates = [];
+    const params = [];
+    if (Object.prototype.hasOwnProperty.call(b, 'item_name')) {
+      const v = String(b.item_name || '').trim();
+      if (!v) return res.status(400).json({ ok: false, error: 'item_name must be non-empty' });
+      params.push(v);
+      updates.push(`item_name = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'location')) {
+      params.push(String(b.location || '').trim() || null);
+      updates.push(`location = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'qty')) {
+      const n = Number(b.qty);
+      if (!Number.isFinite(n)) return res.status(400).json({ ok: false, error: 'qty must be a number' });
+      params.push(n);
+      updates.push(`qty = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'unit_price')) {
+      const n = Number(b.unit_price);
+      if (!Number.isFinite(n)) return res.status(400).json({ ok: false, error: 'unit_price must be a number' });
+      params.push(n);
+      updates.push(`unit_price = $${params.length}`);
+    }
+    if (!updates.length) return res.status(400).json({ ok: false, error: 'no updatable fields' });
+    params.push(req.params.lineId);
+    params.push(req.params.woId);
+    try {
+      await ensureWorkOrderLineTables();
+      const { rows } = await dbQueryForRoute(
+        `UPDATE work_order_item_lines
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${params.length - 1} AND work_order_id = $${params.length}
+          RETURNING *`,
+        params
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, line: rows[0], data: rows[0] });
+    } catch (e) {
+      logError('PUT /api/work-orders/:woId/item-lines/:lineId', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/work-orders/:woId/item-lines/:lineId', async (req, res) => {
+    try {
+      await ensureWorkOrderLineTables();
+      const { rows } = await dbQueryForRoute(
+        'DELETE FROM work_order_item_lines WHERE id = $1 AND work_order_id = $2 RETURNING id',
+        [req.params.lineId, req.params.woId]
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, deleted: String(rows[0].id) });
+    } catch (e) {
+      logError('DELETE /api/work-orders/:woId/item-lines/:lineId', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
@@ -4430,6 +4594,319 @@ export function mountErpCoreApi(app, opts = {}) {
       )`
     );
   }
+
+  function toNumOr(v, fallback = 0) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function normalizeCostLinesPayload(body) {
+    const b = body && typeof body === 'object' ? body : {};
+    const out = { categories: [], items: [] };
+    const costLines = b.cost_lines && typeof b.cost_lines === 'object' ? b.cost_lines : null;
+    const rawCategories = Array.isArray(costLines?.categories) ? costLines.categories : [];
+    const rawItems = Array.isArray(costLines?.items) ? costLines.items : [];
+
+    out.categories = rawCategories
+      .map((row) => ({
+        category: String(row?.category || '').trim(),
+        description: String(row?.description || '').trim() || null,
+        amount: toNumOr(row?.amount, 0),
+      }))
+      .filter((row) => row.category);
+
+    out.items = rawItems
+      .map((row) => {
+        const qtyRaw = row?.qty ?? row?.quantity ?? 1;
+        const qty = Number.isFinite(Number(qtyRaw)) && Number(qtyRaw) > 0 ? Number(qtyRaw) : 1;
+        const unitPriceRaw = row?.unit_price ?? row?.unitPrice ?? row?.amount ?? 0;
+        return {
+          item_name: String(row?.item_name || row?.name || row?.description || '').trim(),
+          location: String(row?.location || '').trim() || null,
+          qty,
+          unit_price: toNumOr(unitPriceRaw, 0),
+        };
+      })
+      .filter((row) => row.item_name);
+
+    if (!costLines && Array.isArray(b.lines)) {
+      out.items = b.lines
+        .map((row) => {
+          const qtyRaw = row?.qty ?? row?.quantity ?? 1;
+          const qty = Number.isFinite(Number(qtyRaw)) && Number(qtyRaw) > 0 ? Number(qtyRaw) : 1;
+          const unitPriceRaw = row?.unit_price ?? row?.unitPrice ?? row?.amount ?? 0;
+          return {
+            item_name: String(row?.description || row?.name || '').trim(),
+            location: String(row?.location || '').trim() || null,
+            qty,
+            unit_price: toNumOr(unitPriceRaw, 0),
+          };
+        })
+        .filter((row) => row.item_name);
+    }
+
+    return out;
+  }
+
+  async function ensureWorkOrderLineTables() {
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS work_order_category_lines (
+        id BIGSERIAL PRIMARY KEY,
+        work_order_id INTEGER NOT NULL REFERENCES work_orders(id) ON DELETE CASCADE,
+        category TEXT NOT NULL,
+        description TEXT,
+        amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS work_order_item_lines (
+        id BIGSERIAL PRIMARY KEY,
+        work_order_id INTEGER NOT NULL REFERENCES work_orders(id) ON DELETE CASCADE,
+        item_name TEXT NOT NULL,
+        location TEXT,
+        qty NUMERIC(10,3) NOT NULL DEFAULT 1,
+        unit_price NUMERIC(12,2) NOT NULL DEFAULT 0,
+        line_total NUMERIC(12,2) GENERATED ALWAYS AS (qty * unit_price) STORED,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQueryForRoute(
+      'CREATE INDEX IF NOT EXISTS idx_work_order_category_lines_work_order_id ON work_order_category_lines(work_order_id)'
+    );
+    await dbQueryForRoute(
+      'CREATE INDEX IF NOT EXISTS idx_work_order_item_lines_work_order_id ON work_order_item_lines(work_order_id)'
+    );
+  }
+
+  async function ensureTransactionLineTables() {
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS transaction_category_lines (
+        id BIGSERIAL PRIMARY KEY,
+        transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+        category TEXT NOT NULL,
+        description TEXT,
+        amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQueryForRoute(
+      `CREATE TABLE IF NOT EXISTS transaction_item_lines (
+        id BIGSERIAL PRIMARY KEY,
+        transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+        item_name TEXT NOT NULL,
+        location TEXT,
+        qty NUMERIC(10,3) NOT NULL DEFAULT 1,
+        unit_price NUMERIC(12,2) NOT NULL DEFAULT 0,
+        line_total NUMERIC(12,2) GENERATED ALWAYS AS (qty * unit_price) STORED,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
+    await dbQueryForRoute(
+      'CREATE INDEX IF NOT EXISTS idx_transaction_category_lines_transaction_id ON transaction_category_lines(transaction_id)'
+    );
+    await dbQueryForRoute(
+      'CREATE INDEX IF NOT EXISTS idx_transaction_item_lines_transaction_id ON transaction_item_lines(transaction_id)'
+    );
+  }
+
+  async function readWorkOrderCostLines(workOrderId, queryFn = dbQueryForRoute) {
+    const idNum = Number(workOrderId);
+    if (!Number.isFinite(idNum) || idNum <= 0) return { categories: [], items: [] };
+    const [{ rows: catRows }, { rows: itemRows }] = await Promise.all([
+      queryFn(
+        `SELECT id, work_order_id, category, description, amount, created_at, updated_at
+           FROM work_order_category_lines
+          WHERE work_order_id = $1
+          ORDER BY id`,
+        [idNum]
+      ),
+      queryFn(
+        `SELECT id, work_order_id, item_name, location, qty, unit_price, line_total, created_at, updated_at
+           FROM work_order_item_lines
+          WHERE work_order_id = $1
+          ORDER BY id`,
+        [idNum]
+      ),
+    ]);
+    return { categories: catRows || [], items: itemRows || [] };
+  }
+
+  async function readTransactionCostLines(transactionId, queryFn = dbQueryForRoute) {
+    const idNum = Number(transactionId);
+    if (!Number.isFinite(idNum) || idNum <= 0) return { categories: [], items: [] };
+    const [{ rows: catRows }, { rows: itemRows }] = await Promise.all([
+      queryFn(
+        `SELECT id, transaction_id, category, description, amount, created_at, updated_at
+           FROM transaction_category_lines
+          WHERE transaction_id = $1
+          ORDER BY id`,
+        [idNum]
+      ),
+      queryFn(
+        `SELECT id, transaction_id, item_name, location, qty, unit_price, line_total, created_at, updated_at
+           FROM transaction_item_lines
+          WHERE transaction_id = $1
+          ORDER BY id`,
+        [idNum]
+      ),
+    ]);
+    return { categories: catRows || [], items: itemRows || [] };
+  }
+
+  async function attachWorkOrderCostLines(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) return [];
+    const ids = Array.from(new Set(list.map((r) => Number(r?.id)).filter((n) => Number.isFinite(n) && n > 0)));
+    if (!ids.length) return list.map((r) => ({ ...r, cost_lines: { categories: [], items: [] } }));
+    const [{ rows: catRows }, { rows: itemRows }] = await Promise.all([
+      dbQueryForRoute(
+        `SELECT id, work_order_id, category, description, amount, created_at, updated_at
+           FROM work_order_category_lines
+          WHERE work_order_id = ANY($1::int[])
+          ORDER BY id`,
+        [ids]
+      ),
+      dbQueryForRoute(
+        `SELECT id, work_order_id, item_name, location, qty, unit_price, line_total, created_at, updated_at
+           FROM work_order_item_lines
+          WHERE work_order_id = ANY($1::int[])
+          ORDER BY id`,
+        [ids]
+      ),
+    ]);
+    const map = new Map(ids.map((id) => [id, { categories: [], items: [] }]));
+    for (const row of catRows || []) {
+      const k = Number(row?.work_order_id);
+      if (map.has(k)) map.get(k).categories.push(row);
+    }
+    for (const row of itemRows || []) {
+      const k = Number(row?.work_order_id);
+      if (map.has(k)) map.get(k).items.push(row);
+    }
+    return list.map((row) => {
+      const k = Number(row?.id);
+      return { ...row, cost_lines: map.get(k) || { categories: [], items: [] } };
+    });
+  }
+
+  async function attachTransactionCostLines(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) return [];
+    const ids = Array.from(new Set(list.map((r) => Number(r?.id)).filter((n) => Number.isFinite(n) && n > 0)));
+    if (!ids.length) return list.map((r) => ({ ...r, cost_lines: { categories: [], items: [] } }));
+    const [{ rows: catRows }, { rows: itemRows }] = await Promise.all([
+      dbQueryForRoute(
+        `SELECT id, transaction_id, category, description, amount, created_at, updated_at
+           FROM transaction_category_lines
+          WHERE transaction_id = ANY($1::int[])
+          ORDER BY id`,
+        [ids]
+      ),
+      dbQueryForRoute(
+        `SELECT id, transaction_id, item_name, location, qty, unit_price, line_total, created_at, updated_at
+           FROM transaction_item_lines
+          WHERE transaction_id = ANY($1::int[])
+          ORDER BY id`,
+        [ids]
+      ),
+    ]);
+    const map = new Map(ids.map((id) => [id, { categories: [], items: [] }]));
+    for (const row of catRows || []) {
+      const k = Number(row?.transaction_id);
+      if (map.has(k)) map.get(k).categories.push(row);
+    }
+    for (const row of itemRows || []) {
+      const k = Number(row?.transaction_id);
+      if (map.has(k)) map.get(k).items.push(row);
+    }
+    return list.map((row) => {
+      const k = Number(row?.id);
+      return { ...row, cost_lines: map.get(k) || { categories: [], items: [] } };
+    });
+  }
+
+  async function insertWorkOrderCostLines(client, workOrderId, costLines) {
+    const lines = costLines && typeof costLines === 'object' ? costLines : { categories: [], items: [] };
+    for (const row of lines.categories || []) {
+      await client.query(
+        `INSERT INTO work_order_category_lines (work_order_id, category, description, amount, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,NOW(),NOW())`,
+        [workOrderId, row.category, row.description || null, toNumOr(row.amount, 0)]
+      );
+    }
+    for (const row of lines.items || []) {
+      await client.query(
+        `INSERT INTO work_order_item_lines (work_order_id, item_name, location, qty, unit_price, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,NOW(),NOW())`,
+        [workOrderId, row.item_name, row.location || null, toNumOr(row.qty, 1), toNumOr(row.unit_price, 0)]
+      );
+    }
+  }
+
+  async function insertTransactionCostLines(client, transactionId, costLines) {
+    const lines = costLines && typeof costLines === 'object' ? costLines : { categories: [], items: [] };
+    for (const row of lines.categories || []) {
+      await client.query(
+        `INSERT INTO transaction_category_lines (transaction_id, category, description, amount, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,NOW(),NOW())`,
+        [transactionId, row.category, row.description || null, toNumOr(row.amount, 0)]
+      );
+    }
+    for (const row of lines.items || []) {
+      await client.query(
+        `INSERT INTO transaction_item_lines (transaction_id, item_name, location, qty, unit_price, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,NOW(),NOW())`,
+        [transactionId, row.item_name, row.location || null, toNumOr(row.qty, 1), toNumOr(row.unit_price, 0)]
+      );
+    }
+  }
+
+  app.get('/api/transactions', async (_req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const cached = Array.isArray(erp?.transactions) ? erp.transactions : [];
+        const hydrated = cached.map((row) => ({ ...row, cost_lines: normalizeCostLinesPayload(row) }));
+        return res.json({ ok: true, transactions: hydrated, data: hydrated });
+      }
+      await ensureTransactionsTable();
+      await ensureTransactionLineTables();
+      const { rows } = await dbQueryForRoute('SELECT * FROM transactions ORDER BY created_at DESC, id DESC LIMIT 3000');
+      const transactions = await attachTransactionCostLines(rows || []);
+      return res.json({ ok: true, transactions, data: transactions });
+    } catch (e) {
+      logError('GET /api/transactions', e);
+      return res.json({ ok: true, transactions: [], data: [] });
+    }
+  });
+
+  app.get('/api/transactions/:id', async (req, res) => {
+    try {
+      if (!getPoolForRoute()) {
+        const erp = readFullErpJson();
+        const cached = Array.isArray(erp?.transactions) ? erp.transactions : [];
+        const row = cached.find((r) => String(r?.id) === String(req.params.id));
+        if (!row) return res.status(404).json({ ok: false, error: 'not_found' });
+        const transaction = { ...row, cost_lines: normalizeCostLinesPayload(row) };
+        return res.json({ ok: true, transaction, data: transaction });
+      }
+      await ensureTransactionsTable();
+      await ensureTransactionLineTables();
+      const { rows } = await dbQueryForRoute('SELECT * FROM transactions WHERE id = $1 LIMIT 1', [req.params.id]);
+      const transaction = rows?.[0] || null;
+      if (!transaction) return res.status(404).json({ ok: false, error: 'not_found' });
+      transaction.cost_lines = await readTransactionCostLines(transaction.id);
+      return res.json({ ok: true, transaction, data: transaction });
+    } catch (e) {
+      logError('GET /api/transactions/:id', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
 
   app.post('/api/transactions', async (req, res) => {
     const b = req.body && typeof req.body === 'object' ? req.body : {};
@@ -4493,6 +4970,7 @@ export function mountErpCoreApi(app, opts = {}) {
       completed_at: String(b.completed_at || '').trim() || null,
     };
 
+    const costLinesPayload = normalizeCostLinesPayload(b);
     try {
       if (!getPoolForRoute()) {
         const erp = readFullErpJson();
@@ -4500,6 +4978,7 @@ export function mountErpCoreApi(app, opts = {}) {
         const row = {
           id: String(Date.now()),
           ...payload,
+          cost_lines: costLinesPayload,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -4509,34 +4988,169 @@ export function mountErpCoreApi(app, opts = {}) {
       }
 
       await ensureTransactionsTable();
-      const { rows } = await dbQueryForRoute(
-        `INSERT INTO transactions (
-          transaction_type, unit_id, unit_number, asset_category, driver_id, driver_name,
-          vendor_id, vendor_name, service_type, description, status, priority,
-          amount_estimated, amount_actual, load_number, location_type,
-          qbo_status, qbo_txn_id, sync_error, created_by, updated_by, source_module,
-          due_at, completed_at, created_at, updated_at
-        ) VALUES (
-          $1,$2,$3,$4,$5,$6,
-          $7,$8,$9,$10,$11,$12,
-          $13,$14,$15,$16,
-          $17,$18,$19,$20,$21,$22,
-          $23,$24,NOW(),NOW()
-        ) RETURNING *`,
-        [
-          payload.transaction_type, payload.unit_id, payload.unit_number, payload.asset_category,
-          payload.driver_id, payload.driver_name, payload.vendor_id, payload.vendor_name,
-          payload.service_type, payload.description, payload.status, payload.priority,
-          Number.isFinite(payload.amount_estimated) ? payload.amount_estimated : null,
-          Number.isFinite(payload.amount_actual) ? payload.amount_actual : null,
-          payload.load_number, payload.location_type, payload.qbo_status, payload.qbo_txn_id,
-          payload.sync_error, payload.created_by, payload.updated_by, payload.source_module,
-          payload.due_at, payload.completed_at,
-        ]
-      );
-      return res.json({ ok: true, transaction: rows?.[0] || null, data: rows?.[0] || null });
+      await ensureTransactionLineTables();
+      const pool = getPoolForRoute();
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const { rows } = await client.query(
+          `INSERT INTO transactions (
+            transaction_type, unit_id, unit_number, asset_category, driver_id, driver_name,
+            vendor_id, vendor_name, service_type, description, status, priority,
+            amount_estimated, amount_actual, load_number, location_type,
+            qbo_status, qbo_txn_id, sync_error, created_by, updated_by, source_module,
+            due_at, completed_at, created_at, updated_at
+          ) VALUES (
+            $1,$2,$3,$4,$5,$6,
+            $7,$8,$9,$10,$11,$12,
+            $13,$14,$15,$16,
+            $17,$18,$19,$20,$21,$22,
+            $23,$24,NOW(),NOW()
+          ) RETURNING *`,
+          [
+            payload.transaction_type, payload.unit_id, payload.unit_number, payload.asset_category,
+            payload.driver_id, payload.driver_name, payload.vendor_id, payload.vendor_name,
+            payload.service_type, payload.description, payload.status, payload.priority,
+            Number.isFinite(payload.amount_estimated) ? payload.amount_estimated : null,
+            Number.isFinite(payload.amount_actual) ? payload.amount_actual : null,
+            payload.load_number, payload.location_type, payload.qbo_status, payload.qbo_txn_id,
+            payload.sync_error, payload.created_by, payload.updated_by, payload.source_module,
+            payload.due_at, payload.completed_at,
+          ]
+        );
+        const transaction = rows?.[0] || null;
+        if (!transaction?.id) throw new Error('transaction insert failed');
+        await insertTransactionCostLines(client, transaction.id, costLinesPayload);
+        const cost_lines = await readTransactionCostLines(transaction.id, (sql, params) => client.query(sql, params));
+        await client.query('COMMIT');
+        const out = { ...transaction, cost_lines };
+        return res.json({ ok: true, transaction: out, data: out });
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
     } catch (e) {
       logError('POST /api/transactions', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/transactions/:txnId/category-lines/:lineId', async (req, res) => {
+    const b = req.body && typeof req.body === 'object' ? req.body : null;
+    if (!b) return res.status(400).json({ ok: false, error: 'invalid_body' });
+    const updates = [];
+    const params = [];
+    if (Object.prototype.hasOwnProperty.call(b, 'category')) {
+      const v = String(b.category || '').trim();
+      if (!v) return res.status(400).json({ ok: false, error: 'category must be non-empty' });
+      params.push(v);
+      updates.push(`category = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'description')) {
+      params.push(String(b.description || '').trim() || null);
+      updates.push(`description = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'amount')) {
+      const n = Number(b.amount);
+      if (!Number.isFinite(n)) return res.status(400).json({ ok: false, error: 'amount must be a number' });
+      params.push(n);
+      updates.push(`amount = $${params.length}`);
+    }
+    if (!updates.length) return res.status(400).json({ ok: false, error: 'no updatable fields' });
+    params.push(req.params.lineId);
+    params.push(req.params.txnId);
+    try {
+      await ensureTransactionLineTables();
+      const { rows } = await dbQueryForRoute(
+        `UPDATE transaction_category_lines
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${params.length - 1} AND transaction_id = $${params.length}
+          RETURNING *`,
+        params
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, line: rows[0], data: rows[0] });
+    } catch (e) {
+      logError('PUT /api/transactions/:txnId/category-lines/:lineId', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/transactions/:txnId/category-lines/:lineId', async (req, res) => {
+    try {
+      await ensureTransactionLineTables();
+      const { rows } = await dbQueryForRoute(
+        'DELETE FROM transaction_category_lines WHERE id = $1 AND transaction_id = $2 RETURNING id',
+        [req.params.lineId, req.params.txnId]
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, deleted: String(rows[0].id) });
+    } catch (e) {
+      logError('DELETE /api/transactions/:txnId/category-lines/:lineId', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.put('/api/transactions/:txnId/item-lines/:lineId', async (req, res) => {
+    const b = req.body && typeof req.body === 'object' ? req.body : null;
+    if (!b) return res.status(400).json({ ok: false, error: 'invalid_body' });
+    const updates = [];
+    const params = [];
+    if (Object.prototype.hasOwnProperty.call(b, 'item_name')) {
+      const v = String(b.item_name || '').trim();
+      if (!v) return res.status(400).json({ ok: false, error: 'item_name must be non-empty' });
+      params.push(v);
+      updates.push(`item_name = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'location')) {
+      params.push(String(b.location || '').trim() || null);
+      updates.push(`location = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'qty')) {
+      const n = Number(b.qty);
+      if (!Number.isFinite(n)) return res.status(400).json({ ok: false, error: 'qty must be a number' });
+      params.push(n);
+      updates.push(`qty = $${params.length}`);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'unit_price')) {
+      const n = Number(b.unit_price);
+      if (!Number.isFinite(n)) return res.status(400).json({ ok: false, error: 'unit_price must be a number' });
+      params.push(n);
+      updates.push(`unit_price = $${params.length}`);
+    }
+    if (!updates.length) return res.status(400).json({ ok: false, error: 'no updatable fields' });
+    params.push(req.params.lineId);
+    params.push(req.params.txnId);
+    try {
+      await ensureTransactionLineTables();
+      const { rows } = await dbQueryForRoute(
+        `UPDATE transaction_item_lines
+            SET ${updates.join(', ')}, updated_at = NOW()
+          WHERE id = $${params.length - 1} AND transaction_id = $${params.length}
+          RETURNING *`,
+        params
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, line: rows[0], data: rows[0] });
+    } catch (e) {
+      logError('PUT /api/transactions/:txnId/item-lines/:lineId', e);
+      return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete('/api/transactions/:txnId/item-lines/:lineId', async (req, res) => {
+    try {
+      await ensureTransactionLineTables();
+      const { rows } = await dbQueryForRoute(
+        'DELETE FROM transaction_item_lines WHERE id = $1 AND transaction_id = $2 RETURNING id',
+        [req.params.lineId, req.params.txnId]
+      );
+      if (!rows?.[0]) return res.status(404).json({ ok: false, error: 'not_found' });
+      return res.json({ ok: true, deleted: String(rows[0].id) });
+    } catch (e) {
+      logError('DELETE /api/transactions/:txnId/item-lines/:lineId', e);
       return res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
