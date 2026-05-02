@@ -36863,8 +36863,85 @@
       }
     })();
   </script>
+  <script>
+    /* IH35 Prompt 8 — live AP total wiring */
+    (function () {
+      'use strict';
+      if (window.__ih35ApTotalWired) return;
+      window.__ih35ApTotalWired = true;
 
+      var CATEGORY_SELECTOR = '.wo-amt';
+      var ITEM_SELECTOR = '.wo-line-total';
 
+      function num(v) {
+        var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
+        return isFinite(n) ? n : 0;
+      }
+
+      function fmt(n) {
+        var s = (Math.round(n * 100) / 100).toFixed(2);
+        var parts = s.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return '$' + parts.join('.');
+      }
+
+      function getAmounts(hostId, selector) {
+        var host = document.getElementById(hostId);
+        if (!host) return 0;
+        var nodes = host.querySelectorAll(selector);
+        var sum = 0;
+        for (var i = 0; i < nodes.length; i += 1) {
+          sum += num(nodes[i].value);
+        }
+        return sum;
+      }
+
+      function recompute() {
+        var target = document.getElementById('ihApGrandTotal');
+        if (!target) return;
+        var subtotalA = getAmounts('apWoCatHost', CATEGORY_SELECTOR);
+        var subtotalB = getAmounts('apWoItemHost', ITEM_SELECTOR);
+        target.textContent = fmt(subtotalA + subtotalB);
+      }
+
+      function attachListeners() {
+        var panel = document.getElementById('erpApDocShellPanel');
+        if (!panel) return;
+
+        panel.addEventListener('input', function (e) {
+          var t = e && e.target;
+          if (!t || t.tagName !== 'INPUT') return;
+          var isInCatHost = t.closest && t.closest('#apWoCatHost');
+          var isInItemHost = t.closest && t.closest('#apWoItemHost');
+          if (isInCatHost || isInItemHost) setTimeout(recompute, 0);
+        }, true);
+
+        var catHost = document.getElementById('apWoCatHost');
+        var itemHost = document.getElementById('apWoItemHost');
+        var observer = new MutationObserver(function () {
+          recompute();
+        });
+        if (catHost) observer.observe(catHost, { childList: true, subtree: true });
+        if (itemHost) observer.observe(itemHost, { childList: true, subtree: true });
+
+        var modal = document.getElementById('erpDedicatedFormModal');
+        if (modal) {
+          var visObserver = new MutationObserver(function () {
+            setTimeout(recompute, 100);
+          });
+          visObserver.observe(modal, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+
+        setTimeout(recompute, 200);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachListeners, { once: true });
+      } else {
+        attachListeners();
+      }
+    })();
+  </script>
 
 </body>
 </html>
