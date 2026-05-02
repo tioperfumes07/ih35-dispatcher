@@ -98,7 +98,6 @@
     .maint-save-toolbar--qb { grid-column:1 / -1 !important; }
   </style>
 <link rel="stylesheet" href="/src/design-tokens.css"/>
-    <script src="/src/components/two-section-cost.js" defer></script>
 </head>
 <body class="erp-app erp-maintenance" data-erp-uniform-controls="1">
   <div id="erpToastHost" class="erp-toast-host" aria-live="polite"></div>
@@ -3921,7 +3920,7 @@
                             <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                         </thead>
-                        <tbody id="apWoCatHost" style="display:none"></tbody>
+                        <tbody id="apWoCatHost"></tbody>
                       </table>
                 </div>
                     <div class="maint-qb-cost-details__actions">
@@ -3955,14 +3954,7 @@
                             <th class="maint-qb-th-del" scope="col">Actions</th>
                           </tr>
                         </thead>
-                        <tbody id="apWoItemHost" style="display:none"></tbody>
-                        <tbody>
-                          <tr>
-                            <td colspan="14">
-                              <div id="apTwoSectionMount"></div>
-                            </td>
-                          </tr>
-                        </tbody>
+                        <tbody id="apWoItemHost"></tbody>
                       </table>
                     </div>
                     <div class="maint-qb-cost-details__actions">
@@ -12625,28 +12617,6 @@
       erpSyncApRepairLocationHidden();
     }
 
-    function mountApTwoSectionCost() {
-      var mount = document.getElementById('apTwoSectionMount');
-      if (!mount || !window.IH35TwoSectionCost) return;
-      // Tear down any prior mount when reopening
-      if (mount.__ihController && typeof mount.__ihController.destroy === 'function') {
-        try { mount.__ihController.destroy(); } catch (e) {}
-      }
-      // Pull existing lines from prior data if any (when editing)
-      var existingState = (window.__currentApDocLines && window.__currentApDocLines.cost_lines) || null;
-      var opts = {
-        onChange: function(state) {
-          window.__currentApDocLines = window.__currentApDocLines || {};
-          window.__currentApDocLines.cost_lines = { categories: state.categories, items: state.items };
-        }
-      };
-      if (existingState) {
-        opts.initialCategories = existingState.categories;
-        opts.initialItems = existingState.items;
-      }
-      mount.__ihController = window.IH35TwoSectionCost.mount(mount, opts);
-    }
-
     function erpApplyApDedicatedUiAfterOpen(mode) {
       const wrap = document.getElementById('apDriverFieldWrap');
       if (wrap) wrap.classList.add('hidden');
@@ -12679,7 +12649,6 @@
         apLocSel._erpBound = true;
         apLocSel.addEventListener('change', erpSyncApRepairLocationHidden);
       }
-      mountApTwoSectionCost();
       if (typeof syncErpDedicatedModalChrome === 'function') syncErpDedicatedModalChrome();
     }
 
@@ -33118,9 +33087,6 @@
           ...(apDriverId ? { driverId: apDriverId } : {}),
           ...(apDriverSearch ? { driverName: apDriverSearch } : {}),
           ...(accidentDotForBody ? { accidentDotReportable: true } : {}),
-          ...(window.__currentApDocLines && window.__currentApDocLines.cost_lines
-            ? { cost_lines: window.__currentApDocLines.cost_lines }
-            : {}),
           lines
         })
       });
