@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Two-Section Cost Breakdown Test</title>
+  <link rel="stylesheet" href="/src/design-tokens.css" />
+  <style>
+    body {
+      margin: 0;
+      background: var(--ih-bg-surface);
+      color: var(--ih-text-primary);
+      font-family: Arial, sans-serif;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 18px auto;
+      padding: 0 12px 24px;
+      display: grid;
+      gap: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .actions button {
+      height: var(--ih-height-button);
+      border: var(--ih-border-width) solid var(--ih-border-light);
+      border-radius: var(--ih-radius);
+      background: var(--ih-bg-card);
+      font-size: var(--ih-font-button);
+      padding: 0 10px;
+      cursor: pointer;
+    }
+    .panel {
+      border: var(--ih-border-width) solid var(--ih-border-light);
+      border-radius: var(--ih-radius);
+      background: var(--ih-bg-card);
+      padding: 8px;
+    }
+    .panel-title {
+      margin: 0 0 8px;
+      font-size: var(--ih-font-label);
+      text-transform: uppercase;
+      letter-spacing: var(--ih-letter-label);
+      color: var(--ih-text-label);
+    }
+    pre {
+      margin: 0;
+      max-height: 280px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Two-Section Cost Breakdown — Component Test</h1>
+    <div class="actions">
+      <button type="button" id="btnReset">Reset</button>
+      <button type="button" id="btnLoad">Load example data</button>
+      <button type="button" id="btnSubmit">Submit to API (test)</button>
+    </div>
+    <div id="mount"></div>
+    <div class="panel">
+      <p class="panel-title">Live State JSON</p>
+      <pre id="json">{}</pre>
+    </div>
+    <div class="panel">
+      <p class="panel-title">API Response</p>
+      <pre id="apiResponse">No request yet.</pre>
+    </div>
+  </div>
+
+  <script src="/src/components/two-section-cost.js"></script>
+  <script>
+    (function initTwoSectionTestPage() {
+      var jsonEl = document.getElementById('json');
+      var apiEl = document.getElementById('apiResponse');
+      var mountEl = document.getElementById('mount');
+      var controller = window.IH35TwoSectionCost.mount(mountEl, {
+        onChange: function onChange(state) {
+          jsonEl.textContent = JSON.stringify(state, null, 2);
+        }
+      });
+
+      document.getElementById('btnReset').addEventListener('click', function () {
+        controller.reset();
+      });
+
+      document.getElementById('btnLoad').addEventListener('click', function () {
+        controller.setState({
+          categories: [
+            { category: 'Detention', description: 'Test', amount: 50 },
+            { category: 'Toll', description: 'I-35', amount: 14.5 }
+          ],
+          items: [
+            { item_name: 'Steer tire', location: 'ST-LF', qty: 1, unit_price: 425 }
+          ]
+        });
+      });
+
+      document.getElementById('btnSubmit').addEventListener('click', async function () {
+        var state = controller.getState();
+        var payload = {
+          unit_number: 'T142',
+          service_type: 'tire_replacement',
+          service_date: '2026-05-01',
+          repair_location_type: 'in_house',
+          repair_location_detail: 'shop bay 2',
+          cost_lines: {
+            categories: state.categories,
+            items: state.items
+          }
+        };
+        try {
+          var rsp = await fetch('/api/work-orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          var data = await rsp.json().catch(function () { return {}; });
+          apiEl.textContent = JSON.stringify({ status: rsp.status, ok: rsp.ok, response: data }, null, 2);
+        } catch (err) {
+          apiEl.textContent = JSON.stringify({ ok: false, error: String(err && err.message ? err.message : err) }, null, 2);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
